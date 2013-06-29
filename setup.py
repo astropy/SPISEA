@@ -33,12 +33,14 @@ from astropy.setup_helpers import (register_commands, adjust_compiler,
                                    get_debug_option)
 from astropy.version_helpers import get_git_devstr, generate_version_py
 
+import popstar
+
 # Set affiliated package-specific settings
-PACKAGENAME = 'packagename'
-DESCRIPTION = 'Astropy affiliated package'
-LONG_DESCRIPTION = ''
-AUTHOR = ''
-AUTHOR_EMAIL = ''
+PACKAGENAME = 'popstar'
+DESCRIPTION = 'Astropy affiliated package for working with resolved stellar populations.'
+LONG_DESCRIPTION = popstar.__doc__
+AUTHOR = 'Jessica R. Lu'
+AUTHOR_EMAIL = 'jlu@ifa.hawaii.edu'
 LICENSE = 'BSD'
 URL = 'http://astropy.org'
 
