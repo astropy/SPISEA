@@ -46,19 +46,19 @@ rst_epilog += """
 # -- Project information ------------------------------------------------------
 
 # This does not *have* to match the package name, but typically does
-project = u'Packagename'
-author = u'The Packagename Developers'
-copyright = u'2012, ' + author
+project = u'popstar'
+author = u'Jessica R. Lu'
+copyright = u'2013, ' + author
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
 # built documents.
 
-import packagename
+import popstar
 # The short X.Y version.
-version = packagename.__version__.split('-', 1)[0]
+version = popstar.__version__.split('-', 1)[0]
 # The full version, including alpha/beta/rc tags.
-release = packagename.__version__
+release = popstar.__version__
 
 
 # -- Options for HTML output ---------------------------------------------------
@@ -116,17 +116,17 @@ man_pages = [('index', project.lower(), project + u' Documentation',
 
 
 ## -- Options for the edit_on_github extension ----------------------------------------
-#
-#extensions += ['astropy.sphinx.ext.edit_on_github']
-#
-## Don't import the module as "version" or it will override the
-## "version" configuration parameter
-#from packagename import version as versionmod
-#edit_on_github_project = "astropy/reponame"
-#if versionmod.release:
-#    edit_on_github_branch = "v" + versionmod.version
-#else:
-#    edit_on_github_branch = "master"
-#
-#edit_on_github_source_root = ""
-#edit_on_github_doc_root = "docs"
+
+extensions += ['astropy.sphinx.ext.edit_on_github']
+
+# Don't import the module as "version" or it will override the
+# "version" configuration parameter
+from popstar import version as versionmod
+edit_on_github_project = "astropy/PopStar"
+if versionmod.release:
+   edit_on_github_branch = "v" + versionmod.version
+else:
+   edit_on_github_branch = "master"
+
+edit_on_github_source_root = ""
+edit_on_github_doc_root = "docs"
