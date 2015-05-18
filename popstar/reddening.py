@@ -4,6 +4,10 @@
 """
 Reddening laws.
 """
+import pylab as py
+import numpy as np
+from scipy import interpolate
+import pysynphot
 
 class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
     """
@@ -165,3 +169,66 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         return extinction
 
 
+
+class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
+    """
+    An object that represents the reddening vs. wavelength for the 
+    Roman Zunigoa et al. 2007 reddening law. The returned object is 
+
+    pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
+
+    The wavelength range over which this law is calculated is
+    0.5 - 8.0 microns.
+    """
+    def __init__(self):
+        # Fetch the extinction curve, pre-interpolate across 1-8 microns
+        wave = np.arange(1.0, 8.0, 0.01)
+        
+        # This will eventually be scaled by AKs when you
+        # call reddening(). Right now, calc for AKs=1
+        Alambda_scaled = extinction.romanzuniga07(wave, 1.0, makePlot=False)
+
+        # Convert wavelength to angstrom
+        wave *= 10**4
+
+        pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
+                                                  waveunits='angstrom',
+                                                  Avscaled=Alambda_scaled,
+                                                  name='RomanZuniga07',
+                                                  litref='Roman-Zuniga+ 2007')
+
+    @staticmethod
+    def romanzuniga07(wavelength, AKs, makePlot=False):
+        filters = ['J', 'H', 'Ks', '[3.6]', '[4.5]', '[5.8]', '[8.0]']
+        wave =      np.array([1.240, 1.664, 2.164, 3.545, 4.442, 5.675, 7.760])
+        A_AKs =     np.array([2.299, 1.550, 1.000, 0.618, 0.525, 0.462, 0.455])
+        A_AKs_err = np.array([0.530, 0.080, 0.000, 0.077, 0.063, 0.055, 0.059])
+        
+        # Interpolate over the curve
+        spline_interp = interpolate.splrep(wave, A_AKs, k=3, s=0)
+
+        A_AKs_at_wave = interpolate.splev(wavelength, spline_interp)
+        A_at_wave = AKs * A_AKs_at_wave
+
+        if makePlot:
+            py.clf()
+            py.errorbar(wave, A_AKs, yerr=A_AKs_err, fmt='bo', 
+                        markerfacecolor='none', markeredgecolor='blue',
+                        markeredgewidth=2)
+
+            # Make an interpolated curve.
+            wavePlot = np.arange(wave.min(), wave.max(), 0.1)
+            extPlot = interpolate.splev(wavePlot, spline_interp)
+            py.loglog(wavePlot, extPlot, 'k-')
+
+            # Plot a marker for the computed value.
+            py.plot(wavelength, A_AKs_at_wave, 'rs',
+                    markerfacecolor='none', markeredgecolor='red',
+                    markeredgewidth=2)
+            py.xlabel('Wavelength (microns)')
+            py.ylabel('Extinction (magnitudes)')
+            py.title('Roman Zuniga et al. 2007')
+
+
+        return A_at_wave
+    

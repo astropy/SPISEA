@@ -147,7 +147,7 @@ def sample_imf(massLimits, imfSlopes, totalMass,
 
 
 class IMF(object):
-    def __init__(self, massLimits=massLimits, multiplicity=None):
+    def __init__(self, massLimits=np.array([0.1,150]), multiplicity=None):
         """
         The IMF base class. The multiplicity implementation is here.
         """
@@ -280,7 +280,7 @@ class IMF(object):
 
         
     
-class IMFBrokenPowerlaw(IMF):
+class IMF_broken_powerlaw(IMF):
     def __init__(self, mass_limits, powers, multiplicity=None):
         """
         Initialze a multi-part power-law with N parts. Each part of the
@@ -310,7 +310,7 @@ class IMFBrokenPowerlaw(IMF):
 
         self._mass_limits = np.atleast_1d(mass_limits)
         self._m_limits_low = massLimits[0:-1]
-        self._m_limits_high- = massLimits[1:]
+        self._m_limits_high = massLimits[1:]
         self._powers = powers
 
 
@@ -339,7 +339,6 @@ class IMFBrokenPowerlaw(IMF):
 
         Output:
         xi - probability of measuring that mass.
-
         """
         returnFloat = type(m) == float
         
