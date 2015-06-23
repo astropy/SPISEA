@@ -171,6 +171,9 @@ class EkstromStellarEvolution(StellarEvolution):
         Creates two new directories, rot and norot, which contain their respective
         isochrones.
         """
+        # Store current directory for later
+        start_dir = os.getcwd()
+        
         # Move into metallicity direcotry, read iso.dat file
         os.chdir(input_iso_dir)
     
@@ -209,8 +212,8 @@ class EkstromStellarEvolution(StellarEvolution):
             tmp_r.write('rot/iso_{0:4.2f}.dat'.format(age), format='ascii')
             tmp_n.write('norot/iso_{0:4.2f}.dat'.format(age), format='ascii')
 
-        # Return to some directory
-        #os.chdir(<somewhere>)
+        # Return to starting directory
+        os.chdir(start_dir)
         return
 
 #---------------------------------------#
@@ -296,6 +299,10 @@ class ParsecStellarEvolution(StellarEvolution):
         metallicity_list format: absolute (vs. relative to solar),
         z + <digits after decimal>: e.g. Z = 0.014 --> z014
         """
+        # Store current directory for later
+        start_dir = os.getcwd()
+
+        # Move into isochrone directory
         os.chdir(input_iso_dir)
         
         # Work on each metallicity isochrones individually
@@ -327,7 +334,7 @@ class ParsecStellarEvolution(StellarEvolution):
             os.chdir('..')
 
         # Return to starting directory
-        #os.chdir(<somewhere>)
+        os.chdir(start_dir)
         return
 
 
@@ -417,6 +424,10 @@ class PisaStellarEvolution(StellarEvolution):
         format for metallicity_list : absolute (vs. relative to sun)
         'z' + <digits after decimal>, e.g Z = 0.015 --> z015.
         """
+        # Store current directory for later
+        start_dir = os.getcwd()
+
+        # Move into isochrone directory
         os.chdir(input_iso_dir)
         # Work on each metallicity directory individually
         for metal in metallicity_list:
@@ -446,6 +457,6 @@ class PisaStellarEvolution(StellarEvolution):
 
             # Return to overhead directory
             os.chdir('..')
-        # Return to some direction
-        #os.chdir(<somewhere>)
+        # Return to starting directory
+        os.chdir(start_dir)
         return
