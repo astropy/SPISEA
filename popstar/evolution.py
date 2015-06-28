@@ -8,7 +8,7 @@ import numpy as np
 import os
 import glob
 
-log = logging.getLogger('starEvo')
+log = logging.getLogger('evolution')
 
 class StellarEvolution():
     def __init__(self, model_dir, age_list, mass_list, z_list):
