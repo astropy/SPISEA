@@ -197,7 +197,8 @@ def organize_CMFGEN_atmospheres(path_to_dir):
     and tables describing parameters are in this directory.
 
     Tables describing parameters MUST be named Table_rot.txt,
-    Table_noRot.txt. Made by hand from Tables 3, 4 in Fierro+15
+    Table_noRot.txt. Made by hand from Tables 3, 4 in Fierro+15.
+    These are located in same original directory as atmosphere files
 
     Will separate files into 2 subdirectories, one rotating and
     the other non-rotating
@@ -214,23 +215,23 @@ def organize_CMFGEN_atmospheres(path_to_dir):
     noRot_models = glob.glob("t*n_ir*")
 
     # Separate into different subdirectories
-    if os.path.exists('rot'):
+    if os.path.exists('cmfgenF15_rot'):
         pass
     else:
-        os.mkdir('rot')
-        os.mkdir('noRot')
+        os.mkdir('cmfgenF15_rot')
+        os.mkdir('cmfgenF15_noRot')
 
     for mod in rot_models:
-        cmd = 'mv {0:s} rot'.format(mod)
+        cmd = 'mv {0:s} cmfgenF15_rot'.format(mod)
         os.system(cmd)
 
     for mod in noRot_models:
-        cmd = 'mv {0:s} noRot'.format(mod)
+        cmd = 'mv {0:s} cmfgenF15_noRot'.format(mod)
         os.system(cmd)
 
     # Also move Tables with model parameters into correct directory
-    os.cmd('mv Table_rot.txt rot')
-    os.cmd('mv Table_noRot.txt noRot')
+    os.cmd('mv Table_rot.txt cmfgenF15_rot')
+    os.cmd('mv Table_noRot.txt cmfgenF15_noRot')
     
     # Return to original directory
     os.chdir(start_dir)
@@ -245,8 +246,8 @@ def make_CMFGEN_catalog(path_to_dir):
     been run.
 
     path_to_dir is from current working directory to directory
-    containing the rotating or non-rotating models.ALso, needs to be
-    a Table*.txt file which contains the parameters for all of the
+    containing the rotating or non-rotating models (i.e. cmfgenF15_rot). Also,
+    needs to be a Table*.txt file which contains the parameters for all of the
     original models, since params in filename are not precise enough
 
     Will create catalog.fits file in atmosphere directory with
