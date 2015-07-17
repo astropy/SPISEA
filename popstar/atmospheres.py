@@ -1,6 +1,10 @@
 import logging
 import numpy as np
 import pysynphot
+import os
+import glob
+from astropy.io import fits
+import pdb
 
 log = logging.getLogger('atmospheres')
 
@@ -107,6 +111,60 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4):
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
         print 'Could not find PHOENIX BT-Settl (Allard+ 2011 atmosphere model for'
+        print '  temperature = %d' % temperature
+        print '  metallicity = %.1f' % metallicity
+        print '  log gravity = %.1f' % gravity
+
+    return sp
+
+def get_cmfgenRot_atmosphere(metallicity=0, temperature=30000, gravity=4.14):
+    """
+    metallicity = [M/H] (def = 0)
+    temperature = Kelvin (def = 30000)
+    gravity = log gravity (def = 4.14)
+    """
+    sp = pysynphot.Icat('cmfgenF15_rot', temperature, metallicity, gravity)
+
+    # Do some error checking
+    idx = np.where(sp.flux != 0)[0]
+    if len(idx) == 0:
+        print 'Could not find CMFGEN rotating atmosphere model (Fierro+15) for'
+        print '  temperature = %d' % temperature
+        print '  metallicity = %.1f' % metallicity
+        print '  log gravity = %.1f' % gravity
+
+    return sp
+
+def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=30000, gravity=4.14):
+    """
+    metallicity = [M/H] (def = 0)
+    temperature = Kelvin (def = 30000)
+    gravity = log gravity (def = 4.14)
+    """
+    sp = pysynphot.Icat('cmfgenF15_noRot', temperature, metallicity, gravity)
+
+    # Do some error checking
+    idx = np.where(sp.flux != 0)[0]
+    if len(idx) == 0:
+        print 'Could not find CMFGEN non-rotating atmosphere model (Fierro+15) for'
+        print '  temperature = %d' % temperature
+        print '  metallicity = %.1f' % metallicity
+        print '  log gravity = %.1f' % gravity
+
+    return sp
+
+def get_phoenixv16_atmosphere(metallicity=0, temperature=5000, gravity=4):
+    """
+    metallicity = [M/H] (def = 0)
+    temperature = Kelvin (def = 5000)
+    gravity = log gravity (def = 4.0)
+    """
+    sp = pysynphot.Icat('phoenix_v16', temperature, metallicity, gravity)
+
+    # Do some error checking
+    idx = np.where(sp.flux != 0)[0]
+    if len(idx) == 0:
+        print 'Could not find PHOENIXv16 (Husser+13) atmosphere model for'
         print '  temperature = %d' % temperature
         print '  metallicity = %.1f' % metallicity
         print '  log gravity = %.1f' % gravity
@@ -317,7 +375,7 @@ def make_CMFGEN_catalog(path_to_dir):
     
     return
 
-def orgnaize_PHOENIX_atmospheres(path_to_dir):
+def orgnaize_PHOENIXv16_atmospheres(path_to_dir):
     """
     Construct the Phoenix Husser+13 atmopsheres for each model. Combines the
     fluxes from the *HiRES.fits files and the wavelengths of the
@@ -384,7 +442,7 @@ def orgnaize_PHOENIX_atmospheres(path_to_dir):
     os.chdir(start_dir)
     return
 
-def make_PHOENIX_catalog(path_to_dir):
+def make_PHOENIXv16_catalog(path_to_dir):
     """
     Makes catalog.fits file for Husser+13 phoenix models. Assumes that
     construct_atmospheres has been run already, and that the models lie
@@ -428,4 +486,77 @@ def make_PHOENIX_catalog(path_to_dir):
     os.chdir(start_dir)
     catalog.write('catalog.fits', format='fits')
     
+    return
+
+def cdbs_PHOENIXv16(path_to_cdbs_dir):
+    """
+    Put the PHOENIXv16 (Husser+13) fits files into cdbs format. This primarily
+    consists of adjusting the flux units from [erg/s/cm^2/cm] to [erg/s/cm^2/A]
+    and adding the appropriate keywords to the fits header.
+
+    path_to_cdbs_dir goes from current working directory to phoenixm00 directory
+    in cdbs/grids/phoenix_v16. Note that these files have already been organized
+    using orgnaize_PHOENIXv16_atmospheres code.
+    """
+    # Save starting directory for later, move into working directory
+    start_dir = os.getcwd()
+    os.chdir(path_to_cdbs_dir)
+
+    # Collect the filenames, make necessary changes to each one
+    files = glob.glob('*.fits')
+
+    # Need to make brand-new fits tables with data we want. Assumes 14 columns
+    for i in files:
+        # Open file, extract useful info
+        hdu = fits.open(i)
+        header_0 = hdu[0].header
+        header_1 = hdu[1].header
+        sci = hdu[1].data
+
+        # Remake fits table from individual columns, multiplying each flux
+        # column by 10^-8 for conversion
+        c0 = fits.Column(name='Wavelength', format='D', array=sci.field(0))
+        c1 = fits.Column(name='g0.0', format='E', array=sci.field(1)*10**-8)
+        c2 = fits.Column(name='g0.5', format='E', array=sci.field(2)*10**-8)
+        c3 = fits.Column(name='g1.0', format='E', array=sci.field(3)*10**-8)
+        c4 = fits.Column(name='g1.5', format='E', array=sci.field(4)*10**-8)
+        c5 = fits.Column(name='g2.0', format='E', array=sci.field(5)*10**-8)
+        c6 = fits.Column(name='g2.5', format='E', array=sci.field(6)*10**-8)
+        c7 = fits.Column(name='g3.0', format='E', array=sci.field(7)*10**-8)
+        c8 = fits.Column(name='g3.5', format='E', array=sci.field(8)*10**-8)
+        c9 = fits.Column(name='g4.0', format='E', array=sci.field(9)*10**-8)
+        c10 = fits.Column(name='g4.5', format='E', array=sci.field(10)*10**-8)
+        c11 = fits.Column(name='g5.0', format='E', array=sci.field(11)*10**-8)
+        c12 = fits.Column(name='g5.5', format='E', array=sci.field(12)*10**-8)
+        c13 = fits.Column(name='g6.0', format='E', array=sci.field(13)*10**-8)
+        
+        cols = fits.ColDefs([c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
+        tbhdu = fits.BinTableHDU.from_columns(cols)
+
+        # Copying over the older headers, adding unit keywords
+        prihdu = fits.PrimaryHDU(header=header_0)
+        tbhdu.header['TUNIT1'] = 'ANGSTROM'
+        tbhdu.header['TUNIT2'] = 'FLAM'
+        tbhdu.header['TUNIT3'] = 'FLAM'
+        tbhdu.header['TUNIT4'] = 'FLAM'
+        tbhdu.header['TUNIT5'] = 'FLAM'
+        tbhdu.header['TUNIT6'] = 'FLAM'
+        tbhdu.header['TUNIT7'] = 'FLAM'
+        tbhdu.header['TUNIT8'] = 'FLAM'
+        tbhdu.header['TUNIT9'] = 'FLAM'
+        tbhdu.header['TUNIT10'] = 'FLAM'
+        tbhdu.header['TUNIT11'] = 'FLAM'
+        tbhdu.header['TUNIT12'] = 'FLAM'
+        tbhdu.header['TUNIT13'] = 'FLAM'
+        tbhdu.header['TUNIT14'] = 'FLAM'
+    
+        finalhdu = fits.HDUList([prihdu, tbhdu])
+
+        finalhdu.writeto('test.fits')
+
+        hdu.close()
+
+        pdb.set_trace()
+
+
     return
