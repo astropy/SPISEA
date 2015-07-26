@@ -171,75 +171,75 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=5000, gravity=4):
 
     return sp
 
-def test_merged_atmospheres(metallicity=0, gravity=4):
-    """
-    Compare spectra from Castelli and NextGen at the boundary
-    temperature of 8000 K.
 
-    Compare spectra from NextGen and Phoenix at the boundary
-    temperature of 4000 K.
-    """
-    cast = get_castelli_atmosphere(temperature=8000, 
-                                   metallicity=metallicity, gravity=gravity)
-
-    ngen = get_nextgen_atmosphere(temperature=8000,
-                                  metallicity=metallicity, gravity=gravity)
-
-    # Now Plot the spectra
-    py.figure(1)
-    py.clf()
-    py.loglog(cast.wave, cast.flux, 'r-', label='Castelli')
-    py.plot(ngen.wave, ngen.flux, 'b-', label='NextGen')
-    py.xlabel('Wavelength')
-    py.ylabel('Flux')
-    py.legend()
-    py.xlim(3000, 50000)
-    py.ylim(1e3, 1e8)
-
-
-    ngen = get_nextgen_atmosphere(temperature=4000,
-                                  metallicity=metallicity, gravity=gravity)
-
-    phoe = get_phoenix_atmosphere(temperature=4000,
-                                  metallicity=metallicity, gravity=gravity)
-    # Now Plot the spectra
-    py.figure(2)
-    py.clf()
-    py.loglog(phoe.wave, phoe.flux, 'r-', label='Phoenix')
-    py.plot(ngen.wave, ngen.flux, 'b-', label='NextGen')
-    py.xlabel('Wavelength')
-    py.ylabel('Flux')
-    py.legend()
-    py.xlim(3000, 50000)
-    py.ylim(1, 1e8)
-
-    
-
-
-def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
-    if temperature < 4000 or (temperature < 7000 and gravity < 4.0):
-        print 'Phoenix Model Atmosphere Used'
-        return get_phoenix_atmosphere(metallicity=metallicity,
-                                      temperature=temperature,
-                                      gravity=gravity)
-
-    # if temperature < 4000:
-    #     return get_amesdusty_atmosphere(metallicity=metallicity,
-    #                                     temperature=temperature,
-    #                                     gravity=gravity)
-
-    if temperature >= 4000 and temperature < 7000 and gravity >= 4.0:
-        print 'Nextgen atmosphere used'
-        return get_nextgen_atmosphere(metallicity=metallicity,
-                                      temperature=temperature,
-                                      gravity=gravity)
-
-    if temperature >= 7000: 
-        return get_castelli_atmosphere(metallicity=metallicity,
-                                       temperature=temperature,
-                                       gravity=gravity)
-
-
+#---------OLD MERGED ATMOSPHERES------------#
+#def test_merged_atmospheres(metallicity=0, gravity=4):
+#    """
+#    Compare spectra from Castelli and NextGen at the boundary
+#    temperature of 8000 K.
+#
+#    Compare spectra from NextGen and Phoenix at the boundary
+#    temperature of 4000 K.
+#    """
+#    cast = get_castelli_atmosphere(temperature=8000, 
+#                                   metallicity=metallicity, gravity=gravity)
+#
+#    ngen = get_nextgen_atmosphere(temperature=8000,
+#                                  metallicity=metallicity, gravity=gravity)
+#
+#    # Now Plot the spectra
+#    py.figure(1)
+#    py.clf()
+#    py.loglog(cast.wave, cast.flux, 'r-', label='Castelli')
+#    py.plot(ngen.wave, ngen.flux, 'b-', label='NextGen')
+#    py.xlabel('Wavelength')
+#    py.ylabel('Flux')
+#    py.legend()
+#    py.xlim(3000, 50000)
+#    py.ylim(1e3, 1e8)
+#
+#
+#    ngen = get_nextgen_atmosphere(temperature=4000,
+#                                  metallicity=metallicity, gravity=gravity)
+#
+#    phoe = get_phoenix_atmosphere(temperature=4000,
+#                                  metallicity=metallicity, gravity=gravity)
+#    # Now Plot the spectra
+#    py.figure(2)
+#    py.clf()
+#    py.loglog(phoe.wave, phoe.flux, 'r-', label='Phoenix')
+#    py.plot(ngen.wave, ngen.flux, 'b-', label='NextGen')
+#    py.xlabel('Wavelength')
+#    py.ylabel('Flux')
+#    py.legend()
+#    py.xlim(3000, 50000)
+#    py.ylim(1, 1e8)
+#
+#    
+#def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
+#    if temperature < 4000 or (temperature < 7000 and gravity < 4.0):
+#        print 'Phoenix Model Atmosphere Used'
+#        return get_phoenix_atmosphere(metallicity=metallicity,
+#                                      temperature=temperature,
+#                                      gravity=gravity)
+#
+#    # if temperature < 4000:
+#    #     return get_amesdusty_atmosphere(metallicity=metallicity,
+#    #                                     temperature=temperature,
+#    #                                     gravity=gravity)
+#
+#    if temperature >= 4000 and temperature < 7000 and gravity >= 4.0:
+#        print 'Nextgen atmosphere used'
+#        return get_nextgen_atmosphere(metallicity=metallicity,
+#                                      temperature=temperature,
+#                                      gravity=gravity)
+#
+#    if temperature >= 7000: 
+#        return get_castelli_atmosphere(metallicity=metallicity,
+#                                       temperature=temperature,
+#                                       gravity=gravity)
+#
+#
 #--------------------------------------#
 # Atmosphere formatting functions
 #--------------------------------------#
@@ -505,8 +505,10 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
     # Collect the filenames, make necessary changes to each one
     files = glob.glob('*.fits')
 
-    # Need to make brand-new fits tables with data we want. Assumes 14 columns
+    # Need to make brand-new fits tables with data we want.
+    counter = 0
     for i in files:
+        counter += 1
         # Open file, extract useful info
         hdu = fits.open(i)
         header_0 = hdu[0].header
@@ -515,22 +517,81 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
 
         # Remake fits table from individual columns, multiplying each flux
         # column by 10^-8 for conversion
+        # This gets messy due to changing number of columns
         c0 = fits.Column(name='Wavelength', format='D', array=sci.field(0))
-        c1 = fits.Column(name='g0.0', format='E', array=sci.field(1)*10**-8)
-        c2 = fits.Column(name='g0.5', format='E', array=sci.field(2)*10**-8)
-        c3 = fits.Column(name='g1.0', format='E', array=sci.field(3)*10**-8)
-        c4 = fits.Column(name='g1.5', format='E', array=sci.field(4)*10**-8)
-        c5 = fits.Column(name='g2.0', format='E', array=sci.field(5)*10**-8)
-        c6 = fits.Column(name='g2.5', format='E', array=sci.field(6)*10**-8)
-        c7 = fits.Column(name='g3.0', format='E', array=sci.field(7)*10**-8)
-        c8 = fits.Column(name='g3.5', format='E', array=sci.field(8)*10**-8)
-        c9 = fits.Column(name='g4.0', format='E', array=sci.field(9)*10**-8)
-        c10 = fits.Column(name='g4.5', format='E', array=sci.field(10)*10**-8)
-        c11 = fits.Column(name='g5.0', format='E', array=sci.field(11)*10**-8)
-        c12 = fits.Column(name='g5.5', format='E', array=sci.field(12)*10**-8)
-        c13 = fits.Column(name='g6.0', format='E', array=sci.field(13)*10**-8)
-        
-        cols = fits.ColDefs([c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
+        # This particular column only exists for lower temp models
+        if counter <= 34:
+            c1 = fits.Column(name='g0.0', format='E', array=sci.field(1)*10**-8)
+            c2 = fits.Column(name='g0.5', format='E', array=sci.field(2)*10**-8)
+            c3 = fits.Column(name='g1.0', format='E', array=sci.field(3)*10**-8)
+            c4 = fits.Column(name='g1.5', format='E', array=sci.field(4)*10**-8)
+            c5 = fits.Column(name='g2.0', format='E', array=sci.field(5)*10**-8)
+            c6 = fits.Column(name='g2.5', format='E', array=sci.field(6)*10**-8)
+            c7 = fits.Column(name='g3.0', format='E', array=sci.field(7)*10**-8)
+            c8 = fits.Column(name='g3.5', format='E', array=sci.field(8)*10**-8)
+            c9 = fits.Column(name='g4.0', format='E', array=sci.field(9)*10**-8)
+            c10 = fits.Column(name='g4.5', format='E', array=sci.field(10)*10**-8)
+            c11 = fits.Column(name='g5.0', format='E', array=sci.field(11)*10**-8)
+            c12 = fits.Column(name='g5.5', format='E', array=sci.field(12)*10**-8)
+            c13 = fits.Column(name='g6.0', format='E', array=sci.field(13)*10**-8)
+        elif counter <= 37:
+            c2 = fits.Column(name='g0.5', format='E', array=sci.field(1)*10**-8)
+            c3 = fits.Column(name='g1.0', format='E', array=sci.field(2)*10**-8)
+            c4 = fits.Column(name='g1.5', format='E', array=sci.field(3)*10**-8)
+            c5 = fits.Column(name='g2.0', format='E', array=sci.field(4)*10**-8)
+            c6 = fits.Column(name='g2.5', format='E', array=sci.field(5)*10**-8)
+            c7 = fits.Column(name='g3.0', format='E', array=sci.field(6)*10**-8)
+            c8 = fits.Column(name='g3.5', format='E', array=sci.field(7)*10**-8)
+            c9 = fits.Column(name='g4.0', format='E', array=sci.field(8)*10**-8)
+            c10 = fits.Column(name='g4.5', format='E', array=sci.field(9)*10**-8)
+            c11 = fits.Column(name='g5.0', format='E', array=sci.field(10)*10**-8)
+            c12 = fits.Column(name='g5.5', format='E', array=sci.field(11)*10**-8)
+            c13 = fits.Column(name='g6.0', format='E', array=sci.field(12)*10**-8)
+        elif counter <= 54:
+            c3 = fits.Column(name='g1.0', format='E', array=sci.field(1)*10**-8)
+            c4 = fits.Column(name='g1.5', format='E', array=sci.field(2)*10**-8)
+            c5 = fits.Column(name='g2.0', format='E', array=sci.field(3)*10**-8)
+            c6 = fits.Column(name='g2.5', format='E', array=sci.field(4)*10**-8)
+            c7 = fits.Column(name='g3.0', format='E', array=sci.field(5)*10**-8)
+            c8 = fits.Column(name='g3.5', format='E', array=sci.field(6)*10**-8)
+            c9 = fits.Column(name='g4.0', format='E', array=sci.field(7)*10**-8)
+            c10 = fits.Column(name='g4.5', format='E', array=sci.field(8)*10**-8)
+            c11 = fits.Column(name='g5.0', format='E', array=sci.field(9)*10**-8)
+            c12 = fits.Column(name='g5.5', format='E', array=sci.field(10)*10**-8)
+            c13 = fits.Column(name='g6.0', format='E', array=sci.field(11)*10**-8)
+        elif counter <= 59:
+            c4 = fits.Column(name='g1.5', format='E', array=sci.field(1)*10**-8)
+            c5 = fits.Column(name='g2.0', format='E', array=sci.field(2)*10**-8)
+            c6 = fits.Column(name='g2.5', format='E', array=sci.field(3)*10**-8)
+            c7 = fits.Column(name='g3.0', format='E', array=sci.field(4)*10**-8)
+            c8 = fits.Column(name='g3.5', format='E', array=sci.field(5)*10**-8)
+            c9 = fits.Column(name='g4.0', format='E', array=sci.field(6)*10**-8)
+            c10 = fits.Column(name='g4.5', format='E', array=sci.field(7)*10**-8)
+            c11 = fits.Column(name='g5.0', format='E', array=sci.field(8)*10**-8)
+            c12 = fits.Column(name='g5.5', format='E', array=sci.field(9)*10**-8)
+            c13 = fits.Column(name='g6.0', format='E', array=sci.field(10)*10**-8)
+        else:
+            c5 = fits.Column(name='g2.0', format='E', array=sci.field(1)*10**-8)
+            c6 = fits.Column(name='g2.5', format='E', array=sci.field(2)*10**-8)
+            c7 = fits.Column(name='g3.0', format='E', array=sci.field(3)*10**-8)
+            c8 = fits.Column(name='g3.5', format='E', array=sci.field(4)*10**-8)
+            c9 = fits.Column(name='g4.0', format='E', array=sci.field(5)*10**-8)
+            c10 = fits.Column(name='g4.5', format='E', array=sci.field(6)*10**-8)
+            c11 = fits.Column(name='g5.0', format='E', array=sci.field(7)*10**-8)
+            c12 = fits.Column(name='g5.5', format='E', array=sci.field(8)*10**-8)
+            c13 = fits.Column(name='g6.0', format='E', array=sci.field(9)*10**-8)
+            
+            
+        if counter <= 35:
+            cols = fits.ColDefs([c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
+        elif counter <= 37:
+            cols = fits.ColDefs([c0,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
+        elif counter <= 54:
+            cols = fits.ColDefs([c0,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
+        elif counter <= 59:
+            cols = fits.ColDefs([c0,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
+        else:
+            cols = fits.ColDefs([c0,c5,c6,c7,c8,c9,c10,c11,c12,c13])
         tbhdu = fits.BinTableHDU.from_columns(cols)
 
         # Copying over the older headers, adding unit keywords
@@ -552,11 +613,10 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
     
         finalhdu = fits.HDUList([prihdu, tbhdu])
 
-        finalhdu.writeto('test.fits')
+        finalhdu.writeto(i, clobber=True)
 
         hdu.close()
-
-        pdb.set_trace()
-
+        print 'Done {0:2.0f} of {1:2.0f}'.format(counter, len(files))
 
     return
+
