@@ -4,6 +4,9 @@ import pysynphot
 import os
 import glob
 from astropy.io import fits
+from astropy.table import Table
+from thesis import atmos_comp
+import time
 import pdb
 
 log = logging.getLogger('atmospheres')
@@ -46,11 +49,33 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
                 Temperature Range      Grid Step
                        K                   K
 
-                  2600 -  4000            100 
-                  4000 - 10000            200 
+                  3000 -  13000            250 
+                  13000 - 50000            1000
 
-    log gravity (def = 4.0) in the range of 3.5 - 6.0 in 0.5 increments
+    log gravity (def = 4.0) in the range of 2.0 - 5.0 in 0.5 increments
     """
+    # Round given temp, gravity to closest model that exists
+    if temperature < 3000:
+        print 'No ck04 model below 3000 K'
+        return
+
+    t1 = np.arange(3000, 13000+1, 250)
+    t2 = np.arange(13000,50000+1, 1000)
+    temp_arr = np.append(t1, t2)
+    grav_arr = np.arange(2.0, 5.0+0.1, 0.5)
+
+    temp_ind = np.where( abs(temp_arr - temperature) == min(abs(temp_arr - temperature)) )
+    grav_ind = np.where( abs(grav_arr - gravity) == min(abs(grav_arr - gravity)) )
+
+    # Error checking: stop if temp/grav difference is too high
+    #if ((abs(temperature - temp_arr[temp_ind[0]]) > 250) | (abs(gravity - grav_arr[grav_ind[0]]) > 0.5) ):
+    #    print 'BAD TEMP/GRAV MATCH'
+    #    return
+        
+    # Define new temp based on closest match
+    temperature = temp_arr[temp_ind[0]]
+    gravity = grav_arr[grav_ind[0]]
+    
     sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -153,18 +178,87 @@ def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=30000, gravity=4.14):
 
     return sp
 
-def get_phoenixv16_atmosphere(metallicity=0, temperature=5000, gravity=4):
+def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=True):
     """
     metallicity = [M/H] (def = 0)
     temperature = Kelvin (def = 5000)
     gravity = log gravity (def = 4.0)
-    """
-    sp = pysynphot.Icat('phoenix_v16', temperature, metallicity, gravity)
 
+    temp: 2300 - 7000 steps of 100 K; 7000 - 12000 in steps of 200 K
+    grav: 2.0 - 6.0, steps of 0.5 (gaurenteed over all temps)
+
+    If rebin = True, pull from spectra that have been rebinned to ck04model resolution;
+    this is important for spectrophotometry, otherwise it takes forever
+    """
+    # Round given temp, gravity to closest model that exists
+    if (temperature < 2300) | (temperature > 12000) | (gravity < 2.0):
+        print 'No phoenixV16 model below 2300 K or above 12000 K, or grav < 2.0'
+        return
+    
+    t1 = np.arange(2300, 7000+1, 100)
+    t2 = np.arange(7000,12000+1, 200)
+    temp_arr = np.append(t1, t2)
+    grav_arr = np.arange(2.0, 6.0+0.1, 0.5)
+
+    temp_ind = np.where( abs(temp_arr - temperature) == min(abs(temp_arr - temperature)) )
+    grav_ind = np.where( abs(grav_arr - gravity) == min(abs(grav_arr - gravity)) )
+
+    # Error checking: stop if temp/grav difference is too high
+    if ((abs(temperature - temp_arr[temp_ind][0]) > 100) | (abs(gravity - grav_arr[grav_ind[0]]) > 0.5) ):
+        print 'BAD TEMP/GRAV MATCH'
+        return
+        
+    # Define new temp based on closest match
+    temperature = temp_arr[temp_ind[0]]
+    gravity = grav_arr[grav_ind[0]]
+    
+    if rebin == True:
+        sp = pysynphot.Icat('phoenix_v16_rebin', temperature, metallicity, gravity)
+    else:
+        sp = pysynphot.Icat('phoenix_v16', temperature, metallicity, gravity)
+    
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
         print 'Could not find PHOENIXv16 (Husser+13) atmosphere model for'
+        print '  temperature = %d' % temperature
+        print '  metallicity = %.1f' % metallicity
+        print '  log gravity = %.1f' % gravity
+
+    return sp
+
+def get_atlas_phoenix_atmosphere(metallicity=0, temperature=4000, gravity=4):
+    """
+    Return atmosphere that is a linear merge of atlas ck04 model and phoenixV16.
+
+    Only valid for temp of 5250 K, gravity from 0 = 5.0 in steps of 0.5
+    """
+    # Round given temp, gravity to closest model that exists
+    if (temperature < 5000) | (temperature > 5500):
+        print 'No ATLAS-PHOENIX merge model outside 5000 - 5500'
+        return
+
+    temp_arr = np.array([5250])
+    grav_arr = np.arange(0.0, 5.0+0.1, 0.5)
+
+    temp_ind = np.where( abs(temp_arr - temperature) == min(abs(temp_arr - temperature)) )
+    grav_ind = np.where( abs(grav_arr - gravity) == min(abs(grav_arr - gravity)) )
+
+    # Error checking: stop if temp/grav difference is too high
+    if ((abs(temperature - temp_arr[temp_ind[0]]) > 250) | (abs(gravity - grav_arr[grav_ind[0]]) > 0.5) ):
+        print 'BAD TEMP/GRAV MATCH'
+        return
+        
+    # Define new temp based on closest match
+    temperature = temp_arr[temp_ind[0]]
+    gravity = grav_arr[grav_ind[0]]
+    
+    sp = pysynphot.Icat('merged', temperature, metallicity, gravity)
+
+    # Do some error checking
+    idx = np.where(sp.flux != 0)[0]
+    if len(idx) == 0:
+        print 'Could not find ATLAS-PHOENIX merge atmosphere model for'
         print '  temperature = %d' % temperature
         print '  metallicity = %.1f' % metallicity
         print '  log gravity = %.1f' % gravity
@@ -239,7 +333,43 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=5000, gravity=4):
 #                                       temperature=temperature,
 #                                       gravity=gravity)
 #
-#
+#---------------------------------------------------------------------#
+def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
+    """
+    If T > 20,000 K : CMFGEN
+    20,000 > T > 5500: ATLAS (ck04)
+    5500 > T > 5000: ATLAS/PHOENIX merge
+    T < 5000: PHEONIXv16 (Husser+13) 
+    """
+    if temperature < 5000:
+        print 'Phoenix Model Atmosphere Used'
+        return get_phoenixv16_atmosphere(metallicity=metallicity,
+                                      temperature=temperature,
+                                      gravity=gravity)
+
+    if (temperature > 5000) & (temperature < 5500):
+        print 'ATLAS and PHOENIX merged atmosphere used'
+        return get_atlas_phoenix_atmosphere(metallicity=metallicity,
+                                         temperature=temperature,
+                                         gravity=gravity)
+
+    if temperature > 5500:
+        print 'ATLAS atmosphere used'
+        return get_castelli_atmosphere(metallicity=metallicity,
+                                      temperature=temperature,
+                                      gravity=gravity)
+
+    if temperature > 20000:
+        print 'Warning: ATLAS still used at high temps'
+        return get_castelli_atmosphere(metallicity=metallicity,
+                                       temperature=temperature,
+                                       gravity=gravity)
+
+        print 'CMFGEN model with rotation used'
+        #return get_cmfgenrot_atmosphere(metallicity=metallicity,
+        #                               temperature=temperature,
+        #                               gravity=gravity)    
+
 #--------------------------------------#
 # Atmosphere formatting functions
 #--------------------------------------#
@@ -620,3 +750,80 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
 
     return
 
+
+def rebin_phoenixV16(cdbs_path):
+    """
+    Rebin phoenixV16 models to atlas ck04 resolution; this makes
+    spectrophotometry MUST faster
+
+    makes new directory in cdbs/grid: phoenix_v16_rebin
+
+    cdbs_path: path to cdbs directory
+    """
+    # Get an atlas ck04 model, we will use this to set wavelength grid
+    sp_atlas = get_castelli_atmosphere()
+
+    # Open a fits table for an existing phoenix model; we will steal the header
+    tmp = cdbs_path+'/grid/phoenix_v16/phoenixm00/phoenixm00_02400.fits'
+    phoenix_hdu = fits.open(tmp)
+    header0 = phoenix_hdu[0].header
+
+    # Create cdbs/grid directory for rebinned models
+    path = cdbs_path+'/grid/phoenix_v16_rebin/'
+    if not os.path.exists(path):
+        os.mkdir(path)
+        os.mkdir(path+'phoenixm00')
+        
+    # Want to go through all phoenixV16 models and rebin. See get_phoenix_v16
+    # code comment for ranges.
+    t1 = np.arange(2300, 7000+1, 100)
+    t2 = np.arange(7000,12000+1, 200)
+    temp_arr = np.append(t1, t2)
+    grav_arr = np.arange(2.0, 6.0+0.1, 0.5)
+
+    count=0
+    for t in temp_arr:
+        count += 1
+        outfile = 'phoenixm00_{0:05.0f}.fits'.format(t)
+        # Loop through gravities
+        flux_arr = []
+        for g in grav_arr:
+            sp_phoenix = get_phoenixv16_atmosphere(temperature=t, gravity=g)
+            flux_rebin = atmos_comp.rebin_spec(sp_phoenix.wave, sp_phoenix.flux,
+                                               sp_atlas.wave)
+            flux_arr.append(flux_rebin)
+
+        # Build the columns fo the new cdbs table
+        c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
+        c1 = fits.Column(name='g2.0', format='E', array=flux_arr[0])
+        c2 = fits.Column(name='g2.5', format='E', array=flux_arr[1])
+        c3 = fits.Column(name='g3.0', format='E', array=flux_arr[2])
+        c4 = fits.Column(name='g3.5', format='E', array=flux_arr[3])
+        c5 = fits.Column(name='g4.0', format='E', array=flux_arr[4])
+        c6 = fits.Column(name='g4.5', format='E', array=flux_arr[5])
+        c7 = fits.Column(name='g5.0', format='E', array=flux_arr[6])
+        c8 = fits.Column(name='g5.5', format='E', array=flux_arr[7])
+        c9 = fits.Column(name='g6.0', format='E', array=flux_arr[8])
+
+        cols = fits.ColDefs([c0,c1,c2,c3,c4,c5,c6,c7,c8,c9])
+        tbhdu = fits.BinTableHDU.from_columns(cols)
+        prihdu = fits.PrimaryHDU(header=header0)
+        # Gotta add a keyword to the table hdu
+        tbhdu.header['TUNIT1'] = 'ANGSTROM'
+        tbhdu.header['TUNIT2'] = 'FLAM'
+        tbhdu.header['TUNIT3'] = 'FLAM'
+        tbhdu.header['TUNIT4'] = 'FLAM'
+        tbhdu.header['TUNIT5'] = 'FLAM'
+        tbhdu.header['TUNIT6'] = 'FLAM'
+        tbhdu.header['TUNIT7'] = 'FLAM'
+        tbhdu.header['TUNIT8'] = 'FLAM'
+        tbhdu.header['TUNIT9'] = 'FLAM'
+        tbhdu.header['TUNIT10'] = 'FLAM'
+
+        # Write hdu
+        finalhdu = fits.HDUList([prihdu, tbhdu])
+        finalhdu.writeto(path+'phoenixm00/'+outfile, clobber=True)
+
+        print 'Done file {0:1f} of {1:1f}'.format(count, len(temp_arr))           
+
+    return
