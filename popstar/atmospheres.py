@@ -55,6 +55,7 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     log gravity (def = 4.0) in the range of 2.0 - 5.0 in 0.5 increments
     """
     # Round given temp, gravity to closest model that exists
+    # No models below 3000 K
     if temperature < 3000:
         print 'No ck04 model below 3000 K'
         return
@@ -64,8 +65,8 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     temp_arr = np.append(t1, t2)
     grav_arr = np.arange(2.0, 5.0+0.1, 0.5)
 
-    temp_ind = np.where( abs(temp_arr - temperature) == min(abs(temp_arr - temperature)) )
-    grav_ind = np.where( abs(grav_arr - gravity) == min(abs(grav_arr - gravity)) )
+    temp_ind = np.where( abs(temp_arr - temperature) == min(abs(temp_arr - temperature)) )[0]
+    grav_ind = np.where( abs(grav_arr - gravity) == min(abs(grav_arr - gravity)) )[0]
 
     # Error checking: stop if temp/grav difference is too high
     #if ((abs(temperature - temp_arr[temp_ind[0]]) > 250) | (abs(gravity - grav_arr[grav_ind[0]]) > 0.5) ):
@@ -75,6 +76,11 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     # Define new temp based on closest match
     temperature = temp_arr[temp_ind[0]]
     gravity = grav_arr[grav_ind[0]]
+
+    # Pysynphot crashes if gravity is less than 2.5; change gravity to 2.5
+    # if this is the case
+    if gravity < 2.5:
+        gravity = 2.5
     
     sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
 
@@ -200,13 +206,13 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
     temp_arr = np.append(t1, t2)
     grav_arr = np.arange(2.0, 6.0+0.1, 0.5)
 
-    temp_ind = np.where( abs(temp_arr - temperature) == min(abs(temp_arr - temperature)) )
-    grav_ind = np.where( abs(grav_arr - gravity) == min(abs(grav_arr - gravity)) )
+    temp_ind = np.where( abs(temp_arr - temperature) == min(abs(temp_arr - temperature)) )[0]
+    grav_ind = np.where( abs(grav_arr - gravity) == min(abs(grav_arr - gravity)) )[0]
 
     # Error checking: stop if temp/grav difference is too high
     if ((abs(temperature - temp_arr[temp_ind][0]) > 100) | (abs(gravity - grav_arr[grav_ind[0]]) > 0.5) ):
         print 'BAD TEMP/GRAV MATCH'
-        return
+        return    
         
     # Define new temp based on closest match
     temperature = temp_arr[temp_ind[0]]
@@ -241,8 +247,8 @@ def get_atlas_phoenix_atmosphere(metallicity=0, temperature=4000, gravity=4):
     temp_arr = np.array([5250])
     grav_arr = np.arange(0.0, 5.0+0.1, 0.5)
 
-    temp_ind = np.where( abs(temp_arr - temperature) == min(abs(temp_arr - temperature)) )
-    grav_ind = np.where( abs(grav_arr - gravity) == min(abs(grav_arr - gravity)) )
+    temp_ind = np.where( abs(temp_arr - temperature) == min(abs(temp_arr - temperature)) )[0]
+    grav_ind = np.where( abs(grav_arr - gravity) == min(abs(grav_arr - gravity)) )[0]
 
     # Error checking: stop if temp/grav difference is too high
     if ((abs(temperature - temp_arr[temp_ind[0]]) > 250) | (abs(gravity - grav_arr[grav_ind[0]]) > 0.5) ):
@@ -374,6 +380,66 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
 # Atmosphere formatting functions
 #--------------------------------------#
 
+def download_CMFGEN_atmospheres(Table_rot, Table_norot):
+    """
+    Downloads CMFGEN models from
+    https://sites.google.com/site/fluxesandcontinuum/home;
+    these contain continuum as well as lines.
+
+    Table_rot, Table_norot are tables with the file prefixes
+    and model atmosphere parameters, taken by hand from the
+    Fierro+15 paper
+
+    Website addresses are hardcoded
+    
+    Puts downloaded models in the current working directory.
+    """
+    print 'WARNING: THIS DOES NOT COMPLETELY WORK'
+    print '**********************'
+    t_rot = Table.read(Table_rot, format='ascii')
+    t_norot = Table.read(Table_norot, format='ascii')
+
+    tables = [t_rot, t_norot]
+    filenames = [t_rot['col1'], t_norot['col1']]
+
+    # Hardcoded list of webiste addresses
+    web_base1 = 'https://sites.google.com/site/fluxesandcontinuum/home/'
+    web_base2 = 'https://sites.google.com/site/modelsobmassivestars/'
+    web = [web_base1+'009-solar-masses/',web_base1+'012-solar-masses/',
+           web_base1+'015-solar-masses/',web_base1+'020-solar-masses/',
+           web_base1+'025-solar-masses/',web_base2+'009-solar-masses-tracks/',
+           web_base2+'040-solar-masses/',web_base2+'060-solar-masses/',
+           web_base1+'085-solar-masses/',web_base1+'120-solar-masses/']
+    # Array of masses that matches the website addresses
+    mass_arr = np.array([9.,12.,15.,20.,25.,32.,40.,60.,85.,120.])
+
+    # Loop through rotating and unrotating case. First loop is rot, second unrot
+    for i in range(2):
+        # Extract masses from filenames
+        masses = []
+        for j in filenames[i]:
+            tmp = j.split('m')
+            mass = float(tmp[1][:-1])
+            masses.append(mass)
+
+        # Download the models webpage by webpage. A bit tricky because masses
+        # change slightly within a particular website. THIS IS WHAT FAILS
+        for j in range(len(web)):
+            if j == 0:
+                good = np.where( (masses <= mass_arr[j]) )
+            else:
+                g = j - 1
+                good = np.where( (masses <= mass_arr[j]) &
+                                (masses > mass_arr[g]) )
+            # Use wget command to pull down the files, and unzip them
+            for k in good[0]:
+                full = web[j]+'{1:s}.flx.zip'.format(mass_arr[j],filenames[i][k])
+                os.system('wget ' + full)
+                os.system('unzip '+ filenames[i][k] + '.flx.zip')
+
+
+    return
+
 def organize_CMFGEN_atmospheres(path_to_dir):
     """
     Change CMFGEN grid from Fierro+15
@@ -399,8 +465,8 @@ def organize_CMFGEN_atmospheres(path_to_dir):
     # Enter atmosphere directory, collect rotating and non-rotating
     # file names (assumed to all start with "t")
     os.chdir(path_to_dir)
-    rot_models = glob.glob("t*r_ir*")
-    noRot_models = glob.glob("t*n_ir*")
+    rot_models = glob.glob("t*r.flx*")
+    noRot_models = glob.glob("t*n.flx*")
 
     # Separate into different subdirectories
     if os.path.exists('cmfgenF15_rot'):
@@ -418,8 +484,8 @@ def organize_CMFGEN_atmospheres(path_to_dir):
         os.system(cmd)
 
     # Also move Tables with model parameters into correct directory
-    os.cmd('mv Table_rot.txt cmfgenF15_rot')
-    os.cmd('mv Table_noRot.txt cmfgenF15_noRot')
+    os.system('mv Table_rot.txt cmfgenF15_rot')
+    os.system('mv Table_noRot.txt cmfgenF15_noRot')
     
     # Return to original directory
     os.chdir(start_dir)
