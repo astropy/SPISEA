@@ -181,6 +181,8 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
         endTime = time.time()
         print '      Time taken: %d seconds' % (endTime - startTime)
 
+    return
+
 def load_isochrone(logAge=6.78, AKs=defaultAKs, distance=defaultDist,
                    iso_dir='./'):
     """
@@ -188,7 +190,7 @@ def load_isochrone(logAge=6.78, AKs=defaultAKs, distance=defaultDist,
     already exist.
     """
     # Define directory where hst_isochrones exist
-    inFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}.pickle'
+    inFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}.fits'
     inFile = inFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4))
 
     if not os.path.exists(inFile):
