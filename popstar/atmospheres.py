@@ -5,7 +5,6 @@ import os
 import glob
 from astropy.io import fits
 from astropy.table import Table
-from thesis import atmos_comp
 import time
 import pdb
 
@@ -60,7 +59,7 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
         print 'No ck04 model below 3000 K'
         return
 
-    t1 = np.arange(3000, 13000+1, 250)
+    t1 = np.arange(3000, 13000, 250)
     t2 = np.arange(13000,50000+1, 1000)
     temp_arr = np.append(t1, t2)
     grav_arr = np.arange(2.0, 5.0+0.1, 0.5)
@@ -77,12 +76,35 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     temperature = temp_arr[temp_ind[0]]
     gravity = grav_arr[grav_ind[0]]
 
-    # Pysynphot crashes if gravity is less than 2.5; change gravity to 2.5
-    # if this is the case
-    if gravity < 2.5:
+    # Catch the edge cases for the hotest stars where the newest 
+    # evolution models have logg < 4.0 but the atmosphere models
+    # aren't available. HACK! FIX!
+    if (temperature > 49000) and (gravity < 5.0):
+        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        gravity = 5.0
+    if (temperature > 39000) and (gravity < 4.5):
+        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        gravity = 4.5
+    if (temperature > 31000) and (gravity < 4.0):
+        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        gravity = 4.0
+    if (temperature > 26000) and (gravity < 3.5):
+        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        gravity = 3.5
+    if (temperature > 19000) and (gravity < 3.0):
+        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        gravity = 3.0
+    if (temperature > 11750) and (gravity < 2.5):
+        print 'Changing gravity for T=', temperature, ' logg=', gravity
         gravity = 2.5
-    
-    
+
+    if (temperature > 9000) and (gravity < 2.0):
+        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        gravity = 2.0
+    if (temperature > 8250) and (gravity < 1.5):
+        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        gravity = 1.5
+        
     sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -349,12 +371,12 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
     T < 5000: PHEONIXv16 (Husser+13) 
     """
     if temperature < 5000:
-        print 'Phoenix Model Atmosphere Used'
         return get_phoenixv16_atmosphere(metallicity=metallicity,
                                       temperature=temperature,
                                       gravity=gravity)
 
     if (temperature > 5000) & (temperature < 5500):
+<<<<<<< HEAD
         #print 'ATLAS and PHOENIX merged atmosphere used'
         #return get_atlas_phoenix_atmosphere(metallicity=metallicity,
         #                                temperature=temperature,
@@ -364,18 +386,15 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
                                       gravity=gravity)
     
     if temperature > 5500:
-        print 'ATLAS atmosphere used'
         return get_castelli_atmosphere(metallicity=metallicity,
                                       temperature=temperature,
                                       gravity=gravity)
 
     if temperature > 20000:
-        print 'Warning: ATLAS still used at high temps'
         return get_castelli_atmosphere(metallicity=metallicity,
                                        temperature=temperature,
                                        gravity=gravity)
 
-        print 'CMFGEN model with rotation used'
         #return get_cmfgenrot_atmosphere(metallicity=metallicity,
         #                               temperature=temperature,
         #                               gravity=gravity)    
@@ -1033,3 +1052,17 @@ def rebin_phoenixV16(cdbs_path):
         print 'Done file {0:1f} of {1:1f}'.format(count, len(temp_arr))           
 
     return
+
+
+def rebin_spec(wave, specin, wavnew):
+    """
+    Helper routine to rebin spectra. TAKEN FROM ASTROBETTER BLOG FROM JESSICA:
+    http://www.astrobetter.com/blog/2013/08/12/
+    python-tip-re-sampling-spectra-with-pysynphot/
+    """
+    spec = spectrum.ArraySourceSpectrum(wave=wave, flux=specin)
+    f = np.ones(len(wave))
+    filt = spectrum.ArraySpectralElement(wave, f, waveunits='angstrom')
+    obs = observation.Observation(spec, filt, binset=wavnew, force='taper')
+ 
+    return obs.binflux
