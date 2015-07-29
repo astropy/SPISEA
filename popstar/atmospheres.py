@@ -370,30 +370,25 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
     T < 5000: PHEONIXv16 (Husser+13) 
     """
     if temperature < 5000:
-        print 'Phoenix Model Atmosphere Used'
         return get_phoenixv16_atmosphere(metallicity=metallicity,
                                       temperature=temperature,
                                       gravity=gravity)
 
     if (temperature > 5000) & (temperature < 5500):
-        print 'ATLAS and PHOENIX merged atmosphere used'
         return get_atlas_phoenix_atmosphere(metallicity=metallicity,
                                          temperature=temperature,
                                          gravity=gravity)
 
     if temperature > 5500:
-        print 'ATLAS atmosphere used'
         return get_castelli_atmosphere(metallicity=metallicity,
                                       temperature=temperature,
                                       gravity=gravity)
 
     if temperature > 20000:
-        print 'Warning: ATLAS still used at high temps'
         return get_castelli_atmosphere(metallicity=metallicity,
                                        temperature=temperature,
                                        gravity=gravity)
 
-        print 'CMFGEN model with rotation used'
         #return get_cmfgenrot_atmosphere(metallicity=metallicity,
         #                               temperature=temperature,
         #                               gravity=gravity)    
