@@ -727,8 +727,6 @@ def cdbs_cmfgen(path_to_cdbs_dir, rot=True):
     return
 
 
-    
-
 def organize_PHOENIXv16_atmospheres(path_to_dir):
     """
     Construct the Phoenix Husser+13 atmopsheres for each model. Combines the
@@ -936,8 +934,7 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
             c11 = fits.Column(name='g5.0', format='E', array=sci.field(7)*10**-8)
             c12 = fits.Column(name='g5.5', format='E', array=sci.field(8)*10**-8)
             c13 = fits.Column(name='g6.0', format='E', array=sci.field(9)*10**-8)
-            
-            
+                        
         if counter <= 35:
             cols = fits.ColDefs([c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
         elif counter <= 37:
