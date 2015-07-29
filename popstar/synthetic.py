@@ -77,7 +77,7 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
         print '     Usually takes ~5 minutes'
 
     # Define directory where hst_isochrones are made
-    outFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}.pickle'
+    outFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}.fits'
     outFile = outFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4))
 
     c = constants
