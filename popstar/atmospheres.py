@@ -57,24 +57,6 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     # No models below 3000 K
     if temperature < 3000:
         print 'No ck04 model below 3000 K'
-        return
-
-    t1 = np.arange(3000, 13000, 250)
-    t2 = np.arange(13000,50000+1, 1000)
-    temp_arr = np.append(t1, t2)
-    grav_arr = np.arange(2.0, 5.0+0.1, 0.5)
-
-    temp_ind = np.where( abs(temp_arr - temperature) == min(abs(temp_arr - temperature)) )[0]
-    grav_ind = np.where( abs(grav_arr - gravity) == min(abs(grav_arr - gravity)) )[0]
-
-    # Error checking: stop if temp/grav difference is too high
-    #if ((abs(temperature - temp_arr[temp_ind[0]]) > 250) | (abs(gravity - grav_arr[grav_ind[0]]) > 0.5) ):
-    #    print 'BAD TEMP/GRAV MATCH'
-    #    return
-        
-    # Define new temp based on closest match
-    temperature = temp_arr[temp_ind[0]]
-    gravity = grav_arr[grav_ind[0]]
 
     # Catch the edge cases for the hotest stars where the newest 
     # evolution models have logg < 4.0 but the atmosphere models
@@ -214,33 +196,11 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
     gravity = log gravity (def = 4.0)
 
     temp: 2300 - 7000 steps of 100 K; 7000 - 12000 in steps of 200 K
-    grav: 2.0 - 6.0, steps of 0.5 (gaurenteed over all temps)
+    grav: 0.0 - 6.0, steps of 0.5 (gaurenteed over all temps)
 
     If rebin = True, pull from spectra that have been rebinned to ck04model resolution;
     this is important for spectrophotometry, otherwise it takes forever
     """
-    # Round given temp, gravity to closest model that exists
-    if (temperature < 2300) | (temperature > 12000) | (gravity < 2.0):
-        print 'No phoenixV16 model below 2300 K or above 12000 K, or grav < 2.0'
-        return
-    
-    t1 = np.arange(2300, 7000+1, 100)
-    t2 = np.arange(7000,12000+1, 200)
-    temp_arr = np.append(t1, t2)
-    grav_arr = np.arange(2.0, 6.0+0.1, 0.5)
-
-    temp_ind = np.where( abs(temp_arr - temperature) == min(abs(temp_arr - temperature)) )[0]
-    grav_ind = np.where( abs(grav_arr - gravity) == min(abs(grav_arr - gravity)) )[0]
-
-    # Error checking: stop if temp/grav difference is too high
-    if ((abs(temperature - temp_arr[temp_ind][0]) > 100) | (abs(gravity - grav_arr[grav_ind[0]]) > 0.5) ):
-        print 'BAD TEMP/GRAV MATCH'
-        return    
-        
-    # Define new temp based on closest match
-    temperature = temp_arr[temp_ind[0]]
-    gravity = grav_arr[grav_ind[0]]
-    
     if rebin == True:
         sp = pysynphot.Icat('phoenix_v16_rebin', temperature, metallicity, gravity)
     else:
@@ -262,26 +222,6 @@ def get_atlas_phoenix_atmosphere(metallicity=0, temperature=4000, gravity=4):
 
     Only valid for temp of 5250 K, gravity from 0 = 5.0 in steps of 0.5
     """
-    # Round given temp, gravity to closest model that exists
-    if (temperature < 5000) | (temperature > 5500):
-        print 'No ATLAS-PHOENIX merge model outside 5000 - 5500'
-        return
-
-    temp_arr = np.array([5250])
-    grav_arr = np.arange(0.0, 5.0+0.1, 0.5)
-
-    temp_ind = np.where( abs(temp_arr - temperature) == min(abs(temp_arr - temperature)) )[0]
-    grav_ind = np.where( abs(grav_arr - gravity) == min(abs(grav_arr - gravity)) )[0]
-
-    # Error checking: stop if temp/grav difference is too high
-    if ((abs(temperature - temp_arr[temp_ind[0]]) > 250) | (abs(gravity - grav_arr[grav_ind[0]]) > 0.5) ):
-        print 'BAD TEMP/GRAV MATCH'
-        return
-        
-    # Define new temp based on closest match
-    temperature = temp_arr[temp_ind[0]]
-    gravity = grav_arr[grav_ind[0]]
-    
     sp = pysynphot.Icat('merged', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -722,13 +662,6 @@ def cdbs_cmfgen(path_to_cdbs_dir, rot=True):
 
     return
 
-
-
-    return
-
-
-    
-
 def organize_PHOENIXv16_atmospheres(path_to_dir):
     """
     Construct the Phoenix Husser+13 atmopsheres for each model. Combines the
@@ -814,15 +747,15 @@ def make_PHOENIXv16_catalog(path_to_dir):
     # Collect the filenames. Each is a unique temp with many different log g's
     files = glob.glob('*.fits')
 
-    # Get log g values from the column header of one of the files
-    t = Table.read(files[0], format='fits')
-    keys = t.keys()
-    logg_vals = keys[1:]
-
     # Create the catalog.fits file, row by row
     index_arr = []
     filename_arr = []
     for i in files:
+        # Get log g values from the column header the file
+        t = Table.read(i, format='fits')
+        keys = t.keys()
+        logg_vals = keys[1:]
+        
         # Extract temp from filename
         name = i.split('_')
         temp = float(name[1][:-5])
@@ -838,7 +771,7 @@ def make_PHOENIXv16_catalog(path_to_dir):
     
     # Return to starting directory, write catalog
     os.chdir(start_dir)
-    catalog.write('catalog.fits', format='fits')
+    catalog.write('catalog.fits', format='fits', overwrite=True)
     
     return
 
@@ -997,58 +930,73 @@ def rebin_phoenixV16(cdbs_path):
     if not os.path.exists(path):
         os.mkdir(path)
         os.mkdir(path+'phoenixm00')
+
+    # Read in the existing catalog.fits file and rebin every spectrum.
+    cat = fits.getdata(cdbs_path + '/grid/phoenix_v16/catalog.fits')
+    files_all = [cat[ii][1].split('[')[0] for ii in range(len(cat))]
+    temp_arr = np.zeros(len(files_all), dtype=float)
+    logg_arr = np.zeros(len(files_all), dtype=float)
+    metal_arr = np.zeros(len(files_all), dtype=float)
+
+    for ff in range(len(files_all)):
+        vals = cat[ff][0].split(',')
+
+        temp_arr[ff] = float(vals[0])
+        metal_arr[ff] = float(vals[1])
+        logg_arr[ff] = float(vals[2])
+
+    metal_uniq = np.unique(metal_arr)
+    temp_uniq = np.unique(temp_arr)
+
+    for mm in range(len(metal_uniq)):
+        metal = metal_uniq[mm] # metallicity
         
-    # Want to go through all phoenixV16 models and rebin. See get_phoenix_v16
-    # code comment for ranges.
-    t1 = np.arange(2300, 7000+1, 100)
-    t2 = np.arange(7000,12000+1, 200)
-    temp_arr = np.append(t1, t2)
-    grav_arr = np.arange(2.0, 6.0+0.1, 0.5)
+        for tt in range(len(temp_uniq)):
+            temp = temp_uniq[tt] # temperature
 
-    count=0
-    for t in temp_arr:
-        count += 1
-        outfile = 'phoenixm00_{0:05.0f}.fits'.format(t)
-        # Loop through gravities
-        flux_arr = []
-        for g in grav_arr:
-            sp_phoenix = get_phoenixv16_atmosphere(temperature=t, gravity=g, rebin=False)
-            flux_rebin = atmos_comp.rebin_spec(sp_phoenix.wave, sp_phoenix.flux,
-                                               sp_atlas.wave)
-            flux_arr.append(flux_rebin)
+            # Pick out the list of gravities for this T, Z combo            
+            idx = np.where((metal_arr == metal) & (temp_arr == temp))[0]
+            logg_exist = logg_arr[idx]
 
-        # Build the columns fo the new cdbs table
-        c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
-        c1 = fits.Column(name='g2.0', format='E', array=flux_arr[0])
-        c2 = fits.Column(name='g2.5', format='E', array=flux_arr[1])
-        c3 = fits.Column(name='g3.0', format='E', array=flux_arr[2])
-        c4 = fits.Column(name='g3.5', format='E', array=flux_arr[3])
-        c5 = fits.Column(name='g4.0', format='E', array=flux_arr[4])
-        c6 = fits.Column(name='g4.5', format='E', array=flux_arr[5])
-        c7 = fits.Column(name='g5.0', format='E', array=flux_arr[6])
-        c8 = fits.Column(name='g5.5', format='E', array=flux_arr[7])
-        c9 = fits.Column(name='g6.0', format='E', array=flux_arr[8])
+            # All gravities will go in one file. Here is the output
+            # file name.
+            outfile = path + files_all[idx[0]].split('[')[0]
+            
+            # Build a columns array. One column for each gravity.
+            cols_arr = []
 
-        cols = fits.ColDefs([c0,c1,c2,c3,c4,c5,c6,c7,c8,c9])
-        tbhdu = fits.BinTableHDU.from_columns(cols)
-        prihdu = fits.PrimaryHDU(header=header0)
-        # Gotta add a keyword to the table hdu
-        tbhdu.header['TUNIT1'] = 'ANGSTROM'
-        tbhdu.header['TUNIT2'] = 'FLAM'
-        tbhdu.header['TUNIT3'] = 'FLAM'
-        tbhdu.header['TUNIT4'] = 'FLAM'
-        tbhdu.header['TUNIT5'] = 'FLAM'
-        tbhdu.header['TUNIT6'] = 'FLAM'
-        tbhdu.header['TUNIT7'] = 'FLAM'
-        tbhdu.header['TUNIT8'] = 'FLAM'
-        tbhdu.header['TUNIT9'] = 'FLAM'
-        tbhdu.header['TUNIT10'] = 'FLAM'
+            # Make the wavelength column, which is first in the cols array.
+            c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
+            cols_arr.append(c0)
+            
+            for gg in range(len(logg_exist)):
+                grav = logg_exist[gg] # gravity
 
-        # Write hdu
-        finalhdu = fits.HDUList([prihdu, tbhdu])
-        finalhdu.writeto(path+'phoenixm00/'+outfile, clobber=True)
+                # Fetch the spectrum                
+                sp = pysynphot.Icat('phoenix_v16', temp, metal, grav)
+                flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
 
-        print 'Done file {0:1f} of {1:1f}'.format(count, len(temp_arr))           
+                # Store the spectrum
+                name = 'g{0:3.1f}'.format(grav)
+                col = fits.Column(name=name, format='E', array=flux_rebin)
+                cols_arr.append(col)
+                
+
+            # Make the FITS file from the columns with header.
+            cols = fits.ColDefs(cols_arr)
+            tbhdu = fits.BinTableHDU.from_columns(cols)
+            prihdu = fits.PrimaryHDU(header=header0)
+            tbhdu.header['TUNIT1'] = 'ANGSTROM'
+            for gg in range(len(logg_exist)):
+                tbhdu.header['TUNIT{0:d}'.format(gg+2)] = 'FLAM'
+
+            # Write hdu
+            finalhdu = fits.HDUList([prihdu, tbhdu])
+            # don't have clobber to protect original files.
+            finalhdu.writeto(path + outfile)   
+
+            print 'Finished file ' + outfile + ' with gravities: ', logg_exist
+            
 
     return
 
@@ -1059,9 +1007,9 @@ def rebin_spec(wave, specin, wavnew):
     http://www.astrobetter.com/blog/2013/08/12/
     python-tip-re-sampling-spectra-with-pysynphot/
     """
-    spec = spectrum.ArraySourceSpectrum(wave=wave, flux=specin)
+    spec = pysynphot.spectrum.ArraySourceSpectrum(wave=wave, flux=specin)
     f = np.ones(len(wave))
-    filt = spectrum.ArraySpectralElement(wave, f, waveunits='angstrom')
-    obs = observation.Observation(spec, filt, binset=wavnew, force='taper')
+    filt = pysynphot.spectrum.ArraySpectralElement(wave, f, waveunits='angstrom')
+    obs = pysynphot.observation.Observation(spec, filt, binset=wavnew, force='taper')
  
     return obs.binflux

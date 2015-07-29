@@ -70,11 +70,10 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
     """
     startTime = time.time()
 
-    if verbose:
-        print 'Making isochrone: log(t) = %.2f  AKs = %.2f  dist = %d' % \
+    print 'Making isochrone: log(t) = %.2f  AKs = %.2f  dist = %d' % \
             (logAge, AKs, distance)
-        print '     Starting at: ', datetime.datetime.now()
-        print '     Usually takes ~5 minutes'
+    print '     Starting at: ', datetime.datetime.now()
+    print '     Usually takes ~5 minutes'
 
     # Define directory where hst_isochrones are made
     outFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}.fits'
@@ -152,7 +151,7 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
             col_name = 'mag' + filt_name
             filt = filt_list[filt_name]
             red = red_list[filt_name]
-            evol[col_name] = mag_in_filter(star, filt, red)
+            evol[col_name][ii] = mag_in_filter(star, filt, red)
         t1 = time.time()
             
         if verbose:
