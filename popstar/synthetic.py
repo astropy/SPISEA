@@ -189,7 +189,7 @@ def load_isochrone(logAge=6.78, AKs=defaultAKs, distance=defaultDist,
     """
     # Define directory where hst_isochrones exist
     inFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}.pickle'
-    inFile = outFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4))
+    inFile = inFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4))
 
     if not os.path.exists(inFile):
         make_observed_isochrone_hst(logAge=logAge, AKs=AKs, distance=distance,
