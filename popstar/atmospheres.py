@@ -82,6 +82,7 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     if gravity < 2.5:
         gravity = 2.5
     
+    
     sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -354,11 +355,14 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
                                       gravity=gravity)
 
     if (temperature > 5000) & (temperature < 5500):
-        print 'ATLAS and PHOENIX merged atmosphere used'
-        return get_atlas_phoenix_atmosphere(metallicity=metallicity,
-                                         temperature=temperature,
-                                         gravity=gravity)
-
+        #print 'ATLAS and PHOENIX merged atmosphere used'
+        #return get_atlas_phoenix_atmosphere(metallicity=metallicity,
+        #                                temperature=temperature,
+        #                                 gravity=gravity)
+        return get_phoenixv16_atmosphere(metallicity=metallicity,
+                                      temperature=temperature,
+                                      gravity=gravity)
+    
     if temperature > 5500:
         print 'ATLAS atmosphere used'
         return get_castelli_atmosphere(metallicity=metallicity,
@@ -571,7 +575,143 @@ def make_CMFGEN_catalog(path_to_dir):
     
     return
 
-def orgnaize_PHOENIXv16_atmospheres(path_to_dir):
+def cdbs_cmfgen(path_to_cdbs_dir, rot=True):
+    """
+    Code to put cmfgen models into cdbs format, and adds proper unit keyword in
+    fits header.
+
+    path_to_cdbs_dir goes to cdbs/grid/cmfgen_rot or cdbs/grid/cmfgen_norot
+    directory. Note that these files have already been organized using
+    organize_CMFGEN_atmospheres code.
+
+    Overwrites original files in directory
+    """
+    # Save starting directory for later, move into working directory
+    start_dir = os.getcwd()
+    os.chdir(path_to_cdbs_dir)
+
+    # Collect the filenames, make necessary changes to each one
+    files = glob.glob('*.flx')
+
+    # Need to make brand-new fits tables with data we want.
+    counter = 0
+    for i in files:
+        counter += 1
+        # Open file, extract useful info
+        
+
+        # Remake fits table from individual columns, multiplying each flux
+        # column by 10^-8 for conversion
+        # This gets messy due to changing number of columns
+        c0 = fits.Column(name='Wavelength', format='D', array=sci.field(0))
+        # This particular column only exists for lower temp models
+        if counter <= 34:
+            c1 = fits.Column(name='g0.0', format='E', array=sci.field(1)*10**-8)
+            c2 = fits.Column(name='g0.5', format='E', array=sci.field(2)*10**-8)
+            c3 = fits.Column(name='g1.0', format='E', array=sci.field(3)*10**-8)
+            c4 = fits.Column(name='g1.5', format='E', array=sci.field(4)*10**-8)
+            c5 = fits.Column(name='g2.0', format='E', array=sci.field(5)*10**-8)
+            c6 = fits.Column(name='g2.5', format='E', array=sci.field(6)*10**-8)
+            c7 = fits.Column(name='g3.0', format='E', array=sci.field(7)*10**-8)
+            c8 = fits.Column(name='g3.5', format='E', array=sci.field(8)*10**-8)
+            c9 = fits.Column(name='g4.0', format='E', array=sci.field(9)*10**-8)
+            c10 = fits.Column(name='g4.5', format='E', array=sci.field(10)*10**-8)
+            c11 = fits.Column(name='g5.0', format='E', array=sci.field(11)*10**-8)
+            c12 = fits.Column(name='g5.5', format='E', array=sci.field(12)*10**-8)
+            c13 = fits.Column(name='g6.0', format='E', array=sci.field(13)*10**-8)
+        elif counter <= 37:
+            c2 = fits.Column(name='g0.5', format='E', array=sci.field(1)*10**-8)
+            c3 = fits.Column(name='g1.0', format='E', array=sci.field(2)*10**-8)
+            c4 = fits.Column(name='g1.5', format='E', array=sci.field(3)*10**-8)
+            c5 = fits.Column(name='g2.0', format='E', array=sci.field(4)*10**-8)
+            c6 = fits.Column(name='g2.5', format='E', array=sci.field(5)*10**-8)
+            c7 = fits.Column(name='g3.0', format='E', array=sci.field(6)*10**-8)
+            c8 = fits.Column(name='g3.5', format='E', array=sci.field(7)*10**-8)
+            c9 = fits.Column(name='g4.0', format='E', array=sci.field(8)*10**-8)
+            c10 = fits.Column(name='g4.5', format='E', array=sci.field(9)*10**-8)
+            c11 = fits.Column(name='g5.0', format='E', array=sci.field(10)*10**-8)
+            c12 = fits.Column(name='g5.5', format='E', array=sci.field(11)*10**-8)
+            c13 = fits.Column(name='g6.0', format='E', array=sci.field(12)*10**-8)
+        elif counter <= 54:
+            c3 = fits.Column(name='g1.0', format='E', array=sci.field(1)*10**-8)
+            c4 = fits.Column(name='g1.5', format='E', array=sci.field(2)*10**-8)
+            c5 = fits.Column(name='g2.0', format='E', array=sci.field(3)*10**-8)
+            c6 = fits.Column(name='g2.5', format='E', array=sci.field(4)*10**-8)
+            c7 = fits.Column(name='g3.0', format='E', array=sci.field(5)*10**-8)
+            c8 = fits.Column(name='g3.5', format='E', array=sci.field(6)*10**-8)
+            c9 = fits.Column(name='g4.0', format='E', array=sci.field(7)*10**-8)
+            c10 = fits.Column(name='g4.5', format='E', array=sci.field(8)*10**-8)
+            c11 = fits.Column(name='g5.0', format='E', array=sci.field(9)*10**-8)
+            c12 = fits.Column(name='g5.5', format='E', array=sci.field(10)*10**-8)
+            c13 = fits.Column(name='g6.0', format='E', array=sci.field(11)*10**-8)
+        elif counter <= 59:
+            c4 = fits.Column(name='g1.5', format='E', array=sci.field(1)*10**-8)
+            c5 = fits.Column(name='g2.0', format='E', array=sci.field(2)*10**-8)
+            c6 = fits.Column(name='g2.5', format='E', array=sci.field(3)*10**-8)
+            c7 = fits.Column(name='g3.0', format='E', array=sci.field(4)*10**-8)
+            c8 = fits.Column(name='g3.5', format='E', array=sci.field(5)*10**-8)
+            c9 = fits.Column(name='g4.0', format='E', array=sci.field(6)*10**-8)
+            c10 = fits.Column(name='g4.5', format='E', array=sci.field(7)*10**-8)
+            c11 = fits.Column(name='g5.0', format='E', array=sci.field(8)*10**-8)
+            c12 = fits.Column(name='g5.5', format='E', array=sci.field(9)*10**-8)
+            c13 = fits.Column(name='g6.0', format='E', array=sci.field(10)*10**-8)
+        else:
+            c5 = fits.Column(name='g2.0', format='E', array=sci.field(1)*10**-8)
+            c6 = fits.Column(name='g2.5', format='E', array=sci.field(2)*10**-8)
+            c7 = fits.Column(name='g3.0', format='E', array=sci.field(3)*10**-8)
+            c8 = fits.Column(name='g3.5', format='E', array=sci.field(4)*10**-8)
+            c9 = fits.Column(name='g4.0', format='E', array=sci.field(5)*10**-8)
+            c10 = fits.Column(name='g4.5', format='E', array=sci.field(6)*10**-8)
+            c11 = fits.Column(name='g5.0', format='E', array=sci.field(7)*10**-8)
+            c12 = fits.Column(name='g5.5', format='E', array=sci.field(8)*10**-8)
+            c13 = fits.Column(name='g6.0', format='E', array=sci.field(9)*10**-8)
+            
+            
+        if counter <= 35:
+            cols = fits.ColDefs([c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
+        elif counter <= 37:
+            cols = fits.ColDefs([c0,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
+        elif counter <= 54:
+            cols = fits.ColDefs([c0,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
+        elif counter <= 59:
+            cols = fits.ColDefs([c0,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
+        else:
+            cols = fits.ColDefs([c0,c5,c6,c7,c8,c9,c10,c11,c12,c13])
+        tbhdu = fits.BinTableHDU.from_columns(cols)
+
+        # Copying over the older headers, adding unit keywords
+        prihdu = fits.PrimaryHDU(header=header_0)
+        tbhdu.header['TUNIT1'] = 'ANGSTROM'
+        tbhdu.header['TUNIT2'] = 'FLAM'
+        tbhdu.header['TUNIT3'] = 'FLAM'
+        tbhdu.header['TUNIT4'] = 'FLAM'
+        tbhdu.header['TUNIT5'] = 'FLAM'
+        tbhdu.header['TUNIT6'] = 'FLAM'
+        tbhdu.header['TUNIT7'] = 'FLAM'
+        tbhdu.header['TUNIT8'] = 'FLAM'
+        tbhdu.header['TUNIT9'] = 'FLAM'
+        tbhdu.header['TUNIT10'] = 'FLAM'
+        tbhdu.header['TUNIT11'] = 'FLAM'
+        tbhdu.header['TUNIT12'] = 'FLAM'
+        tbhdu.header['TUNIT13'] = 'FLAM'
+        tbhdu.header['TUNIT14'] = 'FLAM'
+    
+        finalhdu = fits.HDUList([prihdu, tbhdu])
+        finalhdu.writeto(i, clobber=True)
+
+        hdu.close()
+        print 'Done {0:2.0f} of {1:2.0f}'.format(counter, len(files))
+
+    return
+
+
+
+    return
+
+
+    
+
+def organize_PHOENIXv16_atmospheres(path_to_dir):
     """
     Construct the Phoenix Husser+13 atmopsheres for each model. Combines the
     fluxes from the *HiRES.fits files and the wavelengths of the
@@ -693,6 +833,8 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
     path_to_cdbs_dir goes from current working directory to phoenixm00 directory
     in cdbs/grids/phoenix_v16. Note that these files have already been organized
     using orgnaize_PHOENIXv16_atmospheres code.
+
+    Overwrites original files in directory
     """
     # Save starting directory for later, move into working directory
     start_dir = os.getcwd()
@@ -808,7 +950,6 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
         tbhdu.header['TUNIT14'] = 'FLAM'
     
         finalhdu = fits.HDUList([prihdu, tbhdu])
-
         finalhdu.writeto(i, clobber=True)
 
         hdu.close()
@@ -816,11 +957,10 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
 
     return
 
-
 def rebin_phoenixV16(cdbs_path):
     """
     Rebin phoenixV16 models to atlas ck04 resolution; this makes
-    spectrophotometry MUST faster
+    spectrophotometry MUCH faster
 
     makes new directory in cdbs/grid: phoenix_v16_rebin
 
@@ -854,7 +994,7 @@ def rebin_phoenixV16(cdbs_path):
         # Loop through gravities
         flux_arr = []
         for g in grav_arr:
-            sp_phoenix = get_phoenixv16_atmosphere(temperature=t, gravity=g)
+            sp_phoenix = get_phoenixv16_atmosphere(temperature=t, gravity=g, rebin=False)
             flux_rebin = atmos_comp.rebin_spec(sp_phoenix.wave, sp_phoenix.flux,
                                                sp_atlas.wave)
             flux_arr.append(flux_rebin)
