@@ -376,7 +376,6 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
                                       gravity=gravity)
 
     if (temperature > 5000) & (temperature < 5500):
-<<<<<<< HEAD
         #print 'ATLAS and PHOENIX merged atmosphere used'
         #return get_atlas_phoenix_atmosphere(metallicity=metallicity,
         #                                temperature=temperature,
