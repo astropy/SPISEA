@@ -90,6 +90,7 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     # Also edge case where gravity > 5.0, set to gravity = 5.0. This
     # is true at all temperatures. HACK!
     if gravity > 5.0:
+        print 'Changing gravity for T=', temperature, ' logg=', gravity
         gravity = 5.0
         
     sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
