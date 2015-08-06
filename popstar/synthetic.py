@@ -50,7 +50,7 @@ redlaw = reddening.RedLawNishiyama09()
 def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist, 
                                 iso_dir='./',
                                 verbose=False,
-                                massSampling=10, 
+                                massSampling=2, 
                                 filters={'127m': 'wfc3,ir,f127m',
                                          '139m': 'wfc3,ir,f127m',
                                          '153m': 'wfc3,ir,f153m',
