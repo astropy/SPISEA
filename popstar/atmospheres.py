@@ -61,6 +61,9 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     # Catch the edge cases for the hotest stars where the newest 
     # evolution models have logg < 4.0 but the atmosphere models
     # aren't available. HACK! FIX!
+    if (temperature > 50000):
+        print 'Changing temp from {0:5.0f} to 50000'.format(temperature)
+        temperature = 50000
     if (temperature > 49000) and (gravity < 5.0):
         print 'Changing gravity for T=', temperature, ' logg=', gravity
         gravity = 5.0
@@ -92,6 +95,10 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     if gravity > 5.0:
         print 'Changing gravity for T=', temperature, ' logg=', gravity
         gravity = 5.0
+    if (gravity < 0.5):
+        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        gravity = 0.5
+        
         
     sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
 
@@ -207,6 +214,10 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
     If rebin = True, pull from spectra that have been rebinned to ck04model resolution;
     this is important for spectrophotometry, otherwise it takes forever
     """
+    if (gravity < 0.5):
+        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        gravity = 0.5
+        
     if rebin == True:
         sp = pysynphot.Icat('phoenix_v16_rebin', temperature, metallicity, gravity)
     else:

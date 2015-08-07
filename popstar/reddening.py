@@ -8,6 +8,7 @@ import pylab as py
 import numpy as np
 from scipy import interpolate
 import pysynphot
+import pdb
 
 class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
     """
@@ -113,17 +114,17 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         x = 1.0 / np.array(wavelength)
 
         # check for applicability
-        if (x.min() < 0.3):
+        if (wavelength.min() < 0.3):
             print 'wavelength is longer than applicable range for Cardelli law'
             return None
 
-        if (x.max() > 8.0):
+        if (wavelength.max() > 8.0):
             print 'wavelength is shorter than applicable range for Cardelli law'
             return None
         
         # Set up some arrays for coefficients that we will need
-        a = np.zeros(len(x), dypte=float)
-        b = np.zeros(len(x), dypte=float)
+        a = np.zeros(len(x), dtype=float)
+        b = np.zeros(len(x), dtype=float)
 
         y = x - 1.82
 

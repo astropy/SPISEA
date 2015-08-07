@@ -50,7 +50,7 @@ redlaw = reddening.RedLawNishiyama09()
 def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist, 
                                 iso_dir='./',
                                 verbose=False,
-                                massSampling=2, 
+                                massSampling=10, 
                                 filters={'127m': 'wfc3,ir,f127m',
                                          '139m': 'wfc3,ir,f127m',
                                          '153m': 'wfc3,ir,f153m',
@@ -130,9 +130,9 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
     for ii in range(len(temp)):
         t2 = time.time()
         gravity = float( evol['logg'][ii] )
-        L = float( L_all[ii] / (units.erg / units.s)) # in erg/s
+        L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
         T = float(  temp[ii] / units.K)               # in Kelvin
-        R = float( R_all[ii] / units.pc)              # in pc
+        R = float( R_all[ii].to('pc') / units.pc)              # in pc
 
         # Get the atmosphere model now. Wavelength is in Angstroms
         star = atm.get_merged_atmosphere(temperature=T, 

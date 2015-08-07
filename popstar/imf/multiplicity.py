@@ -1,3 +1,5 @@
+import numpy as np
+
 defaultMF_amp = 0.44
 defaultMF_power = 0.51
 defaultCSF_amp = 0.50
@@ -114,8 +116,9 @@ class MultiplicityUnresolved(object):
         # Multiplicity Fraction
         mf = self.MF_amp * mass ** self.MF_pow
 
-        if np.isscalar(mf) and mf > 1:
-            mf = 1
+        if np.isscalar(mf):
+            if mf > 1:
+                mf = 1
         else:
             mf[mf > 1] = 1
 
@@ -140,8 +143,9 @@ class MultiplicityUnresolved(object):
         # Companion Star Fraction
         csf = self.CSF_amp * mass ** self.CSF_pow
         
-        if np.isscalar(csf) and csf > self.CSF_max:
-            csf = self.CSF_max
+        if np.isscalar(csf):
+            if csf > self.CSF_max:
+                csf = self.CSF_max
         else:
             csf[csf > self.CSF_max] = self.CSF_max
 
