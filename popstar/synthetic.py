@@ -5,7 +5,7 @@ from popstar import evolution
 from popstar import atmospheres as atm
 from scipy import interpolate
 from scipy import stats
-from gcwork import objects
+#from gcwork import objects
 from pysynphot import spectrum
 from pysynphot import ObsBandpass
 from pysynphot import observation as obs
@@ -117,6 +117,7 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
         # Make reddening
         red = redlaw.reddening(AKs).resample(filt.wave)
         red_list[filt_name] = red
+        #pdb.set_trace()
 
     # Convert luminosity to erg/s
     L_all = 10**evol['logL'] * c.L_sun # luminsoity in erg/s
