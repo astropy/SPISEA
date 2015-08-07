@@ -82,7 +82,7 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
 class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
     """
     An object that represents the reddening vs. wavelength for the 
-    Cardelli et al. ?? reddening law. The returned object is 
+    Cardelli et al. 1989 reddening law. The returned object is 
 
     pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
 
@@ -94,8 +94,9 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         wave = np.arange(0.5, 8.0, 0.001)
         
         # This will eventually be scaled by AKs when you
-        # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawCardelli.cardelli(wave, 1.0)
+        # call reddening(). Produces A_lambda for AKs = 1, which will be 
+        # scaled later. Adopt Rv=3.1
+        Alambda_scaled = RedLawCardelli.cardelli(wave, 3.1)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -105,11 +106,11 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
                                                   Avscaled=Alambda_scaled,
                                                   name='Nishiyama09',
                                                   litref='Nishiyama+ 2009')
-
     @staticmethod
     def cardelli(wavelength, Rv):
         """
-        Cardelli extinction law
+        Cardelli extinction law. Note: this produces extinction values expected
+        for AKs = 1 mag
         """
         x = 1.0 / np.array(wavelength)
 
@@ -163,11 +164,18 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         b[idx] = -3.090 + (1.825 * xx) + (1.206/((xx - 4.62) ** 2 + 0.263)) + \
             (0.2130 * (xx - 5.9) ** 2) + (0.1207 * (xx - 5.9) ** 3)
 
-
         # A(lam) / A(V)
         extinction = a + b/Rv
 
-        return extinction
+        # Now, want to produce redvals at AKs = 1
+        k_ind = np.where(abs(x-0.47) == min(abs(x-0.47)))
+        Aks_Av = a[k_ind] + b[k_ind]/Rv
+        # Av / Aks
+        Av_Aks = 1.0 / Aks_Av 
+        
+        output = extinction * Av_Aks # If Aks = 1, Av/Aks = Av
+        
+        return output
 
 
 
