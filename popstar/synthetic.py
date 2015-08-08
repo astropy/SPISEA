@@ -174,7 +174,7 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
             t3 = time.time()
             print 'It took {0:.2f} s to process one star'.format(t3 - t2)
 
-
+    evol.meta['RedLaw'] = redlaw.name
     evol.write(outFile, overwrite=True)
 
     if verbose:
