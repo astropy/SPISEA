@@ -46,8 +46,14 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         Data pulled from Nishiyama et al. 2009, Table 1
         """
         filters = ['V', 'J', 'H', 'Ks', '[3.6]', '[4.5]', '[5.8]', '[8.0]']
+        # Using the SIRIUS filters
         wave = np.array([0.551, 1.25, 1.63, 2.14, 3.545, 4.442, 5.675, 7.760])
         A_AKs = np.array([16.13, 3.02, 1.73, 1.00, 0.500, 0.390, 0.360, 0.430])
+
+        # Using the 2MASS JHK filters
+        #wave = np.array([0.551, 1.24, 1.66, 2.16, 3.545, 4.442, 5.675, 7.760])
+        #A_AKs = np.array([16.13, 2.89, 1.62, 1.00, 0.500, 0.390, 0.360, 0.430])        
+
         A_AKs_err = np.array([0.04,  0.04, 0.03, 0.00, 0.010, 0.010, 0.010, 0.010])
 
         # Interpolate over the curve
@@ -274,14 +280,20 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
 
         Data pulled from Rieke+Lebofsky 1985, Table 3
         """
-        filters = ['U', 'B', 'V', 'R', 'I', 'J', 'H', 'K', 'L', 'M', 'N', 
+        filters = ['U', 'B', 'V', 'R', 'I', 'J', 'H', 'K', 'L', 'M', 
                    '[8.0]', '[8.5]', '[9.0]', '[9.5]', '[10.0]', '[10.5]', 
                    '[11.0]', '[11.5]', '[12.0]', '[12.5]', '[13.0]']
-        wave = np.array([0.365, 0.445, 0.551, 0.658, 0.806, 1.25, 1.635, 2.2, 
-                         3.77, 4.68, 4.75, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0,
+        #wave = np.array([0.365, 0.445, 0.551, 0.658, 0.806, 1.25, 1.635, 2.2, 
+        #                 3.77, 4.68, 4.75, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0,
+        #                11.5, 12.0, 12.5, 13.0])
+        
+        # Wavelengths from Nishiyama+09 plot of RL+85 law...slightly different than standard, 
+        # drop N filter
+        wave = np.array([0.365, 0.445, 0.551, 0.658, 0.806, 1.17, 1.57, 2.12, 
+                         3.40, 4.75, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0,
                         11.5, 12.0, 12.5, 13.0])
         A_Av = np.array([1.531, 1.324, 1.00, 0.748, 0.482, 0.282, 0.175, 0.112,
-                         0.058, 0.023, 0.052, 0.02, 0.043, 0.074, 0.087, 0.083,
+                         0.058, 0.023, 0.02, 0.043, 0.074, 0.087, 0.083,
                          0.074, 0.060, 0.047, 0.037, 0.030, 0.027])
         # Want to change this from A/Av to A/AK
         k_ind = np.where(np.array(filters) == 'K')
