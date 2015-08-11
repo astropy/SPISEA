@@ -50,7 +50,7 @@ redlaw = reddening.RedLawNishiyama09()
 def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist, 
                                 iso_dir='./',
                                 verbose=False,
-                                massSampling=10, 
+                                massSampling=2, 
                                 filters={'127m': 'wfc3,ir,f127m',
                                          '139m': 'wfc3,ir,f127m',
                                          '153m': 'wfc3,ir,f153m',
@@ -59,7 +59,7 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
                                          'K': 'nirc2,K',
                                          'Kp': 'nirc2,Kp',
                                          'L': 'nirc2,Lp',
-                                         '814w': 'wfc3,uvis1,f814w',
+                                         '814w': 'acs,wfc1,f814w',
                                          '125w': 'wfc3,ir,f125w',
                                          '160w': 'wfc3,ir,f160w'}):
     """
@@ -74,6 +74,7 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
             (logAge, AKs, distance)
     print '     Starting at: ', datetime.datetime.now()
     print '     Usually takes ~5 minutes'
+    print '     Mass sampling = ', massSampling
 
     # Define directory where hst_isochrones are made
     outFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}.fits'
@@ -184,7 +185,18 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
     return
 
 def load_isochrone(logAge=6.78, AKs=defaultAKs, distance=defaultDist,
-                   iso_dir='./'):
+                   iso_dir='./', massSampling=2, 
+                   filters={'127m': 'wfc3,ir,f127m',
+                            '139m': 'wfc3,ir,f127m',
+                            '153m': 'wfc3,ir,f153m',
+                            'J': 'nirc2,J',
+                            'H': 'nirc2,H',
+                            'K': 'nirc2,K',
+                            'Kp': 'nirc2,Kp',
+                            'L': 'nirc2,Lp',
+                            '814w': 'acs,wfc1,f814w',
+                            '125w': 'wfc3,ir,f125w',
+                            '160w': 'wfc3,ir,f160w'}):
     """
     Wrapper code that loads an hst isochrone or make a new one if it doesn't
     already exist.
@@ -195,7 +207,8 @@ def load_isochrone(logAge=6.78, AKs=defaultAKs, distance=defaultDist,
 
     if not os.path.exists(inFile):
         make_observed_isochrone_hst(logAge=logAge, AKs=AKs, distance=distance,
-                                    iso_dir=iso_dir)
+                                    iso_dir=iso_dir, massSampling=massSampling,
+                                    filters=filters)
 
     iso = Table.read(inFile)
 

@@ -110,8 +110,8 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
                                                   waveunits='angstrom',
                                                   Avscaled=Alambda_scaled,
-                                                  name='Nishiyama09',
-                                                  litref='Nishiyama+ 2009')
+                                                  name='Cardelli89',
+                                                  litref='Cardelli+ 2009')
     @staticmethod
     def cardelli(wavelength, Rv):
         """
@@ -200,7 +200,7 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = extinction.romanzuniga07(wave, 1.0, makePlot=False)
+        Alambda_scaled = RedLawRomanZuniga07.romanzuniga07(wave, 1.0, makePlot=False)
 
         # Convert wavelength to angstrom
         wave *= 10**4
@@ -321,3 +321,79 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
             py.title('Rieke+Lebofsky 1985')
 
         return A_at_wave
+
+
+class RedLawWesterlund1(pysynphot.reddening.CustomRedLaw):
+    """
+    An object that represents the reddening vs. wavelength for the 
+    Nishiyama et al. 2009 reddening law. The returned object is 
+
+    pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
+
+    The wavelength range over which this law is calculated is
+    0.5 - 8.0 microns.
+    """
+    def __init__(self):
+        # Fetch the extinction curve, pre-interpolate across 1-8 microns
+        wave = np.arange(0.5, 8.0, 0.001)
+        
+        # This will eventually be scaled by AKs when you
+        # call reddening(). Right now, calc for AKs=1
+        Alambda_scaled = RedLawWesterlund1.westerlund1(wave, 1.0)
+
+        # Convert wavelength to angstrom
+        wave *= 10 ** 4
+
+        pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
+                                                  waveunits='angstrom',
+                                                  Avscaled=Alambda_scaled,
+                                                  name='Westerlund1',
+                                                  litref='Lu+ 2015')
+
+    @staticmethod
+    def westerlund1(wavelength, AKs, makePlot=False):
+        """
+        Calculate the resulting extinction for an array of wavelengths.
+        The extinction is normalized with A_Ks.
+
+        Data pulled from Nishiyama et al. 2009, Table 1
+        """
+
+        filters = ['V', 'I', 'J', 'H', 'Ks', '[3.6]', '[4.5]', '[5.8]', '[8.0]']
+
+        # Based on Nishiyama+ 2009, but then by-eye fitting to Wd 1 data for 
+        # 0.551, 0.814, 1.25 micron.
+        wave = np.array( [0.551, 0.814, 1.25, 1.63, 2.14, 3.545, 4.442, 5.675, 7.760])
+        A_AKs = np.array([16.9, 9.4, 2.82, 1.73, 1.00, 0.500, 0.390, 0.360, 0.430])
+
+        A_AKs_err = np.array([0.04, 0.04, 0.04, 0.03, 0.00, 0.010, 0.010, 0.010, 0.010])
+
+        # Interpolate over the curve
+        spline_interp = interpolate.splrep(wave, A_AKs, k=3, s=0)
+
+        A_AKs_at_wave = interpolate.splev(wavelength, spline_interp)
+        A_at_wave = AKs * A_AKs_at_wave
+
+        if makePlot:
+            py.clf()
+            py.errorbar(wave, A_AKs, yerr=A_AKs_err, fmt='bo', 
+                        markerfacecolor='none', markeredgecolor='blue',
+                        markeredgewidth=2)
+
+            # Make an interpolated curve.
+            wavePlot = np.arange(wave.min(), wave.max(), 0.1)
+            extPlot = interpolate.splev(wavePlot, spline_interp)
+            py.loglog(wavePlot, extPlot, 'k-')
+
+            # Plot a marker for the computed value.
+            py.plot(wavelength, A_AKs_at_wave, 'rs',
+                    markerfacecolor='none', markeredgecolor='red',
+                    markeredgewidth=2)
+            py.xlabel('Wavelength (microns)')
+            py.ylabel('Extinction (magnitudes)')
+            py.title('Lu et al. 2015')
+
+
+        return A_at_wave
+    
+    
