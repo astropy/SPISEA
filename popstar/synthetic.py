@@ -81,7 +81,7 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
     outFile = outFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4))
 
     c = constants
-
+    
     # Get solar metallicity models for a population at a specific age.
     evol_model = evolution.MergedPisaEkstromParsec()
     evol = evol_model.isochrone(age=10**logAge)  # solar metallicity
@@ -185,7 +185,7 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
     return
 
 def load_isochrone(logAge=6.78, AKs=defaultAKs, distance=defaultDist,
-                   iso_dir='./', massSampling=2, 
+                   iso_dir='./', massSampling=3, 
                    filters={'127m': 'wfc3,ir,f127m',
                             '139m': 'wfc3,ir,f127m',
                             '153m': 'wfc3,ir,f153m',
