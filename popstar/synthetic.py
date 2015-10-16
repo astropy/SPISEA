@@ -13,10 +13,11 @@ import pysynphot
 from astropy import constants, units
 from astropy.table import Table, Column
 # START Need to remove these jlu dependencies #
-from jlu.imf import imf
-from jlu.util import plfit
-from jlu.gc.gcwork import objects
-from jlu.nirc2 import synthetic as nirc2syn
+from popstar.imf import imf
+#from jlu.imf import imf
+from popstar.utils import objects
+# from jlu.gc.gcwork import objects
+from nirc2 import synthetic as nirc2syn
 # STOP Need to remove these jlu dependencies #
 import pickle
 import time, datetime
@@ -241,11 +242,12 @@ def make_isochrone_grid():
 # Little helper utility to get all the bandpass/zeropoint info.
 def get_filter_info(name, vega=vega):
     if name.startswith('nirc2'):
-        tmp = name.split(',')
-        filterName = tmp[-1]
-        filter = nirc2syn.filters[filterName]
-        flux0 = nirc2syn.filter_flux0[filterName]
-        mag0 = nirc2syn.filter_mag0[filterName]
+        filter = nirc2syn.get_filter_info(name, vega=vega)
+        # tmp = name.split(',')
+        # filterName = tmp[-1]
+        # filter = nirc2syn.filters[filterName]
+        # flux0 = nirc2syn.filter_flux0[filterName]
+        # mag0 = nirc2syn.filter_mag0[filterName]
     else:
         filter = ObsBandpass(name)
 
