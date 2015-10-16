@@ -485,9 +485,7 @@ class MergedPisaEkstromParsec(StellarEvolution):
         
         # specify location of model files
         model_dir = models_dir + 'merged/pisa_ekstrom_parsec/'
-
         StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
-
         self.z_solar = 0.015
         self.z_file_map = {0.015: 'z015/'}
 
