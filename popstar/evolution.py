@@ -518,7 +518,7 @@ class MergedPisaEkstromParsec(StellarEvolution):
         
         # convert age (in yrs) to log scale and find nearest value in grid
         age_idx = searchsorted(self.age_list, log_age, side='right')
-        iso_file = 'iso_' + str(self.age_list[age_idx]) + '.dat'
+        iso_file = 'iso_{0:.2f}.dat'.format(self.age_list[age_idx])
         
         # find closest metallicity value
         z_idx = searchsorted(self.z_list, z_defined, side='left')
