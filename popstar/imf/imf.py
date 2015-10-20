@@ -23,6 +23,7 @@ defaultMFindex = 0.51
 defaultCSFamp = 0.50
 defaultCSFindex = 0.45
 defaultCSFmax = 3
+multiplicity = 0
 
 def sample_imf(massLimits, imfSlopes, totalMass,
                makeMultiples=True, 
