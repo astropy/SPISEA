@@ -242,7 +242,9 @@ def make_isochrone_grid():
 # Little helper utility to get all the bandpass/zeropoint info.
 def get_filter_info(name, vega=vega):
     if name.startswith('nirc2'):
-        filter = nirc2syn.get_filter_info(name, vega=vega)
+        tmp = name.split(',')
+        filterName = tmp[-1]
+        filter = nirc2syn.get_filter_info(filterName, vega=vega)[0]
         # tmp = name.split(',')
         # filterName = tmp[-1]
         # filter = nirc2syn.filters[filterName]
