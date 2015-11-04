@@ -322,8 +322,8 @@ class IMF_broken_powerlaw(IMF):
         # First term is just 1.0
         # Subsequent terms are products of previous terms and then some.
         for i in range(1, nterms):
-            y = self.mLimitsLow[i]**powers[i-1]
-            z = self.mLimitsLow[i]**powers[i]
+            y = self._m_limits_low[i] ** self._powers[i-1]
+            z = self._m_limits_low[i] ** self._powers[i]
 
             coeffs[i] *= coeffs[i-1] * y / z
 

@@ -2,54 +2,62 @@
 PopStar
 ====================
 
-Stuff left to do in setup:
+INSTALL (from git)
 
-  Now that it is pointing to the correct master, you should push everything up
-  to your project and make sure that your local master is tied to your project
-  rather than the template.  You'll only be able to do this if your github
-  repository is empty (if not, add the ``-f`` option to the ``push``
-  command - that will overwrite whatever is there)::
+Once you have cloned the repository, you will need to download the
+grid of evolution and atmosphere models. The evolution models can be
+found here:
 
-    git push upstream master
-    git branch master --set-upstream upstream/master
+GIT SITE -- load these up
+/g/lu/models/evolution/
 
-* (optional) If you are adopting the standard workflow used by `Astropy`_ with
-  github, you will also want to set up a fork of the repo on your own account,
-  by going to the Github page https://github.com/astropy/yourpkg and clicking
-  the "fork" button on the upper right.  Then run the following commands::
+Ready:
+Ekstrom2012 (rot and norot)
+ParsecV1.2S
+Pisa2011
+geneva
+merged
+- pisa_ekstrom_parsec
+- pisa_ekstrom_parsec/norot
+- siess_meynetMaeder_padova
+padova
+pallaStahler1999
+siess2000
 
-    git remote add origin git@github.com:yourgithubusername/yourpkg.git
-    git branch master --set-upstream origin/master
+Update:
+STERN2011
 
-  Now you can push, pull, and branch whatever you want in your local fork
-  without affecting the official version, but when you want to push something
-  up to the main repository, just switch to the appropriate branch and do
-  ``git push upstream master``.
 
-* You should register your package on https://travis-ci.org and modify the
-  ``.travis.yml`` file to make the build pass. This will continuously test
-  your package for each commit, even pull requests against your main repository
-  will be automatically tested, so that you notice when something breaks.
-  For further information see
-  `here <https://github.com/astropy/astropy/wiki/Continuous-Integration>`_
-  and for lot's of example ``.travis.yml`` build configurations see
-  `here <https://github.com/astropy/astropy/wiki/travis-ci-test-status>`_.
-  Generally you should aim to always have you `master` branch work with
-  the latest stable as well as the latest development version of astropy
-  (i.e. the astropy git master branch).
+The atmosphere models use the CDBS framework (which is supported by
+pysynphot). We have added new grids of atmosphere models (including
+merged sets of atmospheres). You can find the complete CDBS grid you
+can download from here:
 
-* You're now ready to start doing actual work on your affiliated package.  You
-  will probably want to read over the developer guidelines of the Astropy
-  documentation, and if you are hosting your code in GitHub, you might also
-  want to read the `Github help <http://help.github.com/>`_ to ensure you know
-  how to push your code to GitHub and some recommended workflows that work for
-  the core Astropy project.
+GIT SITE -- load these up
+/g/lu/models/cdbs
 
-* Once you have started work on the affiliated package, you should register
-  your package with the Astropy affiliated package registry. Instructions for
-  doing this will be provided on the `Astropy`_ website.
+Ready: 
+phoenix_v16 - high resolution (reformatted for CDBS)
+phoenix_v16_rebin - downgraded to improve synthetic photometry
+performance.
 
-* Good luck with your code and your science!
+
+
+MODEL LOCATION
+
+You need to notify python where these models are going to live. This
+is done in two steps.
+
+In your .cshrc or .bashrc, set the PSYN_CDBS variable to point to the
+CDBS directory:
+
+.. highlight:: c
+
+    setenv PSYN_CDBS /g/lu/models/cdbs
+    export PSYN_CDBS=/g/lu/models/cdbs
+
+
+
 
 .. _Astropy: http://www.astropy.org/
 .. _git: http://git-scm.com/
