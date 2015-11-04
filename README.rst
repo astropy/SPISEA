@@ -61,6 +61,8 @@ CDBS directory:
     export PSYN_CDBS=/g/lu/models/cdbs
 
 
+Fubar2
+
 .. _Astropy: http://www.astropy.org/
 .. _git: http://git-scm.com/
 .. _github: http://github.com
