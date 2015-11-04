@@ -60,8 +60,6 @@ CDBS directory:
     setenv PSYN_CDBS /g/lu/models/cdbs
     export PSYN_CDBS=/g/lu/models/cdbs
 
-Fubar
-
 
 .. _Astropy: http://www.astropy.org/
 .. _git: http://git-scm.com/
