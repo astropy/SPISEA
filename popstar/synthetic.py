@@ -31,6 +31,7 @@ import pdb
 
 defaultAKs = 2.4
 defaultDist = 8000
+defaultEvModel = 'mergedPisaEkstromParsec'
 
 #-----------------------------------------------------#
 # Default settings for model_young_cluster code
@@ -58,8 +59,23 @@ def Vega():
 vega = Vega()
 redlaw = reddening.RedLawNishiyama09()
 
+def evModel_select(evModel):
+    evModel_switch = {
+        'mergedPisaEkstromParsec': evolution.MergedPisaEkstromParsec(),
+        'MergedPisaEkstromParsec_norot': evolution.MergedPisaEkstromParsec_norot(),
+        # none of the following models are fully set up in evolution.py yet!!!!
+        'Geneva': evolution.GenevaStellarEvolution(),
+        'Ekstrom': evolution.EkstromStellarEvolution(),
+        'Ekstrom_norot': evolution.EkstromStellarEvolution_norot(),
+        'Parsec': evolution.ParsecStellarEvolution(),
+        'Pisa': evolution.PisaStellarEvolution()
+        }
+    pickevModel = evModel_switch.get(evModel)
+    return pickevModel
+        
 
-def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist, 
+def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
+                                evModel=defaultEvModel,
                                 iso_dir='./',
                                 verbose=False,
                                 massSampling=2, 
@@ -89,13 +105,13 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
     print '     Mass sampling = ', massSampling
 
     # Define directory where hst_isochrones are made
-    outFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}.fits'
-    outFile = outFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4))
+    outFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}_{4}.fits'
+    outFile = outFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4), evModel)
 
     c = constants
     
     # Get solar metallicity models for a population at a specific age.
-    evol_model = evolution.MergedPisaEkstromParsec()
+    evol_model = evModel_select(evModel)
     evol = evol_model.isochrone(age=10**logAge)  # solar metallicity
     if verbose:
         print 'Elapsed time while getting merged isochrone: ', \
@@ -197,6 +213,7 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
     return
 
 def load_isochrone(logAge=6.78, AKs=defaultAKs, distance=defaultDist,
+                   evModel=defaultEvModel,
                    iso_dir='./', massSampling=3, 
                    filters={'127m': 'wfc3,ir,f127m',
                             '139m': 'wfc3,ir,f127m',
@@ -214,11 +231,11 @@ def load_isochrone(logAge=6.78, AKs=defaultAKs, distance=defaultDist,
     already exist.
     """
     # Define directory where hst_isochrones exist
-    inFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}.fits'
-    inFile = inFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4))
+    inFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}_{4}.fits'
+    inFile = inFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4), evModel)
 
     if not os.path.exists(inFile):
-        make_observed_isochrone_hst(logAge=logAge, AKs=AKs, distance=distance,
+        make_observed_isochrone_hst(logAge=logAge, AKs=AKs, distance=distance,evModel=evModel,
                                     iso_dir=iso_dir, massSampling=massSampling,
                                     filters=filters)
 
@@ -242,7 +259,9 @@ def make_isochrone_grid():
 # Little helper utility to get all the bandpass/zeropoint info.
 def get_filter_info(name, vega=vega):
     if name.startswith('nirc2'):
-        filter = nirc2syn.get_filter_info(name, vega=vega)
+        tmp = name.split(',')
+        filterName = tmp[-1]
+        filter = nirc2syn.get_filter_info(filterName, vega=vega)[0]
         # tmp = name.split(',')
         # filterName = tmp[-1]
         # filter = nirc2syn.filters[filterName]
@@ -274,6 +293,7 @@ def mag_in_filter(star, filter, extinction):
     return star_mag
 
 def model_young_cluster_new(logAge, AKs, distance, iso_dir,
+                            evModel='mergedPisaEkstromParsec',
                             imfSlopes=np.array([-2.35]), massLimits=np.array([1, 150]),
                             clusterMass=1e4, makeMultiples=False,
                             MFamp=defaultMFamp, MFindex=defaultMFindex,
@@ -292,7 +312,7 @@ def model_young_cluster_new(logAge, AKs, distance, iso_dir,
 
     logAgeString = '0%d' % (int(logAge * 100))
 
-    iso = load_isochrone(logAge=logAge, AKs=AKs, distance=distance,
+    iso = load_isochrone(logAge=logAge, AKs=AKs, distance=distance, evModel=evModel,
                                    iso_dir=iso_dir)
 
     # Sample a power-law IMF randomly

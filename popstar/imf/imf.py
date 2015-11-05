@@ -55,7 +55,7 @@ def sample_imf(massLimits, imfSlopes, totalMass,
         massLimits[-1] = totalMass
 
     imf = IMF_broken_powerlaw(massLimits, imfSlopes)
-    imf.imf_norm_cl(totalMass)
+    imf.imf_norm_cl_wk04(totalMass)
 
     # First estimate the mean number of stars expected
     meanNumber = imf.imf_int_xi(massLimits[0], massLimits[-1])
@@ -310,20 +310,20 @@ class IMF_broken_powerlaw(IMF):
             raise RuntimeException(msg)
 
         self._mass_limits = np.atleast_1d(mass_limits)
-        self._m_limits_low = massLimits[0:-1]
-        self._m_limits_high = massLimits[1:]
+        self._m_limits_low = mass_limits[0:-1]
+        self._m_limits_high = mass_limits[1:]
         self._powers = powers
 
 
         # Calculate the coeffs to make the function continuous
-        nterms = len(self.powers)
+        nterms = len(self._powers)
         coeffs = np.ones(nterms, dtype=float)
 
         # First term is just 1.0
         # Subsequent terms are products of previous terms and then some.
         for i in range(1, nterms):
-            y = self.mLimitsLow[i]**powers[i-1]
-            z = self.mLimitsLow[i]**powers[i]
+            y = self._m_limits_low[i] ** self._powers[i-1]
+            z = self._m_limits_low[i] ** self._powers[i]
 
             coeffs[i] *= coeffs[i-1] * y / z
 
@@ -385,6 +385,12 @@ class IMF_broken_powerlaw(IMF):
         """
         return self.prim_xi(massHi) - self.prim_xi(massLo)
 
+    def imf_int_xi(self, left, right):
+        """
+        Return the integrated probability between some low and high mass value.
+        """
+        return self.prim_xi(right) - self.prim_xi(left)
+
     def imf_int_mxi(self, left, right):
         """
         Return the total mass between some low and high stellar mass value.
@@ -398,15 +404,15 @@ class IMF_broken_powerlaw(IMF):
         val = np.zeros(len(a), dtype=float)
 
         for i in range(len(val)):
-            t1 = theta_open(a[i] - self.mLimitsHigh) * self.coeffs
-            t2 = imf_prim_power(self.mLimitsHigh, self.powers)
-            t3 = imf_prim_power(self.mLimitsLow, self.powers)
+            t1 = theta_open(a[i] - self._m_limits_high) * self.coeffs
+            t2 = imf_prim_power(self._m_limits_high, self._powers)
+            t3 = imf_prim_power(self._m_limits_low, self._powers)
             y1 = (t1 * (t2 - t3)).sum()
 
-            t1 = gamma_closed(a[i], self.mLimitsLow, self.mLimitsHigh) 
+            t1 = gamma_closed(a[i], self._m_limits_low, self._m_limits_high) 
             t1 *= self.coeffs
-            t2 = imf_prim_power(a[i], self.powers)
-            t3 = imf_prim_power(self.mLimitsLow, self.powers)
+            t2 = imf_prim_power(a[i], self._powers)
+            t3 = imf_prim_power(self._m_limits_low, self._powers)
             y2 = (t1 * (t2 - t3)).sum()
 
             val[i] = self.k * (y1 + y2)
@@ -423,15 +429,15 @@ class IMF_broken_powerlaw(IMF):
         val = np.zeros(len(a), dtype=float)
 
         for i in range(len(val)):
-            t1 = theta_open(a[i] - self.mLimitsHigh) * self.coeffs
-            t2 = imf_prim_power(self.mLimitsHigh, self.powers+1)
-            t3 = imf_prim_power(self.mLimitsLow, self.powers+1)
+            t1 = theta_open(a[i] - self._m_limits_high) * self.coeffs
+            t2 = imf_prim_power(self._m_limits_high, self._powers+1)
+            t3 = imf_prim_power(self._m_limits_low, self._powers+1)
             y1 = (t1 * (t2 - t3)).sum()
             
-            t1 = gamma_closed(a[i], self.mLimitsLow, self.mLimitsHigh) 
+            t1 = gamma_closed(a[i], self._m_limits_low, self._m_limits_high) 
             t1 *= self.coeffs
-            t2 = imf_prim_power(a[i], self.powers+1)
-            t3 = imf_prim_power(self.mLimitsLow, self.powers+1)
+            t2 = imf_prim_power(a[i], self._powers+1)
+            t3 = imf_prim_power(self._m_limits_low, self._powers+1)
             y2 = (t1 * (t2 - t3)).sum()
 
             val[i] = self.k * (y1 + y2)
@@ -470,27 +476,27 @@ class IMF_broken_powerlaw(IMF):
         self.k = Mcl / self.imf_int_mxi(self.norm_Mmin, self.norm_Mmax)
         self.lamda = self.imf_int_xi_cl(self.mLimitsLow[0], self.massLimits)
 
-    def imf_norm_cl_wk04(self, Mcl, Mmax, Mmin=None):
+    def imf_norm_cl_wk04(self, Mcl, Mmax=None, Mmin=None):
         self.k = 1.0
         self.Mcl = Mcl
 
         if Mmax == None:
-            Mmax = self.mLimitsHigh[-1]
+            Mmax = self._m_limits_high[-1]
 
         if Mmin == None:
-            Mmin = self.mLimitsLow[0]
+            Mmin = self._m_limits_low[0]
 
         if Mmax > Mcl:
             Mmax = Mcl
             
-        if Mmax > self.mLimitsHigh[-1]:
-            Mmax = self.mLimitsHigh[-1]
+        if Mmax > self._m_limits_high[-1]:
+            Mmax = self._m_limits_high[-1]
 
-        if Mmin < self.mLimitsLow[0]:
-            Mmin = self.mLimitsLow[0]
+        if Mmin < self._m_limits_low[0]:
+            Mmin = self._m_limits_low[0]
 
         a = Mmin
-        c = Mmix
+        c = Mmax
         b = (c + a) / 2.0
         while (((c/b)-(a/b)) > 0.00001):
             mb = self.imf_int_mxi(Mmin, b) / self.imf_int_xi(b, Mmax)
@@ -505,7 +511,7 @@ class IMF_broken_powerlaw(IMF):
         self.norm_Mmax = Mmax
 
         self.k = Mcl / self.imf_int_mxi(Mmin, Mmax)
-        self.lamda = self.imf_int_xi_cl(self.mLimitsLow[0], self.massLimits)
+        self.lamda = self.imf_int_xi_cl(self._m_limits_low[0], self._mass_limits)
 
     def imf_xi_cl(self, m):
         return theta_closed(self.norm_Mmax - m) * self.imf_xi(m)
@@ -560,9 +566,9 @@ class IMF_broken_powerlaw(IMF):
 
             # len(idx) entries
             t1 = aux_tmp / (self.coeffs[i] * self.k)
-            t1 += imf_prim_power(self.mLimitsLow[i], self.powers[i])
+            t1 += imf_prim_power(self._m_limits_low[i], self._powers[i])
             y_i = gamma_closed(x_tmp, self.lamda[i], self.lamda[i+1])
-            y_i *= imf_inv_prim_power(t1, self.powers[i])
+            y_i *= imf_inv_prim_power(t1, self._powers[i])
             
             # Save results into the y array
             y[idx] += y_i

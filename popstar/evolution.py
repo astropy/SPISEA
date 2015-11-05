@@ -555,8 +555,7 @@ class MergedPisaEkstromParsec_norot(StellarEvolution):
         age_list = np.arange(6.0, 8.001, 0.01).tolist()
         
         # specify location of model files
-        if 
-        model_dir = models_dir + 'merged/pisa_ekstrom_parsec/norot'
+        model_dir = models_dir + 'merged/pisa_ekstrom_parsec/norot/'
         StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
         self.z_solar = 0.015
         self.z_file_map = {0.015: 'z015/'}
