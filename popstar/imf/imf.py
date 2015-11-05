@@ -18,144 +18,15 @@ import logging
 
 log = logging.getLogger('imf')
 
-defaultMFamp = 0.44
-defaultMFindex = 0.51
-defaultCSFamp = 0.50
-defaultCSFindex = 0.45
-defaultCSFmax = 3
-multiplicity = 0
-
-def sample_imf(massLimits, imfSlopes, totalMass,
-               makeMultiples=True, 
-               multiMFamp=defaultMFamp, multiMFindex=defaultMFindex,
-               multiCSFamp=defaultCSFamp, multiCSFindex=defaultCSFindex,
-               multiCSFmax=defaultCSFmax,
-               multiQindex=-0.4, multiQmin=0.01,
-               verbose=False):
-    """
-    Randomly sample from an multi-part powerlaw IMF with specified slope mass
-    limits until the desired total mass is reached. The maximum
-    stellar mass is not allowed to exceed the total cluster mass.
-    The simulated total mass will not be exactly equivalent to the
-    desired total mass; but we will take one star above or below
-    (whichever brings us closer to the desired total) the desired
-    total cluster mass break point.
-
-    IMF Slope is -2.35 for Salpeter.
-
-    To specify an multi-part powerlaw with N segments:
-    massLimits - numpy array of size N+1 with the upper and lower mass limits for each segment
-    imfSlopes - numpy array of size N with the power law slopes (alpha) for each segment.
-    """
-
-    if (massLimits[-1] > totalMass) and verbose:
-        print 'sample_imf: Setting maximum allowed mass to %d' % \
-            (totalMass)
-
-        massLimits[-1] = totalMass
-
-    imf = IMF_broken_powerlaw(massLimits, imfSlopes)
-    imf.imf_norm_cl_wk04(totalMass)
-
-    # First estimate the mean number of stars expected
-    meanNumber = imf.imf_int_xi(massLimits[0], massLimits[-1])
-
-    simTotalMass = 0
-    newStarCount = round(meanNumber)
-    if not makeMultiples:
-        newStarCount *= 1.1
-
-    masses = np.array([], dtype=float)
-    isMultiple = np.array([], dtype=bool)
-    compMasses = []
-    systemMasses = np.array([], dtype=float)
-
-    loopCnt = 0
-
-    while simTotalMass < totalMass:
-        # Generate a random distribution 20% larger than
-        # the number we expect to need.
-        uniX = np.random.rand(newStarCount)
-
-        # Convert into the IMF from the inverted CDF
-        newMasses = imf.imf_dice_star_cl(uniX)
-
-        if makeMultiples:
-            compMasses = [[] for ii in range(len(newMasses))]
-
-            # Determine the multiplicity of every star
-            MF, CSF = binary_properties(newMasses, MFamp=multiMFamp, MFindex=multiMFindex,
-                                        CSFamp=multiCSFamp, CSFindex=multiCSFindex, CSFmax=multiCSFmax)
-            newIsMultiple = np.random.rand(newStarCount) < MF
-            newSystemMasses = newMasses.copy()
-        
-            # Calculate number and masses of companions
-            for ii in range(len(newMasses)):
-                if newIsMultiple[ii]:
-                    n_comp = 1 + np.random.poisson((CSF[ii]/MF[ii]) - 1)
-                    q_values = q_cdf_inv(np.random.rand(n_comp), multiQmin, multiQindex)
-                    m_comp = q_values * newMasses[ii]
-
-                    # Only keep companions that are more than the minimum mass
-                    mdx = np.where(m_comp >= massLimits[0])
-                    compMasses[ii] = m_comp[mdx]
-                    newSystemMasses[ii] += compMasses[ii].sum()
-
-                    # Double check for the case when we drop all companions.
-                    # This happens a lot near the minimum allowed mass.
-                    if len(mdx) == 0:
-                        newIsMultiple[ii] == False
-
-            newSimTotalMass = newSystemMasses.sum()
-            isMultiple = np.append(isMultiple, newIsMultiple)
-            systemMasses = np.append(systemMasses, newSystemMasses)
-        else:
-            newSimTotalMass = newMasses.sum()
-
-        # Append to our primary masses array
-        masses = np.append(masses, newMasses)
-
-        if (loopCnt >= 0) and verbose:
-            print 'sample_imf: Loop %d added %.2e Msun to previous total of %.2e Msun' % \
-                (loopCnt, newSimTotalMass, simTotalMass)
-
-        simTotalMass += newSimTotalMass
-        newStarCount = meanNumber * 0.1  # increase by 20% each pass
-        loopCnt += 1
-        
-    # Make a running sum of the system masses
-    if makeMultiples:
-        massCumSum = systemMasses.cumsum()
-    else:
-        massCumSum = masses.cumsum()
-
-    # Find the index where we are closest to the desired
-    # total mass.
-    idx = np.abs(massCumSum - totalMass).argmin()
-
-    masses = masses[:idx+1]
-
-    if makeMultiples:
-        systemMasses = systemMasses[:idx+1]
-        isMultiple = isMultiple[:idx+1]
-        compMasses = compMasses[:idx+1]
-    else:
-        isMultiple = np.zeros(len(masses), dtype=bool)
-        systemMasses = masses
-
-    return (masses, isMultiple, compMasses, systemMasses)
-
-
-
 class IMF(object):
     def __init__(self, massLimits=np.array([0.1,150]), multiplicity=None):
         """
         The IMF base class. The multiplicity implementation is here.
         """
-        self.multi_props = multiplicity
-        self.mass_limits = massLimits
+        self._multi_props = multiplicity
+        self._mass_limits = massLimits
 
-    def generateCluster(self, totalMass):
+    def generate_cluster(self, totalMass):
         """
         Generate a cluster of stellar systems with the specified IMF.
         
@@ -170,20 +41,36 @@ class IMF(object):
         Primary stars are sampled from the IMF, companions are generated
         based on the multiplicity properties provided.
 
-        @param totalMass The total mass of the cluster (including companions).
+        Parameters
+        ----------
+        totalMass : float
+            The total mass of the cluster (including companions) in solar masses.
+
+        Return
+        ------
+        masses : numpy float array
+            List of primary star masses.
+
+        isMultiple : numpy boolean array
+            List of booleans with True for each primary star that is in a multiple
+            system and False for each single star.
+
+        companionMasses : numpy float array
+            List of 
+        
         """
 
-        if (massLimits[-1] > totalMass):
+        if (self._mass_limits[-1] > totalMass):
             log.info('sample_imf: Setting maximum allowed mass to %d' %
                       (totalMass))
 
-        massLimits[-1] = totalMass
+        self._mass_limits[-1] = totalMass
 
         # Estimate the mean number of stars expected.
         self.normalize(totalMass)
-        mean_number = self.getProbabilityBetween(massLimits[0], massLimits[-1])
-        newStarCount = round(meanNumber)
-        if multiplicity == None:
+        mean_number = self.int_xi(self._mass_limits[0], self._mass_limits[-1])
+        newStarCount = round(mean_number)
+        if self._multi_props == None:
             newStarCount *= 1.1
 
         # Generate output arrays.
@@ -202,14 +89,14 @@ class IMF(object):
             uniX = np.random.rand(newStarCount)
 
             # Convert into the IMF from the inverted CDF
-            newMasses = imf.imf_dice_star_cl(uniX)
+            newMasses = self.dice_star_cl(uniX)
 
-            if multiplicity:
+            if self._multi_props != None:
                 compMasses = [[] for newMass in newMasses]
 
                 # Determine the multiplicity of every star
-                MF = multiplicity.getMultiplicityFraction()
-                CSF = multiplicity.getCompanionStarFraction()
+                MF = self._multi_props.multiplicity_fraction(newMasses)
+                CSF = self._multi_props.companion_star_fraction(newMasses)
                 
                 newIsMultiple = np.random.rand(newStarCount) < MF
 
@@ -223,7 +110,7 @@ class IMF(object):
                         n_comp = 1 + np.random.poisson((CSF[ii]/MF[ii]) - 1)
 
                         # Determine the mass ratios of the companions
-                        q_values = multiplicity.getMassRatios(np.random.rand(n_comp))
+                        q_values = self._multi_props.random_q(np.random.rand(n_comp))
 
                         # Determine the masses of the companions
                         m_comp = q_values * newMasses[ii]
@@ -231,7 +118,7 @@ class IMF(object):
                         # Add in seperation information
 
                         # Only keep companions that are more than the minimum mass
-                        compMasses[ii] = m_comp[m_comp >= massLimits[0]]
+                        compMasses[ii] = m_comp[m_comp >= self._mass_limits[0]]
                         newSystemMasses[ii] += compMasses[ii].sum()
 
                         # Double check for the case when we drop all companions.
@@ -253,11 +140,11 @@ class IMF(object):
                          (loopCnt, newTotalMassTally, totalMassTally))
 
             totalMassTally += newTotalMassTally
-            newStarCount = meanNumber * 0.1  # increase by 20% each pass
+            newStarCount = mean_number * 0.1  # increase by 20% each pass
             loopCnt += 1
         
         # Make a running sum of the system masses
-        if multiplicity:
+        if self._multi_props:
             massCumSum = systemMasses.cumsum()
         else:
             massCumSum = masses.cumsum()
@@ -268,7 +155,7 @@ class IMF(object):
 
         masses = masses[:idx+1]
 
-        if multiplicity:
+        if self._multi_props:
             systemMasses = systemMasses[:idx+1]
             isMultiple = isMultiple[:idx+1]
             compMasses = compMasses[:idx+1]
@@ -313,7 +200,7 @@ class IMF_broken_powerlaw(IMF):
         self._m_limits_low = mass_limits[0:-1]
         self._m_limits_high = mass_limits[1:]
         self._powers = powers
-
+        self._multi_props = multiplicity
 
         # Calculate the coeffs to make the function continuous
         nterms = len(self._powers)
@@ -331,7 +218,7 @@ class IMF_broken_powerlaw(IMF):
         self.coeffs = coeffs
         self.k = 1
 
-    def imf_xi(self, m):
+    def xi(self, m):
         """
         Probability density describing the IMF.
 
@@ -347,10 +234,10 @@ class IMF_broken_powerlaw(IMF):
         xi = np.zeros(len(m), dtype=float)
         
         for i in range(len(xi)):
-            tmp = gamma_closed(m[i], self.mLimitsLow, self.mLimitsHigh)
+            tmp = gamma_closed(m[i], self._m_limits_low, self._m_limits_high)
             tmp *= self.coeffs * m[i]**self.powers
             y = tmp.sum()
-            z = delta(m[i] - self.mLimitsHigh).prod()
+            z = delta(m[i] - self._m_limits_high).prod()
             xi[i] = self.k * z * y
 
         if returnFloat:
@@ -358,7 +245,7 @@ class IMF_broken_powerlaw(IMF):
         else:
             return xi
 
-    def imf_mxi(self, m):
+    def m_xi(self, m):
         """
         Mass-weighted probability m*xi
         """
@@ -367,10 +254,10 @@ class IMF_broken_powerlaw(IMF):
         mxi = np.zeros(len(m), dtype=float)
         
         for i in range(len(mxi)):
-            tmp = gamma_closed(m[i], self.mLimitsLow, self.mLimitsHigh)
+            tmp = gamma_closed(m[i], self._m_limits_low, self._m_limits_high)
             tmp *= self.coeffs * m[i]**(self.powers+1)
             y = tmp.sum()
-            z = delta(m[i] - self.mLimitsHigh).prod()
+            z = delta(m[i] - self._m_limits_high).prod()
             mxi[i] = self.k * z * y
 
         if returnFloat:
@@ -380,24 +267,24 @@ class IMF_broken_powerlaw(IMF):
 
 
     def getProbabilityBetween(self, massLo, massHi):
+        """Return the integrated probability between some low and high mass value.
         """
-        Return the integrated probability between some low and high mass value.
+        return self.int_xi(massLo, massHi)
+    
+    def int_xi(self, massLo, massHi):
+        """Return the integrated probability between some low and high mass value.
         """
         return self.prim_xi(massHi) - self.prim_xi(massLo)
     
-    def imf_int_xi(self, left, right):
+    def int_mxi(self, massLo, massHi):
+        """Return the integrated total mass between some low and high stellar
+        mass value. Be sure to normalize the IMF instance beforehand.
         """
-        Return the integrated probability between some low and high mass value.
-        """
-        return self.prim_xi(right) - self.prim_xi(left)
-    
-    def imf_int_mxi(self, left, right):
-        """
-        Return the total mass between some low and high stellar mass value.
-        """
-        return self.prim_mxi(right) - self.prim_mxi(left)
+        return self.prim_mxi(massHi) - self.prim_mxi(massLo)
 
     def prim_xi(self, a):
+        """
+        """
         returnFloat = type(a) == float
 
         a = np.atleast_1d(a)
@@ -405,14 +292,14 @@ class IMF_broken_powerlaw(IMF):
 
         for i in range(len(val)):
             t1 = theta_open(a[i] - self._m_limits_high) * self.coeffs
-            t2 = imf_prim_power(self._m_limits_high, self._powers)
-            t3 = imf_prim_power(self._m_limits_low, self._powers)
+            t2 = prim_power(self._m_limits_high, self._powers)
+            t3 = prim_power(self._m_limits_low, self._powers)
             y1 = (t1 * (t2 - t3)).sum()
 
             t1 = gamma_closed(a[i], self._m_limits_low, self._m_limits_high) 
             t1 *= self.coeffs
-            t2 = imf_prim_power(a[i], self._powers)
-            t3 = imf_prim_power(self._m_limits_low, self._powers)
+            t2 = prim_power(a[i], self._powers)
+            t3 = prim_power(self._m_limits_low, self._powers)
             y2 = (t1 * (t2 - t3)).sum()
 
             val[i] = self.k * (y1 + y2)
@@ -430,14 +317,14 @@ class IMF_broken_powerlaw(IMF):
 
         for i in range(len(val)):
             t1 = theta_open(a[i] - self._m_limits_high) * self.coeffs
-            t2 = imf_prim_power(self._m_limits_high, self._powers+1)
-            t3 = imf_prim_power(self._m_limits_low, self._powers+1)
+            t2 = prim_power(self._m_limits_high, self._powers+1)
+            t3 = prim_power(self._m_limits_low, self._powers+1)
             y1 = (t1 * (t2 - t3)).sum()
             
             t1 = gamma_closed(a[i], self._m_limits_low, self._m_limits_high) 
             t1 *= self.coeffs
-            t2 = imf_prim_power(a[i], self._powers+1)
-            t3 = imf_prim_power(self._m_limits_low, self._powers+1)
+            t2 = prim_power(a[i], self._powers+1)
+            t3 = prim_power(self._m_limits_low, self._powers+1)
             y2 = (t1 * (t2 - t3)).sum()
 
             val[i] = self.k * (y1 + y2)
@@ -456,27 +343,27 @@ class IMF_broken_powerlaw(IMF):
         self.Mcl = Mcl
         
         if Mmax == None:
-            Mmax = self.mLimitsHigh[-1]
+            Mmax = self._m_limits_high[-1]
 
         if Mmin == None:
-            Mmin = self.mLimitsLow[0]
+            Mmin = self._m_limits_low[0]
 
         if Mmax > Mcl:
             Mmax = Mcl
             
-        if Mmax > self.mLimitsHigh[-1]:
-            Mmax = self.mLimitsHigh[-1]
+        if Mmax > self._m_limits_high[-1]:
+            Mmax = self._m_limits_high[-1]
 
-        if Mmin < self.mLimitsLow[0]:
-            Mmin = self.mLimitsLow[0]
+        if Mmin < self._m_limits_low[0]:
+            Mmin = self._m_limits_low[0]
 
         self.norm_Mmin = Mmin
         self.norm_Mmax = Mmax
         
-        self.k = Mcl / self.imf_int_mxi(self.norm_Mmin, self.norm_Mmax)
-        self.lamda = self.imf_int_xi_cl(self.mLimitsLow[0], self.massLimits)
+        self.k = Mcl / self.int_mxi(self.norm_Mmin, self.norm_Mmax)
+        self.lamda = self.int_xi_cl(self._m_limits_low[0], self._mass_limits)
 
-    def imf_norm_cl_wk04(self, Mcl, Mmax=None, Mmin=None):
+    def norm_cl_wk04(self, Mcl, Mmax=None, Mmin=None):
         self.k = 1.0
         self.Mcl = Mcl
 
@@ -499,7 +386,7 @@ class IMF_broken_powerlaw(IMF):
         c = Mmax
         b = (c + a) / 2.0
         while (((c/b)-(a/b)) > 0.00001):
-            mb = self.imf_int_mxi(Mmin, b) / self.imf_int_xi(b, Mmax)
+            mb = self.int_mxi(Mmin, b) / self.int_xi(b, Mmax)
             if mb < Mcl:
                 a = b
             else:
@@ -510,36 +397,36 @@ class IMF_broken_powerlaw(IMF):
         self.norm_Mmin = Mmin
         self.norm_Mmax = Mmax
 
-        self.k = Mcl / self.imf_int_mxi(Mmin, Mmax)
-        self.lamda = self.imf_int_xi_cl(self._m_limits_low[0], self._mass_limits)
+        self.k = Mcl / self.int_mxi(Mmin, Mmax)
+        self.lamda = self.int_xi_cl(self._m_limits_low[0], self._mass_limits)
 
-    def imf_xi_cl(self, m):
-        return theta_closed(self.norm_Mmax - m) * self.imf_xi(m)
+    def xi_cl(self, m):
+        return theta_closed(self.norm_Mmax - m) * self.xi(m)
 
-    def imf_mxi_cl(self, m):
-        return theta_closed(self.norm_Mmax - m) * self.imf_mxi(m)
+    def mxi_cl(self, m):
+        return theta_closed(self.norm_Mmax - m) * self.m_xi(m)
 
-    def imf_int_xi_cl(self, left, right):
+    def int_xi_cl(self, left, right):
         t1 = self.prim_xi(right)
         t2 = theta_closed(right - self.norm_Mmax)
-        t3 = self.imf_int_xi(self.norm_Mmax, right)
+        t3 = self.int_xi(self.norm_Mmax, right)
         t4 = self.prim_xi(left)
         t5 = theta_closed(left - self.norm_Mmax)
-        t6 = self.imf_int_xi(self.norm_Mmax, left)
+        t6 = self.int_xi(self.norm_Mmax, left)
 
         return (t1 - t2*t3) - (t4 - t5*t6)
 
-    def imf_int_mxi_cl(self, left, right):
+    def int_mxi_cl(self, left, right):
         t1 = self.prim_mxi(right)
         t2 = theta_closed(right - self.norm_Mmax)
-        t3 = self.imf_int_mxi(self.norm_Mmax, right)
+        t3 = self.int_mxi(self.norm_Mmax, right)
         t4 = self.prim_mxi(left)
         t5 = theta_closed(left - self.norm_Mmax)
-        t6 = self.imf_int_mxi(self.norm_Mmax, left)
+        t6 = self.int_mxi(self.norm_Mmax, left)
 
         return (t1 - t2*t3) - (t4 - t5*t6)
 
-    def imf_dice_star_cl(self, r):
+    def dice_star_cl(self, r):
         """
         Given a list of random numbers (r), return a list of masses
         selected from the IMF.
@@ -566,9 +453,9 @@ class IMF_broken_powerlaw(IMF):
 
             # len(idx) entries
             t1 = aux_tmp / (self.coeffs[i] * self.k)
-            t1 += imf_prim_power(self._m_limits_low[i], self._powers[i])
+            t1 += prim_power(self._m_limits_low[i], self._powers[i])
             y_i = gamma_closed(x_tmp, self.lamda[i], self.lamda[i+1])
-            y_i *= imf_inv_prim_power(t1, self._powers[i])
+            y_i *= inv_prim_power(t1, self._powers[i])
             
             # Save results into the y array
             y[idx] += y_i
@@ -581,7 +468,7 @@ class IMF_broken_powerlaw(IMF):
             return y * z
 
 class IMFSalpeter1955(IMF_broken_powerlaw):
-    def __init__(self, multiplicity=multiplicity):
+    def __init__(self, multiplicity=None):
 
         massLimits = np.array([0.40, 10.0])
         powers = np.array([-2.3])
@@ -591,39 +478,43 @@ class IMFSalpeter1955(IMF_broken_powerlaw):
 
 
 class Miller_Scalo_1979(IMF_broken_powerlaw):
-    def __init__(self):
+    def __init__(self, multiplicity=None):
         massLimits = np.array([0.1, 1, 10, np.inf])
         powers = np.array([-1.4, -2.5, -3.3])
 
-        IMF_broken_powerlaw.__init__(self, massLimits, powers)
+        IMF_broken_powerlaw.__init__(self, massLimits, powers,
+                                     multiplicity=multiplicity)
 
 class Kennicutt_1983(IMF_broken_powerlaw):
-    def __init__(self):
+    def __init__(self, multiplicity=None):
         massLimits = np.array([0.1, 1, np.inf])
         powers = np.array([-1.4, -2.5])
 
-        IMF_broken_powerlaw.__init__(self, massLimits, powers)
+        IMF_broken_powerlaw.__init__(self, massLimits, powers,
+                                     multiplicity=multiplicity)
 
 class Kroupa_2001(IMF_broken_powerlaw):
-    def __init__(self):
+    def __init__(self, multiplicity=None):
         massLimits = np.array([0.01, 0.08, 0.5, 1, np.inf])
         powers = np.array([-0.3, -1.3, -2.3, -2.3])
 
-        IMF_broken_powerlaw.__init__(self, massLimits, powers)
+        IMF_broken_powerlaw.__init__(self, massLimits, powers,
+                                     multiplicity=multiplicity)
 
 class Weidner_Kroupa_2004(IMF_broken_powerlaw):
-    def __init__(self):
+    def __init__(self, multiplicity=None):
         massLimits = np.array([0.01, 0.08, 0.5, 1, np.inf])
         powers = np.array([-0.3, -1.3, -2.3, -2.35])
 
-        IMF_broken_powerlaw.__init__(self, massLimits, powers)
+        IMF_broken_powerlaw.__init__(self, massLimits, powers,
+                                     multiplicity=multiplicity)
 
 ##################################################
 # 
 # Generic functions -- see if we can move these up.
 #
 ##################################################
-def imf_prim_power(m, power):
+def prim_power(m, power):
     """
     Takes floats or arrays, but returns arrays.
     returns: m**(power + 1) / (power + 1) and handles the case when power = -1
@@ -642,7 +533,7 @@ def imf_prim_power(m, power):
     else:
         return val
 
-def imf_inv_prim_power(x, power):
+def inv_prim_power(x, power):
     """
     returns ((1+power) * x)**(1.0 / (1 + power)) and handles the case 
     when power == -1.
@@ -662,7 +553,7 @@ def imf_inv_prim_power(x, power):
         return val
     
 
-def imf_log_normal(m, mean_logm, sigma_logm):
+def log_normal(m, mean_logm, sigma_logm):
     returnFloat = (type(m) == float) and (type(mean_logm) == float) and \
         (type(sigma_logm) == float)
 
@@ -678,7 +569,7 @@ def imf_log_normal(m, mean_logm, sigma_logm):
     else:
         return val
 
-def imf_prim_log_normal(m, mean_logm, sigma_logm):
+def prim_log_normal(m, mean_logm, sigma_logm):
     returnFloat = (type(m) == float) and (type(mean_logm) == float) and \
         (type(sigma_logm) == float)
 
@@ -694,7 +585,7 @@ def imf_prim_log_normal(m, mean_logm, sigma_logm):
     else:
         return val
 
-def imf_inv_prim_log_normal(x, mean_logm, sigma_logm):
+def inv_prim_log_normal(x, mean_logm, sigma_logm):
     returnFloat = (type(m) == float) and (type(mean_logm) == float) and \
         (type(sigma_logm) == float)
 
@@ -710,7 +601,7 @@ def imf_inv_prim_log_normal(x, mean_logm, sigma_logm):
     else:
         return val
 
-def imf_mlog_normal(x, mean_logm, sigma_logm):
+def mlog_normal(x, mean_logm, sigma_logm):
     returnFloat = (type(m) == float) and (type(mean_logm) == float) and \
         (type(sigma_logm) == float)
 
@@ -726,7 +617,7 @@ def imf_mlog_normal(x, mean_logm, sigma_logm):
     else:
         return val
 
-def imf_prim_mlog_normal(x, mean_logm, sigma_logm):
+def prim_mlog_normal(x, mean_logm, sigma_logm):
     returnFloat = (type(m) == float) and (type(mean_logm) == float) and \
         (type(sigma_logm) == float)
 
