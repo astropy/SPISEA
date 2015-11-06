@@ -4,11 +4,22 @@ PopStar
 
 INSTALL (from git)
 
-Dependencies:
-astropy
-pysynphot
+* python (preferably via ureka, as it includes some necessary packages, like astropy and pysynphot)
+    python dependencies:
+    * astropy
+    * pysynphot
+    * ATpy (https://pypi.python.org/pypi/ATpy) 
+    * asciitable (http://www.stecf.org/software/PYTHONtools/astroasciidata/) - note: if python was installed via ureka, the asciitable install folder may need to be copied from the default python site-packages folder to ureka's site-packages folder
+* Github respository dependencies (git clone these)
+    * jluastro/JLU-python-code 
+    * jluastro/nirc2
 
-Once you have cloned the repository, you will need to download the
+Add all of these to your python path in your .cshrc:
+
+set CODE_DIR = /path/to/top/level/python/code
+setenv PYTHONPATH ${CODE_DIR}/popstar/PopStar:${CODE_DIR}/jlu/JLU-python-code-master:${CODE_DIR}/jlu/JLU-python-code-master/jlu/gc:${CODE_DIR}/nirc2:${CODE_DIR}/ATpy-0.9.7:${CODE_DIR}/asciidata/asciidata-1.1.1
+
+Once you have cloned the popstar repository, you will need to download the
 grid of evolution and atmosphere models. The evolution models can be
 found here:
 
@@ -16,13 +27,15 @@ GIT SITE -- load these up
 /g/lu/models/evolution/
 
 Ready:
+** pisa_ekstrom_parsec
+** pisa_ekstrom_parsec/norot
+
+Data files ready but not yet supported in code:
 * Ekstrom2012 (rot and norot)
 * ParsecV1.2S
 * Pisa2011
 * geneva
 * merged
-** pisa_ekstrom_parsec
-** pisa_ekstrom_parsec/norot
 ** siess_meynetMaeder_padova
 * padova
 * pallaStahler1999
