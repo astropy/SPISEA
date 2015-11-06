@@ -59,6 +59,216 @@ def Vega():
 vega = Vega()
 redlaw = reddening.RedLawNishiyama09()
 
+def model_young_cluster_object():
+    multi = multiplicity.MultiplicityUnresolved()
+    imf = imf.Kroupa_2001(multiplicty=multi)
+    evo = evolution.MergedPisaEkstromParsec()
+    atm_func = atm.get_merged_atmosphere
+
+    log_age = 6.5
+    AKs = 1.0
+    distance = 8000.0
+    
+    cluster = Cluster(log_age, AKs, distance, imf, evo, atm_func)
+
+    # Plot the spectrum of the most massive star
+    idx = cluster.mass.argmax()
+    plt.clf()
+    plt.plot(cluster.stars[idx].wave, cluster.stars[idx].flux, 'k.')
+
+    # Plot an integrated spectrum of the whole cluster.
+    wave, flux = cluster.get_integrated_spectrum()
+    plt.clf()
+    plt.plot(wave, flux, 'k.')
+
+    return
+
+class Cluster(object):
+    def __init__(self, logAge, AKs, distance,
+                 imf, evolution_model, atmosphere_func,
+                 verbose=False): 
+        """
+        Code to model a cluster with user-specified logAge, AKs, and distance.
+        Must also specify directory containing the isochrone (made using popstar
+        synthetic code).
+
+        Can also specify IMF slope, mass limits, cluster mass, and parameters for
+        multiple stars
+        """
+
+        return
+
+    
+class ResolvedCluster(Cluster):
+    def __init__(self, logAge, AKs, distance,
+                 imf, evolution_model, atmosphere_func,
+                 verbose=False):  
+        return
+
+            
+class UnresolvedCluster(Cluster):
+    def __init__(self, logAge, AKs, distance,
+                 imf, evolution_model, atmosphere_func,
+                 verbose=False): 
+    
+    
+        c = constants
+
+        logAgeString = '0%d' % (int(logAge * 100))
+
+        iso = load_isochrone(logAge=logAge, AKs=AKs, distance=distance, evModel=evModel,
+                                       iso_dir=iso_dir)
+
+        # Sample a power-law IMF randomly
+        results = imf.sample_imf(massLimits, imfSlopes, clusterMass,
+                                 makeMultiples=makeMultiples,
+                                 multiMFamp=MFamp, multiMFindex=MFindex,
+                                 multiCSFamp=CSFamp, multiCSFindex=CSFindex,
+                                 multiCSFmax=CSFmax,
+                                 multiQmin=qMin, multiQindex=qIndex)
+        mass = results[0]
+        isMultiple = results[1]
+        compMasses = results[2]
+        systemMasses = results[3]
+
+        mag814w = np.zeros(len(mass), dtype=float)
+        mag127m = np.zeros(len(mass), dtype=float)
+        mag139m = np.zeros(len(mass), dtype=float)
+        mag153m = np.zeros(len(mass), dtype=float)
+        magJ = np.zeros(len(mass), dtype=float)
+        magH = np.zeros(len(mass), dtype=float)
+        magK = np.zeros(len(mass), dtype=float)
+        magKp = np.zeros(len(mass), dtype=float)
+        magL = np.zeros(len(mass), dtype=float)
+        temp = np.zeros(len(mass), dtype=float)
+        logg = np.zeros(len(mass), dtype=float)
+        logL = np.zeros(len(mass), dtype=float)
+        isWR = np.zeros(len(mass), dtype=bool)
+
+        def match_model_mass(theMass):
+            dm = np.abs(iso['mass'] - theMass)
+            mdx = dm.argmin()
+
+            # Model mass has to be within 2% of the desired mass
+            if (dm[mdx] / theMass) > 0.1:
+                return None
+            else:
+                return mdx
+
+        for ii in range(len(mass)):
+            # Find the closest model mass (returns None, if nothing with dm = 0.1
+            mdx = match_model_mass(mass[ii])
+            if mdx == None:
+                continue
+
+            mag814w[ii] = iso['mag814w'][mdx]
+            mag127m[ii] = iso['mag127m'][mdx]
+            mag139m[ii] = iso['mag139m'][mdx]
+            mag153m[ii] = iso['mag153m'][mdx]
+            magJ[ii] = iso['magJ'][mdx]
+            magH[ii] = iso['magH'][mdx]
+            magK[ii] = iso['magK'][mdx]
+            magKp[ii] = iso['magKp'][mdx]
+            magL[ii] = iso['magL'][mdx]
+
+            temp[ii] = iso['logT'][mdx]
+            logg[ii] = iso['logg'][mdx]
+            logL[ii] = iso['logL'][mdx]
+            isWR[ii] = iso['isWR'][mdx]
+
+
+            # Determine if this system is a binary.
+            if isMultiple[ii]:
+                n_stars = len(compMasses[ii])
+                for cc in range(n_stars):
+                    mdx_cc = match_model_mass(compMasses[ii][cc])
+                    if mdx_cc != None:
+                        f1 = 10**(-mag[ii]/2.5)
+                        f2 = 10**(-iso.mag[mdx_cc]/2.5)
+                        mag[ii] = -2.5 * np.log10(f1 + f2)
+                    else:
+                        print 'Rejected a companion %.2f' % compMasses[ii][cc]
+
+
+        # Get rid of the bad ones
+        idx = np.where(temp != 0)[0]
+        cdx = np.where(temp == 0)[0]
+
+        if len(cdx) > 0 and verbose:
+            print 'Found %d stars out of mass range: Minimum bad mass = %.1f' % \
+                (len(cdx), mass[cdx].min())
+
+        mass = mass[idx]
+        mag814w = mag814w[idx]
+        mag127m = mag127m[idx]
+        mag139m = mag139m[idx]
+        mag153m = mag153m[idx]
+        magJ = magJ[idx]
+        magH = magH[idx]
+        magK = magK[idx]
+        magKp = magKp[idx]
+        magL = magL[idx]
+
+
+        temp = temp[idx]
+        logg = logg[idx]
+        logL = logL[idx]
+        isWR = isWR[idx]
+
+        isMultiple = isMultiple[idx]
+        systemMasses = systemMasses[idx]
+        if makeMultiples:
+            compMasses = [compMasses[ii] for ii in idx]
+
+        idx_noWR = np.where(isWR == False)[0]
+
+        mag127m_noWR = mag127m[idx_noWR]
+        num_WR = len(mag127m) - len(idx_noWR)
+
+        cluster = objects.DataHolder()
+        cluster.mass = mass
+        cluster.Teff = temp
+        cluster.logg = logg
+        cluster.logL = logL
+        cluster.isWR = isWR
+        cluster.mag814w = mag814w
+        cluster.mag127m = mag127m
+        cluster.mag139m = mag139m
+        cluster.mag153m = mag153m
+        cluster.magJ = magJ
+        cluster.magH = magH
+        cluster.magK = magK
+        cluster.magKp = magKp
+        cluster.magL = magL
+        cluster.isMultiple = isMultiple
+        cluster.compMasses = compMasses
+        cluster.systemMasses = systemMasses
+
+        cluster.idx_noWR = idx_noWR
+        cluster.mag127m_noWR = mag127m_noWR
+        cluster.num_WR = num_WR
+
+        # Summary parameters
+        cluster.logAge = logAge
+        cluster.AKs = AKs
+        cluster.distance = distance
+        cluster.massLimits = massLimits
+        cluster.imfSlopes = imfSlopes
+        cluster.sumIMFmass = clusterMass
+        cluster.makeMultiples = makeMultiples
+        cluster.MFamp = MFamp
+        cluster.MFindex = MFindex
+        cluster.CSFamp = CSFamp
+        cluster.CSFindex = CSFindex
+        cluster.CSFmax = CSFmax
+        cluster.qMin = qMin
+        cluster.qIndex = qIndex
+
+        return cluster, iso
+       return
+
+    def 
+
 def evModel_select(evModel):
     evModel_switch = {
         'mergedPisaEkstromParsec': evolution.MergedPisaEkstromParsec(),
