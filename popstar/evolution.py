@@ -9,6 +9,7 @@ import os
 import glob
 import pdb
 from astropy.table import Table
+from popstar.utils import objects
 
 log = logging.getLogger('evolution')
 
@@ -218,6 +219,67 @@ class EkstromStellarEvolution(StellarEvolution):
 
         # Return to starting directory
         os.chdir(start_dir)
+
+        return
+
+    def create_iso(fileList, ageList, rot=True):
+        """
+        Given a set of isochrone files downloaded from
+        http://obswww.unige.ch/Recherche/evoldb/index/Isochrone/, put in correct
+        iso.dat format for parse_iso code.
+
+        fileList: list of downloaded isochrone files (could be one)
+    
+        ageList: list of lists of ages associated with each file in filelist.
+        MUST BE IN SAME ORDER AS ISOCHRONES IN FILE! Also needs to be in logAge
+    
+        rot = TRUE: assumes that models are rotating, will add appropriate column
+    
+        This code writes the individual files, which is then easiest to combine by hand
+        in aquamacs 
+        """
+        # Read each file in fileList individually, add necessary columns
+        for i in range(len(fileList)):
+            t = Table.read(fileList[i],format='ascii')
+            ages = ageList[i]
+
+            # Find places where new models start; mass here is assumed to be 0.8
+            start = np.where(t['M_ini'] == 0.8)
+
+            # Now, each identified start is assumed to be associated with the
+            # corresponding age in ages        
+            if len(start[0]) != len(ages):
+                print 'Ages mismatched in file! Quitting...'
+                return
+
+            age_arr = np.zeros(len(t))
+
+        
+            for j in range(len(start[0])):
+                low_ind = start[0][j]
+                # Deal with case at end of file
+                if (j == len(start[0])-1):
+                    high_ind = len(t)
+                else:
+                    high_ind = start[0][j+1]
+
+                ind = np.arange(low_ind, high_ind, 1)
+                age_arr[ind] = ages[j]
+
+            # Add ages_arr column to column 1 in ischrone, as well as column
+            # signifying rotation
+            col_age = Column(age_arr, name = 'logAge')
+            rot_val = np.chararray(len(t))
+            rot_val[:] = 'r'
+            if not rot:
+                rot_val[:] = 'n'
+            
+            col_rot = Column(rot_val, name='Rot')
+        
+            t.add_column(col_rot, index=0)
+            t.add_column(col_age, index=0)
+
+            t.write('tmp'+str(i)+'.dat',format='ascii')
 
         return
 
@@ -467,7 +529,29 @@ class PisaStellarEvolution(StellarEvolution):
         os.chdir(start_dir)
         return
 
+    def make_isochrone_grid(metallicity=0.015):
+        """
+        Create isochrone grid of given metallicity with time sampling = 0.01
+        in logAge (hardcoded). This interpolates the downloaded isochrones
+        when necessary. Builds upon the online iscohrone grid.
 
+        Note: format of metallicity is important. After decimal point, must match
+        the format of the metallcity directory (i.e., 0.015 matches directory z015,
+        while 0.0150 would not)
+        """
+        logAge_arr = np.arange(6.0, 8.0+0.005, 0.01)
+    
+        count = 0
+        for logAge in logAge_arr:
+            # Could interpolate using evolutionary tracks, but less accurate.
+            make_isochrone_pisa_interp(logAge, metallicity=metallicity)
+
+            count += 1
+        
+            print 'Done {0} of {1} models'.format(count, (len(logAge_arr)))
+
+        return
+    
 class MergedPisaEkstromParsec(StellarEvolution):
     def __init__(self):
         """
@@ -538,4 +622,212 @@ class MergedPisaEkstromParsec(StellarEvolution):
         iso.meta['metallicity'] = metallicity
         
         return iso
+
+def make_isochrone_pisa_interp(log_age, metallicity=0.015, 
+                         tracks=None, test=False):
+    """
+    Read in a set of isochrones and generate an isochrone at log_age
+    that is well sampled at the full range of masses.
+
+    Puts isochrones is Pisa2011/iso/<metal>/
+    """
+    # If logage > 8.0, quit immediately...grid doesn't go that high
+    if log_age > 8.0:
+        print 'Age too high for Pisa grid (max logAge = 8.0)'
+        return
+
+    # Directory with where the isochrones will go (both downloaded and interpolated)
+    rootDir = models_dir + '/Pisa2011/iso/'
+    metSuffix = 'z' + str(metallicity).split('.')[-1]
+    rootDir += metSuffix + '/'
+
+    # Can we find the isochrone directory?
+    if not os.path.exists(rootDir):
+        print 'Failed to find Pisa PMS isochrones for metallicity = ' + metSuffix
+        return
+
+    # Check to see if isochrone at given age already exists. If so, quit
+    if os.path.exists(rootDir+'iso_{0:3.2f}.dat'.format(log_age)):
+        print 'Isochrone at logAge = {0:3.2f} already exists'.format(log_age)
+        return
     
+    # Name/directory for interpolated isochrone
+    isoFile = rootDir+'iso_%3.2f.dat' % log_age
+    outSuffix = '_%.2f' % (log_age)
+
+    print '*** Generating Pisa isochrone for log t = %3.2f and Z = %.3f' % \
+        (log_age, metallicity)
+
+    print time.asctime(), 'Getting original Pisa isochrones.'
+    iso = get_orig_pisa_isochrones(metallicity=metallicity)
+
+    # First thing is to find the isochrones immediately above and below desired
+    # age
+    iso_log_ages = iso.log_ages
+    tmp = np.append(iso_log_ages, log_age)
+
+    # Find desired age in ordered sequence; isolate model younger and older
+    tmp.sort()
+    good = np.where(tmp == log_age)
+    young_model_logage = tmp[good[0]-1]
+    old_model_logage = tmp[good[0]+1]
+    
+    # Isolate younger/older isochrones
+    young_ind = np.where(iso.log_ages == young_model_logage)
+    old_ind = np.where(iso.log_ages == old_model_logage)
+
+    young_iso = iso.isochrones[young_ind[0]]
+    old_iso = iso.isochrones[old_ind[0]]
+
+    # Need both younger and older model on same temperature grid for time
+    # interpolation. Will adopt mass grid of whichever model is closer in time
+    if abs(young_model_logage - log_age) <= abs(old_model_logage - log_age):
+        # Use young model mass grid
+        young_iso, old_iso = interpolate_iso_tempgrid(young_iso, old_iso)
+        
+    else:
+        # Use old model mass grid
+        old_iso, young_iso = interpolate_iso_tempgrid(old_iso, young_iso)
+
+    # Now, can interpolate in time over the two models. Do this star by star.
+    # Work in linear time here!!
+    numStars = len(young_iso.M)
+    
+    interp_iso = Isochrone(log_age)
+    interp_iso.log_Teff = np.zeros(numStars, dtype=float)
+    interp_iso.log_L = np.zeros(numStars, dtype=float)
+    interp_iso.log_g = np.zeros(numStars, dtype=float)
+    interp_iso.M = young_iso.M # Since mass grids should already be matched
+    
+    for i in range(numStars):
+        # Do interpolations in linear space
+        model_ages = [10**young_model_logage[0], 10**old_model_logage[0]]
+        target_age = 10**log_age
+        #model_ages = [young_model_logage[0], old_model_logage[0]]
+        #target_age = log_age
+        
+        # Build interpolation functions
+        Teff_arr = [10**young_iso.log_Teff[i], 10**old_iso.log_Teff[i]]
+        logL_arr = [10**young_iso.log_L[i], 10**old_iso.log_L[i]]
+        logg_arr = [10**young_iso.log_g[i], 10**old_iso.log_g[i]]
+        
+        f_log_Teff = interpolate.interp1d(model_ages, Teff_arr, kind='linear')
+        f_log_L = interpolate.interp1d(model_ages, logL_arr, kind='linear')
+        f_log_g = interpolate.interp1d(model_ages, logg_arr, kind='linear')
+
+        interp_iso.log_Teff[i] = np.log10(f_log_Teff(target_age))
+        interp_iso.log_L[i] = np.log10(f_log_L(target_age))
+        interp_iso.log_g[i] = np.log10(f_log_g(target_age))
+
+    # If indicated, plot new isochrone along with originals it was interpolated
+    # from
+    if test:
+        py.figure(1)
+        py.clf()
+        py.plot(interp_iso.log_Teff, interp_iso.log_L, 'k-', label = 'Interp')
+        py.plot(young_iso.log_Teff, young_iso.log_L, 'b-',
+                label = 'log Age = {0:3.2f}'.format(young_model_logage[0]))
+        py.plot(old_iso.log_Teff, old_iso.log_L, 'r-',
+                label = 'log Age = {0:3.2f}'.format(old_model_logage[0]))
+        rng = py.axis()
+        py.xlim(rng[1], rng[0])
+        py.xlabel('log Teff')
+        py.ylabel('log L')
+        py.legend()
+        py.title('Pisa 2011 Isochrone at log t = %.2f' % log_age)
+        py.savefig(rootDir + 'plots/interp_isochrone_at' + outSuffix + '.png')
+    
+    print time.asctime(), 'Finished.'
+
+    # Write output to file, MUST BE IN SAME ORDER AS ORIG FILES
+    _out = open(isoFile, 'w')
+    
+    _out.write('%10s  %10s  %10s  %10s\n' % 
+               ('# log L', 'log Teff', 'Mass', 'log g'))
+    _out.write('%10s  %10s  %10s  %10s\n' % 
+               ('# (Lsun)', '(Kelvin)', '(Msun)', '(cgs)'))
+
+    for ii in range(len(interp_iso.M)):
+        _out.write('%10.4f  %10.4f  %10.4f  %10.4f\n' %
+                   (interp_iso.log_L[ii], interp_iso.log_Teff[ii], interp_iso.M[ii],
+                    interp_iso.log_g[ii]))
+
+    _out.close()
+
+    return
+
+def get_orig_pisa_isochrones(metallicity=0.015):
+    """
+    Helper code to get the original pisa isochrones at given metallicity.
+    These are downloaded online
+    """
+    pms_dir = models_dir + '/Pisa2011/iso/iso_orig/'
+    metSuffix = 'z' + str(metallicity).split('.')[-1]
+    pms_dir += metSuffix + '/'
+
+    if not os.path.exists(pms_dir):
+        print 'Failed to find Siess PMS isochrones for metallicity = ' + metSuffix
+        return
+    
+    # Collect the isochrones
+    files = glob.glob(pms_dir + '*.dat')
+    count = len(files)
+
+    data = objects.DataHolder()
+
+    data.isochrones = []
+    data.log_ages = []
+    
+    # Extract useful params from isochrones
+    for ff in range(len(files)):
+        d = Table.read(files[ff], format='ascii')
+
+        # Extract logAge from filename
+        log_age = float(files[ff].split('_')[2][:-4])
+
+        # Create an isochrone object   
+        iso = Isochrone(log_age)
+        iso.M = d['col3']
+        iso.log_Teff = d['col2']
+        iso.log_L = d['col1']
+
+        # If a log g column exist, extract it. Otherwise, calculate
+        # log g from T and L and add column at end
+        if len(d.keys()) == 3:
+            
+            # Calculate log g from T and L
+            L_sun = 3.8 * 10**33 #cgs
+            SB_sig = 5.67 * 10**-5 #cgs
+            M_sun = 2. * 10**33 #cgs
+            G_const = 6.67 * 10**-8 #cgs
+        
+            radius = np.sqrt( (10**d['col1'] * L_sun) /
+                          (4 * np.pi * SB_sig *  (10**d['col2'])**4) )
+            g = (G_const * d['col3'] * M_sun) / radius**2
+
+
+            iso.log_g = np.log10(g.astype(np.float))
+        else:
+            iso.log_g = d['col4']
+        
+        data.isochrones.append(iso)
+        data.log_ages.append(log_age)
+
+        # If it doesn't already exist, add a column with logg vals. This will
+        # be appended at the end
+        if len(d.keys()) == 3:
+            logg_col = Column(iso.log_g, name = 'col4')
+            d.add_column(logg_col, index=3)
+            d.write(files[ff],format='ascii')
+    data.log_ages = np.array(data.log_ages)
+
+    # Resort so that everything is in order of increasing age
+    sdx = data.log_ages.argsort()
+    data.masses = data.log_ages[sdx]
+    data.isochrones = [data.isochrones[ss] for ss in sdx]
+
+    return data
+
+class Isochrone(object):
+    def __init__(self, log_age):
+        self.log_age = log_age
