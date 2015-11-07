@@ -785,7 +785,7 @@ def organize_PHOENIXv16_atmospheres(path_to_dir):
 def make_PHOENIXv16_catalog(path_to_dir):
     """
     Makes catalog.fits file for Husser+13 phoenix models. Assumes that
-    construct_atmospheres has been run already, and that the models lie
+    organize_PHOENIXv16_atmospheres has been run already, and that the models lie
     in subdirectory phoenixm00.
 
     path_to_directory is the path to the directory with the reformatted
