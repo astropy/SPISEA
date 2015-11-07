@@ -317,7 +317,7 @@ class ParsecStellarEvolution(StellarEvolution):
 
             isoFile = glob.glob('output*')
             print 'Read Input: this is slow'
-            iso = Table.read(isoFile[0], format='ascii')
+            iso = Table.read(isoFile[0], format='fits')
             print 'Done'
     
             ages_all = iso['col2']
@@ -439,25 +439,25 @@ class PisaStellarEvolution(StellarEvolution):
             # Move into directory, check to see if files are already formatted
             os.chdir(metal)
 
-            if os.path.exists('iso_6.00.dat'):
+            if os.path.exists('iso_6.00.fits'):
                 print 'Files in {0:s} already formatted'.format(metal)
             else:
                 # Create a ReadMe with the original file names to preserve the
                 # model details
         
-                cmd = "ls *.DAT > ReadMe"
+                cmd = "ls *.FITS > ReadMe"
                 os.system(cmd)
 
                 # Collect all filenames in a list, rename files one
                 # by one
-                isoFile_list = glob.glob('*.DAT')
+                isoFile_list = glob.glob('*.FITS')
                 for File in isoFile_list:
                     name = File.split('_')
                     # Extract iso age from filename
                     age = float(name[1][1:])
                     logAge = np.log10(age * 10**6)
 
-                    cmd = "mv {0:s} iso_{1:4.2f}.dat".format(File, logAge)
+                    cmd = "mv {0:s} iso_{1:4.2f}.fits".format(File, logAge)
                     os.system(cmd)
 
             # Return to overhead directory
@@ -516,7 +516,7 @@ class MergedPisaEkstromParsec(StellarEvolution):
         
         # convert age (in yrs) to log scale and find nearest value in grid
         age_idx = searchsorted(self.age_list, log_age, side='right')
-        iso_file = 'iso_{0:.2f}.dat'.format(self.age_list[age_idx])
+        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
         z_idx = searchsorted(self.z_list, z_defined, side='left')
@@ -526,7 +526,7 @@ class MergedPisaEkstromParsec(StellarEvolution):
         full_iso_file = self.model_dir + z_dir + iso_file
         
         # return isochrone data
-        iso = Table.read(full_iso_file, format='ascii')
+        iso = Table.read(full_iso_file, format='fits')
         iso.rename_column('col1', 'mass')
         iso.rename_column('col2', 'logT')
         iso.rename_column('col3', 'logL')
@@ -587,7 +587,7 @@ class MergedPisaEkstromParsec_norot(StellarEvolution):
         
         # convert age (in yrs) to log scale and find nearest value in grid
         age_idx = searchsorted(self.age_list, log_age, side='right')
-        iso_file = 'iso_{0:.2f}.dat'.format(self.age_list[age_idx])
+        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
         z_idx = searchsorted(self.z_list, z_defined, side='left')
@@ -597,7 +597,7 @@ class MergedPisaEkstromParsec_norot(StellarEvolution):
         full_iso_file = self.model_dir + z_dir + iso_file
         
         # return isochrone data
-        iso = Table.read(full_iso_file, format='ascii')
+        iso = Table.read(full_iso_file, format='fits')
         iso.rename_column('col1', 'mass')
         iso.rename_column('col2', 'logT')
         iso.rename_column('col3', 'logL')
