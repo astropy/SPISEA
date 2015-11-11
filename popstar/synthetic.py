@@ -114,12 +114,8 @@ class Cluster(object):
         logAgeString = '0%d' % (int(logAge * 100))
 
         # Sample a power-law IMF randomly
-        results = imf.sample_imf(massLimits, imfSlopes, clusterMass,
-                                 makeMultiples=makeMultiples,
-                                 multiMFamp=MFamp, multiMFindex=MFindex,
-                                 multiCSFamp=CSFamp, multiCSFindex=CSFindex,
-                                 multiCSFmax=CSFmax,
-                                 multiQmin=qMin, multiQindex=qIndex)
+        results = imf.generateCluster(clusterMass)
+        
         mass = results[0] # masses of the stars in the simulated cluster
         isMultiple = results[1]
         compMasses = results[2]
