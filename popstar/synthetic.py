@@ -59,7 +59,17 @@ def Vega():
 vega = Vega()
 redlaw = reddening.RedLawNishiyama09()
 
-def model_young_cluster_object():
+def match_model_mass(isoMasses,theMass):
+    dm = np.abs(isoMasses - theMass)
+    mdx = dm.argmin()
+
+    # Model mass has to be within 2% of the desired mass
+    if (dm[mdx] / theMass) > 0.1:
+        return None
+    else:
+        return mdx
+
+def model_young_cluster_object(resolved=False):
     multi = multiplicity.MultiplicityUnresolved()
     imf = imf.Kroupa_2001(multiplicty=multi)
     evo = evolution.MergedPisaEkstromParsec()
@@ -68,8 +78,11 @@ def model_young_cluster_object():
     log_age = 6.5
     AKs = 1.0
     distance = 8000.0
-    
-    cluster = Cluster(log_age, AKs, distance, imf, evo, atm_func)
+
+    if resolved:
+        cluster = ResolvedCluster(log_age, AKs, distance, imf, evo, atm_func)
+    else:
+        cluster = UnresolvedCluster(log_age, AKs, distance, imf, evo, atm_func)
 
     # Plot the spectrum of the most massive star
     idx = cluster.mass.argmax()
@@ -96,28 +109,9 @@ class Cluster(object):
         multiple stars
         """
 
-        return
-
-    
-class ResolvedCluster(Cluster):
-    def __init__(self, logAge, AKs, distance,
-                 imf, evolution_model, atmosphere_func,
-                 verbose=False):  
-        return
-
-            
-class UnresolvedCluster(Cluster):
-    def __init__(self, logAge, AKs, distance,
-                 imf, evolution_model, atmosphere_func,
-                 verbose=False): 
-    
-    
         c = constants
 
         logAgeString = '0%d' % (int(logAge * 100))
-
-        iso = load_isochrone(logAge=logAge, AKs=AKs, distance=distance, evModel=evModel,
-                                       iso_dir=iso_dir)
 
         # Sample a power-law IMF randomly
         results = imf.sample_imf(massLimits, imfSlopes, clusterMass,
@@ -126,42 +120,49 @@ class UnresolvedCluster(Cluster):
                                  multiCSFamp=CSFamp, multiCSFindex=CSFindex,
                                  multiCSFmax=CSFmax,
                                  multiQmin=qMin, multiQindex=qIndex)
-        mass = results[0]
+        mass = results[0] # masses of the stars in the simulated cluster
         isMultiple = results[1]
         compMasses = results[2]
         systemMasses = results[3]
 
-        mag814w = np.zeros(len(mass), dtype=float)
-        mag127m = np.zeros(len(mass), dtype=float)
-        mag139m = np.zeros(len(mass), dtype=float)
-        mag153m = np.zeros(len(mass), dtype=float)
-        magJ = np.zeros(len(mass), dtype=float)
-        magH = np.zeros(len(mass), dtype=float)
-        magK = np.zeros(len(mass), dtype=float)
-        magKp = np.zeros(len(mass), dtype=float)
-        magL = np.zeros(len(mass), dtype=float)
-        temp = np.zeros(len(mass), dtype=float)
-        logg = np.zeros(len(mass), dtype=float)
-        logL = np.zeros(len(mass), dtype=float)
-        isWR = np.zeros(len(mass), dtype=bool)
+        
 
-        def match_model_mass(theMass):
-            dm = np.abs(iso['mass'] - theMass)
-            mdx = dm.argmin()
+    
+class ResolvedCluster(Cluster):
+    def __init__(self, logAge, AKs, distance,
+                 imf, evolution_model, atmosphere_func,
+                 verbose=False):
 
-            # Model mass has to be within 2% of the desired mass
-            if (dm[mdx] / theMass) > 0.1:
-                return None
-            else:
-                return mdx
+        ### to do:
+        ###   --check how I'm loading in the magnitudes
+        ###   --get rid of the stuff at the end?
+        
+        Iso = load_isochrone(logAge=logAge, AKs=AKs, distance=distance, evModel=evModel,
+                                       iso_dir=iso_dir, mag_calc=True)
 
-        for ii in range(len(mass)):
+        mag814w = np.zeros(len(Cluster.mass), dtype=float)
+        mag127m = np.zeros(len(Cluster.mass), dtype=float)
+        mag139m = np.zeros(len(Cluster.mass), dtype=float)
+        mag153m = np.zeros(len(Cluster.mass), dtype=float)
+        magJ = np.zeros(len(Cluster.mass), dtype=float)
+        magH = np.zeros(len(Cluster.mass), dtype=float)
+        magK = np.zeros(len(Cluster.mass), dtype=float)
+        magKp = np.zeros(len(Cluster.mass), dtype=float)
+        magL = np.zeros(len(Cluster.mass), dtype=float)
+        temp = np.zeros(len(Cluster.mass), dtype=float)
+        logg = np.zeros(len(Cluster.mass), dtype=float)
+        logL = np.zeros(len(Cluster.mass), dtype=float)
+        isWR = np.zeros(len(Cluster.mass), dtype=bool)   
+
+        for ii in range(len(Cluster.mass)):
             # Find the closest model mass (returns None, if nothing with dm = 0.1
-            mdx = match_model_mass(mass[ii])
+            mdx = match_model_mass(Iso.mass,Cluster.mass[ii])
             if mdx == None:
                 continue
 
-            mag814w[ii] = iso['mag814w'][mdx]
+            # if end up making the magnitudes attributes of Iso in make/load
+            # isochrone, update this section as in the first one
+            mag814w[ii] = Iso.mag814w[mdx]
             mag127m[ii] = iso['mag127m'][mdx]
             mag139m[ii] = iso['mag139m'][mdx]
             mag153m[ii] = iso['mag153m'][mdx]
@@ -225,49 +226,62 @@ class UnresolvedCluster(Cluster):
         mag127m_noWR = mag127m[idx_noWR]
         num_WR = len(mag127m) - len(idx_noWR)
 
-        cluster = objects.DataHolder()
-        cluster.mass = mass
-        cluster.Teff = temp
-        cluster.logg = logg
-        cluster.logL = logL
-        cluster.isWR = isWR
-        cluster.mag814w = mag814w
-        cluster.mag127m = mag127m
-        cluster.mag139m = mag139m
-        cluster.mag153m = mag153m
-        cluster.magJ = magJ
-        cluster.magH = magH
-        cluster.magK = magK
-        cluster.magKp = magKp
-        cluster.magL = magL
-        cluster.isMultiple = isMultiple
-        cluster.compMasses = compMasses
-        cluster.systemMasses = systemMasses
+# START can I get rid of all this?
+    cluster = objects.DataHolder()
+    cluster.mass = mass
+    cluster.Teff = temp
+    cluster.logg = logg
+    cluster.logL = logL
+    cluster.isWR = isWR
+    cluster.mag814w = mag814w
+    cluster.mag127m = mag127m
+    cluster.mag139m = mag139m
+    cluster.mag153m = mag153m
+    cluster.magJ = magJ
+    cluster.magH = magH
+    cluster.magK = magK
+    cluster.magKp = magKp
+    cluster.magL = magL
+    cluster.isMultiple = isMultiple
+    cluster.compMasses = compMasses
+    cluster.systemMasses = systemMasses
 
-        cluster.idx_noWR = idx_noWR
-        cluster.mag127m_noWR = mag127m_noWR
-        cluster.num_WR = num_WR
+    cluster.idx_noWR = idx_noWR
+    cluster.mag127m_noWR = mag127m_noWR
+    cluster.num_WR = num_WR
 
-        # Summary parameters
-        cluster.logAge = logAge
-        cluster.AKs = AKs
-        cluster.distance = distance
-        cluster.massLimits = massLimits
-        cluster.imfSlopes = imfSlopes
-        cluster.sumIMFmass = clusterMass
-        cluster.makeMultiples = makeMultiples
-        cluster.MFamp = MFamp
-        cluster.MFindex = MFindex
-        cluster.CSFamp = CSFamp
-        cluster.CSFindex = CSFindex
-        cluster.CSFmax = CSFmax
-        cluster.qMin = qMin
-        cluster.qIndex = qIndex
+    # Summary parameters
+    cluster.logAge = logAge
+    cluster.AKs = AKs
+    cluster.distance = distance
+    cluster.massLimits = massLimits
+    cluster.imfSlopes = imfSlopes
+    cluster.sumIMFmass = clusterMass
+    cluster.makeMultiples = makeMultiples
+    cluster.MFamp = MFamp
+    cluster.MFindex = MFindex
+    cluster.CSFamp = CSFamp
+    cluster.CSFindex = CSFindex
+    cluster.CSFmax = CSFmax
+    cluster.qMin = qMin
+    cluster.qIndex = qIndex
 
-        return cluster, iso
-       return
+    return cluster, iso
+# STOP remove the stuff above?
+            
+class UnresolvedCluster(Cluster):
+    def __init__(self, logAge, AKs, distance,
+                 imf, evolution_model, atmosphere_func,
+                 verbose=False): 
 
-    def 
+        Iso = load_isochrone(logAge=logAge, AKs=AKs, distance=distance, evModel=evModel,
+                                       iso_dir=iso_dir, mag_calc=False)
+    
+        # integrate the spectrum over the stellar pop
+
+        
+        
+ 
 
 def evModel_select(evModel):
     evModel_switch = {
@@ -284,11 +298,13 @@ def evModel_select(evModel):
     return pickevModel
         
 
-def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
+class MakeObservedIsochroneHST(object):
+    def __init__(logAge, AKs=defaultAKs, distance=defaultDist,
                                 evModel=defaultEvModel,
                                 iso_dir='./',
                                 verbose=False,
-                                massSampling=2, 
+                                massSampling=2,
+                                mag_calc=False,
                                 filters={'127m': 'wfc3,ir,f127m',
                                          '139m': 'wfc3,ir,f127m',
                                          '153m': 'wfc3,ir,f153m',
@@ -306,17 +322,24 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
                    The isochrones are already very finely sampled. Must be
                    an integer value.
     """
+
+    ### to do:
+    ###  --add more filters?
+    ###  --check star_list initialization
+    ###  --trim spectrum wavelength range to match filter
+        
     startTime = time.time()
 
-    print 'Making isochrone: log(t) = %.2f  AKs = %.2f  dist = %d' % \
+    if mag_calc:
+        print 'Making isochrone: log(t) = %.2f  AKs = %.2f  dist = %d' % \
             (logAge, AKs, distance)
-    print '     Starting at: ', datetime.datetime.now()
-    print '     Usually takes ~5 minutes'
-    print '     Mass sampling = ', massSampling
+        print '     Starting at: ', datetime.datetime.now()
+        print '     Usually takes ~5 minutes'
+        print '     Mass sampling = ', massSampling
 
-    # Define directory where hst_isochrones are made
-    outFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}_{4}.fits'
-    outFile = outFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4), evModel)
+        # Define directory where hst_isochrones are made
+        outFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}_{4}.fits'
+        outFile = outFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4), evModel)
 
     c = constants
     
@@ -337,7 +360,37 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
 
     # Determine which stars are WR stars.
     evol['isWR'] = evol['logT'] != evol['logT_WR']
-    
+  
+    # Convert luminosity to erg/s
+    L_all = 10**evol['logL'] * c.L_sun # luminsoity in erg/s
+
+    temp = 10**evol['logT'] * units.K
+
+    # Calculate radius
+    R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * temp**4))
+
+    # Initialize output for stellar spectra
+    # WHAT IS THE PROPER OUTPUT FOR THIS - FIX
+    spec_list = {}
+
+    # For each temperature extract the synthetic photometry.
+    for ii in range(len(temp)):
+        t2 = time.time()
+        gravity = float( evol['logg'][ii] )
+        L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
+        T = float(  temp[ii] / units.K)               # in Kelvin
+        R = float( R_all[ii].to('pc') / units.pc)              # in pc
+
+        # Get the atmosphere model now. Wavelength is in Angstroms
+        star = atm.get_merged_atmosphere(temperature=T, 
+                                         gravity=gravity)
+        # Trim wavelength range down to JHKL range (0.5 - 4.25 microns)
+        star = spectrum.trimSpectrum(star, 5000, 42500)
+
+        # Convert into flux observed at Earth (unreddened)
+        star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
+        spec_list[ii] = star
+
     # Setup output arrays, filter functions, and reddening laws
     # for each filter requested.
     filt_list = {}
@@ -357,32 +410,9 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
         red = redlaw.reddening(AKs).resample(filt.wave)
         red_list[filt_name] = red
         #pdb.set_trace()
-
-    # Convert luminosity to erg/s
-    L_all = 10**evol['logL'] * c.L_sun # luminsoity in erg/s
-
-    temp = 10**evol['logT'] * units.K
-
-    # Calculate radius
-    R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * temp**4))
-
-    # For each temperature extract the synthetic photometry.
-    for ii in range(len(temp)):
-        t2 = time.time()
-        gravity = float( evol['logg'][ii] )
-        L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
-        T = float(  temp[ii] / units.K)               # in Kelvin
-        R = float( R_all[ii].to('pc') / units.pc)              # in pc
-
-        # Get the atmosphere model now. Wavelength is in Angstroms
-        star = atm.get_merged_atmosphere(temperature=T, 
-                                         gravity=gravity)
-        # Trim wavelength range down to JHKL range (0.5 - 4.25 microns)
-        star = spectrum.trimSpectrum(star, 5000, 42500)
-
-        # Convert into flux observed at Earth (unreddened)
-        star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
-
+    
+    if mag_calc:
+       for ii in range(len(temp)):
         # ----------
         # Now to the filter integrations
         # ----------
@@ -391,7 +421,7 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
             col_name = 'mag' + filt_name
             filt = filt_list[filt_name]
             red = red_list[filt_name]
-            evol[col_name][ii] = mag_in_filter(star, filt, red)
+            evol[col_name][ii] = mag_in_filter(star[ii], filt, red)
         t1 = time.time()
             
         if verbose:
@@ -424,7 +454,8 @@ def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist,
 
 def load_isochrone(logAge=6.78, AKs=defaultAKs, distance=defaultDist,
                    evModel=defaultEvModel,
-                   iso_dir='./', massSampling=3, 
+                   iso_dir='./', massSampling=3,
+                   mag_calc=False, 
                    filters={'127m': 'wfc3,ir,f127m',
                             '139m': 'wfc3,ir,f127m',
                             '153m': 'wfc3,ir,f153m',
@@ -440,16 +471,39 @@ def load_isochrone(logAge=6.78, AKs=defaultAKs, distance=defaultDist,
     Wrapper code that loads an hst isochrone or make a new one if it doesn't
     already exist.
     """
+
+    ### to do:
+    ###   --check the else else statement
+    
     # Define directory where hst_isochrones exist
     inFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}_{4}.fits'
     inFile = inFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4), evModel)
 
-    if not os.path.exists(inFile):
-        make_observed_isochrone_hst(logAge=logAge, AKs=AKs, distance=distance,evModel=evModel,
-                                    iso_dir=iso_dir, massSampling=massSampling,
+    if not mag_calc:
+        iso = MakeObservedIsochroneHST(logAge=logAge, AKs=AKs, distance=distance,evModel=evModel,
+                                    iso_dir=iso_dir, massSampling=massSampling, mag_calc=mag_calc
                                     filters=filters)
-
-    iso = Table.read(inFile)
+    else:
+        if not os.path.exists(inFile):
+            iso = MakeObservedIsochroneHST(logAge=logAge, AKs=AKs, distance=distance,evModel=evModel,
+                                    iso_dir=iso_dir, massSampling=massSampling, mag_calc=mag_calc
+                                    filters=filters)
+        else:
+            iso = MakeObservedIsochroneHST(logAge=logAge, AKs=AKs, distance=distance,evModel=evModel,
+                                    iso_dir=iso_dir, massSampling=massSampling, mag_calc=False
+                                    filters=filters)
+            readmag = Table.read(inFile)
+            # DOES THIS WORK???
+            # if so, need to support within MakeObservedIsochroneHST!
+            iso.mag814w = readmag['mag814w']
+            iso.mag127m = readmag['mag127m']
+            iso.mag139m = readmag['mag139m']
+            iso.mag153m = readmag['mag153m']
+            iso.magJ = readmag['magJ']
+            iso.magH = readmag['magH']
+            iso.magK = readmag['magK']
+            iso.magKp = readmag['magKp']
+            iso.magL = readmag['magL']
 
     return iso
 
