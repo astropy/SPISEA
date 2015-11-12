@@ -267,12 +267,14 @@ class IMF_broken_powerlaw(IMF):
 
 
     def getProbabilityBetween(self, massLo, massHi):
-        """Return the integrated probability between some low and high mass value.
+        """Return the integrated probability between some low and high 
+        mass value.
         """
         return self.int_xi(massLo, massHi)
     
     def int_xi(self, massLo, massHi):
-        """Return the integrated probability between some low and high mass value.
+        """Return the integrated probability between some low and high 
+        mass value.
         """
         return self.prim_xi(massHi) - self.prim_xi(massLo)
     
