@@ -1,5 +1,16 @@
 Matt Hosek
-11/6/15
+11/11/15
+
+========================
+Atmosphere Models Used
+========================
+By default, the atmosphere models adopted in the synthetic isochrones
+are the  ATLAS models Castelli et al. (2004) for temperatures
+greater than 5500 K and the Phoenix v16 models (Husser et al. 2013)
+for temperatures less than 5000 K. For 5000 K < T_eff < 5500 K, an
+average atmosphere between the ATLAS and Phoenix models are used, with
+the ATLAS atmosphere weighted more heavily toward 5500 K and the
+Pheonix atmosphere weighted more heavily toward 5000 K. 
 
 ========================
 Phoenix Models

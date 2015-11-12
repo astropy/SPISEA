@@ -1,6 +1,3 @@
-#
-#
-#
 import math
 import logging
 from numpy import searchsorted, genfromtxt
@@ -8,13 +5,21 @@ import numpy as np
 import os
 import glob
 import pdb
+import warnings
 from astropy.table import Table
 from popstar.utils import objects
 
 log = logging.getLogger('evolution')
 
-models_dir = '/g/lu/models/evolution/'
-
+# Fetch root directory of evolution models.
+try:
+    models_dir = os.environ['POPSTAR_MODELS']
+    models_dir += '/evolution/'
+except KeyError:
+    warnings.warn("POPSTAR_MODELS is undefined; functionality "
+                  "will be SEVERELY crippled.")
+    models_dir = ''
+    
 class StellarEvolution(object):
     def __init__(self, model_dir, age_list, mass_list, z_list):
         self.model_dir = model_dir
@@ -170,11 +175,12 @@ class EkstromStellarEvolution(StellarEvolution):
         Parse iso.dat (filename hardcoded) file downloaded from Ekstrom+12
         models, create individual isochrone files for the different ages.
 
-        input_iso_directory should lead to Ekstrom2012/iso/<metallicity> directory,
-        where iso.dat file should be located
+        input_iso_directory should lead to 
+            Ekstrom2012/iso/<metallicity> 
+        directory, where iso.dat file should be located.
 
-        Creates two new directories, rot and norot, which contain their respective
-        isochrones.
+        Creates two new directories, rot and norot, which contain their 
+        respective isochrones.
         """
         # Store current directory for later
         start_dir = os.getcwd()
