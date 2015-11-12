@@ -264,13 +264,13 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
 
     return sp
 
-def get_atlas_phoenix_atmosphere(metallicity=0, temperature=4000, gravity=4):
+def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     """
     Return atmosphere that is a linear merge of atlas ck04 model and phoenixV16.
 
-    Only valid for temp of 5250 K, gravity from 0 = 5.0 in steps of 0.5
+    Only valid for temps between 5000 - 5500K, gravity from 0 = 5.0 
     """
-    sp = pysynphot.Icat('merged', temperature, metallicity, gravity)
+    sp = pysynphot.Icat('merged_atlas_phoenix', temperature, metallicity, gravity)
 
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
@@ -363,14 +363,14 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
                                       temperature=temperature,
                                       gravity=gravity)
 
-    if (temperature > 5000) & (temperature < 5500):
-        #print 'ATLAS and PHOENIX merged atmosphere used'
-        #return get_atlas_phoenix_atmosphere(metallicity=metallicity,
-        #                                temperature=temperature,
-        #                                 gravity=gravity)
-        return get_phoenixv16_atmosphere(metallicity=metallicity,
-                                      temperature=temperature,
-                                      gravity=gravity)
+    if (temperature >= 5000) & (temperature <= 5500):
+        print 'ATLAS and PHOENIX merged atmosphere used'
+        return get_atlas_phoenix_atmosphere(metallicity=metallicity,
+                                        temperature=temperature,
+                                         gravity=gravity)
+        #return get_phoenixv16_atmosphere(metallicity=metallicity,
+        #                              temperature=temperature,
+        #                              gravity=gravity)
     
     if temperature > 5500:
         return get_castelli_atmosphere(metallicity=metallicity,
