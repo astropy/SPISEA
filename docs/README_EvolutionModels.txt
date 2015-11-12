@@ -1,5 +1,21 @@
 Matt Hosek
-11/6/15
+11/11/15
+
+=========================
+Models Used
+=========================
+The default stellar evolution models used in the synthetic isochrones
+are as follows:
+
+For logAge < 7.4:
+Pisa models (Tognelli et al. 2011) from 0.2 M_sun to the highest mass
+available at that age (typically 5-7 M_sun), and then switching to
+Geneva models (Ekstrom et al. 2012) for the rest of the way.
+
+For logAge > 7.4:
+Use the Parsec v1.2s (Bressan et al. 2012) models throughout entire
+mass range
+
 
 ========================
 Parsec version 1.2s
