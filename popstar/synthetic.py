@@ -29,17 +29,9 @@ import matplotlib
 import time
 import pdb
 
-defaultAKs = 2.4
-defaultDist = 8000
-
-#-----------------------------------------------------#
-# Default settings for model_young_cluster code
-defaultMFamp = 0.44
-defaultMFindex = 0.51
-defaultCSFamp = 0.50
-defaultCSFindex = 0.45
-defaultCSFmax = 3
-#-----------------------------------------------------#
+default_evo_model = evolution.MergedPisaEkstromParsec()
+default_red_law = reddening.RedLawNishiyama09()
+default_atm_func = atm.get_merged_atmosphere
 
 def Vega():
     # Use Vega as our zeropoint... assume V=0.03 mag and all colors = 0.0
@@ -56,149 +48,323 @@ def Vega():
     return vega
 
 vega = Vega()
-redlaw = reddening.RedLawNishiyama09()
 
+def match_model_mass(isoMasses,theMass):
+    dm = np.abs(isoMasses - theMass)
+    mdx = dm.argmin()
 
-def make_observed_isochrone_hst(logAge, AKs=defaultAKs, distance=defaultDist, 
-                                iso_dir='./',
-                                verbose=False,
-                                massSampling=2, 
-                                filters={'127m': 'wfc3,ir,f127m',
-                                         '139m': 'wfc3,ir,f127m',
-                                         '153m': 'wfc3,ir,f153m',
-                                         'J': 'nirc2,J',
-                                         'H': 'nirc2,H',
-                                         'K': 'nirc2,K',
-                                         'Kp': 'nirc2,Kp',
-                                         'L': 'nirc2,Lp',
-                                         '814w': 'acs,wfc1,f814w',
-                                         '125w': 'wfc3,ir,f125w',
-                                         '160w': 'wfc3,ir,f160w'}):
-    """
-    massSampling - Sample the raw isochrone every ## steps. The default
-                   is massSampling = 10, which takes every 10th point.
-                   The isochrones are already very finely sampled. Must be
-                   an integer value.
-    """
-    startTime = time.time()
+    # Model mass has to be within 2% of the desired mass
+    if (dm[mdx] / theMass) > 0.1:
+        return None
+    else:
+        return mdx
 
-    print 'Making isochrone: log(t) = %.2f  AKs = %.2f  dist = %d' % \
-            (logAge, AKs, distance)
-    print '     Starting at: ', datetime.datetime.now()
-    print '     Usually takes ~5 minutes'
-    print '     Mass sampling = ', massSampling
+def model_young_cluster_object(resolved=False):
+    multi = multiplicity.MultiplicityUnresolved()
+    imf = imf.Kroupa_2001(multiplicty=multi)
+    evo = evolution.MergedPisaEkstromParsec()
+    atm_func = atm.get_merged_atmosphere
 
-    # Define directory where hst_isochrones are made
-    outFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}.fits'
-    outFile = outFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4))
+    log_age = 6.5
+    AKs = 1.0
+    distance = 8000.0
 
-    c = constants
-    
-    # Get solar metallicity models for a population at a specific age.
-    evol_model = evolution.MergedPisaEkstromParsec()
-    evol = evol_model.isochrone(age=10**logAge)  # solar metallicity
-    if verbose:
-        print 'Elapsed time while getting merged isochrone: ', \
-          time.time() - startTime
+    if resolved:
+        cluster = ResolvedCluster(log_age, AKs, distance, imf, evo, atm_func)
+    else:
+        cluster = UnresolvedCluster(log_age, AKs, distance, imf, evo, atm_func)
 
-    #Eliminate cases where log g is less than 0
-    idx = np.where(evol['logg'] > 0)
-    evol = evol[idx]
-    
-    # Trim down the table by selecting every Nth point where
-    # N = mass sampling factor.
-    evol = evol[::massSampling]
+    # Plot the spectrum of the most massive star
+    idx = cluster.mass.argmax()
+    plt.clf()
+    plt.plot(cluster.stars[idx].wave, cluster.stars[idx].flux, 'k.')
 
-    # Determine which stars are WR stars.
-    evol['isWR'] = evol['logT'] != evol['logT_WR']
-    
-    # Setup output arrays, filter functions, and reddening laws
-    # for each filter requested.
-    filt_list = {}
-    red_list = {}
-    
-    nrows = len(evol)
-    for filt_name, filt_str in filters.iteritems():
-        # Setup the final output array.
-        mag_col = Column(np.zeros(nrows, dtype=float), name='mag'+filt_name)
-        evol.add_column(mag_col)
-
-        # Get the filter transmission function
-        filt = get_filter_info(filt_str)
-        filt_list[filt_name] = filt
-
-        # Make reddening
-        red = redlaw.reddening(AKs).resample(filt.wave)
-        red_list[filt_name] = red
-        #pdb.set_trace()
-
-    # Convert luminosity to erg/s
-    L_all = 10**evol['logL'] * c.L_sun # luminsoity in erg/s
-
-    temp = 10**evol['logT'] * units.K
-
-    # Calculate radius
-    R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * temp**4))
-
-    # For each temperature extract the synthetic photometry.
-    for ii in range(len(temp)):
-        t2 = time.time()
-        gravity = float( evol['logg'][ii] )
-        L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
-        T = float(  temp[ii] / units.K)               # in Kelvin
-        R = float( R_all[ii].to('pc') / units.pc)              # in pc
-
-        # Get the atmosphere model now. Wavelength is in Angstroms
-        star = atm.get_merged_atmosphere(temperature=T, 
-                                         gravity=gravity)
-        # Trim wavelength range down to JHKL range (0.5 - 4.25 microns)
-        star = spectrum.trimSpectrum(star, 5000, 42500)
-
-        # Convert into flux observed at Earth (unreddened)
-        star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
-
-        # ----------
-        # Now to the filter integrations
-        # ----------
-        t0 = time.time()
-        for filt_name, filt_str in filters.iteritems():
-            col_name = 'mag' + filt_name
-            filt = filt_list[filt_name]
-            red = red_list[filt_name]
-            evol[col_name][ii] = mag_in_filter(star, filt, red)
-        t1 = time.time()
-            
-        if verbose:
-            print 'It took {0:f} for reddening calc'.format(t1 - t0)
-            
-            fmt = 'M = %7.3f Msun  T = %5d K  R = %2.1f Rsun  logg = %4.2f  '
-            vals = [evol['mass'][ii], T, float(R_all[ii] / units.R_sun), evol['logg'][ii]]
-
-            for filt_name, filt_str in filters.iteritems():
-                fmt += filt_name + ' = %4.2f  '
-                vals.append(evol['mag' + filt_name][ii])
-                
-            fmt += 'elapsed time = %4s'
-            vals.append(time.time() - startTime)
-            
-            print  fmt % tuple(vals)
-                
-                
-            t3 = time.time()
-            print 'It took {0:.2f} s to process one star'.format(t3 - t2)
-
-    evol.meta['RedLaw'] = redlaw.name
-    evol.write(outFile, overwrite=True)
-
-    if verbose:
-        endTime = time.time()
-        print '      Time taken: %d seconds' % (endTime - startTime)
+    # Plot an integrated spectrum of the whole cluster.
+    wave, flux = cluster.get_integrated_spectrum()
+    plt.clf()
+    plt.plot(wave, flux, 'k.')
 
     return
 
-def load_isochrone(logAge=6.78, AKs=defaultAKs, distance=defaultDist,
-                   iso_dir='./', massSampling=3, 
-                   filters={'127m': 'wfc3,ir,f127m',
+class Cluster(object):
+    def __init__(self, logAge, AKs, distance,
+                 imf, evolution_model, atmosphere_func,
+                 verbose=False): 
+        """
+        Code to model a cluster with user-specified logAge, AKs, and distance.
+        Must also specify directory containing the isochrone (made using popstar
+        synthetic code).
+
+        Can also specify IMF slope, mass limits, cluster mass, and parameters for
+        multiple stars
+        """
+
+        c = constants
+
+        logAgeString = '0%d' % (int(logAge * 100))
+
+        # Sample a power-law IMF randomly
+        results = imf.generateCluster(clusterMass)
+        
+        self.mass = results[0] # masses of the stars in the simulated cluster
+        isMultiple = results[1]
+        compMasses = results[2]
+        systemMasses = results[3]
+
+        
+
+    
+class ResolvedCluster(Cluster):
+    def __init__(self, logAge, AKs, distance,
+                 imf, evolution_model, atmosphere_func,
+                 verbose=False):
+
+        # this object is going to be handled by Jessica/Matt
+        # don't bother fixing anything further in here
+        
+        Iso = load_isochrone(logAge=logAge, AKs=AKs, distance=distance, evModel=evModel,
+                                       iso_dir=iso_dir, mag_calc=True)
+
+        mag814w = np.zeros(len(Cluster.mass), dtype=float)
+        mag127m = np.zeros(len(Cluster.mass), dtype=float)
+        mag139m = np.zeros(len(Cluster.mass), dtype=float)
+        mag153m = np.zeros(len(Cluster.mass), dtype=float)
+        magJ = np.zeros(len(Cluster.mass), dtype=float)
+        magH = np.zeros(len(Cluster.mass), dtype=float)
+        magK = np.zeros(len(Cluster.mass), dtype=float)
+        magKp = np.zeros(len(Cluster.mass), dtype=float)
+        magL = np.zeros(len(Cluster.mass), dtype=float)
+        temp = np.zeros(len(Cluster.mass), dtype=float)
+        logg = np.zeros(len(Cluster.mass), dtype=float)
+        logL = np.zeros(len(Cluster.mass), dtype=float)
+        isWR = np.zeros(len(Cluster.mass), dtype=bool)   
+
+        for ii in range(len(Cluster.mass)):
+            # Find the closest model mass (returns None, if nothing with dm = 0.1
+            mdx = match_model_mass(Iso.mass,Cluster.mass[ii])
+            if mdx == None:
+                continue
+
+            # if end up making the magnitudes attributes of Iso in make/load
+            # isochrone, update this section as in the first one
+            mag814w[ii] = Iso.mag814w[mdx]
+            mag127m[ii] = iso['mag127m'][mdx]
+            mag139m[ii] = iso['mag139m'][mdx]
+            mag153m[ii] = iso['mag153m'][mdx]
+            magJ[ii] = iso['magJ'][mdx]
+            magH[ii] = iso['magH'][mdx]
+            magK[ii] = iso['magK'][mdx]
+            magKp[ii] = iso['magKp'][mdx]
+            magL[ii] = iso['magL'][mdx]
+
+            temp[ii] = iso['logT'][mdx]
+            logg[ii] = iso['logg'][mdx]
+            logL[ii] = iso['logL'][mdx]
+            isWR[ii] = iso['isWR'][mdx]
+
+
+            # Determine if this system is a binary.
+            if isMultiple[ii]:
+                n_stars = len(compMasses[ii])
+                for cc in range(n_stars):
+                    mdx_cc = match_model_mass(compMasses[ii][cc])
+                    if mdx_cc != None:
+                        f1 = 10**(-mag[ii]/2.5)
+                        f2 = 10**(-iso.mag[mdx_cc]/2.5)
+                        mag[ii] = -2.5 * np.log10(f1 + f2)
+                    else:
+                        print 'Rejected a companion %.2f' % compMasses[ii][cc]
+
+
+        # Get rid of the bad ones
+        idx = np.where(temp != 0)[0]
+        cdx = np.where(temp == 0)[0]
+
+        if len(cdx) > 0 and verbose:
+            print 'Found %d stars out of mass range: Minimum bad mass = %.1f' % \
+                (len(cdx), mass[cdx].min())
+
+        mass = mass[idx]
+        mag814w = mag814w[idx]
+        mag127m = mag127m[idx]
+        mag139m = mag139m[idx]
+        mag153m = mag153m[idx]
+        magJ = magJ[idx]
+        magH = magH[idx]
+        magK = magK[idx]
+        magKp = magKp[idx]
+        magL = magL[idx]
+
+
+        temp = temp[idx]
+        logg = logg[idx]
+        logL = logL[idx]
+        isWR = isWR[idx]
+
+        isMultiple = isMultiple[idx]
+        systemMasses = systemMasses[idx]
+        if makeMultiples:
+            compMasses = [compMasses[ii] for ii in idx]
+
+        idx_noWR = np.where(isWR == False)[0]
+
+        mag127m_noWR = mag127m[idx_noWR]
+        num_WR = len(mag127m) - len(idx_noWR)
+
+
+
+    return cluster, iso
+
+            
+class UnresolvedCluster(Cluster):
+    def __init__(self, logAge, AKs, distance,
+                 imf, evolution_model, atmosphere_func,
+                 verbose=False): 
+
+        Iso = Isochrone(logAge, AKs, distance, evModel)
+
+        self.spec_list = cluster_spec(Iso)
+        self.spec_tot_full = add_all_spectra(self.spec_list)
+        self.spec = apply_filter(self.spec_tot_full)
+        self.mass_all = Iso.mass_all
+        self.log_age = Iso.logAge
+
+    def cluster_spec(isochrone)
+        # get the masses from the sampled IMF
+
+        temp = np.zeros(len(Cluster.mass), dtype=float)
+        # initialize spec object
+        #spec = 
+    
+        for ii in range(len(Cluster.mass)):
+            # Find the closest model mass (returns None, if nothing with dm = 0.1
+            mdx = match_model_mass(isochrone.mass,Cluster.mass[ii])
+            if mdx == None:
+                continue
+
+            temp[ii] = isochrone.T_all[mdx]
+            spec[ii] = isochrone.spec_list[mdx]
+
+        # Get rid of the bad ones
+        idx = np.where(temp != 0)[0]
+        cdx = np.where(temp == 0)[0]
+
+        spec = spec[idx]
+        
+        return spec
+
+    def add_all_spectra(spec_list)
+        # sum all spectra in a list
+
+        
+
+    
+    def apply_filter(spectrum, filter)
+        # trim/resample spectrum to match a given filter
+        
+def get_evo_model_by_string(evo_model_string):
+    return getattr(evolution, evo_model_string)
+
+class Isochrone(object):
+    def __init__(self, logAge, AKs, distance,
+                 evo_model=default_evo_model, atm_func=default_atm_func,
+                 redlaw=default_red_law, mass_sampling=2,
+                 wave_range=[5000, 42500]):
+        """
+        Parameters
+        ----------
+        logAge : float
+        AKs : float
+        distance : float
+        evModel : model cl
+        mass_sampling - Sample the raw isochrone every ## steps. The default
+                       is mass_sampling = 10, which takes every 10th point.
+                       The isochrones are already very finely sampled. Must be
+                       an integer value.
+        wave_range : list
+            length=2 list with the wavelength min/max of the final spectra.
+            Units are Angstroms.
+        """
+
+        c = constants
+
+        # Get solar metallicity models for a population at a specific age.
+        evol_model = evModel_select(evModel)
+        evol = evol_model.isochrone(age=10**logAge)  # solar metallicity
+
+        #Eliminate cases where log g is less than 0
+        idx = np.where(evol['logg'] > 0)
+        evol = evol[idx]
+
+        # Trim down the table by selecting every Nth point where
+        # N = mass sampling factor.
+        evol = evol[::mass_sampling]
+
+        # Determine which stars are WR stars.
+        evol['isWR'] = evol['logT'] != evol['logT_WR']
+
+        # Convert luminosity to erg/s
+        L_all = 10**evol['logL'] * c.L_sun # luminsoity in erg/s
+
+        T_all = 10**evol['logT'] * units.K
+
+        mass_all = evol['mass'] * units.Msun # masses in solar masses
+
+        # Calculate radius
+        R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * temp**4))
+
+        grav_all = evol['logg']
+
+        # Define the table that contains the "average" properties for each star.
+        tab = Table([L_all, T_all, mass_all, R_all, logg], names=['L', 'Teff', 'mass', 'R', 'logg'])
+
+        # Initialize output for stellar spectra
+        self.spec_list = []
+
+        # For each temperature extract the synthetic photometry.
+        for ii in range(len(tab['Teff'])):
+            gravity = float( tab['logg'][ii] )
+            L = float( tab['L'][ii].cgs / (units.erg / units.s)) # in erg/s
+            T = float( tab['Teff'][ii] / units.K)               # in Kelvin
+            R = float( tab['R'][ii].to('pc') / units.pc)              # in pc
+
+            # Get the atmosphere model now. Wavelength is in Angstroms
+            star = atm_func(temperature=T, gravity=gravity)
+            
+            # Trim wavelength range down to JHKL range (0.5 - 4.25 microns)
+            star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
+
+            # Convert into flux observed at Earth (unreddened)
+            star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
+            red = redlaw.reddening(AKs).resample(star.wave)  ## check this
+            star *= red
+            self.spec_list.append(star)
+
+        tab.meta['RedLaw'] = redlaw.name
+        tab.meta['AtmFunc'] = atm_func.__name__
+        tab.meta['EvoModel'] = evo_model.__name__
+        tab.meta['LogAge'] = logAge
+        tab.meta['AKs'] = AKs
+        tab.meta['distance'] = distance
+        tab.meta['wave_min'] = wave_range[0]
+        tab.meta['wave_max'] = wave_range[1]
+
+        self.points = tab
+
+        return
+
+    def trim(self, keep_indices):
+        # Convert luminosity to erg/s
+        self.points = self.points[keep_indices]
+        self.spec_list = self.spec_list[keep_indices]
+
+        return
+
+class IsochronePhot(Isochrone):
+    def __init__(self, logAge, AKs, distance,
+                 evo_model=default_evo_model, redlaw=default_red_law,
+                 mass_sampling=2, iso_dir='./',
+                 filters={'127m': 'wfc3,ir,f127m',
                             '139m': 'wfc3,ir,f127m',
                             '153m': 'wfc3,ir,f153m',
                             'J': 'nirc2,J',
@@ -209,22 +375,39 @@ def load_isochrone(logAge=6.78, AKs=defaultAKs, distance=defaultDist,
                             '814w': 'acs,wfc1,f814w',
                             '125w': 'wfc3,ir,f125w',
                             '160w': 'wfc3,ir,f160w'}):
-    """
-    Wrapper code that loads an hst isochrone or make a new one if it doesn't
-    already exist.
-    """
-    # Define directory where hst_isochrones exist
-    inFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}.fits'
-    inFile = inFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4))
 
-    if not os.path.exists(inFile):
-        make_observed_isochrone_hst(logAge=logAge, AKs=AKs, distance=distance,
-                                    iso_dir=iso_dir, massSampling=massSampling,
-                                    filters=filters)
+        """Make an isochrone with photometry in various filters.
 
-    iso = Table.read(inFile)
+        Description
+        -----------
+        Make an isochrone with photometry in various filters. Load from file
+        or save to file if possible.
 
-    return iso
+        Parameters
+        ----------
+
+        Returns
+        -------
+                 
+        """
+        
+        Isochrone.__init__(logAge, AKs, distance, evo_model=evo_model,
+                           redlaw=red_law, mass_sampling=mass_sampling)
+
+        # Make and input/output file name for the stored isochrone photometry.
+        inFileFmt = '{0}iso_{1:.2f}_hst_{2:4.2f}_{3:4s}.fits'
+        inFile = inFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(4))
+
+        if not os.path.exists(inFile):
+            make_observed_isochrone_hst(logAge=logAge, AKs=AKs, distance=distance,
+                                        iso_dir=iso_dir, massSampling=massSampling,
+                                        filters=filters)
+
+        iso = Table.read(inFile)
+        
+        # Define
+        
+
 
 def make_isochrone_grid():
     """
@@ -276,6 +459,7 @@ def mag_in_filter(star, filter, extinction):
     return star_mag
 
 def model_young_cluster_new(logAge, AKs, distance, iso_dir,
+                            evModel='mergedPisaEkstromParsec',
                             imfSlopes=np.array([-2.35]), massLimits=np.array([1, 150]),
                             clusterMass=1e4, makeMultiples=False,
                             MFamp=defaultMFamp, MFindex=defaultMFindex,
@@ -294,7 +478,7 @@ def model_young_cluster_new(logAge, AKs, distance, iso_dir,
 
     logAgeString = '0%d' % (int(logAge * 100))
 
-    iso = load_isochrone(logAge=logAge, AKs=AKs, distance=distance,
+    iso = load_isochrone(logAge=logAge, AKs=AKs, distance=distance, evModel=evModel,
                                    iso_dir=iso_dir)
 
     # Sample a power-law IMF randomly
