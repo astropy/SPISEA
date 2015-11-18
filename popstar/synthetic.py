@@ -11,7 +11,7 @@ from pysynphot import observation as obs
 import pysynphot
 from astropy import constants, units
 from astropy.table import Table, Column
-from popstar.imf import imf
+from popstar.imf import imf, multiplicity
 from popstar.utils import objects
 import pickle
 import time, datetime
@@ -55,18 +55,19 @@ def match_model_mass(isoMasses,theMass):
 
 def model_young_cluster_object(resolved=False):
     multi = multiplicity.MultiplicityUnresolved()
-    imf = imf.Kroupa_2001(multiplicty=multi)
+    imf_in = imf.Kroupa_2001(multiplicity=multi)
     evo = evolution.MergedPisaEkstromParsec()
     atm_func = atm.get_merged_atmosphere
 
     log_age = 6.5
     AKs = 1.0
     distance = 8000.0
+    cluster_mass = 10.
 
     if resolved:
-        cluster = ResolvedCluster(log_age, AKs, distance, imf, evo, atm_func)
+        cluster = ResolvedCluster(log_age, AKs, distance, cluster_mass, imf_in, evo, atm_func)
     else:
-        cluster = UnresolvedCluster(log_age, AKs, distance, imf, evo, atm_func)
+        cluster = UnresolvedCluster(log_age, AKs, distance, cluster_mass, imf_in, evo, atm_func)
 
     # Plot the spectrum of the most massive star
     idx = cluster.mass.argmax()
@@ -81,7 +82,7 @@ def model_young_cluster_object(resolved=False):
     return
 
 class Cluster(object):
-    def __init__(self, logAge, AKs, distance,
+    def __init__(self, logAge, AKs, distance, clusterMass,
                  imf, evolution_model, atmosphere_func,
                  verbose=False): 
         """
@@ -98,18 +99,18 @@ class Cluster(object):
         logAgeString = '0%d' % (int(logAge * 100))
 
         # Sample a power-law IMF randomly
-        results = imf.generateCluster(clusterMass)
+        results = imf.generate_cluster(clusterMass)
         
         self.mass = results[0] # masses of the stars in the simulated cluster
         isMultiple = results[1]
         compMasses = results[2]
         systemMasses = results[3]
 
-        
+        return
 
     
 class ResolvedCluster(Cluster):
-    def __init__(self, logAge, AKs, distance,
+    def __init__(self, logAge, AKs, distance, clusterMass,
                  imf, evolution_model, atmosphere_func,
                  verbose=False):
 
@@ -211,52 +212,48 @@ class ResolvedCluster(Cluster):
 
             
 class UnresolvedCluster(Cluster):
-    def __init__(self, logAge, AKs, distance,
+    def __init__(self, logAge, AKs, distance, clusterMass,
                  imf, evolution_model, atmosphere_func,
+                 wave_range=[19000.,25000.],
                  verbose=False): 
 
-        Iso = Isochrone(logAge, AKs, distance, evModel)
+        Cluster.__init__(self, logAge, AKs, distance, clusterMass,
+                 imf, evolution_model, atmosphere_func,
+                 verbose=False)
+        
+        Iso = Isochrone(logAge, AKs, distance, evolution_model)
 
-        self.spec_list = cluster_spec(Iso)
-        self.spec_tot_full = add_all_spectra(self.spec_list)
-        self.spec = apply_filter(self.spec_tot_full)
-        self.mass_all = Iso.mass_all
-        self.log_age = Iso.logAge
+        temp = np.zeros(len(self.mass), dtype=float)
+        self.spec_list = [None] * len(self.mass)
 
-        return
-
-    def cluster_spec(isochrone):
-        # get the masses from the sampled IMF
-
-        temp = np.zeros(len(Cluster.mass), dtype=float)
-        # initialize spec object
-        #spec = 
-    
-        for ii in range(len(Cluster.mass)):
+        t1 = time.time()
+        for ii in range(len(self.mass)):
             # Find the closest model mass (returns None, if nothing with dm = 0.1
-            mdx = match_model_mass(isochrone.mass,Cluster.mass[ii])
+            mdx = match_model_mass(Iso.points['mass'],self.mass[ii])
             if mdx == None:
                 continue
 
-            temp[ii] = isochrone.T_all[mdx]
-            spec[ii] = isochrone.spec_list[mdx]
+            temp[ii] = Iso.points['Teff'][mdx]
+            self.spec_list[ii] = Iso.spec_list[mdx]
+
+        t2 = time.time()
+        print 'Mass matching took {0:f}s'.format(t2-t1)
 
         # Get rid of the bad ones
         idx = np.where(temp != 0)[0]
         cdx = np.where(temp == 0)[0]
 
-        spec = spec[idx]
+        self.spec_list = [self.spec_list[iidx] for iidx in idx]
         
-        return spec
+        self.spec_tot_full = np.sum(self.spec_list,0)
+        
+        self.spec_trim = spectrum.trimSpectrum(self.spec_tot_full,wave_range[0],wave_range[1])
 
-    def add_all_spectra(spec_list):
-        # sum all spectra in a list
+        self.mass_all = np.sum(Iso.points['mass'])
+        self.log_age = logAge
+
         return
 
-    
-    def apply_filter(spectrum, filter):
-        # trim/resample spectrum to match a given filter
-        return
         
 def get_evo_model_by_string(evo_model_string):
     return getattr(evolution, evo_model_string)

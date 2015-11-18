@@ -61,7 +61,7 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     # Catch the edge cases for the hotest stars where the newest 
     # evolution models have logg < 4.0 but the atmosphere models
     # aren't available. HACK! FIX!
-    logg_msg = 'Changing to logg={0:3.1f} for T={1:6d} logg={2:4.2f}'
+    logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
     if (temperature > 50000):
         print 'Changing temp from {0:5.0f} to 50000'.format(temperature)
         temperature = 50000
