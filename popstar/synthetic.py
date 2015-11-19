@@ -20,6 +20,7 @@ import os, glob
 import tempfile
 import scipy
 import matplotlib
+import matplotlib.pyplot as plt
 import time
 import pdb
 
@@ -62,7 +63,7 @@ def model_young_cluster_object(resolved=False):
     log_age = 6.5
     AKs = 1.0
     distance = 8000.0
-    cluster_mass = 10.
+    cluster_mass = 100.
 
     if resolved:
         cluster = ResolvedCluster(log_age, AKs, distance, cluster_mass, imf_in, evo, atm_func)
@@ -70,12 +71,16 @@ def model_young_cluster_object(resolved=False):
         cluster = UnresolvedCluster(log_age, AKs, distance, cluster_mass, imf_in, evo, atm_func)
 
     # Plot the spectrum of the most massive star
-    idx = cluster.mass.argmax()
+    idx = cluster.mass_all.argmax()
+    print 'Most massive star is {0:f} M_sun.'.format(cluster.mass_all[idx])
+    #bigstar = cluster.spec_list_trim[idx]
+    plt.figure(1)
     plt.clf()
-    plt.plot(cluster.stars[idx].wave, cluster.stars[idx].flux, 'k.')
+    plt.plot(cluster.spec_list_trim[idx]._wavetable, cluster.spec_list_trim[idx]._fluxtable, 'k.')
 
     # Plot an integrated spectrum of the whole cluster.
-    wave, flux = cluster.get_integrated_spectrum()
+    wave, flux = cluster.spec_trim._wavetable, cluster.spec_trim._fluxtable
+    plt.figure(2)
     plt.clf()
     plt.plot(wave, flux, 'k.')
 
@@ -224,7 +229,9 @@ class UnresolvedCluster(Cluster):
         Iso = Isochrone(logAge, AKs, distance, evolution_model)
 
         temp = np.zeros(len(self.mass), dtype=float)
+        self.mass_all = np.zeros(len(self.mass), dtype=float)
         self.spec_list = [None] * len(self.mass)
+        self.spec_list_trim = [None] * len(self.mass)
 
         t1 = time.time()
         for ii in range(len(self.mass)):
@@ -234,22 +241,27 @@ class UnresolvedCluster(Cluster):
                 continue
 
             temp[ii] = Iso.points['Teff'][mdx]
+            self.mass_all[ii] = Iso.points['mass'][mdx]
             self.spec_list[ii] = Iso.spec_list[mdx]
+            self.spec_list_trim[ii] = spectrum.trimSpectrum(Iso.spec_list[mdx],wave_range[0],wave_range[1])
 
         t2 = time.time()
-        print 'Mass matching took {0:f}s'.format(t2-t1)
+        print 'Mass matching took {0:f} s.'.format(t2-t1)
 
         # Get rid of the bad ones
         idx = np.where(temp != 0)[0]
         cdx = np.where(temp == 0)[0]
 
+        self.mass_all = self.mass_all[idx]
         self.spec_list = [self.spec_list[iidx] for iidx in idx]
+        self.spec_list_trim = [self.spec_list_trim[iidx] for iidx in idx]
         
-        self.spec_tot_full = np.sum(self.spec_list,0)
+        self.spec_tot_full = np.sum(self.spec_list)
         
         self.spec_trim = spectrum.trimSpectrum(self.spec_tot_full,wave_range[0],wave_range[1])
 
-        self.mass_all = np.sum(Iso.points['mass'])
+        self.mass_tot = np.sum(self.mass_all)
+        print 'Total mass is {0:f} M_sun'.format(self.mass_tot)
         self.log_age = logAge
 
         return
@@ -279,6 +291,8 @@ class Isochrone(object):
             Units are Angstroms.
         """
 
+        t1 = time.time()
+        
         c = constants
 
         # Get solar metallicity models for a population at a specific age.
@@ -338,6 +352,9 @@ class Isochrone(object):
 
         self.points = tab
 
+        t2 = time.time()
+        print 'Isochrone generation took {0:f} s.'.format(t2-t1)
+        
         return
 
     def trim(self, keep_indices):
