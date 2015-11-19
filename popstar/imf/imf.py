@@ -26,6 +26,14 @@ class IMF(object):
         self._multi_props = multiplicity
         self._mass_limits = massLimits
 
+        if multiplicity == None:
+            self.make_multiples = False
+        else:
+            self.make_multiples = True
+
+        return
+            
+
     def generate_cluster(self, totalMass):
         """
         Generate a cluster of stellar systems with the specified IMF.
@@ -202,6 +210,11 @@ class IMF_broken_powerlaw(IMF):
         self._powers = powers
         self._multi_props = multiplicity
 
+        if multiplicity == None:
+            self.make_multiples = False
+        else:
+            self.make_multiples = True
+
         # Calculate the coeffs to make the function continuous
         nterms = len(self._powers)
         coeffs = np.ones(nterms, dtype=float)
@@ -267,12 +280,14 @@ class IMF_broken_powerlaw(IMF):
 
 
     def getProbabilityBetween(self, massLo, massHi):
-        """Return the integrated probability between some low and high mass value.
+        """Return the integrated probability between some low and high 
+        mass value.
         """
         return self.int_xi(massLo, massHi)
     
     def int_xi(self, massLo, massHi):
-        """Return the integrated probability between some low and high mass value.
+        """Return the integrated probability between some low and high 
+        mass value.
         """
         return self.prim_xi(massHi) - self.prim_xi(massLo)
     
@@ -715,32 +730,3 @@ def inv_error(x):
     else:
         return -y
     
-def binary_properties(mass, MFamp=defaultMFamp, MFindex=defaultMFindex,
-                      CSFamp=defaultCSFamp, CSFindex=defaultCSFindex, CSFmax=defaultCSFmax):
-    """
-    Given a star's mass, determine the probability that the star is in a
-    multiple system (multiplicity fraction = MF) and its average number of
-    companion stars (companion star fraction = CSF).
-    """
-    # Multiplicity Fraction
-    mf = MFamp * mass**MFindex
-    mf[mf > 1] = 1
-
-    # Companion Star Fraction
-    csf = CSFamp * mass**CSFindex
-    csf[csf > 3] = CSFmax
-
-    return mf, csf
-
-def q_cdf_inv(x, qLo, beta):
-    """
-    Generative function for companion mass ratio (q = m_comp/m_primary).
-
-    Inputs:
-    x -- random number between 0 and 1.
-    qLo -- lowest possible mass ratio
-    beta -- p(q) \propto q^beta
-    """
-    b = 1.0 + beta
-    return (x * (1.0 - qLo**b) + qLo**b)**(1.0/b)
-

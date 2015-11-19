@@ -61,45 +61,45 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     # Catch the edge cases for the hotest stars where the newest 
     # evolution models have logg < 4.0 but the atmosphere models
     # aren't available. HACK! FIX!
+    logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
     if (temperature > 50000):
         print 'Changing temp from {0:5.0f} to 50000'.format(temperature)
         temperature = 50000
     if (temperature > 49000) and (gravity < 5.0):
-        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        print logg_msg.format(5.0, temperature, gravity)
         gravity = 5.0
     if (temperature > 39000) and (gravity < 4.5):
-        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        print logg_msg.format(4.5, temperature, gravity)
         gravity = 4.5
     if (temperature > 31000) and (gravity < 4.0):
-        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        print logg_msg.format(4.0, temperature, gravity)
         gravity = 4.0
     if (temperature > 26000) and (gravity < 3.5):
-        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        print logg_msg.format(3.5, temperature, gravity)
         gravity = 3.5
     if (temperature > 19000) and (gravity < 3.0):
-        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        print logg_msg.format(3.0, temperature, gravity)
         gravity = 3.0
     if (temperature > 11750) and (gravity < 2.5):
-        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        print logg_msg.format(2.5, temperature, gravity)
         gravity = 2.5
-
     if (temperature > 9000) and (gravity < 2.0):
-        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        print logg_msg.format(2.0, temperature, gravity)
         gravity = 2.0
     if (temperature > 8250) and (gravity < 1.5):
-        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        print logg_msg.format(1.5, temperature, gravity)
         gravity = 1.5
     if (temperature > 7500) and (gravity < 1.0):
-        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        print logg_msg.format(1.0, temperature, gravity)
         gravity = 1.0
 
     # Also edge case where gravity > 5.0, set to gravity = 5.0. This
     # is true at all temperatures. HACK!
     if gravity > 5.0:
-        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        print logg_msg.format(5.0, temperature, gravity)
         gravity = 5.0
     if (gravity < 0.5):
-        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        print logg_msg.format(0.5, temperature, gravity)
         gravity = 0.5
         
         
@@ -246,7 +246,8 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
     this is important for spectrophotometry, otherwise it takes forever
     """
     if (gravity < 0.5):
-        print 'Changing gravity for T=', temperature, ' logg=', gravity
+        logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
+        print logg_msg.format(0.5, temperature, gravity)
         gravity = 0.5
         
     if rebin == True:
@@ -364,7 +365,6 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
                                       gravity=gravity)
 
     if (temperature >= 5000) & (temperature <= 5500):
-        print 'ATLAS and PHOENIX merged atmosphere used'
         return get_atlas_phoenix_atmosphere(metallicity=metallicity,
                                         temperature=temperature,
                                          gravity=gravity)
