@@ -1,5 +1,5 @@
 import numpy as np
-import pylab as py
+import pylab as plt
 from popstar import reddening
 from popstar import evolution
 from popstar import atmospheres as atm
@@ -109,105 +109,129 @@ class Cluster(object):
 
     
 class ResolvedCluster(Cluster):
-    def __init__(self, logAge, AKs, distance,
-                 imf, evolution_model, atmosphere_func,
-                 verbose=False):
-
-        # this object is going to be handled by Jessica/Matt
-        # don't bother fixing anything further in here
+    def __init__(self, iso, imf, cluster_mass, verbose=False):
+        self.verbose = verbose
         
-        Iso = load_isochrone(logAge=logAge, AKs=AKs, distance=distance, evModel=evModel,
-                                       iso_dir=iso_dir, mag_calc=True)
+        # Sample the IMF to build up our cluster mass.
+        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
 
-        mag814w = np.zeros(len(Cluster.mass), dtype=float)
-        mag127m = np.zeros(len(Cluster.mass), dtype=float)
-        mag139m = np.zeros(len(Cluster.mass), dtype=float)
-        mag153m = np.zeros(len(Cluster.mass), dtype=float)
-        magJ = np.zeros(len(Cluster.mass), dtype=float)
-        magH = np.zeros(len(Cluster.mass), dtype=float)
-        magK = np.zeros(len(Cluster.mass), dtype=float)
-        magKp = np.zeros(len(Cluster.mass), dtype=float)
-        magL = np.zeros(len(Cluster.mass), dtype=float)
-        temp = np.zeros(len(Cluster.mass), dtype=float)
-        logg = np.zeros(len(Cluster.mass), dtype=float)
-        logL = np.zeros(len(Cluster.mass), dtype=float)
-        isWR = np.zeros(len(Cluster.mass), dtype=bool)   
+        ##### 
+        # Make a table to contain all the information about each stellar system.
+        #####
+        star_systems = Table([mass, isMulti, sysMass],
+                             names=['mass', 'isMultiple', 'systemMass'])
+        N_systems = len(star_systems)
 
-        for ii in range(len(Cluster.mass)):
+        # Add columns for the Teff, L, logg, isWR for the primary stars.
+        star_systems.add_column( Column(np.zeros(N_systems, dtype=float), name='Teff') )
+        star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='L') )
+        star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='logg') )
+        star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='isWR') )
+
+        # Add the filter columns to the table. They are empty so far.
+        # Keep track of the filter names in : filt_names
+        filt_names = []
+        for col_name in iso.points.colnames:
+            if 'mag' in col_name:
+                filt_names.append(col_name)
+                mag_col = Column(np.empty(N_systems, dtype=float), name=col_name)
+                star_systems.add_column(mag_col)
+
+        # Loop through each of the systems and assign magnitudes.
+        for ii in range(N_systems):
             # Find the closest model mass (returns None, if nothing with dm = 0.1
-            mdx = match_model_mass(Iso.mass,Cluster.mass[ii])
+            mdx = match_model_mass(iso.points['mass'], star_systems['mass'][ii])
             if mdx == None:
+                # print 'Rejected a primary star {0:.2f}'.format(star_systems['mass'][ii])
                 continue
 
-            # if end up making the magnitudes attributes of Iso in make/load
-            # isochrone, update this section as in the first one
-            mag814w[ii] = Iso.mag814w[mdx]
-            mag127m[ii] = iso['mag127m'][mdx]
-            mag139m[ii] = iso['mag139m'][mdx]
-            mag153m[ii] = iso['mag153m'][mdx]
-            magJ[ii] = iso['magJ'][mdx]
-            magH[ii] = iso['magH'][mdx]
-            magK[ii] = iso['magK'][mdx]
-            magKp[ii] = iso['magKp'][mdx]
-            magL[ii] = iso['magL'][mdx]
-
-            temp[ii] = iso['logT'][mdx]
-            logg[ii] = iso['logg'][mdx]
-            logL[ii] = iso['logL'][mdx]
-            isWR[ii] = iso['isWR'][mdx]
-
-
-            # Determine if this system is a binary.
-            if isMultiple[ii]:
-                n_stars = len(compMasses[ii])
-                for cc in range(n_stars):
-                    mdx_cc = match_model_mass(compMasses[ii][cc])
-                    if mdx_cc != None:
-                        f1 = 10**(-mag[ii]/2.5)
-                        f2 = 10**(-iso.mag[mdx_cc]/2.5)
-                        mag[ii] = -2.5 * np.log10(f1 + f2)
-                    else:
-                        print 'Rejected a companion %.2f' % compMasses[ii][cc]
-
-
+            star_systems['Teff'][ii] = iso.points['Teff'][mdx]
+            star_systems['L'][ii] = iso.points['L'][mdx]
+            star_systems['logg'][ii] = iso.points['logg'][mdx]
+            star_systems['isWR'][ii] = iso.points['isWR'][mdx]
+            
+            for filt in filt_names:
+                star_systems[filt][ii] = iso.points[filt][mdx]
+                
         # Get rid of the bad ones
-        idx = np.where(temp != 0)[0]
-        cdx = np.where(temp == 0)[0]
+        idx = np.where(star_systems['Teff'] > 0)[0]
+        if len(idx) != N_systems and verbose:
+            print 'Found {0:d} stars out of mass range'.format(N_systems - len(idx))
 
-        if len(cdx) > 0 and verbose:
-            print 'Found %d stars out of mass range: Minimum bad mass = %.1f' % \
-                (len(cdx), mass[cdx].min())
+        star_systems = star_systems[idx]
+        N_systems = len(star_systems)
 
-        mass = mass[idx]
-        mag814w = mag814w[idx]
-        mag127m = mag127m[idx]
-        mag139m = mag139m[idx]
-        mag153m = mag153m[idx]
-        magJ = magJ[idx]
-        magH = magH[idx]
-        magK = magK[idx]
-        magKp = magKp[idx]
-        magL = magL[idx]
+        #####
+        #    MULTIPLICITY                 
+        # Make a second table containing all the companion-star masses.
+        # This table will be much longer... here are the arrays:
+        #    sysIndex - the index of the system this star belongs too
+        #    mass - the mass of this individual star.
+        if imf.make_multiples:
+            # Clean up companion stuff (which we haven't handeled yet)
+            compMass = [compMass[ii] for ii in idx]
+            N_companions = np.array([len(star_masses) for star_masses in compMass])
+            star_systems.add_column( Column(N_companions, name='N_companions') )
 
+            N_comp_tot = N_companions.sum()
+            system_index = np.repeat(np.arange(N_systems), N_companions)
 
-        temp = temp[idx]
-        logg = logg[idx]
-        logL = logL[idx]
-        isWR = isWR[idx]
+            companions = Table([system_index], names=['system_idx'])
 
-        isMultiple = isMultiple[idx]
-        systemMasses = systemMasses[idx]
-        if makeMultiples:
-            compMasses = [compMasses[ii] for ii in idx]
+            # Add columns for the Teff, L, logg, isWR, filters for the companion stars.
+            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='mass') )
+            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Teff') )
+            companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='L') )
+            companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='logg') )
+            companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='isWR') )
+            for filt in filt_names:
+                companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
+            
+            kk = 0
 
-        idx_noWR = np.where(isWR == False)[0]
+            # Loop through each star system
+            for ii in range(N_systems):
+                # Determine if this system is a multiple star system.
+                if star_systems['isMultiple'][ii]:
+                    
+                    # Loop through the companions in this system
+                    for cc in range(N_companions[ii]):
+                        companions['mass'][kk] = compMass[ii][cc]
+                        mdx_cc = match_model_mass(iso.points['mass'], compMass[ii][cc])
+                        
+                        if mdx_cc != None:
+                            companions['Teff'][kk] = iso.points['Teff'][mdx_cc]
+                            companions['L'][kk] = iso.points['L'][mdx_cc]
+                            companions['logg'][kk] = iso.points['logg'][mdx_cc]
+                            companions['isWR'][kk] = iso.points['isWR'][mdx_cc]
+                            
+                            for filt in filt_names:
+                                f1 = 10**(-star_systems[filt][ii] / 2.5)
+                                f2 = 10**(-iso.points[filt][mdx_cc] / 2.5)
+                                
+                                companions[filt][kk] = iso.points[filt][mdx_cc]
+                                star_systems[filt][ii] = -2.5 * np.log10(f1 + f2)
 
-        mag127m_noWR = mag127m[idx_noWR]
-        num_WR = len(mag127m) - len(idx_noWR)
+                            kk += 1
+                        
+                        # else:
+                        #     print 'Rejected a companion %.2f' % compMass[ii][cc]
+                            
+            # Get rid of the bad ones
+            idx = np.where(companions['Teff'] > 0)[0]
+            if len(idx) != N_comp_tot and self.verbose:
+                print 'Found {0:d} companions out of mass range'.format(N_comp_tot - len(idx))
 
+            # Double check that everything behaved properly.
+            assert companions['mass'][idx].min() > 0
 
+        # Save our arrays to the object
+        self.star_systems = star_systems
+        
+        if imf.make_multiples:
+            self.companions = companions
 
-        return cluster, iso
+        return
 
             
 class UnresolvedCluster(Cluster):
@@ -264,7 +288,7 @@ def get_evo_model_by_string(evo_model_string):
 class Isochrone(object):
     def __init__(self, logAge, AKs, distance,
                  evo_model=default_evo_model, atm_func=default_atm_func,
-                 redlaw=default_red_law, mass_sampling=2,
+                 red_law=default_red_law, mass_sampling=1,
                  wave_range=[5000, 42500]):
         """
         Parameters
@@ -285,9 +309,10 @@ class Isochrone(object):
         c = constants
 
         # Get solar metallicity models for a population at a specific age.
+        # Takes about 0.1 seconds.
         evol = evo_model.isochrone(age=10**logAge)  # solar metallicity
 
-        #Eliminate cases where log g is less than 0
+        # Eliminate cases where log g is less than 0
         idx = np.where(evol['logg'] > 0)
         evol = evol[idx]
 
@@ -304,21 +329,26 @@ class Isochrone(object):
         R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * T_all**4))
         mass_all = evol['mass'] * units.Msun # masses in solar masses
         logg_all = evol['logg']
+        isWR_all = evol['isWR']
 
         # Define the table that contains the "average" properties for each star.
-        tab = Table([L_all, T_all, R_all, mass_all, logg_all], names=['L', 'Teff', 'R', 'mass', 'logg'])
+        tab = Table([L_all, T_all, R_all, mass_all, logg_all, isWR_all],
+                    names=['L', 'Teff', 'R', 'mass', 'logg', 'isWR'])
 
         # Initialize output for stellar spectra
         self.spec_list = []
 
         # For each temperature extract the synthetic photometry.
         for ii in range(len(tab['Teff'])):
-            gravity = float( tab['logg'][ii] )
-            L = float( tab['L'].quantity[ii].cgs / (units.erg / units.s)) # in erg/s
-            T = float( tab['Teff'].quantity[ii] / units.K)               # in Kelvin
-            R = float( tab['R'].quantity[ii].to('pc') / units.pc)              # in pc
+            # Loop is currently taking about 0.11 s per iteration
+
+            gravity = float( logg_all[ii] )
+            L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
+            T = float( T_all[ii] / units.K)               # in Kelvin
+            R = float( R_all[ii].to('pc') / units.pc)              # in pc
 
             # Get the atmosphere model now. Wavelength is in Angstroms
+            # This is the time-intensive call... everything else is negligable.
             star = atm_func(temperature=T, gravity=gravity)
             
             # Trim wavelength range down to JHKL range (0.5 - 4.25 microns)
@@ -326,18 +356,23 @@ class Isochrone(object):
 
             # Convert into flux observed at Earth (unreddened)
             star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
-            red = redlaw.reddening(AKs).resample(star.wave)  ## check this
+
+            # Redden the spectrum. This doesn't take much time at all.
+            red = red_law.reddening(AKs).resample(star.wave) 
             star *= red
+
+            # Save the final spectrum to our spec_list for later use.            
             self.spec_list.append(star)
 
-        tab.meta['RedLaw'] = redlaw.name
-        tab.meta['AtmFunc'] = atm_func.__name__
-        tab.meta['EvoModel'] = type(evo_model).__name__
-        tab.meta['LogAge'] = logAge
-        tab.meta['AKs'] = AKs
-        tab.meta['distance'] = distance
-        tab.meta['wave_min'] = wave_range[0]
-        tab.meta['wave_max'] = wave_range[1]
+        # Append all the meta data to the summary table.
+        tab.meta['REDLAW'] = red_law.name
+        tab.meta['ATMFUNC'] = atm_func.__name__
+        tab.meta['EVOMODEL'] = type(evo_model).__name__
+        tab.meta['LOGAGE'] = logAge
+        tab.meta['AKS'] = AKs
+        tab.meta['DISTANCE'] = distance
+        tab.meta['WAVEMIN'] = wave_range[0]
+        tab.meta['WAVEMAX'] = wave_range[1]
 
         self.points = tab
 
@@ -350,21 +385,61 @@ class Isochrone(object):
 
         return
 
+    def plot_HR_diagram(self, savefile=None):
+        """
+        Make a standard HR diagram for this isochrone.
+        """
+        plt.clf()
+        plt.loglog(self.points['Teff'], self.points['L'],
+                   color='black', linestyle='solid', marker='+')
+        plt.gca().invert_xaxis()
+        plt.xlabel(r'T$_{\mathrm{eff}}$ (K)')
+        plt.ylabel('Luminosity (erg / s)')
+        
+        fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
+        plt.title(fmt_title.format(self.points.meta['LOGAGE'],
+                                  self.points.meta['DISTANCE']/1e3,
+                                  self.points.meta['AKS']))
+
+        if savefile != None:
+            plt.savefig(savefile)
+        
+        return
+
+    def plot_mass_luminosity(self, savefile=None):
+        """
+        Make a standard mass-luminosity relation plot for this isochrone.
+        """
+        plt.clf()
+        plt.loglog(self.points['mass'], self.points['L'], 'k.')
+        plt.xlabel(r'Mass (M$_\odot$)')
+        plt.ylabel('Luminosity (erg / s)')
+        
+        fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
+        plt.title(fmt_title.format(self.points.meta['LOGAGE'],
+                                  self.points.meta['DISTANCE']/1e3,
+                                  self.points.meta['AKS']))
+        
+        if savefile != None:
+            plt.savefig(savefile)
+        
+        return
+
 class IsochronePhot(Isochrone):
     def __init__(self, logAge, AKs, distance,
                  evo_model=default_evo_model, atm_func=default_atm_func,
-                 redlaw=default_red_law, mass_sampling=2, iso_dir='./',
+                 red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  filters={'127m': 'wfc3,ir,f127m',
-                            '139m': 'wfc3,ir,f127m',
-                            '153m': 'wfc3,ir,f153m',
-                            'J': 'nirc2,J',
-                            'H': 'nirc2,H',
-                            'K': 'nirc2,K',
-                            'Kp': 'nirc2,Kp',
-                            'L': 'nirc2,Lp',
-                            '814w': 'acs,wfc1,f814w',
-                            '125w': 'wfc3,ir,f125w',
-                            '160w': 'wfc3,ir,f160w'}):
+                          '139m': 'wfc3,ir,f127m',
+                          '153m': 'wfc3,ir,f153m',
+                          'J': 'nirc2,J',
+                          'H': 'nirc2,H',
+                          'K': 'nirc2,K',
+                          'Kp': 'nirc2,Kp',
+                          'L': 'nirc2,Lp',
+                          '814w': 'acs,wfc1,f814w',
+                          '125w': 'wfc3,ir,f125w',
+                          '160w': 'wfc3,ir,f160w'}):
 
         """Make an isochrone with photometry in various filters.
 
@@ -381,20 +456,21 @@ class IsochronePhot(Isochrone):
                  
         """
         
-        Isochrone.__init__(self, logAge, AKs, distance,
-                           evo_model=evo_model, atm_func=atm_func,
-                           redlaw=red_law, mass_sampling=mass_sampling)
-
         # Make and input/output file name for the stored isochrone photometry.
-        inFileFmt = '{0}iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
-        inFile = inFileFmt.format(iso_dir, logAge, AKs, str(distance).zfill(5))
+        save_file_fmt = '{0}iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
+        self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5))
 
-        if not os.path.exists(inFile):
-            make_observed_isochrone_hst(logAge=logAge, AKs=AKs, distance=distance,
-                                        iso_dir=iso_dir, massSampling=massSampling,
-                                        filters=filters)
+        # Expected filters
+        self.filters = filters
+
+        if not os.path.exists(self.save_file):
+            Isochrone.__init__(self, logAge, AKs, distance,
+                               evo_model=evo_model, atm_func=atm_func,
+                               red_law=red_law, mass_sampling=mass_sampling)
+            self.verbose = True
+            self.make_photometry()
         else:
-            iso = Table.read(inFile)
+            self.points = Table.read(self.save_file)
             # Add some error checking.
 
         return
@@ -415,17 +491,19 @@ class IsochronePhot(Isochrone):
         """
         startTime = time.time()
 
+        meta = self.points.meta
+
         print 'Making photometry for isochrone: log(t) = %.2f  AKs = %.2f  dist = %d' % \
-            (logAge, AKs, distance)
+            (meta['LOGAGE'], meta['AKS'], meta['DISTANCE'])
         print '     Starting at: ', datetime.datetime.now(), '  Usually takes ~5 minutes'
 
         npoints = len(self.points)
-        verbose_fmt = 'M = {0:7.3f} Msun  T = {1:5d} K  m_{2:s} = {3:4.2f}'
+        verbose_fmt = 'M = {0:7.3f} Msun  T = {1:5.0f} K  m_{2:s} = {3:4.2f}'
 
         # Loop through the filters, get filter info, make photometry for
         # all stars in this filter.
         for filt_name, filt_str in self.filters.iteritems():
-            prt_fmt = 'Starting filter: {0:s}   Elapse time: {1:d} seconds'
+            prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
             print prt_fmt.format(filt_name, time.time() - startTime)
             
             filt = get_filter_info(filt_str)
@@ -443,14 +521,74 @@ class IsochronePhot(Isochrone):
                 self.points[col_name][ss] = star_mag
         
                 if (self.verbose and (ss % 100) == 0):
-                    print verbose_mt.format(self.points['mass'][ss], self.points['Teff'][ss],
-                                            filtName, star_mag)
+                    print verbose_fmt.format(self.points['mass'][ss], self.points['Teff'][ss],
+                                             filt_name, star_mag)
 
         endTime = time.time()
-        print '      Time taken: %d seconds' % (endTime - startTime)
+        print '      Time taken: {0:.2f} seconds'.format(endTime - startTime)
+
+        if self.save_file != None:
+            self.points.write(self.save_file)
 
         return
 
+    def plot_CMD(self, mag1, mag2, savefile=None):
+        """
+        Make a CMD with mag1 vs. mag1 - mag2
+
+        Parameters
+        ----------
+        mag1 : string
+            The name of the first magnitude column to be plotted.
+        mag2 : string
+            The name of the second magnitude column to be plotted.
+        savefile : string (default None)
+            If a savefile is specified, then the plot will be saved to that file. 
+        """
+        plt.clf()
+        plt.plot(self.points[mag1] - self.points[mag2], self.points[mag1],
+                 color='black', linestyle='solid', marker='+')
+        plt.gca().invert_yaxis()
+        plt.xlabel(mag1 + ' - ' + mag2 + ' (mag)')
+        plt.ylabel(mag1 + ' (mag)')
+        
+        fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
+        plt.title(fmt_title.format(self.points.meta['LOGAGE'],
+                                  self.points.meta['DISTANCE']/1e3,
+                                  self.points.meta['AKS']))
+
+        if savefile != None:
+            plt.savefig(savefile)
+        
+        return
+
+    def plot_mass_magnitude(self, mag, savefile=None):
+        """
+        Make a standard mass-luminosity relation plot for this isochrone.
+        
+        Parameters
+        ----------
+        mag : string
+            The name of the magnitude column to be plotted.
+        savefile : string (default None)
+            If a savefile is specified, then the plot will be saved to that file. 
+        """
+        plt.clf()
+        plt.semilogx(self.points['mass'], self.points[mag], 'k.')
+        plt.gca().invert_yaxis()
+        plt.xlabel(r'Mass (M$_\odot$)')
+        plt.ylabel(mag + ' (mag)')
+        
+        fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
+        plt.title(fmt_title.format(self.points.meta['LOGAGE'],
+                                  self.points.meta['DISTANCE']/1e3,
+                                  self.points.meta['AKS']))
+        
+        if savefile != None:
+            plt.savefig(savefile)
+        
+        return
+    
 def make_isochrone_grid():
     """
     Helper routine to make a isochrone grid. logAge is
@@ -474,6 +612,17 @@ def get_filter_info(name, vega=vega):
         filt = nirc2syn.FilterNIRC2(filterName)
     else:
         filt = ObsBandpass(name)
+        
+        # Convert to ArraySpectralElement for resampling.
+        filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
+                                             waveunits=filt.waveunits,
+                                             name=filt.name)
+
+    # Resample the filter to have 1500 points across. More is excessive.
+    if len(filt.wave) > 1500:
+        idx = np.where(filt.throughput > 0.001)[0]
+        new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
+        filt = filt.resample(new_wave) 
 
     vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
     vega_flux = vega_obs.binflux.sum()
