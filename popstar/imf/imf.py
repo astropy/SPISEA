@@ -26,6 +26,14 @@ class IMF(object):
         self._multi_props = multiplicity
         self._mass_limits = massLimits
 
+        if multiplicity == None:
+            self.make_multiples = False
+        else:
+            self.make_multiples = True
+
+        return
+            
+
     def generate_cluster(self, totalMass):
         """
         Generate a cluster of stellar systems with the specified IMF.
@@ -201,6 +209,11 @@ class IMF_broken_powerlaw(IMF):
         self._m_limits_high = mass_limits[1:]
         self._powers = powers
         self._multi_props = multiplicity
+
+        if multiplicity == None:
+            self.make_multiples = False
+        else:
+            self.make_multiples = True
 
         # Calculate the coeffs to make the function continuous
         nterms = len(self._powers)
