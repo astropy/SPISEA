@@ -146,3 +146,33 @@ def test_ResolvedCluster():
 
     return
     
+def test_UnresolvedCluster():
+    from popstar import synthetic as syn
+    from popstar import atmospheres as atm
+    from popstar import evolution
+    from popstar.imf import imf
+    from popstar.imf import multiplicity
+    
+    log_age = 6.7
+    AKs = 2.7
+    distance = 4000
+    cluster_mass = 30.
+
+    startTime = time.time()    
+    multi = multiplicity.MultiplicityUnresolved()
+    imf_in = imf.Kroupa_2001(multiplicity=multi)
+    evo = evolution.MergedPisaEkstromParsec()
+    iso = syn.Isochrone(log_age, AKs, distance, evo, mass_sampling=2)
+    print 'Made cluster: %d seconds' % (time.time() - startTime)
+
+    cluster = syn.UnresolvedCluster(iso, imf_in, cluster_mass)
+    print 'Constructed unresolved cluster: %d seconds' % (time.time() - startTime)
+
+    # Plot an integrated spectrum of the whole cluster.
+    wave = cluster.spec_trim.wave
+    flux = cluster.spec_trim.flux
+    plt.clf()
+    plt.plot(wave, flux, 'k.')
+
+    return
+
