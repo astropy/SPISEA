@@ -201,6 +201,9 @@ class ResolvedCluster(Cluster):
 class UnresolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass,
                  wave_range=[5000, 50000], verbose=False):
+        """
+        iso : Isochrone
+        """
         # Doesn't do much.
         Cluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
         
@@ -395,7 +398,7 @@ class IsochronePhot(Isochrone):
                           'H': 'nirc2,H',
                           'K': 'nirc2,K',
                           'Kp': 'nirc2,Kp',
-                          'L': 'nirc2,Lp',
+                          'Lp': 'nirc2,Lp',
                           '814w': 'acs,wfc1,f814w',
                           '125w': 'wfc3,ir,f125w',
                           '160w': 'wfc3,ir,f160w'}):
@@ -548,18 +551,6 @@ class IsochronePhot(Isochrone):
         
         return
     
-def make_isochrone_grid():
-    """
-    Helper routine to make a isochrone grid. logAge is
-    hardcoded.
-    """
-    logAge_arr = np.arange(6.0, 6.7, 0.01)
-
-    for i in logAge_arr:
-        load_isochrone(i)
-
-    return
-
 
 # Little helper utility to get all the bandpass/zeropoint info.
 def get_filter_info(name, vega=vega):
