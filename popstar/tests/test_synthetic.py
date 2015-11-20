@@ -176,3 +176,34 @@ def test_UnresolvedCluster():
 
     return
 
+def model_young_cluster_object(resolved=False):
+    multi = multiplicity.MultiplicityUnresolved()
+    imf_in = imf.Kroupa_2001(multiplicity=multi)
+    evo = evolution.MergedPisaEkstromParsec()
+    atm_func = atm.get_merged_atmosphere
+
+    log_age = 6.5
+    AKs = 1.0
+    distance = 8000.0
+    cluster_mass = 100.
+
+    if resolved:
+        cluster = ResolvedCluster(log_age, AKs, distance, cluster_mass, imf_in, evo, atm_func)
+    else:
+        cluster = UnresolvedCluster(log_age, AKs, distance, cluster_mass, imf_in, evo, atm_func)
+
+    # Plot the spectrum of the most massive star
+    idx = cluster.mass_all.argmax()
+    print 'Most massive star is {0:f} M_sun.'.format(cluster.mass_all[idx])
+    #bigstar = cluster.spec_list_trim[idx]
+    plt.figure(1)
+    plt.clf()
+    plt.plot(cluster.spec_list_trim[idx]._wavetable, cluster.spec_list_trim[idx]._fluxtable, 'k.')
+
+    # Plot an integrated spectrum of the whole cluster.
+    wave, flux = cluster.spec_trim._wavetable, cluster.spec_trim._fluxtable
+    plt.figure(2)
+    plt.clf()
+    plt.plot(wave, flux, 'k.')
+
+    return
