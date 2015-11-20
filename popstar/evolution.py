@@ -861,6 +861,83 @@ def compare_Baraffe_Pisa(BaraffeIso, PisaIso):
 #==============================#
 # Merged model classes
 #==============================#
+class MergedBaraffePisaEkstromParsec(StellarEvolution):
+    def __init__(self):
+        """
+        Define intrinsic properties for merged Baraffe-Pisa-Ekstrom-Parsec
+        stellar models.
+        """
+        # populate list of model masses (in solar masses)
+        mass_list = [(0.1 + i*0.005) for i in range(181)]
+        
+        # define metallicity parameters for Geneva models
+        z_list = [0.015]
+        
+        # populate list of isochrone ages (log scale)
+        age_list = np.arange(6.0, 8.001, 0.01).tolist()
+        
+        # specify location of model files
+        model_dir = models_dir + 'merged/baraffe_pisa_ekstrom_parsec/'
+        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+        self.z_solar = 0.015
+        self.z_file_map = {0.015: 'z015/'}
+
+        
+    def massTrack(self, mass=0.5, metallicity=0.0):
+        r"""
+        Extract an individual mass track from the Geneva collection.
+        
+        """
+        return
+        
+    
+    def isochrone(self, age=1.e8, metallicity=0.0, rot=True):
+        r"""
+        Extract an individual isochrone from the Geneva collection.
+        """
+        # convert metallicity to mass fraction
+        z_defined = self.z_solar*10.**metallicity
+
+        log_age = math.log10(age)
+        
+        # check age and metallicity are within bounds
+        if (log_age < self.age_list[0]) or (log_age > self.age_list[-1]):
+            logger.error('Requested age is out of bounds.')
+            
+        if not z_defined in self.z_list:
+            logger.error('Requested metallicity is out of bounds.')
+        
+        # convert age (in yrs) to log scale and find nearest value in grid
+        age_idx = searchsorted(self.age_list, log_age, side='right')
+        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
+        
+        # find closest metallicity value
+        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        z_dir = self.z_file_map[self.z_list[z_idx]]
+
+        # Add rotation information to z_dir string
+        if rot:
+            z_dir = z_dir[:-1]+'_rot/'
+        else:
+            z_dir = z_dir[:-1]+'_norot/'
+
+        # generate isochrone file string
+        full_iso_file = self.model_dir + z_dir + iso_file
+        
+        # return isochrone data
+        iso = Table.read(full_iso_file, format='fits')
+        iso.rename_column('col1', 'mass')
+        iso.rename_column('col2', 'logT')
+        iso.rename_column('col3', 'logL')
+        iso.rename_column('col4', 'logg')
+        iso.rename_column('col5', 'logT_WR')
+        iso.rename_column('col6', 'model_ref')
+
+        iso.meta['log_age'] = log_age
+        iso.meta['metallicity'] = metallicity
+        
+        return iso
+
 
 class MergedPisaEkstromParsec(StellarEvolution):
     def __init__(self):
@@ -892,7 +969,7 @@ class MergedPisaEkstromParsec(StellarEvolution):
         return
         
     
-    def isochrone(self, age=1.e8, metallicity=0.0):
+    def isochrone(self, age=1.e8, metallicity=0.0, rot=True):
         r"""
         Extract an individual isochrone from the Geneva collection.
         """
@@ -915,10 +992,16 @@ class MergedPisaEkstromParsec(StellarEvolution):
         # find closest metallicity value
         z_idx = searchsorted(self.z_list, z_defined, side='left')
         z_dir = self.z_file_map[self.z_list[z_idx]]
-        
+
+        # Add rotation information to z_dir string
+        if rot:
+            z_dir = z_dir[:-1]+'_rot/'
+        else:
+            z_dir = z_dir[:-1]+'_norot/'
+
         # generate isochrone file string
         full_iso_file = self.model_dir + z_dir + iso_file
-        
+
         # return isochrone data
         iso = Table.read(full_iso_file, format='fits')
         iso.rename_column('col1', 'mass')
@@ -1142,74 +1225,80 @@ class Isochrone(object):
     def __init__(self, log_age):
         self.log_age = log_age
 
+
+
+#------------------------------------------------------#
+# OUTDATED: now have specific flag to specify rot/norot
+# in class.isochrone
+#------------------------------------------------------#
         
-class MergedPisaEkstromParsec_norot(StellarEvolution):
-    def __init__(self):
-        """
-        Define intrinsic properties for merged Pisa-Ekstrom-Parsec
-        stellar models.
-        """
-        # populate list of model masses (in solar masses)
-        mass_list = [(0.1 + i*0.005) for i in range(181)]
-        
-        # define metallicity parameters for Geneva models
-        z_list = [0.015]
-        
-        # populate list of isochrone ages (log scale)
-        age_list = np.arange(6.0, 8.001, 0.01).tolist()
-        
-        # specify location of model files
-        model_dir = models_dir + 'merged/pisa_ekstrom_parsec/norot/'
-        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
-        self.z_solar = 0.015
-        self.z_file_map = {0.015: 'z015/'}
+#class MergedPisaEkstromParsec_norot(StellarEvolution):
+#    def __init__(self):
+#        """
+#        Define intrinsic properties for merged Pisa-Ekstrom-Parsec
+#        stellar models.
+#        """
+#        # populate list of model masses (in solar masses)
+#        mass_list = [(0.1 + i*0.005) for i in range(181)]
+#        
+#        # define metallicity parameters for Geneva models
+#        z_list = [0.015]
+#        
+#        # populate list of isochrone ages (log scale)
+#        age_list = np.arange(6.0, 8.001, 0.01).tolist()
+#        
+#        # specify location of model files
+#        model_dir = models_dir + 'merged/pisa_ekstrom_parsec/norot/'
+#        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+#        self.z_solar = 0.015
+#        self.z_file_map = {0.015: 'z015/'}
 
         
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Geneva collection.
-        
-        """
-        return
+#    def massTrack(self, mass=0.5, metallicity=0.0):
+#        r"""
+#        Extract an individual mass track from the Geneva collection.
+#        
+#        """
+#        return
         
     
-    def isochrone(self, age=1.e8, metallicity=0.0):
-        r"""
-        Extract an individual isochrone from the Geneva collection.
-        """
-        # convert metallicity to mass fraction
-        z_defined = self.z_solar*10.**metallicity
+#    def isochrone(self, age=1.e8, metallicity=0.0):
+#        r"""
+#        Extract an individual isochrone from the Geneva collection.
+#        """
+#        # convert metallicity to mass fraction
+#        z_defined = self.z_solar*10.**metallicity
 
-        log_age = math.log10(age)
+#        log_age = math.log10(age)
         
         # check age and metallicity are within bounds
-        if (log_age < self.age_list[0]) or (log_age > self.age_list[-1]):
-            logger.error('Requested age is out of bounds.')
+#        if (log_age < self.age_list[0]) or (log_age > self.age_list[-1]):
+#            logger.error('Requested age is out of bounds.')
             
-        if not z_defined in self.z_list:
-            logger.error('Requested metallicity is out of bounds.')
+#        if not z_defined in self.z_list:
+#            logger.error('Requested metallicity is out of bounds.')
         
         # convert age (in yrs) to log scale and find nearest value in grid
-        age_idx = searchsorted(self.age_list, log_age, side='right')
-        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
+#        age_idx = searchsorted(self.age_list, log_age, side='right')
+#        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        z_idx = searchsorted(self.z_list, z_defined, side='left')
-        z_dir = self.z_file_map[self.z_list[z_idx]]
+#        z_idx = searchsorted(self.z_list, z_defined, side='left')
+#        z_dir = self.z_file_map[self.z_list[z_idx]]
         
         # generate isochrone file string
-        full_iso_file = self.model_dir + z_dir + iso_file
+#        full_iso_file = self.model_dir + z_dir + iso_file
         
         # return isochrone data
-        iso = Table.read(full_iso_file, format='fits')
-        iso.rename_column('col1', 'mass')
-        iso.rename_column('col2', 'logT')
-        iso.rename_column('col3', 'logL')
-        iso.rename_column('col4', 'logg')
-        iso.rename_column('col5', 'logT_WR')
-        iso.rename_column('col6', 'model_ref')
+#        iso = Table.read(full_iso_file, format='fits')
+#        iso.rename_column('col1', 'mass')
+#        iso.rename_column('col2', 'logT')
+#        iso.rename_column('col3', 'logL')
+#        iso.rename_column('col4', 'logg')
+#        iso.rename_column('col5', 'logT_WR')
+#        iso.rename_column('col6', 'model_ref')
 
-        iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+#        iso.meta['log_age'] = log_age
+#        iso.meta['metallicity'] = metallicity
         
-        return iso
+#        return iso
