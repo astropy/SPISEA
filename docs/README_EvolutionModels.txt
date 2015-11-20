@@ -116,8 +116,6 @@ NOTE: Only solar metallicity isochrones have been processed up to this point
 
 NOTE: By design, this process interpolates over isochrones, rather than evolutionary tracks. Testing showed that interpolation over the isochrones was more accurate than interpolating over the isochrones
 
-BUG NOTE: Does depend on popstar/utils/objects.py --> class DataHolder(). Could probably elimintate this, but it would take some time
-
 ***File Locations:
 
 -Original downloaded isochrones (needed for interpolation, DO NOT DELETE): /g/lu/models/evolution/Pisa2011/iso/
@@ -144,6 +142,37 @@ None yet
 
 Downloaded files: /g/lu/models/evolution/STERN2011
 
+=================================
+Baraffe+15 Models
+=================================
+Paper reference: Baraffe et al. 2015
+Isochrones are solar metallicity (Asplund et al. 2009), mixing length
+= 1.6 * H_p, where H_p is pressure scale height
+
+Tracks downloaded from
+http://perso.ens-lyon.fr/isabelle.baraffe/BHAC15dir/BHAC15_tracks
+	0.07 M_sun - 1.4 M_sun
+	5.7 < log t < 10
+
+***Code procedure:
+
+0) SED voodoo magic
+	-Need to reformat the downloaded tracks.dat fils so they
+	can be read by python (specifically, "!" must be replaced by "#"). This is done using the following SED command:
+		> sed 's/\!/#/' <oldfile> > <newfile>
+
+1) popstar/evolution.py. class Baraffe15 --> tracks_to_isochrones
+   	- Generate isochrones from evolutionary tracks. Resamples at 
+	desired ages (6.0 < logAge 8.0, steps of 0.01)
+
+	-additional function to test age-interpolated isochrone:
+	class Baraffe15 --> test_age_interp
+
+***File Locations:
+-Original evolutionary tracks downloaded to
+/g/lu/models/evolution/Baraffe15
+
+-Isochrones stored in /g/lu/models/evolution/Baraffe15/iso
 
 
 
