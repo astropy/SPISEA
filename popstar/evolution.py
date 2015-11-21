@@ -7,6 +7,8 @@ import glob
 import pdb
 import warnings
 from astropy.table import Table
+from scipy import interpolate
+import pylab as py
 from popstar.utils import objects
 
 log = logging.getLogger('evolution')
@@ -557,7 +559,386 @@ class Pisa(StellarEvolution):
             print 'Done {0} of {1} models'.format(count, (len(logAge_arr)))
 
         return
+
+#==============================#
+# Baraffe+15 models
+#==============================#
+class Baraffe15(StellarEvolution):
+    def __init__(self):
+        r"""
+        Define intrinsic properties for the Baraffe+15 stellar
+        models.
+        """
+        # populate list of model masses (in solar masses)
+        #mass_list = [(0.1 + i*0.005) for i in range(181)]
+        
+        # define metallicity parameters for Geneva models
+        #z_list = [0.01, 0.02, 0.03]
+        
+        # populate list of isochrone ages (log scale)
+        #age_list = [round(5.5 + 0.01*i, 2) for i in range(190)]
+        #age_list += [round(7.4 + 0.05*i, 2) for i in range(12)]
+        #age_list += [round(math.log10(1.e8*x), 2) for x in range(1, 10)]
+        #age_list += [round(math.log10(1.e9*x), 2) for x in range(1, 10)]
+        #age_list = age_list
+        
+        # specify location of model files
+        #model_dir = '../models/geneva_merged/'
+
+        #super().__init__(model_dir, age_list, mass_list, z_list)
+
+        #self.z_solar = 0.02
+        #self.z_file_map = {0.01: 'z01/', 0.02: 'z02/', 0.03: 'z03/'}
+        
+        
+        
+    def massTrack(self, mass=0.5, metallicity=0.0):
+        r"""
+        Extract an individual mass track from the Pisa (Tognelli+11)
+        collection.
+        
+        """
+        return
+        
     
+    def isochrone(self, age=1.e8, metallicity=0.0):
+        r"""
+        Extract an individual isochrone from the Baraffe+15
+        collection.
+        """
+        # convert metallicity to mass fraction
+        #z_defined = self.z_solar*10.**metallicity
+        
+        # check age and metallicity are within bounds
+        #if (math.log10(age) < 5.5) or (math.log10(age) > 9.78):
+        #    logger.error('Requested age is out of bounds.')
+            
+        #if (z_defined < 0.01) or (z_defined > 0.03):
+        #    logger.error('Requested metallicity is out of bounds.')
+        
+        # convert age (in yrs) to log scale and find nearest value in grid
+        #age_idx = searchsorted(self.age_list, math.log10(age), side='right')
+        #iso_file = 'iso_' + str(self.age_list[age_idx]) + '.fits'
+        
+        # find closest metallicity value
+        #z_idx = searchsorted(self.z_list, z_defined, side='left')
+        #z_dir = self.z_file_map[self.z_list[z_idx]]
+        
+        # generate isochrone file string
+        #full_iso_file = self.model_dir + 'iso/' + z_dir + iso_file
+        
+        # return isochrone data
+        return genfromtxt(full_iso_file, comments='#')
+
+    def tracks_to_isochrones(self, tracksFile):
+        r"""
+        Create isochrones at desired age sampling (6.0 < logAge < 8.0,
+        steps of 0.01; hardcoded) from the Baraffe+15 tracks downloaded
+        online. 
+
+        tracksFile: tracks.dat file downloaded from Baraffe+15, with format
+        modified to be read in python
+        
+        Writes isochrones in iso/ subdirectory off of work directory. Will
+        create this subdirectory if it doesn't already exist
+        """
+        tracks = Table.read(tracksFile, format='ascii')
+
+        age_arr = np.arange(6.0, 8.0+0.005, 0.01)
+        #age_arr = [6.28]
+        
+        # Loop through the masses, interpolating track over time at each.
+        # Resample track properties at hardcoded ages
+        masses = np.unique(tracks['col1'])
+
+        mass_interp = []
+        age_interp = []
+        Teff_interp = []
+        logL_interp = []
+        logG_interp = []
+        print 'Begin looping over masses'
+        cnt=0
+        for mass in masses:
+            idx = np.where(tracks['col1'] == mass)
+            tmp = tracks[idx]
+
+            # First, extract Teff, logL, and logG, eliminating
+            # duplicated inputs (these crash the interpolator)
+            good_Teff = np.where( np.diff(tmp['col3']) != 0 )
+            good_logG = np.where( np.diff(tmp['col5']) != 0 )
+            good_logL = np.where( np.diff(tmp['col4']) != 0 )
+
+            # Interpolate Teff, logL, and logG
+
+            #----Using Spline interpolator: FAILS-----#
+            #tck_Teff = interpolate.splrep(tmp['col2'][good_Teff],
+            #                              tmp['col3'][good_Teff], s=0.01)
+            #tck_logL = interpolate.splrep(tmp['col2'][good_logL],
+            #                              tmp['col4'][good_logL], s=0.01)
+            #tck_logG = interpolate.splrep(tmp['col2'][good_logG],
+            #                              tmp['col5'][good_logG], s=0.01)
+            
+            #tck_Teff = interpolate.splrep(tmp['col2'], tmp['col3'], s=0.01)
+            #tck_logL = interpolate.splrep(tmp['col2'], tmp['col4'], s=0.01)
+            #tck_logG = interpolate.splrep(tmp['col2'], tmp['col5'], s=0.01)
+
+            #Teff = interpolate.splev(age_arr, tck_Teff)
+            #logL = interpolate.splev(age_arr, tck_logL)
+            #logG = interpolate.splev(age_arr, tck_logG)
+            #-------------------------------------------#
+
+            #--Using linear interpolator: this works!--#
+            tck_Teff = interpolate.interp1d(tmp['col2'], tmp['col3'])
+            tck_logL = interpolate.interp1d(tmp['col2'], tmp['col4'])
+            tck_logG = interpolate.interp1d(tmp['col2'], tmp['col5'])            
+
+
+            Teff = tck_Teff(age_arr)
+            logL = tck_logL(age_arr)
+            logG = tck_logG(age_arr)
+            
+            # Test interpolation if desired
+            test=False
+            if test:
+                py.figure(1, figsize=(10,10))
+                py.clf()
+                py.plot(tmp['col2'], tmp['col3'], 'k.', ms=8)
+                py.plot(age_arr, Teff, 'r-', linewidth=2)
+                py.xlabel('logAge')
+                py.ylabel('Teff')
+                py.savefig('test_Teff.png')
+
+                py.figure(2, figsize=(10,10))
+                py.clf()
+                py.plot(tmp['col2'], tmp['col4'], 'k.', ms=8)
+                py.plot(age_arr, logL, 'r-', linewidth=2)
+                py.xlabel('logAge')
+                py.ylabel('logL')
+                py.savefig('test_logL.png')
+
+                py.figure(3, figsize=(10,10))
+                py.clf()
+                py.plot(tmp['col2'], tmp['col5'], 'k.', ms=8)
+                py.plot(age_arr, logG, 'r-', linewidth=2)
+                py.xlabel('logAge')
+                py.ylabel('logG')
+                py.savefig('test_logG.png')
+                
+                pdb.set_trace()
+           
+            # Build upon arrays of interpolated values
+            mass_interp = np.concatenate((mass_interp, np.ones(len(Teff)) * mass))
+            age_interp = np.concatenate((age_interp, age_arr))
+            Teff_interp = np.concatenate((Teff_interp, Teff))
+            logL_interp = np.concatenate((logL_interp, logL))
+            logG_interp = np.concatenate((logG_interp, logG))
+
+            print 'Done {0} of {1}'.format(cnt, len(masses))
+            cnt+=1
+
+        # Now, construct the iso_*.fits files for each age, write files
+        # to iso subdirectory
+        # First check to see if subdirectory exists
+        if not os.path.exists('iso/'):
+            os.mkdir('iso')
+
+        # Now for the loop
+        ages = np.unique(age_interp)
+        print 'Writing iso files'
+        for age in ages:
+            good = np.where( age_interp == age)
+
+            t = Table( (mass_interp[good], Teff_interp[good], logL_interp[good],
+                       logG_interp[good]), names=('Mass', 'Teff', 'logL', 'logG') )
+
+            # Write out as fits table
+            name = 'iso_{0:3.2f}.fits'.format(age)
+            t.write('iso/'+name, format='fits', overwrite=True)
+
+        return
+
+    def test_age_interp(self, onlineIso, interpIso):
+        r"""
+        Compare one of our interpolated ischrones with one
+        of the isochrones provided online by Baraffe+15. 
+        """
+        true_iso = Table.read(onlineIso, format='ascii')
+        our_iso = Table.read(interpIso, format='fits')
+        
+        # Compare the two isochrones using plots. Look at mass vs. Teff,
+        # mass vs. logG, mass vs. logL. Ideally these isochrones should
+        # be identical
+        py.figure(1, figsize=(10,10))
+        py.clf()
+        py.plot(true_iso['col1'], true_iso['col2'], 'k.', ms = 10)
+        py.plot(our_iso['Mass'], our_iso['Teff'], 'r.', ms = 10)
+        py.xlabel('Mass')
+        py.ylabel('Teff')
+        py.savefig('interp_test1.png')
+
+        py.figure(2, figsize=(10,10))
+        py.clf()
+        py.plot(true_iso['col1'], true_iso['col3'], 'k.', ms = 10)
+        py.plot(our_iso['Mass'], our_iso['logL'], 'r.', ms = 10)
+        py.xlabel('Mass')
+        py.ylabel('logL')
+        py.savefig('interp_test2.png')
+
+        py.figure(3, figsize=(10,10))
+        py.clf()
+        py.plot(true_iso['col1'], true_iso['col4'], 'k.', ms = 10)
+        py.plot(our_iso['Mass'], our_iso['logG'], 'r.', ms = 10)
+        py.xlabel('Mass')
+        py.ylabel('logG')
+        py.savefig('interp_test3.png')
+
+        # Look at the difference between values (assumes the masses are lined up)
+        Teff_diff = np.mean(abs(true_iso['col2'][7:] - our_iso['Teff']))
+        logL_diff = np.mean(abs(true_iso['col3'][7:] - our_iso['logL']))
+        logG_diff = np.mean(abs(true_iso['col4'][7:] - our_iso['logG']))
+    
+        print 'Average abs difference in Teff: {0}'.format(Teff_diff)
+        print 'Average abs difference in logL: {0}'.format(logL_diff)
+        print 'Average abs difference in logg: {0}'.format(logG_diff)
+
+        return
+
+def compare_Baraffe_Pisa(BaraffeIso, PisaIso):
+    """
+    Compare the Baraffe isochrones to the Pisa isochrones, since they overlap
+    over a significant portion of mass space.
+    """
+    b = Table.read(BaraffeIso, format='fits')
+    p = Table.read(PisaIso, format='ascii')
+
+    name = BaraffeIso.split('_')
+    age = name[1][:4]
+    
+    # Extract paramters we need
+    b_mass = b['Mass']
+    b_logT = np.log10(b['Teff'])
+    b_logL = b['logL']
+    b_logG = b['logG']
+
+    p_mass = p['col3']
+    p_logT = p['col2']
+    p_logL = p['col1']
+    p_logG = p['col4']
+
+    m05_b = np.where( abs(b_mass - 0.5) == min(abs(b_mass - 0.5)) )
+    m05_p = np.where( abs(p_mass - 0.5) == min(abs(p_mass - 0.5)) )
+    
+    # Comparison plots
+    py.figure(1, figsize=(10,10))
+    py.clf()
+    py.plot(b_logT, b_logL, 'k-', linewidth=2, label='Baraffe+15')
+    py.plot(b_logT[m05_b], b_logL[m05_b], 'k.', ms=10)
+    py.plot(p_logT, p_logL, 'r', linewidth=2, label='Pisa')
+    py.plot(p_logT[m05_p], p_logL[m05_p], 'r.', ms=10)
+    py.xlabel('logT')
+    py.ylabel('logL')
+    py.title(age)
+    py.axis([4.4, 3.4, -3, 4])
+    #py.gca().invert_xaxis()
+    py.legend()
+    py.savefig('BaraffePisa_comp_{0}.png'.format(age))
+
+    py.figure(2, figsize=(10,10))
+    py.clf()
+    py.plot(b_mass, b_logL, 'k-', linewidth=2, label='Baraffe+15')
+    py.plot(b_mass[m05_b], b_logL[m05_b], 'k.', ms=10)
+    py.plot(p_mass, p_logL, 'r', linewidth=2, label='Pisa')
+    py.plot(p_mass[m05_p], p_logL[m05_p], 'r.', ms=10)
+    py.xlabel('Mass')
+    py.ylabel('logL')
+    py.title(age)
+    #py.axis([4.4, 3.4, -3, 4])
+    #py.gca().invert_xaxis()
+    py.legend()
+    py.savefig('BaraffePisa_comp_mass_{0}.png'.format(age))    
+
+    return
+#==============================#
+# Merged model classes
+#==============================#
+class MergedBaraffePisaEkstromParsec(StellarEvolution):
+    def __init__(self):
+        """
+        Define intrinsic properties for merged Baraffe-Pisa-Ekstrom-Parsec
+        stellar models.
+        """
+        # populate list of model masses (in solar masses)
+        mass_list = [(0.1 + i*0.005) for i in range(181)]
+        
+        # define metallicity parameters for Geneva models
+        z_list = [0.015]
+        
+        # populate list of isochrone ages (log scale)
+        age_list = np.arange(6.0, 8.001, 0.01).tolist()
+        
+        # specify location of model files
+        model_dir = models_dir + 'merged/baraffe_pisa_ekstrom_parsec/'
+        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+        self.z_solar = 0.015
+        self.z_file_map = {0.015: 'z015/'}
+
+        
+    def massTrack(self, mass=0.5, metallicity=0.0):
+        r"""
+        Extract an individual mass track from the Geneva collection.
+        
+        """
+        return
+        
+    
+    def isochrone(self, age=1.e8, metallicity=0.0, rot=True):
+        r"""
+        Extract an individual isochrone from the Geneva collection.
+        """
+        # convert metallicity to mass fraction
+        z_defined = self.z_solar*10.**metallicity
+
+        log_age = math.log10(age)
+        
+        # check age and metallicity are within bounds
+        if (log_age < self.age_list[0]) or (log_age > self.age_list[-1]):
+            logger.error('Requested age is out of bounds.')
+            
+        if not z_defined in self.z_list:
+            logger.error('Requested metallicity is out of bounds.')
+        
+        # convert age (in yrs) to log scale and find nearest value in grid
+        age_idx = searchsorted(self.age_list, log_age, side='right')
+        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
+        
+        # find closest metallicity value
+        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        z_dir = self.z_file_map[self.z_list[z_idx]]
+
+        # Add rotation information to z_dir string
+        if rot:
+            z_dir = z_dir[:-1]+'_rot/'
+        else:
+            z_dir = z_dir[:-1]+'_norot/'
+
+        # generate isochrone file string
+        full_iso_file = self.model_dir + z_dir + iso_file
+        
+        # return isochrone data
+        iso = Table.read(full_iso_file, format='fits')
+        iso.rename_column('col1', 'mass')
+        iso.rename_column('col2', 'logT')
+        iso.rename_column('col3', 'logL')
+        iso.rename_column('col4', 'logg')
+        iso.rename_column('col5', 'logT_WR')
+        iso.rename_column('col6', 'model_ref')
+
+        iso.meta['log_age'] = log_age
+        iso.meta['metallicity'] = metallicity
+        
+        return iso
+
+
 class MergedPisaEkstromParsec(StellarEvolution):
     def __init__(self):
         """
@@ -588,7 +969,7 @@ class MergedPisaEkstromParsec(StellarEvolution):
         return
         
     
-    def isochrone(self, age=1.e8, metallicity=0.0):
+    def isochrone(self, age=1.e8, metallicity=0.0, rot=True):
         r"""
         Extract an individual isochrone from the Geneva collection.
         """
@@ -611,10 +992,16 @@ class MergedPisaEkstromParsec(StellarEvolution):
         # find closest metallicity value
         z_idx = searchsorted(self.z_list, z_defined, side='left')
         z_dir = self.z_file_map[self.z_list[z_idx]]
-        
+
+        # Add rotation information to z_dir string
+        if rot:
+            z_dir = z_dir[:-1]+'_rot/'
+        else:
+            z_dir = z_dir[:-1]+'_norot/'
+
         # generate isochrone file string
         full_iso_file = self.model_dir + z_dir + iso_file
-        
+
         # return isochrone data
         iso = Table.read(full_iso_file, format='fits')
         iso.rename_column('col1', 'mass')
@@ -838,74 +1225,80 @@ class Isochrone(object):
     def __init__(self, log_age):
         self.log_age = log_age
 
+
+
+#------------------------------------------------------#
+# OUTDATED: now have specific flag to specify rot/norot
+# in class.isochrone
+#------------------------------------------------------#
         
-class MergedPisaEkstromParsec_norot(StellarEvolution):
-    def __init__(self):
-        """
-        Define intrinsic properties for merged Pisa-Ekstrom-Parsec
-        stellar models.
-        """
-        # populate list of model masses (in solar masses)
-        mass_list = [(0.1 + i*0.005) for i in range(181)]
-        
-        # define metallicity parameters for Geneva models
-        z_list = [0.015]
-        
-        # populate list of isochrone ages (log scale)
-        age_list = np.arange(6.0, 8.001, 0.01).tolist()
-        
-        # specify location of model files
-        model_dir = models_dir + 'merged/pisa_ekstrom_parsec/norot/'
-        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
-        self.z_solar = 0.015
-        self.z_file_map = {0.015: 'z015/'}
+#class MergedPisaEkstromParsec_norot(StellarEvolution):
+#    def __init__(self):
+#        """
+#        Define intrinsic properties for merged Pisa-Ekstrom-Parsec
+#        stellar models.
+#        """
+#        # populate list of model masses (in solar masses)
+#        mass_list = [(0.1 + i*0.005) for i in range(181)]
+#        
+#        # define metallicity parameters for Geneva models
+#        z_list = [0.015]
+#        
+#        # populate list of isochrone ages (log scale)
+#        age_list = np.arange(6.0, 8.001, 0.01).tolist()
+#        
+#        # specify location of model files
+#        model_dir = models_dir + 'merged/pisa_ekstrom_parsec/norot/'
+#        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+#        self.z_solar = 0.015
+#        self.z_file_map = {0.015: 'z015/'}
 
         
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Geneva collection.
-        
-        """
-        return
+#    def massTrack(self, mass=0.5, metallicity=0.0):
+#        r"""
+#        Extract an individual mass track from the Geneva collection.
+#        
+#        """
+#        return
         
     
-    def isochrone(self, age=1.e8, metallicity=0.0):
-        r"""
-        Extract an individual isochrone from the Geneva collection.
-        """
-        # convert metallicity to mass fraction
-        z_defined = self.z_solar*10.**metallicity
+#    def isochrone(self, age=1.e8, metallicity=0.0):
+#        r"""
+#        Extract an individual isochrone from the Geneva collection.
+#        """
+#        # convert metallicity to mass fraction
+#        z_defined = self.z_solar*10.**metallicity
 
-        log_age = math.log10(age)
+#        log_age = math.log10(age)
         
         # check age and metallicity are within bounds
-        if (log_age < self.age_list[0]) or (log_age > self.age_list[-1]):
-            logger.error('Requested age is out of bounds.')
+#        if (log_age < self.age_list[0]) or (log_age > self.age_list[-1]):
+#            logger.error('Requested age is out of bounds.')
             
-        if not z_defined in self.z_list:
-            logger.error('Requested metallicity is out of bounds.')
+#        if not z_defined in self.z_list:
+#            logger.error('Requested metallicity is out of bounds.')
         
         # convert age (in yrs) to log scale and find nearest value in grid
-        age_idx = searchsorted(self.age_list, log_age, side='right')
-        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
+#        age_idx = searchsorted(self.age_list, log_age, side='right')
+#        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        z_idx = searchsorted(self.z_list, z_defined, side='left')
-        z_dir = self.z_file_map[self.z_list[z_idx]]
+#        z_idx = searchsorted(self.z_list, z_defined, side='left')
+#        z_dir = self.z_file_map[self.z_list[z_idx]]
         
         # generate isochrone file string
-        full_iso_file = self.model_dir + z_dir + iso_file
+#        full_iso_file = self.model_dir + z_dir + iso_file
         
         # return isochrone data
-        iso = Table.read(full_iso_file, format='fits')
-        iso.rename_column('col1', 'mass')
-        iso.rename_column('col2', 'logT')
-        iso.rename_column('col3', 'logL')
-        iso.rename_column('col4', 'logg')
-        iso.rename_column('col5', 'logT_WR')
-        iso.rename_column('col6', 'model_ref')
+#        iso = Table.read(full_iso_file, format='fits')
+#        iso.rename_column('col1', 'mass')
+#        iso.rename_column('col2', 'logT')
+#        iso.rename_column('col3', 'logL')
+#        iso.rename_column('col4', 'logg')
+#        iso.rename_column('col5', 'logT_WR')
+#        iso.rename_column('col6', 'model_ref')
 
-        iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+#        iso.meta['log_age'] = log_age
+#        iso.meta['metallicity'] = metallicity
         
-        return iso
+#        return iso

@@ -20,6 +20,7 @@ import os, glob
 import tempfile
 import scipy
 import matplotlib
+import matplotlib.pyplot as plt
 import time
 import pdb
 
@@ -198,10 +199,12 @@ class UnresolvedCluster(Cluster):
         Cluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
         
         # Sample a power-law IMF randomly
-        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
+        self.mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
         
         temp = np.zeros(len(mass), dtype=float)
-        spec_list = [None] * len(mass)
+        self.mass_all = np.zeros(len(self.mass), dtype=float)
+        self.spec_list = [None] * len(mass)
+        self.spec_list_trim = [None] * len(self.mass)
 
         t1 = time.time()
         for ii in range(len(mass)):
@@ -211,25 +214,34 @@ class UnresolvedCluster(Cluster):
                 continue
 
             temp[ii] = iso.points['Teff'][mdx]
-            spec_list[ii] = iso.spec_list[mdx]
+            self.mass_all[ii] = iso.points['mass'][mdx]
+            self.spec_list[ii] = iso.spec_list[mdx]
+            self.spec_list_trim[ii] = spectrum.trimSpectrum(iso.spec_list[mdx],wave_range[0],wave_range[1])
 
         t2 = time.time()
-        print 'Mass matching took {0:f}s'.format(t2-t1)
+        print 'Mass matching took {0:f} s.'.format(t2-t1)
 
         # Get rid of the bad ones
         idx = np.where(temp != 0)[0]
         cdx = np.where(temp == 0)[0]
 
-        spec_list = [spec_list[iidx] for iidx in idx]
+        self.mass_all = self.mass_all[idx]
+        self.spec_list = [self.spec_list[iidx] for iidx in idx]
+        self.spec_list_trim = [self.spec_list_trim[iidx] for iidx in idx]
         
-        self.spec_tot_full = np.sum(spec_list, 0)
-        print 'Spec summing took {0:f}s'.format(t2-t1)
+        self.spec_tot_full = np.sum(self.spec_list,0)
+
+        t3 = time.time()
+        print 'Spec summing took {0:f}s'.format(t3-t2)
         
         self.spec_trim = spectrum.trimSpectrum(self.spec_tot_full,
                                                wave_range[0], wave_range[1])
-        print 'Spec trimming took {0:f}s'.format(t2-t1)
+        t4 = time.time()
+        print 'Spec trimming took {0:f}s'.format(t4-t3)
 
-        self.mass_all = np.sum(sysMass[idx])
+        self.mass_tot = np.sum(sysMass[idx])
+        print 'Total cluster mass is {0:f} M_sun'.format(self.mass_tot)
+        self.log_age = logAge
 
         return
 
@@ -258,6 +270,8 @@ class Isochrone(object):
             Units are Angstroms.
         """
 
+        t1 = time.time()
+        
         c = constants
 
         # Get solar metallicity models for a population at a specific age.
@@ -328,6 +342,9 @@ class Isochrone(object):
 
         self.points = tab
 
+        t2 = time.time()
+        print 'Isochrone generation took {0:f} s.'.format(t2-t1)
+        
         return
 
     def trim(self, keep_indices):
