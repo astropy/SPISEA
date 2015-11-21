@@ -64,6 +64,7 @@ def test_ResolvedCluster():
     from popstar import synthetic as syn
     from popstar import atmospheres as atm
     from popstar import evolution
+    from popstar import reddening
     from popstar.imf import imf
     from popstar.imf import multiplicity
 
@@ -76,7 +77,13 @@ def test_ResolvedCluster():
     
     evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atm.get_merged_atmosphere
-    iso = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo)
+
+    red_law = reddening.RedLawNishiyama09()
+    
+    iso = syn.IsochronePhot(logAge, AKs, distance,
+                            evo_model=evo, atm_func=atm_func,
+                            red_law=red_law)
+
     print 'Constructed isochrone: %d seconds' % (time.time() - startTime)
 
     imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
@@ -154,7 +161,7 @@ def test_UnresolvedCluster():
     from popstar.imf import multiplicity
     
     log_age = 6.7
-    AKs = 2.7
+    AKs = 0.0
     distance = 4000
     cluster_mass = 30.
 
@@ -162,7 +169,7 @@ def test_UnresolvedCluster():
     multi = multiplicity.MultiplicityUnresolved()
     imf_in = imf.Kroupa_2001(multiplicity=multi)
     evo = evolution.MergedPisaEkstromParsec()
-    iso = syn.Isochrone(log_age, AKs, distance, evo, mass_sampling=2)
+    iso = syn.Isochrone(log_age, AKs, distance, evo, mass_sampling=10)
     print 'Made cluster: %d seconds' % (time.time() - startTime)
 
     cluster = syn.UnresolvedCluster(iso, imf_in, cluster_mass)
@@ -173,37 +180,10 @@ def test_UnresolvedCluster():
     flux = cluster.spec_trim.flux
     plt.clf()
     plt.plot(wave, flux, 'k.')
-
+    pdb.set_trace()
     return
 
-def model_young_cluster_object(resolved=False):
-    multi = multiplicity.MultiplicityUnresolved()
-    imf_in = imf.Kroupa_2001(multiplicity=multi)
-    evo = evolution.MergedPisaEkstromParsec()
-    atm_func = atm.get_merged_atmosphere
-
-    log_age = 6.5
-    AKs = 1.0
-    distance = 8000.0
-    cluster_mass = 100.
-
-    if resolved:
-        cluster = ResolvedCluster(log_age, AKs, distance, cluster_mass, imf_in, evo, atm_func)
-    else:
-        cluster = UnresolvedCluster(log_age, AKs, distance, cluster_mass, imf_in, evo, atm_func)
-
-    # Plot the spectrum of the most massive star
-    idx = cluster.mass_all.argmax()
-    print 'Most massive star is {0:f} M_sun.'.format(cluster.mass_all[idx])
-    #bigstar = cluster.spec_list_trim[idx]
-    plt.figure(1)
-    plt.clf()
-    plt.plot(cluster.spec_list_trim[idx]._wavetable, cluster.spec_list_trim[idx]._fluxtable, 'k.')
-
-    # Plot an integrated spectrum of the whole cluster.
-    wave, flux = cluster.spec_trim._wavetable, cluster.spec_trim._fluxtable
-    plt.figure(2)
-    plt.clf()
-    plt.plot(wave, flux, 'k.')
-
+def time_stuff():
+    time.time()
     return
+    
