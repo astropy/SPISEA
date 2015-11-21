@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import time
 import pdb
 
-default_evo_model = evolution.MergedPisaEkstromParsec()
+default_evo_model = evolution.MergedBaraffePisaEkstromParsec()
 default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
 
@@ -452,7 +452,7 @@ class IsochronePhot(Isochrone):
         return
 
     def make_photometry(self):
-        """
+        """ 
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
         photometry.
@@ -565,16 +565,54 @@ class IsochronePhot(Isochrone):
         
         return
     
-def make_isochrone_grid():
+def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
+                        atm_func=default_atm_func, redlaw = default_red_law,
+                        iso_dir = './', mass_sampling=1):
     """
-    Helper routine to make a isochrone grid. logAge is
-    hardcoded.
+    Wrapper routine to generate a grid of isochrones of different ages,
+    extinctions, and distances
+
+    age_arr: array of ages to loop over (logAge)
+    Aks_arr: array of Aks values to loop over (mag)
+    dist_arr: array of distances to loop over (pc)
+
+    evo_models: evolution models to adopt
+    atm_models: atmosphere models to adopt
+    redlaw: reddening law to adopt
+    iso_dir: directory isochrones will be stored
+    mass_sampling: mass sampling of isochrone, relative to original mass sampling
+
+    NOTE: This code only makes isochrones with the Ekstrom rotating models, for now. 
     """
-    logAge_arr = np.arange(6.0, 6.7, 0.01)
+    print '**************************************'
+    print 'Start generating isochrones'
+    print 'Evolutionary Models adopted: {0}'.format(evo_model)
+    print 'Atmospheric Models adopted: {0}'.format(atm_func)
+    print 'Reddening Law adopted: {0}'.format(redlaw)
+    print 'Isochrone Mass sampling: {0}'.format(mass_sampling)
+    print '**************************************'
 
-    for i in logAge_arr:
-        load_isochrone(i)
+    num_models = len(age_arr) * len(AKs_arr) * len(dist_arr)
+    iteration = 0
+    #Loop structure: loop 1 = age, loop 2 = Aks, loop 3 = distance
+    for i in range(len(age_arr)):
+        for j in range(len(AKs_arr)):
+            for k in range(len(dist_arr)):
+                    iso = IsochronePhot(age_arr[i], AKs_arr[j], dist_arr[k],
+                                        evo_model=evo_model, atm_func=atm_func,
+                                        red_law=redlaw, iso_dir=iso_dir,
+                                        mass_sampling=mass_sampling)
+                    iteration += 1
+                    print 'Done ' + str(iteration) + ' of ' + str(num_models)
 
+    # Also, save a README file in iso directory documenting the params used
+    _out = open(iso_dir+'README.txt', 'w')
+    _out.write('Popstar parameters used to generate isochrone grid:\n')
+    _out.write('Evolutionary Models: {0}\n'.format(evo_model))
+    _out.write('Atmospheric Models: {0}\n'.format(atm_func))
+    _out.write('Reddening Law: {0}\n'.format(redlaw))
+    _out.write('Isochrone Mass: {0}'.format(mass_sampling))
+    _out.close()
     return
 
 
