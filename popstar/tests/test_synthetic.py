@@ -177,20 +177,27 @@ def test_UnresolvedCluster():
     return
 
 def model_young_cluster_object(resolved=False):
+    from popstar import synthetic as syn
+    from popstar import atmospheres as atm
+    from popstar import evolution
+    from popstar.imf import imf
+    from popstar.imf import multiplicity
+
+    log_age = 6.5
+    AKs = 0.1
+    distance = 8000.0
+    cluster_mass = 10000.
+    
     multi = multiplicity.MultiplicityUnresolved()
     imf_in = imf.Kroupa_2001(multiplicity=multi)
     evo = evolution.MergedPisaEkstromParsec()
     atm_func = atm.get_merged_atmosphere
-
-    log_age = 6.5
-    AKs = 1.0
-    distance = 8000.0
-    cluster_mass = 100.
+    iso = syn.Isochrone(log_age, AKs, distance, evo, mass_sampling=10)
 
     if resolved:
-        cluster = ResolvedCluster(log_age, AKs, distance, cluster_mass, imf_in, evo, atm_func)
+        cluster = syn.ResolvedCluster(iso, imf_in, cluster_mass)
     else:
-        cluster = UnresolvedCluster(log_age, AKs, distance, cluster_mass, imf_in, evo, atm_func)
+        cluster = syn.UnresolvedCluster(iso, imf_in, cluster_mass, wave_range=[19000,24000])
 
     # Plot the spectrum of the most massive star
     idx = cluster.mass_all.argmax()
@@ -201,7 +208,7 @@ def model_young_cluster_object(resolved=False):
     plt.plot(cluster.spec_list_trim[idx]._wavetable, cluster.spec_list_trim[idx]._fluxtable, 'k.')
 
     # Plot an integrated spectrum of the whole cluster.
-    wave, flux = cluster.spec_trim._wavetable, cluster.spec_trim._fluxtable
+    wave, flux = cluster.spec_list_trim[idx]._wavetable, cluster.spec_trim
     plt.figure(2)
     plt.clf()
     plt.plot(wave, flux, 'k.')

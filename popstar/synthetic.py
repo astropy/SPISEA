@@ -208,22 +208,40 @@ class UnresolvedCluster(Cluster):
         # Sample a power-law IMF randomly
         self.mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
         
-        temp = np.zeros(len(mass), dtype=float)
+        temp = np.zeros(len(self.mass), dtype=float)
         self.mass_all = np.zeros(len(self.mass), dtype=float)
-        self.spec_list = [None] * len(mass)
+        self.spec_list = [None] * len(self.mass)
+        # placeholder array to make spectrum summing more efficient
+        spec_list_np = np.zeros(shape=(len(iso.spec_list[0].flux),len(self.mass)), dtype=float)
         self.spec_list_trim = [None] * len(self.mass)
+        # same as spec_list_np, but for the wavelength-trimmed spectra
+        trimtmp = spectrum.trimSpectrum(iso.spec_list[0],wave_range[0],wave_range[1])
+        trimx = len(trimtmp._fluxtable)
+        spec_list_trim_np = np.zeros(shape=(trimx,len(self.mass)), dtype=float)
 
         t1 = time.time()
-        for ii in range(len(mass)):
+        for ii in range(len(self.mass)):
             # Find the closest model mass (returns None, if nothing with dm = 0.1
-            mdx = match_model_mass(iso.points['mass'], mass[ii])
+            mdx = match_model_mass(iso.points['mass'], self.mass[ii])
             if mdx == None:
                 continue
 
+            # getting the temp, mass, spectrum of the matched star
             temp[ii] = iso.points['Teff'][mdx]
             self.mass_all[ii] = iso.points['mass'][mdx]
-            self.spec_list[ii] = iso.spec_list[mdx]
-            self.spec_list_trim[ii] = spectrum.trimSpectrum(iso.spec_list[mdx],wave_range[0],wave_range[1])
+            tmpspec = iso.spec_list[mdx]
+
+            # resampling the matched spectrum to a common wavelength grid
+            tmpspec = spectrum.CompositeSourceSpectrum.tabulate(tmpspec)
+            tmpspecresamp = spectrum.TabularSourceSpectrum.resample(tmpspec,iso.spec_list[0].wave)
+            self.spec_list[ii] = tmpspecresamp
+            spec_list_np[:,ii]=np.asarray(tmpspecresamp._fluxtable)
+
+            # and trimming to the requested wavelength range
+            tmpspectrim = spectrum.trimSpectrum(tmpspecresamp,wave_range[0],wave_range[1])
+            self.spec_list_trim[ii] = tmpspectrim
+            spec_list_trim_np[:,ii] = np.asarray(tmpspectrim._fluxtable)
+            
 
         t2 = time.time()
         print 'Mass matching took {0:f} s.'.format(t2-t1)
@@ -234,21 +252,22 @@ class UnresolvedCluster(Cluster):
 
         self.mass_all = self.mass_all[idx]
         self.spec_list = [self.spec_list[iidx] for iidx in idx]
+        spec_list_np = spec_list_np[:,idx]
         self.spec_list_trim = [self.spec_list_trim[iidx] for iidx in idx]
-        
-        self.spec_tot_full = np.sum(self.spec_list,0)
+        spec_list_trim_np = spec_list_trim_np[:,idx]
+
+        self.spec_tot_full = np.sum(spec_list_np,1)
 
         t3 = time.time()
         print 'Spec summing took {0:f}s'.format(t3-t2)
+
+        self.spec_trim = np.sum(spec_list_trim_np,1)
         
-        self.spec_trim = spectrum.trimSpectrum(self.spec_tot_full,
-                                               wave_range[0], wave_range[1])
         t4 = time.time()
         print 'Spec trimming took {0:f}s'.format(t4-t3)
 
         self.mass_tot = np.sum(sysMass[idx])
         print 'Total cluster mass is {0:f} M_sun'.format(self.mass_tot)
-        self.log_age = logAge
 
         return
 
