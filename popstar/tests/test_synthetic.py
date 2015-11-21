@@ -68,18 +68,18 @@ def test_ResolvedCluster():
     from popstar.imf import multiplicity
 
     logAge = 6.7
-    AKs = 2.7
+    AKs = 2.4
     distance = 4000
     cluster_mass = 5000
 
     startTime = time.time()
     
-    evo = evolution.MergedPisaEkstromParsec()
+    evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atm.get_merged_atmosphere
-    iso = syn.IsochronePhot(logAge, AKs, distance)
+    iso = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo)
     print 'Constructed isochrone: %d seconds' % (time.time() - startTime)
 
-    imf_mass_limits = np.array([0.15, 0.5, 1, np.inf])
+    imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
     imf_powers = np.array([-1.3, -2.3, -2.3])
 
     ##########
