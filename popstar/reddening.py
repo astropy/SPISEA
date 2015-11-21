@@ -364,7 +364,9 @@ class RedLawWesterlund1(pysynphot.reddening.CustomRedLaw):
         # Based on Nishiyama+ 2009, but then by-eye fitting to Wd 1 data for 
         # 0.551, 0.814, 1.25 micron.
         wave = np.array( [0.551, 0.814, 1.25, 1.63, 2.14, 3.545, 4.442, 5.675, 7.760])
-        A_AKs = np.array([16.9, 9.4, 2.82, 1.73, 1.00, 0.500, 0.390, 0.360, 0.430])
+        #A_AKs = np.array([16.9, 9.4, 2.82, 1.73, 1.00, 0.500, 0.390, 0.360, 0.430]) #IAU version
+        A_AKs = np.array([16.9, 9.45, 2.80, 1.70, 1.00, 0.500, 0.390, 0.360, 0.430]) # Final Wd1
+        
 
         A_AKs_err = np.array([0.04, 0.04, 0.04, 0.03, 0.00, 0.010, 0.010, 0.010, 0.010])
 

@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import time
 import pdb
 
-default_evo_model = evolution.MergedPisaEkstromParsec()
+default_evo_model = evolution.MergedBaraffePisaEkstromParsec()
 default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
 
@@ -43,16 +43,6 @@ def Vega():
     return vega
 
 vega = Vega()
-
-def match_model_mass(isoMasses,theMass):
-    dm = np.abs(isoMasses - theMass)
-    mdx = dm.argmin()
-
-    # Model mass has to be within 2% of the desired mass
-    if (dm[mdx] / theMass) > 0.1:
-        return None
-    else:
-        return mdx
 
 class Cluster(object):
     def __init__(self, iso, imf, cluster_mass, verbose=False):
@@ -202,6 +192,9 @@ class ResolvedCluster(Cluster):
 class UnresolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass,
                  wave_range=[5000, 50000], verbose=False):
+        """
+        iso : Isochrone
+        """
         # Doesn't do much.
         Cluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
         
@@ -272,9 +265,6 @@ class UnresolvedCluster(Cluster):
         return
 
         
-def get_evo_model_by_string(evo_model_string):
-    return getattr(evolution, evo_model_string)
-
 class Isochrone(object):
     def __init__(self, logAge, AKs, distance,
                  evo_model=default_evo_model, atm_func=default_atm_func,
@@ -284,8 +274,11 @@ class Isochrone(object):
         Parameters
         ----------
         logAge : float
+            The log of the age of the isochrone.
         AKs : float
+            The extinction in units if A_Ks (mag).
         distance : float
+            The distance in pc.
         evModel : model cl
         mass_sampling - Sample the raw isochrone every ## steps. The default
                        is mass_sampling = 10, which takes every 10th point.
@@ -431,12 +424,13 @@ class IsochronePhot(Isochrone):
                           'H': 'nirc2,H',
                           'K': 'nirc2,K',
                           'Kp': 'nirc2,Kp',
-                          'L': 'nirc2,Lp',
+                          'Lp': 'nirc2,Lp',
                           '814w': 'acs,wfc1,f814w',
                           '125w': 'wfc3,ir,f125w',
                           '160w': 'wfc3,ir,f160w'}):
 
-        """Make an isochrone with photometry in various filters.
+        """
+        Make an isochrone with photometry in various filters.
 
         Description
         -----------
@@ -471,7 +465,7 @@ class IsochronePhot(Isochrone):
         return
 
     def make_photometry(self):
-        """
+        """ 
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
         photometry.
@@ -584,18 +578,55 @@ class IsochronePhot(Isochrone):
         
         return
     
-def make_isochrone_grid():
+def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
+                        atm_func=default_atm_func, redlaw = default_red_law,
+                        iso_dir = './', mass_sampling=1):
     """
-    Helper routine to make a isochrone grid. logAge is
-    hardcoded.
+    Wrapper routine to generate a grid of isochrones of different ages,
+    extinctions, and distances
+
+    age_arr: array of ages to loop over (logAge)
+    Aks_arr: array of Aks values to loop over (mag)
+    dist_arr: array of distances to loop over (pc)
+
+    evo_models: evolution models to adopt
+    atm_models: atmosphere models to adopt
+    redlaw: reddening law to adopt
+    iso_dir: directory isochrones will be stored
+    mass_sampling: mass sampling of isochrone, relative to original mass sampling
+
+    NOTE: This code only makes isochrones with the Ekstrom rotating models, for now. 
     """
-    logAge_arr = np.arange(6.0, 6.7, 0.01)
+    print '**************************************'
+    print 'Start generating isochrones'
+    print 'Evolutionary Models adopted: {0}'.format(evo_model)
+    print 'Atmospheric Models adopted: {0}'.format(atm_func)
+    print 'Reddening Law adopted: {0}'.format(redlaw)
+    print 'Isochrone Mass sampling: {0}'.format(mass_sampling)
+    print '**************************************'
 
-    for i in logAge_arr:
-        load_isochrone(i)
+    num_models = len(age_arr) * len(AKs_arr) * len(dist_arr)
+    iteration = 0
+    #Loop structure: loop 1 = age, loop 2 = Aks, loop 3 = distance
+    for i in range(len(age_arr)):
+        for j in range(len(AKs_arr)):
+            for k in range(len(dist_arr)):
+                    iso = IsochronePhot(age_arr[i], AKs_arr[j], dist_arr[k],
+                                        evo_model=evo_model, atm_func=atm_func,
+                                        red_law=redlaw, iso_dir=iso_dir,
+                                        mass_sampling=mass_sampling)
+                    iteration += 1
+                    print 'Done ' + str(iteration) + ' of ' + str(num_models)
 
+    # Also, save a README file in iso directory documenting the params used
+    _out = open(iso_dir+'README.txt', 'w')
+    _out.write('Popstar parameters used to generate isochrone grid:\n')
+    _out.write('Evolutionary Models: {0}\n'.format(evo_model))
+    _out.write('Atmospheric Models: {0}\n'.format(atm_func))
+    _out.write('Reddening Law: {0}\n'.format(redlaw))
+    _out.write('Isochrone Mass: {0}'.format(mass_sampling))
+    _out.close()
     return
-
 
 # Little helper utility to get all the bandpass/zeropoint info.
 def get_filter_info(name, vega=vega):
@@ -640,172 +671,16 @@ def mag_in_filter(star, filt):
 
     return star_mag
 
-# def model_young_cluster_new(logAge, AKs, distance, iso_dir,
-#                             evModel='mergedPisaEkstromParsec',
-#                             imfSlopes=np.array([-2.35]), massLimits=np.array([1, 150]),
-#                             clusterMass=1e4, makeMultiples=False,
-#                             MFamp=defaultMFamp, MFindex=defaultMFindex,
-#                             CSFamp=defaultCSFamp, CSFindex=defaultCSFindex,
-#                             CSFmax=defaultCSFmax,
-#                             qMin=0.01, qIndex=-0.4, verbose=False):
-#     """
-#     Code to model a cluster with user-specified logAge, AKs, and distance.
-#     Must also specify directory containing the isochrone (made using popstar
-#     synthetic code).
+def match_model_mass(isoMasses,theMass):
+    dm = np.abs(isoMasses - theMass)
+    mdx = dm.argmin()
 
-#     Can also specify IMF slope, mass limits, cluster mass, and parameters for
-#     multiple stars
-#     """
-#     c = constants
-
-#     logAgeString = '0%d' % (int(logAge * 100))
-
-#     iso = load_isochrone(logAge=logAge, AKs=AKs, distance=distance, evModel=evModel,
-#                                    iso_dir=iso_dir)
-
-#     # Sample a power-law IMF randomly
-#     results = imf.sample_imf(massLimits, imfSlopes, clusterMass,
-#                              makeMultiples=makeMultiples,
-#                              multiMFamp=MFamp, multiMFindex=MFindex,
-#                              multiCSFamp=CSFamp, multiCSFindex=CSFindex,
-#                              multiCSFmax=CSFmax,
-#                              multiQmin=qMin, multiQindex=qIndex)
-#     mass = results[0]
-#     isMultiple = results[1]
-#     compMasses = results[2]
-#     systemMasses = results[3]
-
-#     mag814w = np.zeros(len(mass), dtype=float)
-#     mag127m = np.zeros(len(mass), dtype=float)
-#     mag139m = np.zeros(len(mass), dtype=float)
-#     mag153m = np.zeros(len(mass), dtype=float)
-#     magJ = np.zeros(len(mass), dtype=float)
-#     magH = np.zeros(len(mass), dtype=float)
-#     magK = np.zeros(len(mass), dtype=float)
-#     magKp = np.zeros(len(mass), dtype=float)
-#     magL = np.zeros(len(mass), dtype=float)
-#     temp = np.zeros(len(mass), dtype=float)
-#     logg = np.zeros(len(mass), dtype=float)
-#     logL = np.zeros(len(mass), dtype=float)
-#     isWR = np.zeros(len(mass), dtype=bool)
+    # Model mass has to be within 2% of the desired mass
+    if (dm[mdx] / theMass) > 0.1:
+        return None
+    else:
+        return mdx
     
-#     def match_model_mass(theMass):
-#         dm = np.abs(iso['mass'] - theMass)
-#         mdx = dm.argmin()
+def get_evo_model_by_string(evo_model_string):
+    return getattr(evolution, evo_model_string)
 
-#         # Model mass has to be within 2% of the desired mass
-#         if (dm[mdx] / theMass) > 0.1:
-#             return None
-#         else:
-#             return mdx
-        
-#     for ii in range(len(mass)):
-#         # Find the closest model mass (returns None, if nothing with dm = 0.1
-#         mdx = match_model_mass(mass[ii])
-#         if mdx == None:
-#             continue
-
-#         mag814w[ii] = iso['mag814w'][mdx]
-#         mag127m[ii] = iso['mag127m'][mdx]
-#         mag139m[ii] = iso['mag139m'][mdx]
-#         mag153m[ii] = iso['mag153m'][mdx]
-#         magJ[ii] = iso['magJ'][mdx]
-#         magH[ii] = iso['magH'][mdx]
-#         magK[ii] = iso['magK'][mdx]
-#         magKp[ii] = iso['magKp'][mdx]
-#         magL[ii] = iso['magL'][mdx]
-        
-#         temp[ii] = iso['logT'][mdx]
-#         logg[ii] = iso['logg'][mdx]
-#         logL[ii] = iso['logL'][mdx]
-#         isWR[ii] = iso['isWR'][mdx]
-
-
-#         # Determine if this system is a binary.
-#         if isMultiple[ii]:
-#             n_stars = len(compMasses[ii])
-#             for cc in range(n_stars):
-#                 mdx_cc = match_model_mass(compMasses[ii][cc])
-#                 if mdx_cc != None:
-#                     f1 = 10**(-mag[ii]/2.5)
-#                     f2 = 10**(-iso.mag[mdx_cc]/2.5)
-#                     mag[ii] = -2.5 * np.log10(f1 + f2)
-#                 else:
-#                     print 'Rejected a companion %.2f' % compMasses[ii][cc]
-        
-
-#     # Get rid of the bad ones
-#     idx = np.where(temp != 0)[0]
-#     cdx = np.where(temp == 0)[0]
-
-#     if len(cdx) > 0 and verbose:
-#         print 'Found %d stars out of mass range: Minimum bad mass = %.1f' % \
-#             (len(cdx), mass[cdx].min())
-
-#     mass = mass[idx]
-#     mag814w = mag814w[idx]
-#     mag127m = mag127m[idx]
-#     mag139m = mag139m[idx]
-#     mag153m = mag153m[idx]
-#     magJ = magJ[idx]
-#     magH = magH[idx]
-#     magK = magK[idx]
-#     magKp = magKp[idx]
-#     magL = magL[idx]
-    
-    
-#     temp = temp[idx]
-#     logg = logg[idx]
-#     logL = logL[idx]
-#     isWR = isWR[idx]
-    
-#     isMultiple = isMultiple[idx]
-#     systemMasses = systemMasses[idx]
-#     if makeMultiples:
-#         compMasses = [compMasses[ii] for ii in idx]
-
-#     idx_noWR = np.where(isWR == False)[0]
-
-#     mag127m_noWR = mag127m[idx_noWR]
-#     num_WR = len(mag127m) - len(idx_noWR)
-
-#     cluster = objects.DataHolder()
-#     cluster.mass = mass
-#     cluster.Teff = temp
-#     cluster.logg = logg
-#     cluster.logL = logL
-#     cluster.isWR = isWR
-#     cluster.mag814w = mag814w
-#     cluster.mag127m = mag127m
-#     cluster.mag139m = mag139m
-#     cluster.mag153m = mag153m
-#     cluster.magJ = magJ
-#     cluster.magH = magH
-#     cluster.magK = magK
-#     cluster.magKp = magKp
-#     cluster.magL = magL
-#     cluster.isMultiple = isMultiple
-#     cluster.compMasses = compMasses
-#     cluster.systemMasses = systemMasses
-
-#     cluster.idx_noWR = idx_noWR
-#     cluster.mag127m_noWR = mag127m_noWR
-#     cluster.num_WR = num_WR
-
-#     # Summary parameters
-#     cluster.logAge = logAge
-#     cluster.AKs = AKs
-#     cluster.distance = distance
-#     cluster.massLimits = massLimits
-#     cluster.imfSlopes = imfSlopes
-#     cluster.sumIMFmass = clusterMass
-#     cluster.makeMultiples = makeMultiples
-#     cluster.MFamp = MFamp
-#     cluster.MFindex = MFindex
-#     cluster.CSFamp = CSFamp
-#     cluster.CSFindex = CSFindex
-#     cluster.CSFmax = CSFmax
-#     cluster.qMin = qMin
-#     cluster.qIndex = qIndex
-            
-#     return cluster, iso

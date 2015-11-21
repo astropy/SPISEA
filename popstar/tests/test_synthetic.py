@@ -64,22 +64,29 @@ def test_ResolvedCluster():
     from popstar import synthetic as syn
     from popstar import atmospheres as atm
     from popstar import evolution
+    from popstar import reddening
     from popstar.imf import imf
     from popstar.imf import multiplicity
 
     logAge = 6.7
-    AKs = 2.7
+    AKs = 2.4
     distance = 4000
     cluster_mass = 5000
 
     startTime = time.time()
     
-    evo = evolution.MergedPisaEkstromParsec()
+    evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atm.get_merged_atmosphere
-    iso = syn.IsochronePhot(logAge, AKs, distance)
+
+    red_law = reddening.RedLawNishiyama09()
+    
+    iso = syn.IsochronePhot(logAge, AKs, distance,
+                            evo_model=evo, atm_func=atm_func,
+                            red_law=red_law)
+
     print 'Constructed isochrone: %d seconds' % (time.time() - startTime)
 
-    imf_mass_limits = np.array([0.15, 0.5, 1, np.inf])
+    imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
     imf_powers = np.array([-1.3, -2.3, -2.3])
 
     ##########
@@ -154,7 +161,7 @@ def test_UnresolvedCluster():
     from popstar.imf import multiplicity
     
     log_age = 6.7
-    AKs = 2.7
+    AKs = 0.0
     distance = 4000
     cluster_mass = 30.
 
@@ -162,7 +169,7 @@ def test_UnresolvedCluster():
     multi = multiplicity.MultiplicityUnresolved()
     imf_in = imf.Kroupa_2001(multiplicity=multi)
     evo = evolution.MergedPisaEkstromParsec()
-    iso = syn.Isochrone(log_age, AKs, distance, evo, mass_sampling=2)
+    iso = syn.Isochrone(log_age, AKs, distance, evo, mass_sampling=10)
     print 'Made cluster: %d seconds' % (time.time() - startTime)
 
     cluster = syn.UnresolvedCluster(iso, imf_in, cluster_mass)
@@ -173,7 +180,7 @@ def test_UnresolvedCluster():
     flux = cluster.spec_trim.flux
     plt.clf()
     plt.plot(wave, flux, 'k.')
-
+    pdb.set_trace()
     return
 
 def model_young_cluster_object(resolved=False):
@@ -214,3 +221,9 @@ def model_young_cluster_object(resolved=False):
     plt.plot(wave, flux, 'k.')
 
     return
+
+def time_stuff():
+    time.time()
+
+    return
+    
