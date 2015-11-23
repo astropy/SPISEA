@@ -181,7 +181,61 @@ def test_UnresolvedCluster():
     pdb.set_trace()
     return
 
-def time_stuff():
-    time.time()
+def time_test_cluster():
+    from popstar import synthetic as syn
+    from popstar import atmospheres as atm
+    from popstar import evolution
+    from popstar import reddening
+    from popstar.imf import imf
+    from popstar.imf import multiplicity
+
+    logAge = 6.7
+    AKs = 2.7
+    distance = 4000
+    cluster_mass = 5e6
+
+    startTime = time.time()
+    
+    evo = evolution.MergedPisaEkstromParsec()
+    atm_func = atm.get_merged_atmosphere
+    red_law = reddening.RedLawNishiyama09()
+    
+    iso = syn.IsochronePhot(logAge, AKs, distance,
+                            evo_model=evo, atm_func=atm_func,
+                            red_law=red_law)
+    print 'Constructed isochrone: %d seconds' % (time.time() - startTime)
+
+    imf_limits = np.array([0.07, 0.5, 150])
+    imf_powers = np.array([-1.3, -2.35])
+    multi = multiplicity.MultiplicityUnresolved()
+    my_imf = imf.IMF_broken_powerlaw(imf_limits, imf_powers, multiplicity=multi)
+    print 'Constructed IMF with multiples: %d seconds' % (time.time() - startTime)
+    
+    cluster = syn.ResolvedCluster(iso, my_imf, cluster_mass)
+    print 'Constructed cluster: %d seconds' % (time.time() - startTime)
+    
     return
     
+def time_test_mass_match():
+    from popstar import synthetic as syn
+
+    def match_model_mass1(isoMasses, theMass):
+        dm = np.abs(isoMasses - theMass)
+        mdx = dm.argmin()
+
+        # Model mass has to be within 2% of the desired mass
+        if (dm[mdx] / theMass) > 0.1:
+            return None
+        else:
+            return mdx
+
+    def match_model_mass2(isoMasses, theMass):
+        dm = np.abs(isoMasses - theMass)
+        mdx = dm.argmin()
+
+        # Model mass has to be within 2% of the desired mass
+        if (dm[mdx] / theMass) > 0.1:
+            return None
+        else:
+            return mdx
+                
