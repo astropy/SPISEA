@@ -862,10 +862,10 @@ def compare_Baraffe_Pisa(BaraffeIso, PisaIso):
 # Merged model classes
 #==============================#
 class MergedBaraffePisaEkstromParsec(StellarEvolution):
-    def __init__(self):
+    def __init__(self, rot=True):
         """
         Define intrinsic properties for merged Baraffe-Pisa-Ekstrom-Parsec
-        stellar models.
+        stellar models. If rot=True (default), use the rotating Ekstrom models.
         """
         # populate list of model masses (in solar masses)
         mass_list = [(0.1 + i*0.005) for i in range(181)]
@@ -880,8 +880,12 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         model_dir = models_dir + 'merged/baraffe_pisa_ekstrom_parsec/'
         StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
         self.z_solar = 0.015
-        self.z_file_map = {0.015: 'z015/'}
-
+        
+        # Switch to specify rotating/non-rotating models
+        if rot:
+            self.z_file_map = {0.015: 'z015_rot/'}
+        else:
+            self.z_file_map = {0.015: 'z015_norot/'}
         
     def massTrack(self, mass=0.5, metallicity=0.0):
         r"""
@@ -891,7 +895,7 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         return
         
     
-    def isochrone(self, age=1.e8, metallicity=0.0, rot=True):
+    def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the Geneva collection.
         """
@@ -915,15 +919,9 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         z_idx = searchsorted(self.z_list, z_defined, side='left')
         z_dir = self.z_file_map[self.z_list[z_idx]]
 
-        # Add rotation information to z_dir string
-        if rot:
-            z_dir = z_dir[:-1]+'_rot/'
-        else:
-            z_dir = z_dir[:-1]+'_norot/'
-
         # generate isochrone file string
         full_iso_file = self.model_dir + z_dir + iso_file
-        
+
         # return isochrone data
         iso = Table.read(full_iso_file, format='fits')
         iso.rename_column('col1', 'mass')
@@ -940,10 +938,10 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
 
 
 class MergedPisaEkstromParsec(StellarEvolution):
-    def __init__(self):
+    def __init__(self, rot=True):
         """
         Define intrinsic properties for merged Pisa-Ekstrom-Parsec
-        stellar models.
+        stellar models. If rot=True (default), use the rotating Ekstrom models.
         """
         # populate list of model masses (in solar masses)
         mass_list = [(0.1 + i*0.005) for i in range(181)]
@@ -958,8 +956,12 @@ class MergedPisaEkstromParsec(StellarEvolution):
         model_dir = models_dir + 'merged/pisa_ekstrom_parsec/'
         StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
         self.z_solar = 0.015
-        self.z_file_map = {0.015: 'z015/'}
 
+        #Switch to specify rot/notot
+        if rot:
+            self.z_file_map = {0.015: 'z015_rot/'}
+        else:
+            self.z_file_map = {0.015: 'z015_norot/'}
         
     def massTrack(self, mass=0.5, metallicity=0.0):
         r"""
@@ -969,7 +971,7 @@ class MergedPisaEkstromParsec(StellarEvolution):
         return
         
     
-    def isochrone(self, age=1.e8, metallicity=0.0, rot=True):
+    def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the Geneva collection.
         """
@@ -992,12 +994,6 @@ class MergedPisaEkstromParsec(StellarEvolution):
         # find closest metallicity value
         z_idx = searchsorted(self.z_list, z_defined, side='left')
         z_dir = self.z_file_map[self.z_list[z_idx]]
-
-        # Add rotation information to z_dir string
-        if rot:
-            z_dir = z_dir[:-1]+'_rot/'
-        else:
-            z_dir = z_dir[:-1]+'_norot/'
 
         # generate isochrone file string
         full_iso_file = self.model_dir + z_dir + iso_file
