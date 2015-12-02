@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 import time
 import pdb
 
-default_evo_model = evolution.MergedPisaEkstromParsec()
+default_evo_model = evolution.MergedBaraffePisaEkstromParsec()
 default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
 
@@ -201,22 +201,40 @@ class UnresolvedCluster(Cluster):
         # Sample a power-law IMF randomly
         self.mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
         
-        temp = np.zeros(len(mass), dtype=float)
+        temp = np.zeros(len(self.mass), dtype=float)
         self.mass_all = np.zeros(len(self.mass), dtype=float)
-        self.spec_list = [None] * len(mass)
+        self.spec_list = [None] * len(self.mass)
+        # placeholder array to make spectrum summing more efficient
+        spec_list_np = np.zeros(shape=(len(iso.spec_list[0].flux),len(self.mass)), dtype=float)
         self.spec_list_trim = [None] * len(self.mass)
+        # same as spec_list_np, but for the wavelength-trimmed spectra
+        trimtmp = spectrum.trimSpectrum(iso.spec_list[0],wave_range[0],wave_range[1])
+        trimx = len(trimtmp._fluxtable)
+        spec_list_trim_np = np.zeros(shape=(trimx,len(self.mass)), dtype=float)
 
         t1 = time.time()
-        for ii in range(len(mass)):
+        for ii in range(len(self.mass)):
             # Find the closest model mass (returns None, if nothing with dm = 0.1
-            mdx = match_model_mass(iso.points['mass'], mass[ii])
+            mdx = match_model_mass(iso.points['mass'], self.mass[ii])
             if mdx == None:
                 continue
 
+            # getting the temp, mass, spectrum of the matched star
             temp[ii] = iso.points['Teff'][mdx]
             self.mass_all[ii] = iso.points['mass'][mdx]
-            self.spec_list[ii] = iso.spec_list[mdx]
-            self.spec_list_trim[ii] = spectrum.trimSpectrum(iso.spec_list[mdx],wave_range[0],wave_range[1])
+            tmpspec = iso.spec_list[mdx]
+
+            # resampling the matched spectrum to a common wavelength grid
+            tmpspec = spectrum.CompositeSourceSpectrum.tabulate(tmpspec)
+            tmpspecresamp = spectrum.TabularSourceSpectrum.resample(tmpspec,iso.spec_list[0].wave)
+            self.spec_list[ii] = tmpspecresamp
+            spec_list_np[:,ii]=np.asarray(tmpspecresamp._fluxtable)
+
+            # and trimming to the requested wavelength range
+            tmpspectrim = spectrum.trimSpectrum(tmpspecresamp,wave_range[0],wave_range[1])
+            self.spec_list_trim[ii] = tmpspectrim
+            spec_list_trim_np[:,ii] = np.asarray(tmpspectrim._fluxtable)
+            
 
         t2 = time.time()
         print 'Mass matching took {0:f} s.'.format(t2-t1)
@@ -227,21 +245,22 @@ class UnresolvedCluster(Cluster):
 
         self.mass_all = self.mass_all[idx]
         self.spec_list = [self.spec_list[iidx] for iidx in idx]
+        spec_list_np = spec_list_np[:,idx]
         self.spec_list_trim = [self.spec_list_trim[iidx] for iidx in idx]
-        
-        self.spec_tot_full = np.sum(self.spec_list,0)
+        spec_list_trim_np = spec_list_trim_np[:,idx]
+
+        self.spec_tot_full = np.sum(spec_list_np,1)
 
         t3 = time.time()
         print 'Spec summing took {0:f}s'.format(t3-t2)
+
+        self.spec_trim = np.sum(spec_list_trim_np,1)
         
-        self.spec_trim = spectrum.trimSpectrum(self.spec_tot_full,
-                                               wave_range[0], wave_range[1])
         t4 = time.time()
         print 'Spec trimming took {0:f}s'.format(t4-t3)
 
         self.mass_tot = np.sum(sysMass[idx])
         print 'Total cluster mass is {0:f} M_sun'.format(self.mass_tot)
-        self.log_age = logAge
 
         return
 
@@ -446,7 +465,7 @@ class IsochronePhot(Isochrone):
         return
 
     def make_photometry(self):
-        """
+        """ 
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
         photometry.
@@ -559,6 +578,55 @@ class IsochronePhot(Isochrone):
         
         return
     
+def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
+                        atm_func=default_atm_func, redlaw = default_red_law,
+                        iso_dir = './', mass_sampling=1):
+    """
+    Wrapper routine to generate a grid of isochrones of different ages,
+    extinctions, and distances
+
+    age_arr: array of ages to loop over (logAge)
+    Aks_arr: array of Aks values to loop over (mag)
+    dist_arr: array of distances to loop over (pc)
+
+    evo_models: evolution models to adopt
+    atm_models: atmosphere models to adopt
+    redlaw: reddening law to adopt
+    iso_dir: directory isochrones will be stored
+    mass_sampling: mass sampling of isochrone, relative to original mass sampling
+
+    NOTE: This code only makes isochrones with the Ekstrom rotating models, for now. 
+    """
+    print '**************************************'
+    print 'Start generating isochrones'
+    print 'Evolutionary Models adopted: {0}'.format(evo_model)
+    print 'Atmospheric Models adopted: {0}'.format(atm_func)
+    print 'Reddening Law adopted: {0}'.format(redlaw)
+    print 'Isochrone Mass sampling: {0}'.format(mass_sampling)
+    print '**************************************'
+
+    num_models = len(age_arr) * len(AKs_arr) * len(dist_arr)
+    iteration = 0
+    #Loop structure: loop 1 = age, loop 2 = Aks, loop 3 = distance
+    for i in range(len(age_arr)):
+        for j in range(len(AKs_arr)):
+            for k in range(len(dist_arr)):
+                    iso = IsochronePhot(age_arr[i], AKs_arr[j], dist_arr[k],
+                                        evo_model=evo_model, atm_func=atm_func,
+                                        red_law=redlaw, iso_dir=iso_dir,
+                                        mass_sampling=mass_sampling)
+                    iteration += 1
+                    print 'Done ' + str(iteration) + ' of ' + str(num_models)
+
+    # Also, save a README file in iso directory documenting the params used
+    _out = open(iso_dir+'README.txt', 'w')
+    _out.write('Popstar parameters used to generate isochrone grid:\n')
+    _out.write('Evolutionary Models: {0}\n'.format(evo_model))
+    _out.write('Atmospheric Models: {0}\n'.format(atm_func))
+    _out.write('Reddening Law: {0}\n'.format(redlaw))
+    _out.write('Isochrone Mass: {0}'.format(mass_sampling))
+    _out.close()
+    return
 
 # Little helper utility to get all the bandpass/zeropoint info.
 def get_filter_info(name, vega=vega):

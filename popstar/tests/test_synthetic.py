@@ -69,22 +69,24 @@ def test_ResolvedCluster():
     from popstar.imf import multiplicity
 
     logAge = 6.7
-    AKs = 2.7
+    AKs = 2.4
     distance = 4000
     cluster_mass = 5000
 
     startTime = time.time()
     
-    evo = evolution.MergedPisaEkstromParsec()
+    evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atm.get_merged_atmosphere
+
     red_law = reddening.RedLawNishiyama09()
     
     iso = syn.IsochronePhot(logAge, AKs, distance,
                             evo_model=evo, atm_func=atm_func,
                             red_law=red_law)
+
     print 'Constructed isochrone: %d seconds' % (time.time() - startTime)
 
-    imf_mass_limits = np.array([0.15, 0.5, 1, np.inf])
+    imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
     imf_powers = np.array([-1.3, -2.3, -2.3])
 
     ##########
@@ -213,7 +215,46 @@ def time_test_cluster():
     
     cluster = syn.ResolvedCluster(iso, my_imf, cluster_mass)
     print 'Constructed cluster: %d seconds' % (time.time() - startTime)
+
+    return
     
+def model_young_cluster_object(resolved=False):
+    from popstar import synthetic as syn
+    from popstar import atmospheres as atm
+    from popstar import evolution
+    from popstar.imf import imf
+    from popstar.imf import multiplicity
+
+    log_age = 6.5
+    AKs = 0.1
+    distance = 8000.0
+    cluster_mass = 10000.
+    
+    multi = multiplicity.MultiplicityUnresolved()
+    imf_in = imf.Kroupa_2001(multiplicity=multi)
+    evo = evolution.MergedPisaEkstromParsec()
+    atm_func = atm.get_merged_atmosphere
+    iso = syn.Isochrone(log_age, AKs, distance, evo, mass_sampling=10)
+
+    if resolved:
+        cluster = syn.ResolvedCluster(iso, imf_in, cluster_mass)
+    else:
+        cluster = syn.UnresolvedCluster(iso, imf_in, cluster_mass, wave_range=[19000,24000])
+
+    # Plot the spectrum of the most massive star
+    idx = cluster.mass_all.argmax()
+    print 'Most massive star is {0:f} M_sun.'.format(cluster.mass_all[idx])
+    #bigstar = cluster.spec_list_trim[idx]
+    plt.figure(1)
+    plt.clf()
+    plt.plot(cluster.spec_list_trim[idx]._wavetable, cluster.spec_list_trim[idx]._fluxtable, 'k.')
+
+    # Plot an integrated spectrum of the whole cluster.
+    wave, flux = cluster.spec_list_trim[idx]._wavetable, cluster.spec_trim
+    plt.figure(2)
+    plt.clf()
+    plt.plot(wave, flux, 'k.')
+
     return
     
 def time_test_mass_match():
