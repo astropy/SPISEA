@@ -2,6 +2,7 @@ import time
 import pylab as plt
 import numpy as np
 import pdb
+from scipy.spatial import cKDTree as KDTree
 
 def test_isochrone(plot=False):
     from popstar import synthetic as syn
@@ -168,7 +169,7 @@ def test_UnresolvedCluster():
     startTime = time.time()    
     multi = multiplicity.MultiplicityUnresolved()
     imf_in = imf.Kroupa_2001(multiplicity=multi)
-    evo = evolution.MergedPisaEkstromParsec()
+    evo = evolution.MergedBaraffePisaEkstromParsec()
     iso = syn.Isochrone(log_age, AKs, distance, evo, mass_sampling=10)
     print 'Made cluster: %d seconds' % (time.time() - startTime)
 
@@ -194,11 +195,11 @@ def time_test_cluster():
     logAge = 6.7
     AKs = 2.7
     distance = 4000
-    cluster_mass = 5e6
+    cluster_mass = 5e3
 
     startTime = time.time()
     
-    evo = evolution.MergedPisaEkstromParsec()
+    evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atm.get_merged_atmosphere
     red_law = reddening.RedLawNishiyama09()
     
@@ -259,24 +260,70 @@ def model_young_cluster_object(resolved=False):
     
 def time_test_mass_match():
     from popstar import synthetic as syn
+    from popstar import atmospheres as atm
+    from popstar import evolution
+    from popstar.imf import imf
+    from popstar.imf import multiplicity
 
-    def match_model_mass1(isoMasses, theMass):
-        dm = np.abs(isoMasses - theMass)
-        mdx = dm.argmin()
+    log_age = 6.7
+    AKs = 2.7
+    distance = 4000
+    cluster_mass = 5e3
+    
+    imf_in = imf.Kroupa_2001(multiplicity=None)
 
-        # Model mass has to be within 2% of the desired mass
-        if (dm[mdx] / theMass) > 0.1:
-            return None
-        else:
-            return mdx
+    start_time = time.time()
+    iso = syn.IsochronePhot(log_age, AKs, distance)
+    iso_masses = iso.points['mass']
+    print 'Generated iso masses in {0:.0f} s'.format(time.time() - start_time)
 
-    def match_model_mass2(isoMasses, theMass):
-        dm = np.abs(isoMasses - theMass)
-        mdx = dm.argmin()
+    start_time = time.time()
+    star_masses, isMulti, compMass, sysMass = imf_in.generate_cluster(cluster_mass)
+    print 'Generated cluster masses in {0:.0f} s'.format(time.time() - start_time)
+    
+    def match_model_masses1(isoMasses, starMasses):
+        indices = np.empty(len(starMasses), dtype=int)
+        
+        for ii in range(len(starMasses)):
+            theMass = starMasses[ii]
+            
+            dm = np.abs(isoMasses - theMass)
+            mdx = dm.argmin()
 
-        # Model mass has to be within 2% of the desired mass
-        if (dm[mdx] / theMass) > 0.1:
-            return None
-        else:
-            return mdx
-                
+            # Model mass has to be within 10% of the desired mass
+            if (dm[mdx] / theMass) > 0.1:
+                indices[ii] = -1
+            else:
+                indices[ii] = mdx
+
+        return indices
+            
+
+    def match_model_masses2(isoMasses, starMasses):
+        isoMasses_tmp = isoMasses.reshape((len(isoMasses), 1))
+        kdt = KDTree(isoMasses_tmp)
+
+        starMasses_tmp = starMasses.reshape((len(starMasses), 1))
+        q_results = kdt.query(starMasses_tmp, k=1)
+        indices = q_results[1]
+
+        dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
+
+        idx = np.where(dm_frac > 0.1)[0]
+        indices[idx] = -1
+        
+        return indices
+
+    print 'Test #1 START'
+    start_time = time.time()
+    idx1 = match_model_masses1(iso_masses, star_masses)
+    stop_time = time.time()
+    print 'Test #1 STOPPED after {0:.0f} seconds'.format(stop_time - start_time)
+
+    print 'Test #2 START'
+    start_time = time.time()
+    idx2 = match_model_masses2(iso_masses, star_masses)
+    stop_time = time.time()
+    print 'Test #2 STOPPED after {0:.0f} seconds'.format(stop_time - start_time)
+
+    return

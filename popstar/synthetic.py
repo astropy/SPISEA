@@ -23,6 +23,8 @@ import matplotlib
 import matplotlib.pyplot as plt
 import time
 import pdb
+from scipy.spatial import cKDTree as KDTree
+
 
 default_evo_model = evolution.MergedBaraffePisaEkstromParsec()
 default_red_law = reddening.RedLawNishiyama09()
@@ -63,16 +65,76 @@ class Cluster(object):
 
     
 class ResolvedCluster(Cluster):
-    def __init__(self, iso, imf, cluster_mass, verbose=False):
-        # Doesn't do much.
+    def __init__(self, iso, imf, cluster_mass, save_dir='./', verbose=False):
+        # Save to object variables
         Cluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
+
+        # ##### 
+        # # Use saved cluster if all parameters (except distance) match.
+        # #####
+        # # Unique parameters
+        # log_age = self.iso.points.meta['LOGAGE']
+        # AKs = self.iso.points.meta['AKS']
+        # dist = self.iso.points.meta['DISTANCE']
         
+        # # Make and input/output file name for the stored cluster. 
+        # save_file_fmt = '{0}clust_{1:05.2f}_{2:4.2f}_{3:5s}{4:s}'
+        # save_sys_file = save_file_fmt.format(save_dir, log_age, AKs, str(dist).zfill(5), '.fits')
+        # save_comp_file = save_file_fmt.format(save_dir, log_age, AKs, str(dist).zfill(5), '_comp.fits')
+
+        # if os.path.exists(save_sys_file):
+        #     self.star_systems = Table.read(save_sys_file)
+
+        #     if self.imf.make_multiples:
+        #         self.companions = Table.read(save_comp_file)
+            
+            
+        ##### 
         # Sample the IMF to build up our cluster mass.
+        ##### 
         mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
+
+        # Figure out the filters we will make:
+        self.filt_names = self.set_filter_names()
 
         ##### 
         # Make a table to contain all the information about each stellar system.
         #####
+        star_systems = self._make_star_systems_table(mass, isMulti, sysMass)
+
+        # Trim out bad systems
+        star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
+
+        ##### 
+        # Make a table to contain all the information about companions.
+        #####
+        if self.imf.make_multiples:
+            companions = self._make_companions_table(star_systems, compMass)
+
+        #####
+        # Save our arrays to the object
+        #####
+        self.star_systems = star_systems
+        
+        if self.imf.make_multiples:
+            self.companions = companions
+
+        return
+
+    def set_filter_names(self):
+        filt_names = []
+        
+        for col_name in self.iso.points.colnames:
+            if 'mag' in col_name:
+                filt_names.append(col_name)
+
+        return filt_names
+        
+
+    def _make_star_systems_table(self, mass, isMulti, sysMass):
+        """
+        Make a star_systems table and get synthetic photometry for each primary star.
+        """
         star_systems = Table([mass, isMulti, sysMass],
                              names=['mass', 'isMultiple', 'systemMass'])
         N_systems = len(star_systems)
@@ -85,109 +147,121 @@ class ResolvedCluster(Cluster):
 
         # Add the filter columns to the table. They are empty so far.
         # Keep track of the filter names in : filt_names
-        filt_names = []
-        for col_name in iso.points.colnames:
-            if 'mag' in col_name:
-                filt_names.append(col_name)
-                mag_col = Column(np.empty(N_systems, dtype=float), name=col_name)
-                star_systems.add_column(mag_col)
+        for filt in self.filt_names:
+            star_systems.add_column( Column(np.empty(N_systems, dtype=float), name=filt) )
 
-        # Loop through each of the systems and assign magnitudes.
-        for ii in range(N_systems):
-            # Find the closest model mass (returns None, if nothing with dm = 0.1
-            mdx = match_model_mass(iso.points['mass'], star_systems['mass'][ii])
-            if mdx == None:
-                # print 'Rejected a primary star {0:.2f}'.format(star_systems['mass'][ii])
-                continue
+        mdx_all = match_model_masses(self.iso.points['mass'], star_systems['mass'])
+        idx_good = np.where(mdx_all >= 0)[0]
+        mdx_good = mdx_all[idx_good]
+        
+        if len(idx_good) != len(mdx_all):
+            msg = 'Rejected {0:d} of {1:d} primary stars' 
+            print msg.format(len(mdx_all) - len(idx_good), N_systems)
+            foo = np.where(mdx_all == -1)[0]
+            print star_systems['mass'][foo]
 
-            star_systems['Teff'][ii] = iso.points['Teff'][mdx]
-            star_systems['L'][ii] = iso.points['L'][mdx]
-            star_systems['logg'][ii] = iso.points['logg'][mdx]
-            star_systems['isWR'][ii] = iso.points['isWR'][mdx]
-            
-            for filt in filt_names:
-                star_systems[filt][ii] = iso.points[filt][mdx]
-                
-        # Get rid of the bad ones
-        idx = np.where(star_systems['Teff'] > 0)[0]
-        if len(idx) != N_systems and verbose:
-            print 'Found {0:d} stars out of mass range'.format(N_systems - len(idx))
+        
+        star_systems['Teff'][idx_good] = self.iso.points['Teff'][mdx_good]
+        star_systems['L'][idx_good] = self.iso.points['L'][mdx_good]
+        star_systems['logg'][idx_good] = self.iso.points['logg'][mdx_good]
+        star_systems['isWR'][idx_good] = self.iso.points['isWR'][mdx_good]
 
-        star_systems = star_systems[idx]
+        for filt in self.filt_names:
+            star_systems[filt][idx_good] = self.iso.points[filt][mdx_good]
+        
+        return star_systems
+
+    def _make_companions_table(self, star_systems, compMass):
+
         N_systems = len(star_systems)
-
+        
         #####
         #    MULTIPLICITY                 
         # Make a second table containing all the companion-star masses.
         # This table will be much longer... here are the arrays:
         #    sysIndex - the index of the system this star belongs too
         #    mass - the mass of this individual star.
-        if imf.make_multiples:
+        N_companions = np.array([len(star_masses) for star_masses in compMass])
+        star_systems.add_column( Column(N_companions, name='N_companions') )
+
+        N_comp_tot = N_companions.sum()
+        system_index = np.repeat(np.arange(N_systems), N_companions)
+
+        companions = Table([system_index], names=['system_idx'])
+
+        # Add columns for the Teff, L, logg, isWR, filters for the companion stars.
+        companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='mass') )
+        companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Teff') )
+        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='L') )
+        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='logg') )
+        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='isWR') )
+        for filt in self.filt_names:
+            companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
+
+        kk = 0
+        pdb.set_trace()
+
+        # Loop through each star system
+        for ii in range(N_systems):
+            # Determine if this system is a multiple star system.
+            if star_systems['isMultiple'][ii]:
+
+                # Loop through the companions in this system
+                for cc in range(N_companions[ii]):
+                    companions['mass'][kk] = compMass[ii][cc]
+                    mdx_cc = match_model_mass(self.iso.points['mass'], compMass[ii][cc])
+
+                    if mdx_cc != None:
+                        companions['Teff'][kk] = self.iso.points['Teff'][mdx_cc]
+                        companions['L'][kk] = self.iso.points['L'][mdx_cc]
+                        companions['logg'][kk] = self.iso.points['logg'][mdx_cc]
+                        companions['isWR'][kk] = self.iso.points['isWR'][mdx_cc]
+
+                        for filt in self.filt_names:
+                            f1 = 10**(-star_systems[filt][ii] / 2.5)
+                            f2 = 10**(-self.iso.points[filt][mdx_cc] / 2.5)
+
+                            companions[filt][kk] = self.iso.points[filt][mdx_cc]
+                            star_systems[filt][ii] = -2.5 * np.log10(f1 + f2)
+
+                        kk += 1
+
+        # Notify if we have a lot of bad ones.
+        idx = np.where(companions['Teff'] > 0)[0]
+        if len(idx) != N_comp_tot and self.verbose:
+            print 'Found {0:d} companions out of mass range'.format(N_comp_tot - len(idx))
+
+        # Double check that everything behaved properly.
+        assert companions['mass'][idx].min() > 0
+
+        return companions
+
+    def _remove_bad_systems(self, star_systems, compMass):
+        N_systems = len(star_systems)
+
+        # Get rid of the bad ones
+        idx = np.where(star_systems['Teff'] > 0)[0]
+        if len(idx) != N_systems and self.verbose:
+            print 'Found {0:d} stars out of mass range'.format(N_systems - len(idx))
+
+        star_systems = star_systems[idx]
+        N_systems = len(star_systems)
+        
+        if self.imf.make_multiples:
             # Clean up companion stuff (which we haven't handeled yet)
             compMass = [compMass[ii] for ii in idx]
-            N_companions = np.array([len(star_masses) for star_masses in compMass])
-            star_systems.add_column( Column(N_companions, name='N_companions') )
-
-            N_comp_tot = N_companions.sum()
-            system_index = np.repeat(np.arange(N_systems), N_companions)
-
-            companions = Table([system_index], names=['system_idx'])
-
-            # Add columns for the Teff, L, logg, isWR, filters for the companion stars.
-            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='mass') )
-            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Teff') )
-            companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='L') )
-            companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='logg') )
-            companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='isWR') )
-            for filt in filt_names:
-                companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
             
-            kk = 0
+        return star_systems, compMass
 
-            # Loop through each star system
-            for ii in range(N_systems):
-                # Determine if this system is a multiple star system.
-                if star_systems['isMultiple'][ii]:
-                    
-                    # Loop through the companions in this system
-                    for cc in range(N_companions[ii]):
-                        companions['mass'][kk] = compMass[ii][cc]
-                        mdx_cc = match_model_mass(iso.points['mass'], compMass[ii][cc])
-                        
-                        if mdx_cc != None:
-                            companions['Teff'][kk] = iso.points['Teff'][mdx_cc]
-                            companions['L'][kk] = iso.points['L'][mdx_cc]
-                            companions['logg'][kk] = iso.points['logg'][mdx_cc]
-                            companions['isWR'][kk] = iso.points['isWR'][mdx_cc]
-                            
-                            for filt in filt_names:
-                                f1 = 10**(-star_systems[filt][ii] / 2.5)
-                                f2 = 10**(-iso.points[filt][mdx_cc] / 2.5)
-                                
-                                companions[filt][kk] = iso.points[filt][mdx_cc]
-                                star_systems[filt][ii] = -2.5 * np.log10(f1 + f2)
+class ResolvedClusterDiffRedden(ResolvedCluster):
+    def __init__(self, iso, imf, cluster_mass, deltaAKs,
+                 red_law=default_red_law, verbose=False):
 
-                            kk += 1
-                        
-                        # else:
-                        #     print 'Rejected a companion %.2f' % compMass[ii][cc]
-                            
-            # Get rid of the bad ones
-            idx = np.where(companions['Teff'] > 0)[0]
-            if len(idx) != N_comp_tot and self.verbose:
-                print 'Found {0:d} companions out of mass range'.format(N_comp_tot - len(idx))
-
-            # Double check that everything behaved properly.
-            assert companions['mass'][idx].min() > 0
-
-        # Save our arrays to the object
-        self.star_systems = star_systems
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
         
-        if imf.make_multiples:
-            self.companions = companions
 
         return
-
+    
             
 class UnresolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass,
@@ -680,6 +754,19 @@ def match_model_mass(isoMasses,theMass):
         return None
     else:
         return mdx
+
+def match_model_masses(isoMasses, starMasses):
+    kdt = KDTree( isoMasses.reshape((len(isoMasses), 1)) )
+    q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
+    indices = q_results[1]
+
+    dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
+
+    idx = np.where(dm_frac > 0.1)[0]
+    indices[idx] = -1
+    
+    return indices
+    
     
 def get_evo_model_by_string(evo_model_string):
     return getattr(evolution, evo_model_string)
