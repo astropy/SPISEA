@@ -418,7 +418,7 @@ class IsochronePhot(Isochrone):
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  filters={'127m': 'wfc3,ir,f127m',
-                          '139m': 'wfc3,ir,f127m',
+                          '139m': 'wfc3,ir,f139m',
                           '153m': 'wfc3,ir,f153m',
                           'J': 'nirc2,J',
                           'H': 'nirc2,H',
