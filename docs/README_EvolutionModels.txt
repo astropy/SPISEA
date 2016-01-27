@@ -8,7 +8,9 @@ The default stellar evolution models used in the synthetic isochrones
 are as follows:
 
 For logAge < 7.4:
-Pisa models (Tognelli et al. 2011) from 0.2 M_sun to the highest mass
+Baraffe et al. 2015 models from 0.08 - 0.4 M_sun
+Transition region between 0.4 - 0.5 M_sun between Baraffe+15 and Pisa models
+Pisa models (Tognelli et al. 2011) from 0.5 M_sun to the highest mass
 available at that age (typically 5-7 M_sun), and then switching to
 Geneva models (Ekstrom et al. 2012) for the rest of the way.
 
