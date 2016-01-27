@@ -89,6 +89,7 @@ class ResolvedCluster(Cluster):
         #         self.companions = Table.read(save_comp_file)
             
             
+        t1 = time.time()
         ##### 
         # Sample the IMF to build up our cluster mass.
         ##### 
@@ -100,7 +101,7 @@ class ResolvedCluster(Cluster):
         ##### 
         # Make a table to contain all the information about each stellar system.
         #####
-        star_systems = self._make_star_systems_table(mass, isMulti, sysMass)
+        star_systems = self._make_star_systems_table_interp(mass, isMulti, sysMass)
 
         # Trim out bad systems
         star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
@@ -109,7 +110,7 @@ class ResolvedCluster(Cluster):
         # Make a table to contain all the information about companions.
         #####
         if self.imf.make_multiples:
-            companions = self._make_companions_table(star_systems, compMass)
+            companions = self._make_companions_table_interp(star_systems, compMass)
 
         #####
         # Save our arrays to the object
@@ -171,6 +172,45 @@ class ResolvedCluster(Cluster):
         
         return star_systems
 
+    def _make_star_systems_table_interp(self, mass, isMulti, sysMass):
+        """
+        Make a star_systems table and get synthetic photometry for each primary star.
+        """
+        star_systems = Table([mass, isMulti, sysMass],
+                             names=['mass', 'isMultiple', 'systemMass'])
+        N_systems = len(star_systems)
+
+        # Add columns for the Teff, L, logg, isWR for the primary stars.
+        star_systems.add_column( Column(np.zeros(N_systems, dtype=float), name='Teff') )
+        star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='L') )
+        star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='logg') )
+        star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='isWR') )
+
+        # Add the filter columns to the table. They are empty so far.
+        # Keep track of the filter names in : filt_names
+        for filt in self.filt_names:
+            star_systems.add_column( Column(np.empty(N_systems, dtype=float), name=filt) )
+
+        iso_pts = self.iso.points
+        interp_Teff = interpolate.interp1d(iso_pts['mass'], iso_pts['Teff'], kind='linear', bounds_error=False, fill_value=0)
+        interp_L = interpolate.interp1d(iso_pts['mass'], iso_pts['L'], kind='linear', bounds_error=False, fill_value=0)
+        interp_logg = interpolate.interp1d(iso_pts['mass'], iso_pts['logg'], kind='linear', bounds_error=False, fill_value=0)
+        interp_isWR = interpolate.interp1d(iso_pts['mass'], iso_pts['isWR'], kind='linear', bounds_error=False, fill_value=0)
+
+        star_systems['Teff'] = interp_Teff(star_systems['mass'])
+        star_systems['L'] = interp_L(star_systems['mass'])
+        star_systems['logg'] = interp_logg(star_systems['mass'])
+        star_systems['isWR'] = np.round(interp_isWR(star_systems['mass']))
+
+        for filt in self.filt_names:
+            interp_filt = interpolate.interp1d(iso_pts['mass'], iso_pts[filt],
+                                               kind='linear',
+                                               bounds_error=False, fill_value=0)
+            star_systems[filt] = interp_filt(star_systems['mass'])
+        
+        return star_systems
+
+        
     def _make_companions_table(self, star_systems, compMass):
 
         N_systems = len(star_systems)
@@ -199,7 +239,6 @@ class ResolvedCluster(Cluster):
             companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
 
         kk = 0
-        pdb.set_trace()
 
         # Loop through each star system
         for ii in range(N_systems):
@@ -236,6 +275,97 @@ class ResolvedCluster(Cluster):
 
         return companions
 
+    def _make_companions_table_interp(self, star_systems, compMass):
+
+        N_systems = len(star_systems)
+        
+        #####
+        #    MULTIPLICITY                 
+        # Make a second table containing all the companion-star masses.
+        # This table will be much longer... here are the arrays:
+        #    sysIndex - the index of the system this star belongs too
+        #    mass - the mass of this individual star.
+        N_companions = np.array([len(star_masses) for star_masses in compMass])
+        star_systems.add_column( Column(N_companions, name='N_companions') )
+
+        N_comp_tot = N_companions.sum()
+        system_index = np.repeat(np.arange(N_systems), N_companions)
+
+        companions = Table([system_index], names=['system_idx'])
+
+        # Add columns for the Teff, L, logg, isWR, filters for the companion stars.
+        companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='mass') )
+        companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Teff') )
+        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='L') )
+        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='logg') )
+        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='isWR') )
+        for filt in self.filt_names:
+            companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
+
+        # Make an array that maps system index (ii), companion index (cc) to
+        # the place in the 1D companions array.
+        N_comp_max = N_companions.max()
+        
+        comp_index = np.zeros((N_systems, N_comp_max), dtype=int)
+        kk = 0
+        for ii in range(N_systems):
+            for cc in range(N_companions[ii]):
+                comp_index[ii][cc] = kk
+                kk += 1
+
+        # Setup interpolaters.
+        iso_pts = self.iso.points
+        interp_Teff = interpolate.interp1d(iso_pts['mass'], iso_pts['Teff'], kind='linear', bounds_error=False, fill_value=0)
+        interp_L = interpolate.interp1d(iso_pts['mass'], iso_pts['L'], kind='linear', bounds_error=False, fill_value=0)
+        interp_logg = interpolate.interp1d(iso_pts['mass'], iso_pts['logg'], kind='linear', bounds_error=False, fill_value=0)
+        interp_isWR = interpolate.interp1d(iso_pts['mass'], iso_pts['isWR'], kind='linear', bounds_error=False, fill_value=0)
+        interp_filt = {}
+        for filt in self.filt_names:
+            interp_filt[filt] = interpolate.interp1d(iso_pts['mass'], iso_pts[filt],
+                                                    kind='linear',
+                                                    bounds_error=False, fill_value=0)
+                
+        # Find all the systems with at least one companion... add the flux
+        # of that companion to the primary. Repeat for 2 companions,
+        # 3 companions, etc.
+        for cc in range(1, N_comp_max+1):
+            # All systems with at least cc companions.
+            idx = np.where(N_companions >= cc)[0]
+
+            # Get the location in the companions array for each system and
+            # the cc'th companion. 
+            cdx = comp_index[idx, cc-1]
+            
+            companions['mass'][cdx] = [compMass[ii][cc-1] for ii in idx]
+            comp_mass = companions['mass'][cdx]
+
+            if len(idx) > 0:
+                companions['Teff'][cdx] = interp_Teff(comp_mass)
+                companions['L'][cdx] = interp_L(comp_mass)
+                companions['logg'][cdx] = interp_logg(comp_mass)
+                companions['isWR'][cdx] = np.round(interp_isWR(comp_mass))
+
+                for filt in self.filt_names:
+                    # Magnitude of companion
+                    companions[filt][cdx] = interp_filt[filt](comp_mass)
+
+                    # Add companion flux to system flux.
+                    f1 = 10**(-star_systems[filt][idx] / 2.5)
+                    f2 = 10**(-companions[filt][cdx] / 2.5)
+                    star_systems[filt][idx] = -2.5 * np.log10(f1 + f2)
+                    
+
+        # Notify if we have a lot of bad ones.
+        idx = np.where(companions['Teff'] > 0)[0]
+        if len(idx) != N_comp_tot and self.verbose:
+            print 'Found {0:d} companions out of mass range'.format(N_comp_tot - len(idx))
+
+        # Double check that everything behaved properly.
+        assert companions['mass'][idx].min() > 0
+
+        return companions
+
+    
     def _remove_bad_systems(self, star_systems, compMass):
         N_systems = len(star_systems)
 
@@ -258,10 +388,35 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
                  red_law=default_red_law, verbose=False):
 
         ResolvedCluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
-        
 
+        # For a given delta_AKs (sigma of reddening distribution at Ks),
+        # figure out the equivalent delta_filt values for all other filters.
+        delta_red_filt = {}
+
+        AKs = iso.points.meta['AKS']
+        red_vega_lo = vega * red_law.reddening(AKs).resample(vega.wave)
+        red_vega_hi = vega * red_law.reddening(AKs + deltaAKs).resample(vega.wave)
+                              
+        for filt in self.filt_names:
+            filt_info = get_filter_info(iso.filters[filt.replace('mag', '')])
+            
+            mag_lo = mag_in_filter(red_vega_lo, filt_info)
+            mag_hi = mag_in_filter(red_vega_hi, filt_info)
+            delta_red_filt[filt] = mag_hi - mag_lo
+
+        # Perturb all of star systems' photometry by a random amount.
+        rand_red = np.random.randn(len(self.star_systems))
+        for filt in self.filt_names:
+            self.star_systems[filt] += rand_red * delta_red_filt[filt]
+
+        # Perturb the companions by the same amount.
+        if self.imf.make_multiples:
+            rand_red_comp = np.repeat(rand_red, self.star_systems['N_companions'])
+            assert len(rand_red_comp) == len(self.companions)
+            for filt in self.filt_names:
+                self.companions[filt] += rand_red_comp * delta_red_filt[filt]
+            
         return
-    
             
 class UnresolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass,
@@ -766,7 +921,7 @@ def match_model_masses(isoMasses, starMasses):
     indices[idx] = -1
     
     return indices
-    
+
     
 def get_evo_model_by_string(evo_model_string):
     return getattr(evolution, evo_model_string)

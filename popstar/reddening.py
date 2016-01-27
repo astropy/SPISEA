@@ -44,6 +44,13 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         The extinction is normalized with A_Ks.
 
         Data pulled from Nishiyama et al. 2009, Table 1
+
+        Parameters
+        ----------
+        wavelength : float
+            in microns
+        AKs : float
+            in magnitudes
         """
         filters = ['V', 'J', 'H', 'Ks', '[3.6]', '[4.5]', '[5.8]', '[8.0]']
         # Using the SIRIUS filters

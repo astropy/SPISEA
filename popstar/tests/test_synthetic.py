@@ -72,7 +72,7 @@ def test_ResolvedCluster():
     logAge = 6.7
     AKs = 2.4
     distance = 4000
-    cluster_mass = 5000
+    cluster_mass = 100000
 
     startTime = time.time()
     
@@ -101,10 +101,14 @@ def test_ResolvedCluster():
     clust1 = cluster1.star_systems
     print 'Constructed cluster: %d seconds' % (time.time() - startTime)
 
+    plt.figure(3)
     plt.clf()
     plt.plot(clust1['magJ'] - clust1['magKp'], clust1['magJ'], 'r.')
     plt.plot(iso.points['magJ'] - iso.points['magKp'], iso.points['magJ'], 'c.')
     plt.gca().invert_yaxis()
+
+    # *** Visual Inspections: ***
+    #  - check that points (red) fall between isochrone points (blue)
 
     ##########
     # Test with multiplicity
@@ -140,8 +144,6 @@ def test_ResolvedCluster():
     plt.xlabel('Mass (Msun)')
     plt.ylabel('J (mag)')
     
-    return clust2
-
     # # Plot the spectrum of the most massive star
     # idx = cluster.mass.argmax()
     # plt.clf()
@@ -151,6 +153,92 @@ def test_ResolvedCluster():
     # wave, flux = cluster.get_integrated_spectrum()
     # plt.clf()
     # plt.plot(wave, flux, 'k.')
+
+    return
+
+def test_ResolvedClusterDiffRedden():
+    from popstar import synthetic as syn
+    from popstar import atmospheres as atm
+    from popstar import evolution
+    from popstar import reddening
+    from popstar.imf import imf
+    from popstar.imf import multiplicity
+
+    logAge = 6.7
+    AKs = 2.4
+    distance = 4000
+    cluster_mass = 100000
+    deltaAKs = 0.05
+    
+    startTime = time.time()
+    
+    evo = evolution.MergedBaraffePisaEkstromParsec()
+    atm_func = atm.get_merged_atmosphere
+
+    red_law = reddening.RedLawNishiyama09()
+    
+    iso = syn.IsochronePhot(logAge, AKs, distance,
+                            evo_model=evo, atm_func=atm_func,
+                            red_law=red_law)
+
+    print 'Constructed isochrone: %d seconds' % (time.time() - startTime)
+
+    imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
+    imf_powers = np.array([-1.3, -2.3, -2.3])
+
+    ##########
+    # Start without multiplicity
+    ##########
+    my_imf1 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
+                                      multiplicity=None)
+    print 'Constructed IMF: %d seconds' % (time.time() - startTime)
+    
+    cluster1 = syn.ResolvedClusterDiffRedden(iso, my_imf1, cluster_mass, deltaAKs)
+    clust1 = cluster1.star_systems
+    print 'Constructed cluster: %d seconds' % (time.time() - startTime)
+
+    plt.figure(3)
+    plt.clf()
+    plt.plot(clust1['magJ'] - clust1['magKp'], clust1['magJ'], 'r.')
+    plt.plot(iso.points['magJ'] - iso.points['magKp'], iso.points['magJ'], 'c.')
+    plt.gca().invert_yaxis()
+
+    # *** Visual Inspections: ***
+    #  - check that points (red) fall between isochrone points (blue)
+
+    ##########
+    # Test with multiplicity
+    ##########
+    multi = multiplicity.MultiplicityUnresolved()
+    my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
+                                      multiplicity=multi)
+    print 'Constructed IMF with multiples: %d seconds' % (time.time() - startTime)
+    
+    cluster2 = syn.ResolvedClusterDiffRedden(iso, my_imf2, cluster_mass, deltaAKs)
+    clust2 = cluster2.star_systems
+    print 'Constructed cluster with multiples: %d seconds' % (time.time() - startTime)
+
+    ##########
+    # Plots 
+    ##########
+    # Plot an IR CMD and compare cluster members to isochrone.
+    plt.figure(1)
+    plt.clf()
+    plt.plot(clust1['magJ'] - clust1['magKp'], clust1['magJ'], 'r.')
+    plt.plot(clust2['magJ'] - clust2['magKp'], clust2['magJ'], 'b.')
+    plt.plot(iso.points['magJ'] - iso.points['magKp'], iso.points['magJ'], 'c-')
+    plt.gca().invert_yaxis()
+    plt.xlabel('J - Kp (mag)')
+    plt.ylabel('J (mag')
+
+    # Plot a mass-magnitude relationship.
+    plt.figure(2)
+    plt.clf()
+    plt.semilogx(clust1['mass'], clust1['magJ'], 'r.')
+    plt.semilogx(clust2['mass'], clust2['magJ'], 'r.')
+    plt.gca().invert_yaxis()
+    plt.xlabel('Mass (Msun)')
+    plt.ylabel('J (mag)')
 
     return
     
