@@ -36,7 +36,7 @@ def Vega():
                                      gravity=3.95,
                                      metallicity=-0.5)
 
-    vega = spectrum.trimSpectrum(vega, 8000, 50000)
+    vega = spectrum.trimSpectrum(vega, 5000, 50000)
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
     # and is used to convert to flux observed at Earth.
@@ -574,7 +574,7 @@ class Isochrone(object):
             # Redden the spectrum. This doesn't take much time at all.
             red = red_law.reddening(AKs).resample(star.wave) 
             star *= red
-
+            
             # Save the final spectrum to our spec_list for later use.            
             self.spec_list.append(star)
 
@@ -872,7 +872,7 @@ def get_filter_info(name, vega=vega):
         filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
                                              waveunits=filt.waveunits,
                                              name=filt.name)
-
+        
     # Resample the filter to have 1500 points across. More is excessive.
     if len(filt.wave) > 1500:
         idx = np.where(filt.throughput > 0.001)[0]
@@ -892,12 +892,12 @@ def get_filter_info(name, vega=vega):
 def mag_in_filter(star, filt):
     """
     Assumes that extinction is already resampled to same wavelengths
-    as filter.
+    as filter, and has been applied.
     """
     star_in_filter = obs.Observation(star, filt, binset=filt.wave, force='taper')
     star_flux = star_in_filter.binflux.sum()
     star_mag = -2.5 * math.log10(star_flux / filt.flux0) + filt.mag0
-
+    
     return star_mag
 
 def match_model_mass(isoMasses,theMass):
