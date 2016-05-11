@@ -877,7 +877,12 @@ def get_filter_info(name, vega=vega):
     if len(filt.wave) > 1500:
         idx = np.where(filt.throughput > 0.001)[0]
         new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
-        filt = filt.resample(new_wave) 
+        filt = filt.resample(new_wave)
+
+    # Check that vega spectrum covers the wavelength range of the filter.
+    # Otherwise, throw an error
+    if (min(filt.wave) < min(vega.wave)) | (max(filt.wave) > max(vega.wave)):
+       raise ValueError('Vega spectrum doesnt cover filter wavelength range!')  
 
     vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
     vega_flux = vega_obs.binflux.sum()
