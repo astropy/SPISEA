@@ -878,7 +878,7 @@ def get_filter_info(name, vega=vega):
         idx = np.where(filt.throughput > 0.001)[0]
         new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
         filt = filt.resample(new_wave)
-
+        
     # Check that vega spectrum covers the wavelength range of the filter.
     # Otherwise, throw an error
     if (min(filt.wave) < min(vega.wave)) | (max(filt.wave) > max(vega.wave)):
@@ -886,6 +886,10 @@ def get_filter_info(name, vega=vega):
 
     vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
     vega_flux = vega_obs.binflux.sum()
+    #diff = np.diff(vega_obs.binwave)
+    #diff = np.append(diff, diff[-1])
+    #vega_flux = np.sum(vega_obs.binflux * diff)
+    
     vega_mag = 0.03
 
     filt.flux0 = vega_flux
@@ -901,6 +905,10 @@ def mag_in_filter(star, filt):
     """
     star_in_filter = obs.Observation(star, filt, binset=filt.wave, force='taper')
     star_flux = star_in_filter.binflux.sum()
+    #diff = np.diff(star_in_filter.binwave)
+    #diff = np.append(diff, diff[-1])
+    #star_flux = np.sum(star_in_filter.binflux * diff)
+    
     star_mag = -2.5 * math.log10(star_flux / filt.flux0) + filt.mag0
     
     return star_mag
