@@ -52,16 +52,21 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         AKs : float
             in magnitudes
         """
-        filters = ['V', 'J', 'H', 'Ks', '[3.6]', '[4.5]', '[5.8]', '[8.0]']
-        # Using the SIRIUS filters
-        wave = np.array([0.551, 1.25, 1.63, 2.14, 3.545, 4.442, 5.675, 7.760])
-        A_AKs = np.array([16.13, 3.02, 1.73, 1.00, 0.500, 0.390, 0.360, 0.430])
+        # Using the SIRIUS filters (MKO)
+        #filters = ['V', 'J', 'H', 'Ks', '[3.6]', '[4.5]', '[5.8]', '[8.0]']
+        #wave = np.array([0.551, 1.25, 1.63, 2.14, 3.545, 4.442, 5.675, 7.760])
+        #A_AKs = np.array([16.13, 3.02, 1.73, 1.00, 0.500, 0.390, 0.360, 0.430])
 
+        # Using HST + VISTA filters
+        filters = ['V', 'F814W', 'Z', 'Y', 'J', 'F160W', 'H', 'Ks', '[3.6]', '[4.5]', '[5.8]', '[8.0]']
+        wave = np.array([0.551, 0.8059, 0.877, 1.02, 1.25, 1.53, 1.645, 2.14, 3.545, 4.442, 5.675, 7.760])
+        A_AKs = np.array([16.13, 8.8707, 7.4337, 5.1866, 3.02, 1.9256, 1.7032, 1.00, 0.500, 0.390, 0.360, 0.430]) 
+        
         # Using the 2MASS JHK filters
         #wave = np.array([0.551, 1.24, 1.66, 2.16, 3.545, 4.442, 5.675, 7.760])
         #A_AKs = np.array([16.13, 2.89, 1.62, 1.00, 0.500, 0.390, 0.360, 0.430])        
 
-        A_AKs_err = np.array([0.04,  0.04, 0.03, 0.00, 0.010, 0.010, 0.010, 0.010])
+        #A_AKs_err = np.array([0.04,  0.04, 0.03, 0.00, 0.010, 0.010, 0.010, 0.010])
 
         # Interpolate over the curve
         spline_interp = interpolate.splrep(wave, A_AKs, k=3, s=0)
@@ -100,16 +105,18 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
     pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
 
     The wavelength range over which this law is calculated is
-    0.5 - 8.0 microns.
+    0.5 - 3.0 microns.
+
+    User must specify Rv
     """
-    def __init__(self):
-        # Fetch the extinction curve, pre-interpolate across 1-8 microns
-        wave = np.arange(0.5, 8.0, 0.001)
+    def __init__(self, Rv):
+        # Fetch the extinction curve, pre-interpolate across 0.5-3 microns
+        wave = np.arange(0.5, 3.0, 0.001)
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Produces A_lambda for AKs = 1, which will be 
-        # scaled later. Adopt Rv=3.1
-        Alambda_scaled = RedLawCardelli.cardelli(wave, 3.1)
+        # scaled later. Expects wavelength in microns
+        Alambda_scaled = RedLawCardelli.cardelli(wave, Rv, 1.0)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -119,20 +126,21 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
                                                   Avscaled=Alambda_scaled,
                                                   name='Cardelli89',
                                                   litref='Cardelli+ 2009')
+
     @staticmethod
-    def cardelli(wavelength, Rv):
+    def cardelli(wavelength, Rv, AKs):
         """
-        Cardelli extinction law. Note: this produces extinction values expected
-        for AKs = 1 mag
+        Cardelli extinction law. This produces extinction values expected
+        for AKs
         """
         x = 1.0 / np.array(wavelength)
 
         # check for applicability
-        if (wavelength.min() < 0.3):
+        if (np.min(x) < 0.3):
             print 'wavelength is longer than applicable range for Cardelli law'
             return None
 
-        if (wavelength.max() > 8.0):
+        if (np.max(x) > 8.0):
             print 'wavelength is shorter than applicable range for Cardelli law'
             return None
         
@@ -180,13 +188,16 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         # A(lam) / A(V)
         extinction = a + b/Rv
 
-        # Now, want to produce redvals at AKs = 1
-        k_ind = np.where(abs(x-0.47) == min(abs(x-0.47)))
-        Aks_Av = a[k_ind] + b[k_ind]/Rv
-        # Av / Aks
-        Av_Aks = 1.0 / Aks_Av 
+        # Now, want to produce A_lambda / AKs, to match other laws
+        k_ind = np.where(abs(x-0.46) == min(abs(x-0.46)))
+        Aks_Av = a[k_ind] + b[k_ind]/Rv # Aks / Av
+        Av_Aks = 1.0 / Aks_Av # Av / Aks
         
-        output = extinction * Av_Aks # If Aks = 1, Av/Aks = Av
+        output = extinction * Av_Aks # (A(lamb) / Av) * (Av / Aks) = (A(lamb) / Aks)
+
+        # Up to this point, AKs = 1; now let's scale to user-defined Aks
+        output *= AKs
+
         return output
 
 
@@ -366,16 +377,24 @@ class RedLawWesterlund1(pysynphot.reddening.CustomRedLaw):
         Data pulled from Nishiyama et al. 2009, Table 1
         """
 
-        filters = ['V', 'I', 'J', 'H', 'Ks', '[3.6]', '[4.5]', '[5.8]', '[8.0]']
+        filters = ['V', 'F814W', 'Z', 'Y', 'J', 'F160W', 'H', 'Ks', '[3.6]', '[4.5]', '[5.8]', '[8.0]']
 
         # Based on Nishiyama+ 2009, but then by-eye fitting to Wd 1 data for 
         # 0.551, 0.814, 1.25 micron.
-        wave = np.array( [0.551, 0.814, 1.25, 1.63, 2.14, 3.545, 4.442, 5.675, 7.760])
-        #A_AKs = np.array([16.9, 9.4, 2.82, 1.73, 1.00, 0.500, 0.390, 0.360, 0.430]) #IAU version
-        A_AKs = np.array([16.9, 9.45, 2.80, 1.70, 1.00, 0.500, 0.390, 0.360, 0.430]) # Final Wd1
-        
+        #-----OLD: Bad F814W data-----#
+        #wave = np.array( [0.551, 0.814, 1.25, 1.63, 2.14, 3.545, 4.442, 5.675, 7.760])
+        ##A_AKs = np.array([16.9, 9.4, 2.82, 1.73, 1.00, 0.500, 0.390, 0.360, 0.430]) #IAU version
+        #A_AKs = np.array([16.9, 9.45, 2.80, 1.70, 1.00, 0.500, 0.390, 0.360, 0.430]) # Final Wd1
+        #-----------------------------#
 
-        A_AKs_err = np.array([0.04, 0.04, 0.04, 0.03, 0.00, 0.010, 0.010, 0.010, 0.010])
+        #wave = np.array([0.551, 0.814, 1.25, 1.63, 2.14, 3.545, 4.442, 5.675, 7.760])
+        #A_AKs = np.array([16.13, 8.15, 3.19, 1.89, 1.00, 0.500, 0.390, 0.360, 0.430])
+
+        # With HST + VISTA Filters
+        wave = np.array([0.551, 0.8059, 0.877, 1.02, 1.25, 1.53, 1.645, 2.14, 3.545, 4.442, 5.675, 7.760])
+        #A_AKs = np.array([16.13, 8.3229, 6.9367, 4.9299, 3.19, 2.1389, 1.8554, 1.00, 0.500, 0.390, 0.360, 0.430])        
+        A_AKs = np.array([16.13, 8.52, 6.0, 4.32, 3.02, 2.07, 1.82, 1.00, 0.500, 0.390, 0.360, 0.430])        
+        #A_AKs_err = np.array([0.04, 0.04, 0.04, 0.03, 0.00, 0.010, 0.010, 0.010, 0.010])
 
         # Interpolate over the curve
         spline_interp = interpolate.splrep(wave, A_AKs, k=3, s=0)
