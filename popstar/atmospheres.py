@@ -1065,3 +1065,194 @@ def rebin_spec(wave, specin, wavnew):
     obs = pysynphot.observation.Observation(spec, filt, binset=wavnew, force='taper')
  
     return obs.binflux
+
+def organize_BTSettl_atmospheres(path_to_dir):
+    """
+    Construct cdbs-ready BTSettl_CIFITS_2011_2015 atmospheres for each model.
+    Will convert wavelength units to angstroms and flux units to [erg/s/cm^2/A]
+
+    path_to_dir is the path to the directory containing all of the downloaded
+    files
+
+    Saves cdbs-ready atmospheres into /g/lu/models/cdbs/grid/BTSettl_2015
+    (assumes this directory exists)
+    """
+    # Save current directory for return later, move into working dir
+    start_dir = os.getcwd()
+    os.chdir(path_to_dir)
+
+    # If it doesn't already exist, create the BTSettl subdirectory
+    if os.path.exists('BTSettl'):
+        pass
+    else:
+        os.mkdir('BTSettl')
+
+    # Process each atmosphere file independently
+    print 'Creating cdbs-ready files'
+    files = glob.glob('*.spec.fits')
+
+    for i in files:
+        hdu = fits.open(i)
+        spec = hdu[1].data
+        header_0 = hdu[0].header
+        header_1 = hdu[1].header
+        
+        wave = spec.field(0)
+        flux = spec.field(1)
+
+        # Get units right: convert wave from microns to Angstroms,
+        # flux from W /m^2/ micron to erg/s/cm^2/A
+        wave_new = wave * 10**4
+        flux_new = flux * 10**(-1)
+
+        # Make new fits table
+        c0 = fits.Column(name='Wavelength', format='D', array=wave_new)
+        c1 = fits.Column(name='Flux', format='E', array=flux_new)
+
+        cols = fits.ColDefs([c0, c1])
+        tbhdu = fits.BinTableHDU.from_columns(cols)
+
+        # Copy over headers, update unit keywords
+        prihdu = fits.PrimaryHDU(header=header_0)
+        tbhdu.header['TUNIT1'] = 'ANGSTROM'
+        tbhdu.header['TUNIT2'] = 'FLAM'
+        hdu_new = fits.HDUList([prihdu, tbhdu])
+        
+        # Write new fits table in cdbs directory
+        hdu_new.writeto('/g/lu/models/cdbs/grid/BTSettl_2015/'+i, clobber=True)
+
+        hdu.close()
+        hdu_new.close()
+    
+    # Return to original directory
+    os.chdir(start_dir)
+    return
+
+def make_BTSettl_catalog(path_to_dir):
+    """
+    Create cdbs catalog.fits of BTSettl_CIFITS2011_2015 grid.
+    THIS IS STEP 2, after organize_CMFGEN_atmospheres has
+    been run.
+
+    path_to_dir is from current working directory to the cdbs directory.
+    Will create catalog.fits file in atmosphere directory with
+    description of each model
+    """
+    # Record current working directory for later
+    start_dir = os.getcwd()
+    
+    # Enter atmosphere directory
+    os.chdir(path_to_dir)
+   
+    # Extract parameters for each atmosphere from the filename,
+    # construct columns for catalog file
+    files = glob.glob("*spec.fits")
+    index_str = []
+    name_str = []
+    for name in files:
+        tmp = name.split('-')
+        temp = float(tmp[0][3:]) * 100.0 # In kelvin
+        logg = float(tmp[1])
+
+        index_str.append('{0:5.0f},0.0,{1:3.2f}'.format(temp, logg))
+        name_str.append('{0}[Flux]'.format(name))
+
+    # Make catalog
+    catalog = Table([index_str, name_str], names = ('INDEX', 'FILENAME'))
+
+    # Create catalog.fits file in directory with the models
+    catalog.write('catalog.fits', format = 'fits', overwrite=True)
+    
+    # Move back to original directory, create the catalog.fits file
+    os.chdir(start_dir)
+    
+    return
+
+def rebin_BTSettl(cdbs_path='/g/lu/models/cdbs/'):
+    """
+    Rebin BTSettle_CIFITS2011_2015 models to atlas ck04 resolution; this makes
+    spectrophotometry MUCH faster
+
+    makes new directory in cdbs/grid: BTSettl_2015_rebin
+
+    cdbs_path: path to cdbs directory
+    """
+    # Get an atlas ck04 model, we will use this to set wavelength grid
+    sp_atlas = get_castelli_atmosphere()
+
+    # Open a fits table for an existing phoenix model; we will steal the header
+    tmp = cdbs_path+'/grid/phoenix_v16/phoenixm00/phoenixm00_02400.fits'
+    phoenix_hdu = fits.open(tmp)
+    header0 = phoenix_hdu[0].header
+    phoenix_hdu.close()
+
+    # Create cdbs/grid directory for rebinned models
+    path = cdbs_path+'/grid/BTSettl_2015_rebin/'
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    # Read in the existing catalog.fits file and rebin every spectrum.
+    cat = fits.getdata(cdbs_path + '/grid/BTSettl_2015/catalog.fits')
+    files_all = [cat[ii][1].split('[')[0] for ii in range(len(cat))]
+
+    print 'Rebinning BTSettl spectra'
+    for ff in range(len(files_all)):
+        vals = cat[ff][0].split(',')
+        temp = float(vals[0])
+        metal = float(vals[1])
+        logg = float(vals[2])
+
+        # Fetch the BTSettl spectrum, rebin flux
+        sp = pysynphot.Icat('BTSettl_2015', temp, metal, logg)
+        flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
+
+        # Make new output
+        c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
+        c1 = fits.Column(name='Flux', format='E', array=flux_rebin) 
+        
+        cols = fits.ColDefs([c0, c1])
+        tbhdu = fits.BinTableHDU.from_columns(cols)
+        prihdu = fits.PrimaryHDU(header=header0)
+        tbhdu.header['TUNIT1'] = 'ANGSTROM'
+        tbhdu.header['TUNIT2'] = 'FLAM'
+
+        outfile = path + files_all[ff].split('[')[0]
+        finalhdu = fits.HDUList([prihdu, tbhdu])
+        finalhdu.writeto(outfile, clobber=True)        
+
+
+    return
+
+def make_wavelength_unique(files):
+    """
+    Helper function to go through each BTSettl spectrum and ensure that
+    each wavelength point is unique. This is required for rebinning to work.
+
+
+    files: list of files to run this analysis on
+    """
+    # Loop through each file, find fix repeated wavelength entries if necessary
+    for i in files:
+        t = Table.read(i, format='fits')
+        wave = t['Wavelength']
+        flux = t['Flux']
+        test = np.unique(t['Wavelength'], return_index=True)
+
+        if len(wave) != len(test[0]):
+            t = t[test[1]]
+            
+            c0 = fits.Column(name='Wavelength', format='D', array=t['Wavelength'])
+            c1 = fits.Column(name='Flux', format='E', array=t['Flux'])
+            cols = fits.ColDefs([c0, c1])
+
+            tbhdu = fits.BinTableHDU.from_columns(cols)
+            prihdu = fits.PrimaryHDU()
+            tbhdu.header['TUNIT1'] = 'ANGSTROM'
+            tbhdu.header['TUNIT2'] = 'FLAM'
+            finalhdu = fits.HDUList([prihdu, tbhdu])
+            finalhdu.writeto(i, clobber=True)
+
+    return
+            
+            
+    
