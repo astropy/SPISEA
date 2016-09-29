@@ -15,13 +15,11 @@ Pheonix atmosphere weighted more heavily toward 5000 K.
 ========================
 Phoenix Models
 ========================
-
 Paper reference: Husser et al. 2013, A&A, 553, A6
 downloaded via ftp from website: http://phoenix.astro.physik.uni-goettingen.de/?page_id=15
 	-solar metallicity, solar [alpha/Fe]
 
 ***Code procedure:
-
 1) popstar/atmospheres.py --> organize_PHOENIXv16_atmospheres
 	-organizes files into subdirectory phoenixm00
 
@@ -45,16 +43,14 @@ downloaded via ftp from website: http://phoenix.astro.physik.uni-goettingen.de/?
 ===========================
 CMFGEN Fierro+15 Grid
 ===========================
-
 Paper Reference: 
 Fierro et al. 2015, PASP, 127, 951
 
 Models Downloaded from https://sites.google.com/site/fluxesandcontinuum/home
 	-note: want the .flx models, which includes the spectral lines + continuum, not the .con models, which is only the continuum
 	-two grids: one with and one without rotation (0.4 v_crit)
-
+ 
 ***Code procedure:
-
 1) popstar/atmospheres.py --> download_CMFGEN_atmospheres
 	-automated code to download bulk of models. NOTE: NOT 100% successful! Does miss a few models, user has to go back and add them by hand
 	-note: requires tables describing the paramters of the rot and non-rot atmospheres. Paper doesn't provide electronic version of this, so I had to do this by hand. Decidedly 	not fun.
@@ -71,8 +67,7 @@ Models Downloaded from https://sites.google.com/site/fluxesandcontinuum/home
 5) popstar/atmospheres.py ---> rebin_cmfgen
 	-rebin the cmfgen atmospheres into ck04 resolution, for improved photometric performance. "rot" flag in code is set to determine if code operates on rotating or non-	rotating codes
 
-***File Locations
-
+***File Locations:
 -raw downloaded models (without flux normalization, which is what we want): /g/lu/models/atmospheres/CMFGEN_Fierro+15/ir/orig
 	-with flux normalization can be found in CMFGEN_Fierro+15/flux_normalized_models/
 -output from organize_CMFGEN_atmospheres (cmfgenF15_rot/norot): /g/lu/models/atmospheres/CMFGEN_Fierro+15/ir/
@@ -81,10 +76,32 @@ Models Downloaded from https://sites.google.com/site/fluxesandcontinuum/home
 -cdbs model atmospheres, original resolution: /g/lu/models/cdbs/grid/cmfgen_rot/norot
 -cdbs model atmospheres, rebinned: /g/lu/models/cdbs/grid/cmfgen_rot/norot_rebin
 
+===========================
+BTSettl_CIFITS_2011_2015 Grid
+===========================
+Downloaded from https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/FITS/ on 9/28/16
+-solar metallicity, no alpha enhancement
 
+***Code procedure:
+1) popstar/atmospheres.py --> organize_BTSettl_atmospheres 
+    -organize atmospheres from downloaded state into cdbs-ready
+    state. Moves them to /g/lu/model/atmospheres/BTSettl_2015
 
+2) popstar/atmospheres.py --> make_BTSettl_catalog
+	-construct the cdbs catalog for the atmospheres  
 
+2.5) Need to make sure cdbs atmospheres have unique wavelength entries, otherwise pysynphot Icat load won't work. 
+popstar/atmopsheres.py ---> make_wavelength_unique()
 
+3) popstar/atmospheres.py --> rebin_BTSettl
+	-rebin BTSettl model atmospheres to same resolution as ck04 atlas, to enhace photometric performance
+	-these spectra moved to BTSettl_2015_rebin
+
+***File Locations:
+-raw models from online downloaded to /g/lu/model/atmospheres/BTSettl_CIFITS2011_2015
+-cdbs-ready model atmospheres, high resolution: /g/lu/models/cdbs/grid/BTSettl_2015
+-cdbs-ready model atmospheres, low resolution: /g/lu/models/cdbs/grid/BTSettl_2015_rebin
+ 
 
 
 
