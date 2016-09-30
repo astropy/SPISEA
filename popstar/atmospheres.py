@@ -265,6 +265,38 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
 
     return sp
 
+def get_BTSettl_2015_atmosphere(metallicity=0, temperature=3000, gravity=4, rebin=True):
+    """
+    metallicity = [M/H] (def = 0)
+    temperature = Kelvin (def = 3000)
+    gravity = log gravity (def = 4.0)
+
+    temp: 1200 - 7000 K
+    grav: 2.5 - 5.5
+
+    If rebin = True, pull from spectra that have been rebinned to ck04model resolution;
+    this is important for spectrophotometry, otherwise it takes forever
+    """
+    if (gravity < 2.5):
+        logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
+        print logg_msg.format(2.5, temperature, gravity)
+        gravity = 2.5
+        
+    if rebin == True:
+        sp = pysynphot.Icat('BTSettl_2015_rebin', temperature, metallicity, gravity)
+    else:
+        sp = pysynphot.Icat('BTSettl_2015', temperature, metallicity, gravity)
+    
+    # Do some error checking
+    idx = np.where(sp.flux != 0)[0]
+    if len(idx) == 0:
+        print 'Could not find BTSettl_2015 atmosphere model for'
+        print '  temperature = %d' % temperature
+        print '  metallicity = %.1f' % metallicity
+        print '  log gravity = %.1f' % gravity
+
+    return sp
+
 def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     """
     Return atmosphere that is a linear merge of atlas ck04 model and phoenixV16.
@@ -283,6 +315,24 @@ def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 
     return sp
 
+def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
+    """
+    Return atmosphere that is a linear merge of BTSettl_CITFITS2011_2015 model
+    and phoenixV16.
+
+    Only valid for temps between 3200 - 3800K, gravity from 2.5 - 5.5 
+    """
+    sp = pysynphot.Icat('merged_BTSettl_phoenix', temperature, metallicity, gravity)
+
+    # Do some error checking
+    idx = np.where(sp.flux != 0)[0]
+    if len(idx) == 0:
+        print 'Could not find ATLAS-PHOENIX merge atmosphere model for'
+        print '  temperature = %d' % temperature
+        print '  metallicity = %.1f' % metallicity
+        print '  log gravity = %.1f' % gravity
+
+    return sp
 
 #---------OLD MERGED ATMOSPHERES------------#
 #def test_merged_atmospheres(metallicity=0, gravity=4):
@@ -352,19 +402,40 @@ def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 #                                       gravity=gravity)
 #
 #---------------------------------------------------------------------#
-def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
+def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False):
     """
-    If T > 20,000 K : CMFGEN
-    20,000 > T > 5500: ATLAS (ck04)
-    5500 > T > 5000: ATLAS/PHOENIX merge
-    T < 5000: PHEONIXv16 (Husser+13) 
+    **If T >= 20,000 K : CMFGEN** NOT ACTIVE YET, ALL ATLAS
+    5500 <= T < 20000: ATLAS (ck04)
+    5000 <= T < 5500: ATLAS/PHOENIX merge
+    3800 <= T < 5000: PHOENIXv16 (Husser+13)
+    3200 <= T < 3800: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge
+    3200 < T <= 1200: BTSettl_CIFITS2011_2015
     """
-    if temperature < 5000:
+    if temperature <= 3200:
+        if verbose:
+            print 'BTSettl_2015 atmosphere'
+        return get_BTSettl_2015_atmosphere(metallicity=metallicity,
+                                              temperature=temperature,
+                                              gravity=gravity)
+
+ 
+    if (temperature >= 3200) & (temperature < 3800):
+        if verbose:
+            print 'BTSettl_2015/Phoenixv16 merged atmosphere'
+        return get_BTSettl_phoenix_atmosphere(metallicity=metallicity,
+                                              temperature=temperature,
+                                              gravity=gravity)
+    
+    if (temperature >= 3800) & (temperature < 5000):
+        if verbose:
+            print 'Phoenixv16 atmosphere'
         return get_phoenixv16_atmosphere(metallicity=metallicity,
                                       temperature=temperature,
                                       gravity=gravity)
 
-    if (temperature >= 5000) & (temperature <= 5500):
+    if (temperature >= 5000) & (temperature < 5500):
+        if verbose:
+            print 'ATLAS/Phoenix merged atmosphere'
         return get_atlas_phoenix_atmosphere(metallicity=metallicity,
                                         temperature=temperature,
                                          gravity=gravity)
@@ -372,12 +443,16 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
         #                              temperature=temperature,
         #                              gravity=gravity)
     
-    if temperature > 5500:
+    if temperature >= 5500:
+        if verbose:
+            print 'ATLAS merged atmosphere'
         return get_castelli_atmosphere(metallicity=metallicity,
                                       temperature=temperature,
                                       gravity=gravity)
 
-    if temperature > 20000:
+    if temperature >= 20000:
+        if verbose:
+            print 'Still ATLAS merged atmosphere'
         return get_castelli_atmosphere(metallicity=metallicity,
                                        temperature=temperature,
                                        gravity=gravity)
@@ -1219,7 +1294,6 @@ def rebin_BTSettl(cdbs_path='/g/lu/models/cdbs/'):
         outfile = path + files_all[ff].split('[')[0]
         finalhdu = fits.HDUList([prihdu, tbhdu])
         finalhdu.writeto(outfile, clobber=True)        
-
 
     return
 
