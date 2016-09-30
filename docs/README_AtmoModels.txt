@@ -3,15 +3,30 @@ Matt Hosek
 
 ========================
 Atmosphere Models Used
-========================
-By default, the atmosphere models adopted in the synthetic isochrones
-are the  ATLAS models Castelli et al. (2004) for temperatures
-greater than 5500 K and the Phoenix v16 models (Husser et al. 2013)
-for temperatures less than 5000 K. For 5000 K < T_eff < 5500 K, an
-average atmosphere between the ATLAS and Phoenix models are used, with
-the ATLAS atmosphere weighted more heavily toward 5500 K and the
-Pheonix atmosphere weighted more heavily toward 5000 K. 
+======================== 
+The get_merged_atmosphere function extracts a stellar atmosphere 
+from a suite of different model grids, depending  on the input
+tempertaure:
+ 
+T >= 20000: ATLAS
+5500 <= T < 20000: ATLAS
+5000 <= T < 5500: ATLAS/PHOENIX merge
+3800 <= T < 5000: PHOENIXv16 
+3200 <= T < 3800: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge
+ 3200 < T <= 1200: BTSettl_CIFITS2011_2015 
+ 
+References:
+ATLAS --> Castelli et al. (2004)
+PHOENIXv16 --> Husser et al. (2013)
+BTSettl_CIFITS2011_2015 --> Baraffee+15, Allard+in prep 
+(website: https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/)
 
+Merged atmospheres are a weighted average between the two 
+atmosphere grids in the given temperature range. Near one boundary one model
+is weighted more heavily, while at the other boundary the other 
+model is weighted more heavily. These are calculated in the 
+temperature ranges where we switch between model grids, to 
+ensure a smooth transition.
 ========================
 Phoenix Models
 ========================
