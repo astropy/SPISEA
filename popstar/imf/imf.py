@@ -71,13 +71,12 @@ class IMF(object):
         if (self._mass_limits[-1] > totalMass):
             log.info('sample_imf: Setting maximum allowed mass to %d' %
                       (totalMass))
-
-        self._mass_limits[-1] = totalMass
+            self._mass_limits[-1] = totalMass
 
         # Estimate the mean number of stars expected.
         self.normalize(totalMass)
         mean_number = self.int_xi(self._mass_limits[0], self._mass_limits[-1])
-        newStarCount = round(mean_number)
+        newStarCount = np.round(mean_number)
         if self._multi_props == None:
             newStarCount *= 1.1
 
@@ -94,7 +93,7 @@ class IMF(object):
 
         while totalMassTally < totalMass:
             # Generate a random number array.
-            uniX = np.random.rand(newStarCount)
+            uniX = np.random.rand(int(newStarCount))
 
             # Convert into the IMF from the inverted CDF
             newMasses = self.dice_star_cl(uniX)
@@ -106,7 +105,7 @@ class IMF(object):
                 MF = self._multi_props.multiplicity_fraction(newMasses)
                 CSF = self._multi_props.companion_star_fraction(newMasses)
                 
-                newIsMultiple = np.random.rand(newStarCount) < MF
+                newIsMultiple = np.random.rand(int(newStarCount)) < MF
 
                 # Copy over the primary masses. Eventually add the companions.
                 newSystemMasses = newMasses.copy()
@@ -147,6 +146,7 @@ class IMF(object):
                 log.info('sample_imf: Loop %d added %.2e Msun to previous total of %.2e Msun' %
                          (loopCnt, newTotalMassTally, totalMassTally))
 
+            pdb.set_trace()
             totalMassTally += newTotalMassTally
             newStarCount = mean_number * 0.1  # increase by 20% each pass
             loopCnt += 1
@@ -453,11 +453,14 @@ class IMF_broken_powerlaw(IMF):
         y = np.zeros(len(r), dtype=float)
         z = np.ones(len(r), dtype=float)
 
+        # Loop through the different parts of the power-law.
         for i in range(self.nterms):
             aux = x - self.lamda[i]
 
             # Only continue for those entries that are in later segments
             idx = np.where(aux >= 0)[0]
+
+            pdb.set_trace()
 
             # Maybe we are all done?
             if len(idx) == 0:
@@ -470,12 +473,12 @@ class IMF_broken_powerlaw(IMF):
             t1 = aux_tmp / (self.coeffs[i] * self.k)
             t1 += prim_power(self._m_limits_low[i], self._powers[i])
             y_i = gamma_closed(x_tmp, self.lamda[i], self.lamda[i+1])
-            y_i *= inv_prim_power(t1, self._powers[i])
+            Y_i *= inv_prim_power(t1, self._powers[i])
             
             # Save results into the y array
             y[idx] += y_i
 
-            z *= delta(x - self.lamda[i])
+            z *= delta(x - self.lamda[i+1])
 
         if returnFloat:
             return y[0] * z[0]
@@ -539,6 +542,11 @@ def prim_power(m, power):
     m = np.atleast_1d(m)
     power = np.atleast_1d(power)
 
+    if (len(m) == 1) and (len(power) > 1):
+        m = np.repeat(m, len(power))
+    if (len(power) == 1) and (len(m) > 1):
+        power = np.repeat(power, len(m))
+
     z = 1.0 + power
     val = (m**z) / z
     val[power == -1] = np.log(m[power == -1])
@@ -558,6 +566,14 @@ def inv_prim_power(x, power):
     x = np.atleast_1d(x)
     power = np.atleast_1d(power)
 
+    if (len(x) == 1) and (len(power) > 1):
+        x = np.repeat(x, len(power))
+    if (len(power) == 1) and (len(x) > 1):
+        power = np.repeat(power, len(x))
+
+    if x.shape != power.shape:
+        pdb.set_trace()
+    
     z = 1.0 + power
     val = (z * x)**(1.0 / z)
     val[power == -1] = np.exp(x[power == -1])
@@ -703,6 +719,9 @@ def delta(x):
         return val
 
 def gamma_closed(m, left, right):
+    """
+    
+    """
     return theta_closed(m - left) * theta_closed(right - m)
 
 

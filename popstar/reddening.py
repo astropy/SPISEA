@@ -137,11 +137,11 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
 
         # check for applicability
         if (np.min(x) < 0.3):
-            print 'wavelength is longer than applicable range for Cardelli law'
+            print( 'wavelength is longer than applicable range for Cardelli law')
             return None
 
         if (np.max(x) > 8.0):
-            print 'wavelength is shorter than applicable range for Cardelli law'
+            print( 'wavelength is shorter than applicable range for Cardelli law')
             return None
         
         # Set up some arrays for coefficients that we will need

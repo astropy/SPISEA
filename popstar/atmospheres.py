@@ -32,10 +32,10 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4):
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
-        print 'Could not find Kurucz 1993 atmosphere model for'
-        print '  temperature = %d' % temperature
-        print '  metallicity = %.1f' % metallicity
-        print '  log gravity = %.1f' % gravity
+        print( 'Could not find Kurucz 1993 atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
 
     return sp
 
@@ -56,50 +56,50 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     # Round given temp, gravity to closest model that exists
     # No models below 3000 K
     if temperature < 3000:
-        print 'No ck04 model below 3000 K'
+        print( 'No ck04 model below 3000 K')
 
     # Catch the edge cases for the hotest stars where the newest 
     # evolution models have logg < 4.0 but the atmosphere models
     # aren't available. HACK! FIX!
     logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
     if (temperature > 50000):
-        print 'Changing temp from {0:5.0f} to 50000'.format(temperature)
+        print( 'Changing temp from {0:5.0f} to 50000'.format(temperature))
         temperature = 50000
     if (temperature > 49000) and (gravity < 5.0):
-        print logg_msg.format(5.0, temperature, gravity)
+        print( logg_msg.format(5.0, temperature, gravity))
         gravity = 5.0
     if (temperature > 39000) and (gravity < 4.5):
-        print logg_msg.format(4.5, temperature, gravity)
+        print( logg_msg.format(4.5, temperature, gravity))
         gravity = 4.5
     if (temperature > 31000) and (gravity < 4.0):
-        print logg_msg.format(4.0, temperature, gravity)
+        print( logg_msg.format(4.0, temperature, gravity))
         gravity = 4.0
     if (temperature > 26000) and (gravity < 3.5):
-        print logg_msg.format(3.5, temperature, gravity)
+        print( logg_msg.format(3.5, temperature, gravity))
         gravity = 3.5
     if (temperature > 19000) and (gravity < 3.0):
-        print logg_msg.format(3.0, temperature, gravity)
+        print( logg_msg.format(3.0, temperature, gravity))
         gravity = 3.0
     if (temperature > 11750) and (gravity < 2.5):
-        print logg_msg.format(2.5, temperature, gravity)
+        print( logg_msg.format(2.5, temperature, gravity))
         gravity = 2.5
     if (temperature > 9000) and (gravity < 2.0):
-        print logg_msg.format(2.0, temperature, gravity)
+        print( logg_msg.format(2.0, temperature, gravity))
         gravity = 2.0
     if (temperature > 8250) and (gravity < 1.5):
-        print logg_msg.format(1.5, temperature, gravity)
+        print( logg_msg.format(1.5, temperature, gravity))
         gravity = 1.5
     if (temperature > 7500) and (gravity < 1.0):
-        print logg_msg.format(1.0, temperature, gravity)
+        print( logg_msg.format(1.0, temperature, gravity))
         gravity = 1.0
 
     # Also edge case where gravity > 5.0, set to gravity = 5.0. This
     # is true at all temperatures. HACK!
     if gravity > 5.0:
-        print logg_msg.format(5.0, temperature, gravity)
+        print( logg_msg.format(5.0, temperature, gravity))
         gravity = 5.0
     if (gravity < 0.5):
-        print logg_msg.format(0.5, temperature, gravity)
+        print( logg_msg.format(0.5, temperature, gravity))
         gravity = 0.5
         
         
@@ -108,10 +108,10 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
-        print 'Could not find Castelli and Kurucz 2004 atmosphere model for'
-        print '  temperature = %d' % temperature
-        print '  metallicity = %.1f' % metallicity
-        print '  log gravity = %.1f' % gravity
+        print( 'Could not find Castelli and Kurucz 2004 atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
 
     return sp
 
@@ -126,10 +126,10 @@ def get_nextgen_atmosphere(metallicity=0, temperature=5000, gravity=4):
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
-        print 'Could not find NextGen atmosphere model for'
-        print '  temperature = %d' % temperature
-        print '  metallicity = %.1f' % metallicity
-        print '  log gravity = %.1f' % gravity
+        print( 'Could not find NextGen atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
 
     return sp
 
@@ -144,10 +144,10 @@ def get_amesdusty_atmosphere(metallicity=0, temperature=5000, gravity=4):
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
-        print 'Could not find AMESdusty Allard+ 2000 atmosphere model for'
-        print '  temperature = %d' % temperature
-        print '  metallicity = %.1f' % metallicity
-        print '  log gravity = %.1f' % gravity
+        print( 'Could not find AMESdusty Allard+ 2000 atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
 
     return sp
 
@@ -162,10 +162,10 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4):
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
-        print 'Could not find PHOENIX BT-Settl (Allard+ 2011 atmosphere model for'
-        print '  temperature = %d' % temperature
-        print '  metallicity = %.1f' % metallicity
-        print '  log gravity = %.1f' % gravity
+        print( 'Could not find PHOENIX BT-Settl (Allard+ 2011 atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
 
     return sp
 
@@ -185,10 +185,10 @@ def get_cmfgenRot_atmosphere(metallicity=0, temperature=24000, gravity=4.3, rebi
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
-        print 'Could not find CMFGEN rotating atmosphere model (Fierro+15) for'
-        print '  temperature = %d' % temperature
-        print '  metallicity = %.1f' % metallicity
-        print '  log gravity = %.1f' % gravity
+        print( 'Could not find CMFGEN rotating atmosphere model (Fierro+15) for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
 
     return sp
 
@@ -208,10 +208,10 @@ def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=22500, gravity=3.98, r
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
-        print 'Could not find CMFGEN rotating atmosphere model (Fierro+15) for'
-        print '  temperature = %d' % temperature
-        print '  metallicity = %.1f' % metallicity
-        print '  log gravity = %.1f' % gravity
+        print( 'Could not find CMFGEN rotating atmosphere model (Fierro+15) for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
 
     return sp
 
@@ -226,10 +226,10 @@ def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=30000, gravity=4.14):
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
-        print 'Could not find CMFGEN non-rotating atmosphere model (Fierro+15) for'
-        print '  temperature = %d' % temperature
-        print '  metallicity = %.1f' % metallicity
-        print '  log gravity = %.1f' % gravity
+        print( 'Could not find CMFGEN non-rotating atmosphere model (Fierro+15) for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
 
     return sp
 
@@ -247,7 +247,7 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
     """
     if (gravity < 0.5):
         logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
-        print logg_msg.format(0.5, temperature, gravity)
+        print( logg_msg.format(0.5, temperature, gravity))
         gravity = 0.5
         
     if rebin == True:
@@ -258,10 +258,10 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
-        print 'Could not find PHOENIXv16 (Husser+13) atmosphere model for'
-        print '  temperature = %d' % temperature
-        print '  metallicity = %.1f' % metallicity
-        print '  log gravity = %.1f' % gravity
+        print( 'Could not find PHOENIXv16 (Husser+13) atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
 
     return sp
 
@@ -279,7 +279,7 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=3000, gravity=4, rebi
     """
     if (gravity < 2.5):
         logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
-        print logg_msg.format(2.5, temperature, gravity)
+        print( logg_msg.format(2.5, temperature, gravity))
         gravity = 2.5
         
     if rebin == True:
@@ -290,10 +290,10 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=3000, gravity=4, rebi
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
-        print 'Could not find BTSettl_2015 atmosphere model for'
-        print '  temperature = %d' % temperature
-        print '  metallicity = %.1f' % metallicity
-        print '  log gravity = %.1f' % gravity
+        print( 'Could not find BTSettl_2015 atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
 
     return sp
 
@@ -308,10 +308,10 @@ def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
-        print 'Could not find ATLAS-PHOENIX merge atmosphere model for'
-        print '  temperature = %d' % temperature
-        print '  metallicity = %.1f' % metallicity
-        print '  log gravity = %.1f' % gravity
+        print( 'Could not find ATLAS-PHOENIX merge atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
 
     return sp
 
@@ -327,10 +327,10 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
-        print 'Could not find ATLAS-PHOENIX merge atmosphere model for'
-        print '  temperature = %d' % temperature
-        print '  metallicity = %.1f' % metallicity
-        print '  log gravity = %.1f' % gravity
+        print( 'Could not find ATLAS-PHOENIX merge atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
 
     return sp
 
@@ -380,7 +380,7 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 #    
 #def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
 #    if temperature < 4000 or (temperature < 7000 and gravity < 4.0):
-#        print 'Phoenix Model Atmosphere Used'
+#        print( 'Phoenix Model Atmosphere Used')
 #        return get_phoenix_atmosphere(metallicity=metallicity,
 #                                      temperature=temperature,
 #                                      gravity=gravity)
@@ -391,7 +391,7 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 #    #                                     gravity=gravity)
 #
 #    if temperature >= 4000 and temperature < 7000 and gravity >= 4.0:
-#        print 'Nextgen atmosphere used'
+#        print( 'Nextgen atmosphere used')
 #        return get_nextgen_atmosphere(metallicity=metallicity,
 #                                      temperature=temperature,
 #                                      gravity=gravity)
@@ -413,7 +413,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
     """
     if temperature <= 3200:
         if verbose:
-            print 'BTSettl_2015 atmosphere'
+            print( 'BTSettl_2015 atmosphere')
         return get_BTSettl_2015_atmosphere(metallicity=metallicity,
                                               temperature=temperature,
                                               gravity=gravity)
@@ -421,21 +421,21 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
  
     if (temperature >= 3200) & (temperature < 3800):
         if verbose:
-            print 'BTSettl_2015/Phoenixv16 merged atmosphere'
+            print( 'BTSettl_2015/Phoenixv16 merged atmosphere')
         return get_BTSettl_phoenix_atmosphere(metallicity=metallicity,
                                               temperature=temperature,
                                               gravity=gravity)
     
     if (temperature >= 3800) & (temperature < 5000):
         if verbose:
-            print 'Phoenixv16 atmosphere'
+            print( 'Phoenixv16 atmosphere')
         return get_phoenixv16_atmosphere(metallicity=metallicity,
                                       temperature=temperature,
                                       gravity=gravity)
 
     if (temperature >= 5000) & (temperature < 5500):
         if verbose:
-            print 'ATLAS/Phoenix merged atmosphere'
+            print( 'ATLAS/Phoenix merged atmosphere')
         return get_atlas_phoenix_atmosphere(metallicity=metallicity,
                                         temperature=temperature,
                                          gravity=gravity)
@@ -445,14 +445,14 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
     
     if temperature >= 5500:
         if verbose:
-            print 'ATLAS merged atmosphere'
+            print( 'ATLAS merged atmosphere')
         return get_castelli_atmosphere(metallicity=metallicity,
                                       temperature=temperature,
                                       gravity=gravity)
 
     if temperature >= 20000:
         if verbose:
-            print 'Still ATLAS merged atmosphere'
+            print( 'Still ATLAS merged atmosphere')
         return get_castelli_atmosphere(metallicity=metallicity,
                                        temperature=temperature,
                                        gravity=gravity)
@@ -479,8 +479,8 @@ def download_CMFGEN_atmospheres(Table_rot, Table_norot):
     
     Puts downloaded models in the current working directory.
     """
-    print 'WARNING: THIS DOES NOT COMPLETELY WORK'
-    print '**********************'
+    print( 'WARNING: THIS DOES NOT COMPLETELY WORK')
+    print( '**********************')
     t_rot = Table.read(Table_rot, format='ascii')
     t_norot = Table.read(Table_norot, format='ascii')
 
@@ -705,7 +705,7 @@ def cdbs_cmfgen(path_to_dir, path_to_cdbs_dir):
         finalhdu = fits.HDUList([prihdu, tbhdu])
         finalhdu.writeto(i[:-4]+'.fits', clobber=True)
         
-        print 'Done {0:2.0f} of {1:2.0f}'.format(counter, len(files))
+        print( 'Done {0:2.0f} of {1:2.0f}'.format(counter, len(files)))
 
     # Return to original directory, copy over new .fits files to cdbs directory
     os.chdir(start_dir)
@@ -786,7 +786,7 @@ def rebin_cmfgen(cdbs_path, rot=True):
         finalhdu = fits.HDUList([prihdu, tbhdu])
         finalhdu.writeto(path+files_all[ff])
 
-        print 'Finished file {0} of {1}'.format(count, len(files_all))            
+        print( 'Finished file {0} of {1}'.format(count, len(files_all))            )
     return
 
 
@@ -823,7 +823,7 @@ def organize_PHOENIXv16_atmospheres(path_to_dir):
     temp_arr = np.arange(2300, 7001, 100)
     temp_arr = np.append(temp_arr, np.arange(7000, 12001, 200))
 
-    print 'Looping though all temps'
+    print( 'Looping though all temps')
     # For each temp, build file containing the flux for all gravities
     i = 0
     for temp in temp_arr:
@@ -851,7 +851,7 @@ def organize_PHOENIXv16_atmospheres(path_to_dir):
         
         # Progress counter for user
         i += 1
-        print 'Done {0:d} of {1:d}'.format(i, len(temp_arr))
+        print( 'Done {0:d} of {1:d}'.format(i, len(temp_arr)))
 
     # Return to original directory
     os.chdir(start_dir)
@@ -1031,7 +1031,7 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
         finalhdu.writeto(i, clobber=True)
 
         hdu.close()
-        print 'Done {0:2.0f} of {1:2.0f}'.format(counter, len(files))
+        print( 'Done {0:2.0f} of {1:2.0f}'.format(counter, len(files)))
 
     return
 
@@ -1122,7 +1122,7 @@ def rebin_phoenixV16(cdbs_path):
             # don't have clobber to protect original files.
             finalhdu.writeto(path + outfile)   
 
-            print 'Finished file ' + outfile + ' with gravities: ', logg_exist
+            print( 'Finished file ' + outfile + ' with gravities: ', logg_exist)
             
 
     return
@@ -1163,7 +1163,7 @@ def organize_BTSettl_atmospheres(path_to_dir):
         os.mkdir('BTSettl')
 
     # Process each atmosphere file independently
-    print 'Creating cdbs-ready files'
+    print( 'Creating cdbs-ready files')
     files = glob.glob('*.spec.fits')
 
     for i in files:
@@ -1270,7 +1270,7 @@ def rebin_BTSettl(cdbs_path='/g/lu/models/cdbs/'):
     cat = fits.getdata(cdbs_path + '/grid/BTSettl_2015/catalog.fits')
     files_all = [cat[ii][1].split('[')[0] for ii in range(len(cat))]
 
-    print 'Rebinning BTSettl spectra'
+    print( 'Rebinning BTSettl spectra')
     for ff in range(len(files_all)):
         vals = cat[ff][0].split(',')
         temp = float(vals[0])

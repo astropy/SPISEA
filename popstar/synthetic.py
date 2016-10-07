@@ -157,9 +157,9 @@ class ResolvedCluster(Cluster):
         
         if len(idx_good) != len(mdx_all):
             msg = 'Rejected {0:d} of {1:d} primary stars' 
-            print msg.format(len(mdx_all) - len(idx_good), N_systems)
+            print( msg.format(len(mdx_all) - len(idx_good), N_systems))
             foo = np.where(mdx_all == -1)[0]
-            print star_systems['mass'][foo]
+            print( star_systems['mass'][foo])
 
         
         star_systems['Teff'][idx_good] = self.iso.points['Teff'][mdx_good]
@@ -268,7 +268,7 @@ class ResolvedCluster(Cluster):
         # Notify if we have a lot of bad ones.
         idx = np.where(companions['Teff'] > 0)[0]
         if len(idx) != N_comp_tot and self.verbose:
-            print 'Found {0:d} companions out of mass range'.format(N_comp_tot - len(idx))
+            print( 'Found {0:d} companions out of mass range'.format(N_comp_tot - len(idx)))
 
         # Double check that everything behaved properly.
         assert companions['mass'][idx].min() > 0
@@ -358,7 +358,7 @@ class ResolvedCluster(Cluster):
         # Notify if we have a lot of bad ones.
         idx = np.where(companions['Teff'] > 0)[0]
         if len(idx) != N_comp_tot and self.verbose:
-            print 'Found {0:d} companions out of mass range'.format(N_comp_tot - len(idx))
+            print( 'Found {0:d} companions out of mass range'.format(N_comp_tot - len(idx)))
 
         # Double check that everything behaved properly.
         assert companions['mass'][idx].min() > 0
@@ -372,7 +372,7 @@ class ResolvedCluster(Cluster):
         # Get rid of the bad ones
         idx = np.where(star_systems['Teff'] > 0)[0]
         if len(idx) != N_systems and self.verbose:
-            print 'Found {0:d} stars out of mass range'.format(N_systems - len(idx))
+            print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
 
         star_systems = star_systems[idx]
         N_systems = len(star_systems)
@@ -466,7 +466,7 @@ class UnresolvedCluster(Cluster):
             
 
         t2 = time.time()
-        print 'Mass matching took {0:f} s.'.format(t2-t1)
+        print( 'Mass matching took {0:f} s.'.format(t2-t1))
 
         # Get rid of the bad ones
         idx = np.where(temp != 0)[0]
@@ -481,15 +481,15 @@ class UnresolvedCluster(Cluster):
         self.spec_tot_full = np.sum(spec_list_np,1)
 
         t3 = time.time()
-        print 'Spec summing took {0:f}s'.format(t3-t2)
+        print( 'Spec summing took {0:f}s'.format(t3-t2))
 
         self.spec_trim = np.sum(spec_list_trim_np,1)
         
         t4 = time.time()
-        print 'Spec trimming took {0:f}s'.format(t4-t3)
+        print( 'Spec trimming took {0:f}s'.format(t4-t3))
 
         self.mass_tot = np.sum(sysMass[idx])
-        print 'Total cluster mass is {0:f} M_sun'.format(self.mass_tot)
+        print( 'Total cluster mass is {0:f} M_sun'.format(self.mass_tot))
 
         return
 
@@ -591,7 +591,7 @@ class Isochrone(object):
         self.points = tab
 
         t2 = time.time()
-        print 'Isochrone generation took {0:f} s.'.format(t2-t1)
+        print( 'Isochrone generation took {0:f} s.'.format(t2-t1))
         
         return
 
@@ -711,9 +711,9 @@ class IsochronePhot(Isochrone):
 
         meta = self.points.meta
 
-        print 'Making photometry for isochrone: log(t) = %.2f  AKs = %.2f  dist = %d' % \
-            (meta['LOGAGE'], meta['AKS'], meta['DISTANCE'])
-        print '     Starting at: ', datetime.datetime.now(), '  Usually takes ~5 minutes'
+        print( 'Making photometry for isochrone: log(t) = %.2f  AKs = %.2f  dist = %d' % \
+            (meta['LOGAGE'], meta['AKS'], meta['DISTANCE']))
+        print( '     Starting at: ', datetime.datetime.now(), '  Usually takes ~5 minutes')
 
         npoints = len(self.points)
         verbose_fmt = 'M = {0:7.3f} Msun  T = {1:5.0f} K  m_{2:s} = {3:4.2f}'
@@ -722,7 +722,7 @@ class IsochronePhot(Isochrone):
         # all stars in this filter.
         for filt_name, filt_str in self.filters.iteritems():
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
-            print prt_fmt.format(filt_name, time.time() - startTime)
+            print( prt_fmt.format(filt_name, time.time() - startTime))
             
             filt = get_filter_info(filt_str)
 
@@ -739,11 +739,11 @@ class IsochronePhot(Isochrone):
                 self.points[col_name][ss] = star_mag
         
                 if (self.verbose and (ss % 100) == 0):
-                    print verbose_fmt.format(self.points['mass'][ss], self.points['Teff'][ss],
-                                             filt_name, star_mag)
+                    print( verbose_fmt.format(self.points['mass'][ss], self.points['Teff'][ss],
+                                             filt_name, star_mag))
 
         endTime = time.time()
-        print '      Time taken: {0:.2f} seconds'.format(endTime - startTime)
+        print( '      Time taken: {0:.2f} seconds'.format(endTime - startTime))
 
         if self.save_file != None:
             self.points.write(self.save_file)
@@ -826,13 +826,13 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
 
     NOTE: This code only makes isochrones with the Ekstrom rotating models, for now. 
     """
-    print '**************************************'
-    print 'Start generating isochrones'
-    print 'Evolutionary Models adopted: {0}'.format(evo_model)
-    print 'Atmospheric Models adopted: {0}'.format(atm_func)
-    print 'Reddening Law adopted: {0}'.format(redlaw)
-    print 'Isochrone Mass sampling: {0}'.format(mass_sampling)
-    print '**************************************'
+    print( '**************************************')
+    print( 'Start generating isochrones')
+    print( 'Evolutionary Models adopted: {0}'.format(evo_model))
+    print( 'Atmospheric Models adopted: {0}'.format(atm_func))
+    print( 'Reddening Law adopted: {0}'.format(redlaw))
+    print( 'Isochrone Mass sampling: {0}'.format(mass_sampling))
+    print( '**************************************')
 
     num_models = len(age_arr) * len(AKs_arr) * len(dist_arr)
     iteration = 0
@@ -845,7 +845,7 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
                                         red_law=redlaw, iso_dir=iso_dir,
                                         mass_sampling=mass_sampling)
                     iteration += 1
-                    print 'Done ' + str(iteration) + ' of ' + str(num_models)
+                    print( 'Done ' + str(iteration) + ' of ' + str(num_models))
 
     # Also, save a README file in iso directory documenting the params used
     _out = open(iso_dir+'README.txt', 'w')
