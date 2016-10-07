@@ -549,15 +549,6 @@ def prim_power(m, power):
     z = 1.0 + power
     val = (m**z) / z
         
-    # How code handles -1 case depends on size of m. If same size as
-    # power, continue as was coded before. However, sometimes, m can be a 1
-    # element array while power is a larger array. In this case, take
-    # the first element only.
-    #if len(m) == len(power):
-    #    val[power == -1] = np.log(m[power == -1])
-    #else:
-    #    val[power == -1] = np.log(m[0])
-
     val[power == -1] = np.log(m[power == -1])
     
     if returnFloat:
