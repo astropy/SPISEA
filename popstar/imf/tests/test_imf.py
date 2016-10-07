@@ -5,7 +5,7 @@ def test_prim_power():
     from .. import imf
 
     mass_limits = np.array([0.1, 1.0, 100.0])
-    powers = np.array([-2.3, -2.0])
+    powers = np.array([-1.8, -2.0])
 
     imf_tmp = imf.IMF_broken_powerlaw(mass_limits, powers)
 

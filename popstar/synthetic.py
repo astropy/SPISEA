@@ -5,6 +5,7 @@ from popstar import evolution
 from popstar import atmospheres as atm
 from scipy import interpolate
 from scipy import stats
+from scipy.special import erf
 from pysynphot import spectrum
 from pysynphot import ObsBandpass
 from pysynphot import observation as obs
@@ -92,7 +93,7 @@ class ResolvedCluster(Cluster):
         t1 = time.time()
         ##### 
         # Sample the IMF to build up our cluster mass.
-        ##### 
+        #####
         mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
 
         # Figure out the filters we will make:
@@ -154,7 +155,7 @@ class ResolvedCluster(Cluster):
         mdx_all = match_model_masses(self.iso.points['mass'], star_systems['mass'])
         idx_good = np.where(mdx_all >= 0)[0]
         mdx_good = mdx_all[idx_good]
-        
+
         if len(idx_good) != len(mdx_all):
             msg = 'Rejected {0:d} of {1:d} primary stars' 
             print( msg.format(len(mdx_all) - len(idx_good), N_systems))
@@ -392,7 +393,6 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         # For a given delta_AKs (sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
         delta_red_filt = {}
-
         AKs = iso.points.meta['AKS']
         red_vega_lo = vega * red_law.reddening(AKs).resample(vega.wave)
         red_vega_hi = vega * red_law.reddening(AKs + deltaAKs).resample(vega.wave)
@@ -417,7 +417,65 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
                 self.companions[filt] += rand_red_comp * delta_red_filt[filt]
             
         return
+
+class ResolvedClusterDiffRedden2(ResolvedCluster):
+    """
+    Same as the other differentially reddened cluster, but allowing
+    for asymmetric dAKs distribution
+    """
+    def __init__(self, iso, imf, cluster_mass, deltaAKs_blue, deltaAKs_red,
+                 red_law=default_red_law, verbose=False):
+
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
+
+        # For a given delta_AKs (sigma of reddening distribution at Ks),
+        # figure out the equivalent delta_filt values for all other filters.
+        delta_red_blue_filt = {}
+        delta_red_red_filt = {}
+        AKs = iso.points.meta['AKS']
+        red_vega_blue = vega * red_law.reddening(AKs - deltaAKs_blue).resample(vega.wave)
+        red_vega = vega * red_law.reddening(AKs).resample(vega.wave)
+        red_vega_red = vega * red_law.reddening(AKs + deltaAKs_red).resample(vega.wave)
+        
+        for filt in self.filt_names:
+            filt_info = get_filter_info(iso.filters[filt.replace('mag', '')])
             
+            mag_blue = mag_in_filter(red_vega_blue, filt_info)
+            mag = mag_in_filter(red_vega, filt_info)
+            mag_red = mag_in_filter(red_vega_red, filt_info)
+            delta_red_blue_filt[filt] = mag - mag_blue
+            delta_red_red_filt[filt] = mag_red - mag
+
+        #----Perturb all of star systems' photometry by a random amount----#
+        rand_red = np.random.randn(len(self.star_systems))
+        # Identify positive and negative rand_red values. This
+        # will determine if the star gets a blue or red side
+        # dAks, respectively.
+        blue = np.where(rand_red >= 0)
+        red = np.where(rand_red < 0)
+        # For each star, generate a random number from 0-1. This will
+        # be used to set the dAKs value through the inverse CDF
+        samp = np.random.random_sample(len(self.star_systems))
+        for filt in self.filt_names:
+            blue_dist = scipy.stats.halfnorm(loc=0, scale=delta_red_blue_filt[filt])
+            red_dist = scipy.stats.halfnorm(loc=0, scale=delta_red_red_filt[filt])
+
+            blue_ppf = blue_dist.ppf(samp[blue])
+            red_ppf = red_dist.ppf(samp[red])
+
+            # Add appropriate dAKs value to star mag
+            self.star_systems[filt][blue] -= blue_ppf
+            self.star_systems[filt][red] += red_ppf
+            
+        # Perturb the companions by the same amount.
+        #if self.imf.make_multiples:
+        #    rand_red_comp = np.repeat(rand_red, self.star_systems['N_companions'])
+        #    assert len(rand_red_comp) == len(self.companions)
+        #    for filt in self.filt_names:
+        #        self.companions[filt] += rand_red_comp * delta_red_filt[filt]
+            
+        return
+
 class UnresolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass,
                  wave_range=[5000, 50000], verbose=False):
@@ -938,4 +996,5 @@ def match_model_masses(isoMasses, starMasses):
     
 def get_evo_model_by_string(evo_model_string):
     return getattr(evolution, evo_model_string)
+
 

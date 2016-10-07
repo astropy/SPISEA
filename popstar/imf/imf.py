@@ -98,6 +98,7 @@ class IMF(object):
             # Convert into the IMF from the inverted CDF
             newMasses = self.dice_star_cl(uniX)
 
+            # Dealing with multiplicity
             if self._multi_props != None:
                 compMasses = [[] for newMass in newMasses]
 
@@ -146,7 +147,6 @@ class IMF(object):
                 log.info('sample_imf: Loop %d added %.2e Msun to previous total of %.2e Msun' %
                          (loopCnt, newTotalMassTally, totalMassTally))
 
-            pdb.set_trace()
             totalMassTally += newTotalMassTally
             newStarCount = mean_number * 0.1  # increase by 20% each pass
             loopCnt += 1
@@ -460,8 +460,6 @@ class IMF_broken_powerlaw(IMF):
             # Only continue for those entries that are in later segments
             idx = np.where(aux >= 0)[0]
 
-            pdb.set_trace()
-
             # Maybe we are all done?
             if len(idx) == 0:
                 break
@@ -473,12 +471,13 @@ class IMF_broken_powerlaw(IMF):
             t1 = aux_tmp / (self.coeffs[i] * self.k)
             t1 += prim_power(self._m_limits_low[i], self._powers[i])
             y_i = gamma_closed(x_tmp, self.lamda[i], self.lamda[i+1])
-            Y_i *= inv_prim_power(t1, self._powers[i])
+            y_i *= inv_prim_power(t1, self._powers[i])
             
             # Save results into the y array
             y[idx] += y_i
 
-            z *= delta(x - self.lamda[i+1])
+            # z *= delta(x - self.lamda[i+1]) # new version
+            z *= delta(x - self.lamda[i])   # old version
 
         if returnFloat:
             return y[0] * z[0]
@@ -549,8 +548,18 @@ def prim_power(m, power):
 
     z = 1.0 + power
     val = (m**z) / z
-    val[power == -1] = np.log(m[power == -1])
+        
+    # How code handles -1 case depends on size of m. If same size as
+    # power, continue as was coded before. However, sometimes, m can be a 1
+    # element array while power is a larger array. In this case, take
+    # the first element only.
+    #if len(m) == len(power):
+    #    val[power == -1] = np.log(m[power == -1])
+    #else:
+    #    val[power == -1] = np.log(m[0])
 
+    val[power == -1] = np.log(m[power == -1])
+    
     if returnFloat:
         return val[0]
     else:
