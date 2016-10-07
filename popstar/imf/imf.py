@@ -71,8 +71,7 @@ class IMF(object):
         if (self._mass_limits[-1] > totalMass):
             log.info('sample_imf: Setting maximum allowed mass to %d' %
                       (totalMass))
-
-        self._mass_limits[-1] = totalMass
+            self._mass_limits[-1] = totalMass
 
         # Estimate the mean number of stars expected.
         self.normalize(totalMass)
@@ -99,6 +98,7 @@ class IMF(object):
             # Convert into the IMF from the inverted CDF
             newMasses = self.dice_star_cl(uniX)
 
+            # Dealing with multiplicity
             if self._multi_props != None:
                 compMasses = [[] for newMass in newMasses]
 
@@ -476,7 +476,9 @@ class IMF_broken_powerlaw(IMF):
             y[idx] += y_i
 
             z *= delta(x - self.lamda[i])
-
+            
+            #pdb.set_trace()
+            #-------------#
         if returnFloat:
             return y[0] * z[0]
         else:
@@ -541,8 +543,18 @@ def prim_power(m, power):
 
     z = 1.0 + power
     val = (m**z) / z
-    val[power == -1] = np.log(m[power == -1])
+        
+    # How code handles -1 case depends on size of m. If same size as
+    # power, continue as was coded before. However, sometimes, m can be a 1
+    # element array while power is a larger array. In this case, take
+    # the first element only.
+    #if len(m) == len(power):
+    #    val[power == -1] = np.log(m[power == -1])
+    #else:
+    #    val[power == -1] = np.log(m[0])
 
+    val[power == -1] = np.log(m[power == -1])
+    
     if returnFloat:
         return val[0]
     else:
