@@ -410,7 +410,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
     3800 <= T < 5000: PHOENIXv16 (Husser+13)
     3200 <= T < 3800: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge
     3200 < T <= 1200: BTSettl_CIFITS2011_2015
-    """
+    """    
     if temperature <= 3200:
         if verbose:
             print 'BTSettl_2015 atmosphere'
