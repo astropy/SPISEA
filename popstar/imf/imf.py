@@ -97,7 +97,13 @@ class IMF(object):
 
             # Convert into the IMF from the inverted CDF
             newMasses = self.dice_star_cl(uniX)
-
+            
+            # Testing for Nans produced in masses
+            test = np.isnan(newMasses)
+            if np.sum(test) > 0:
+                print 'Nan detected'
+                pdb.set_trace()
+                
             # Dealing with multiplicity
             if self._multi_props != None:
                 compMasses = [[] for newMass in newMasses]
@@ -448,14 +454,17 @@ class IMF_broken_powerlaw(IMF):
         """
         returnFloat = type(r) == float
         r = np.atleast_1d(r)  # Make sure it is an array
-        
-        x = r * self.lamda[-1]
+
+        x = r * self.lamda[-1] 
         y = np.zeros(len(r), dtype=float)
         z = np.ones(len(r), dtype=float)
 
-        for i in range(self.nterms):
-            aux = x - self.lamda[i]
-
+        for i in range(self.nterms): #-----For i = 1 --> n, where n is the number of intervals?
+            #i_lamda = i + 1
+            aux = x - self.lamda[i] #---Should this be i - 1?
+            #aux = x - self.lamda[i_lamda - 1]
+            
+    
             # Only continue for those entries that are in later segments
             idx = np.where(aux >= 0)[0]
 
@@ -466,19 +475,19 @@ class IMF_broken_powerlaw(IMF):
             x_tmp = x[idx]
             aux_tmp = aux[idx]
 
-            # len(idx) entries
             t1 = aux_tmp / (self.coeffs[i] * self.k)
             t1 += prim_power(self._m_limits_low[i], self._powers[i])
+            pdb.set_trace()
             y_i = gamma_closed(x_tmp, self.lamda[i], self.lamda[i+1])
             y_i *= inv_prim_power(t1, self._powers[i])
-            
+
             # Save results into the y array
             y[idx] += y_i
 
             z *= delta(x - self.lamda[i])
+            #z *= delta(x - self.lamda[i_lamda])
             
-            #pdb.set_trace()
-            #-------------#
+
         if returnFloat:
             return y[0] * z[0]
         else:
@@ -548,12 +557,12 @@ def prim_power(m, power):
     # power, continue as was coded before. However, sometimes, m can be a 1
     # element array while power is a larger array. In this case, take
     # the first element only.
-    #if len(m) == len(power):
-    #    val[power == -1] = np.log(m[power == -1])
-    #else:
-    #    val[power == -1] = np.log(m[0])
+    if len(m) == len(power):
+        val[power == -1] = np.log(m[power == -1])
+    else:
+        val[power == -1] = np.log(m[0])
 
-    val[power == -1] = np.log(m[power == -1])
+    #val[power == -1] = np.log(m[power == -1])
     
     if returnFloat:
         return val[0]
@@ -572,8 +581,13 @@ def inv_prim_power(x, power):
 
     z = 1.0 + power
     val = (z * x)**(1.0 / z)
-    val[power == -1] = np.exp(x[power == -1])
 
+    #--------------BUG CHECK---------------------#
+    # This line doesn't make sense if x is an N-element array and
+    # power is just a 1-element array, which it appears to be for
+    # imf.generate_cluster
+    val[power == -1] = np.exp(x[power == -1])
+    #-----------------------------------------------#
     if returnFloat:
         return val[0]
     else:
