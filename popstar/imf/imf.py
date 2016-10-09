@@ -462,9 +462,7 @@ class IMF_broken_powerlaw(IMF):
         
         # Loop through the different parts of the power law.
         for i in range(self.nterms): #-----For i = 1 --> n, where n is the number of intervals?
-            #i_lamda = i + 1
             aux = x - self.lamda[i] #---Should this be i - 1?
-            #aux = x - self.lamda[i_lamda - 1]
             
             # Only continue for those entries that are in later segments
             idx = np.where(aux >= 0)[0]
@@ -485,14 +483,8 @@ class IMF_broken_powerlaw(IMF):
             # Save results into the y array
             y[idx] += y_i
 
-<<<<<<< HEAD
-            z *= delta(x - self.lamda[i])
-            #z *= delta(x - self.lamda[i_lamda])
-            
-=======
             # z *= delta(x - self.lamda[i+1]) # new version
             z *= delta(x - self.lamda[i])   # old version
->>>>>>> 8ef72a7f99e78bc856303a1c5add78790102c079
 
         if returnFloat:
             return y[0] * z[0]
@@ -564,20 +556,20 @@ def prim_power(m, power):
     z = 1.0 + power
     val = (m**z) / z
         
-<<<<<<< HEAD
+
     # How code handles -1 case depends on size of m. If same size as
     # power, continue as was coded before. However, sometimes, m can be a 1
     # element array while power is a larger array. In this case, take
     # the first element only.
-    if len(m) == len(power):
-        val[power == -1] = np.log(m[power == -1])
-    else:
-        val[power == -1] = np.log(m[0])
+    #if len(m) == len(power):
+    #    val[power == -1] = np.log(m[power == -1])
+    #else:
+    #    val[power == -1] = np.log(m[0])
 
     #val[power == -1] = np.log(m[power == -1])
-=======
+
     val[power == -1] = np.log(m[power == -1])
->>>>>>> 8ef72a7f99e78bc856303a1c5add78790102c079
+
     
     if returnFloat:
         return val[0]
