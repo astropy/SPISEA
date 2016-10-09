@@ -190,9 +190,9 @@ class Ekstrom(StellarEvolution):
         # Move into metallicity direcotry, read iso.fits file
         os.chdir(input_iso_dir)
     
-        print 'Read Input: this is slow'
+        print( 'Read Input: this is slow')
         iso = Table.read('iso.fits')
-        print 'Done'    
+        print( 'Done'    )
     
         ages_all = iso['col1']
     
@@ -210,7 +210,7 @@ class Ekstrom(StellarEvolution):
             os.mkdir('rot')
             os.mkdir('norot')
     
-        print 'Making individual isochrone files'
+        print( 'Making individual isochrone files')
         for age in age_arr:
             good = np.where(ages_all == age)
 
@@ -257,7 +257,7 @@ class Ekstrom(StellarEvolution):
             # Now, each identified start is assumed to be associated with the
             # corresponding age in ages        
             if len(start[0]) != len(ages):
-                print 'Ages mismatched in file! Quitting...'
+                print( 'Ages mismatched in file! Quitting...')
                 return
 
             age_arr = np.zeros(len(t))
@@ -396,9 +396,9 @@ class Parsec(StellarEvolution):
             os.chdir(metal)
 
             isoFile = glob.glob('output*')
-            print 'Read Input: this is slow'
+            print( 'Read Input: this is slow')
             iso = Table.read(isoFile[0], format='fits')
-            print 'Done'
+            print( 'Done')
     
             ages_all = iso['col2']
 
@@ -407,7 +407,7 @@ class Parsec(StellarEvolution):
 
             # For each unique age, extract the proper rows and make corresponding
             # table
-            print 'Making individual isochrone files'
+            print( 'Making individual isochrone files')
             for age in age_arr:
                 good = np.where(ages_all == age)
                 tmp = iso[good]
@@ -520,7 +520,7 @@ class Pisa(StellarEvolution):
             os.chdir(metal)
 
             if os.path.exists('iso_6.00.fits'):
-                print 'Files in {0:s} already formatted'.format(metal)
+                print( 'Files in {0:s} already formatted'.format(metal))
             else:
                 # Create a ReadMe with the original file names to preserve the
                 # model details
@@ -566,7 +566,7 @@ class Pisa(StellarEvolution):
 
             count += 1
         
-            print 'Done {0} of {1} models'.format(count, (len(logAge_arr)))
+            print( 'Done {0} of {1} models'.format(count, (len(logAge_arr))))
 
         return
 
@@ -666,7 +666,7 @@ class Baraffe15(StellarEvolution):
         Teff_interp = []
         logL_interp = []
         logG_interp = []
-        print 'Begin looping over masses'
+        print( 'Begin looping over masses')
         cnt=0
         for mass in masses:
             idx = np.where(tracks['col1'] == mass)
@@ -743,7 +743,7 @@ class Baraffe15(StellarEvolution):
             logL_interp = np.concatenate((logL_interp, logL))
             logG_interp = np.concatenate((logG_interp, logG))
 
-            print 'Done {0} of {1}'.format(cnt, len(masses))
+            print( 'Done {0} of {1}'.format(cnt, len(masses)))
             cnt+=1
 
         # Now, construct the iso_*.fits files for each age, write files
@@ -754,7 +754,7 @@ class Baraffe15(StellarEvolution):
 
         # Now for the loop
         ages = np.unique(age_interp)
-        print 'Writing iso files'
+        print( 'Writing iso files')
         for age in ages:
             good = np.where( age_interp == age)
 
@@ -807,9 +807,9 @@ class Baraffe15(StellarEvolution):
         logL_diff = np.mean(abs(true_iso['col3'][7:] - our_iso['logL']))
         logG_diff = np.mean(abs(true_iso['col4'][7:] - our_iso['logG']))
     
-        print 'Average abs difference in Teff: {0}'.format(Teff_diff)
-        print 'Average abs difference in logL: {0}'.format(logL_diff)
-        print 'Average abs difference in logg: {0}'.format(logG_diff)
+        print( 'Average abs difference in Teff: {0}'.format(Teff_diff))
+        print( 'Average abs difference in logL: {0}'.format(logL_diff))
+        print( 'Average abs difference in logg: {0}'.format(logG_diff))
 
         return
 
@@ -1032,7 +1032,7 @@ def make_isochrone_pisa_interp(log_age, metallicity=0.015,
     """
     # If logage > 8.0, quit immediately...grid doesn't go that high
     if log_age > 8.0:
-        print 'Age too high for Pisa grid (max logAge = 8.0)'
+        print( 'Age too high for Pisa grid (max logAge = 8.0)')
         return
 
     # Directory with where the isochrones will go (both downloaded and interpolated)
@@ -1042,22 +1042,22 @@ def make_isochrone_pisa_interp(log_age, metallicity=0.015,
 
     # Can we find the isochrone directory?
     if not os.path.exists(rootDir):
-        print 'Failed to find Pisa PMS isochrones for metallicity = ' + metSuffix
+        print( 'Failed to find Pisa PMS isochrones for metallicity = ' + metSuffix)
         return
 
     # Check to see if isochrone at given age already exists. If so, quit
     if os.path.exists(rootDir+'iso_{0:3.2f}.fits'.format(log_age)):
-        print 'Isochrone at logAge = {0:3.2f} already exists'.format(log_age)
+        print( 'Isochrone at logAge = {0:3.2f} already exists'.format(log_age))
         return
     
     # Name/directory for interpolated isochrone
     isoFile = rootDir+'iso_%3.2f.fits' % log_age
     outSuffix = '_%.2f' % (log_age)
 
-    print '*** Generating Pisa isochrone for log t = %3.2f and Z = %.3f' % \
-        (log_age, metallicity)
+    print( '*** Generating Pisa isochrone for log t = %3.2f and Z = %.3f' % \
+        (log_age, metallicity))
 
-    print time.asctime(), 'Getting original Pisa isochrones.'
+    print( time.asctime(), 'Getting original Pisa isochrones.')
     iso = get_orig_pisa_isochrones(metallicity=metallicity)
 
     # First thing is to find the isochrones immediately above and below desired
@@ -1136,7 +1136,7 @@ def make_isochrone_pisa_interp(log_age, metallicity=0.015,
         py.title('Pisa 2011 Isochrone at log t = %.2f' % log_age)
         py.savefig(rootDir + 'plots/interp_isochrone_at' + outSuffix + '.png')
     
-    print time.asctime(), 'Finished.'
+    print( time.asctime(), 'Finished.')
 
     # Write output to file, MUST BE IN SAME ORDER AS ORIG FILES
     _out = open(isoFile, 'w')
@@ -1165,7 +1165,7 @@ def get_orig_pisa_isochrones(metallicity=0.015):
     pms_dir += metSuffix + '/'
 
     if not os.path.exists(pms_dir):
-        print 'Failed to find Siess PMS isochrones for metallicity = ' + metSuffix
+        print( 'Failed to find Siess PMS isochrones for metallicity = ' + metSuffix)
         return
     
     # Collect the isochrones

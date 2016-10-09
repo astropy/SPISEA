@@ -1,11 +1,6 @@
-popstar
+popstar.synthetic
 ================
 
-This is the documentation for the affiliated package.
-
- .. automodule:: popstar
-    :members:
-       
  .. automodule:: popstar.synthetic
     :members:
     :undoc-members:
