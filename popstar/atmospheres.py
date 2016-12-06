@@ -322,6 +322,11 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 
     Only valid for temps between 3200 - 3800K, gravity from 2.5 - 5.5 
     """
+    if (gravity < 2.5):
+        logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
+        print( logg_msg.format(2.5, temperature, gravity))
+        gravity = 2.5
+    
     sp = pysynphot.Icat('merged_BTSettl_phoenix', temperature, metallicity, gravity)
 
     # Do some error checking
