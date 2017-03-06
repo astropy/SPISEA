@@ -778,7 +778,7 @@ class IsochronePhot(Isochrone):
 
         # Loop through the filters, get filter info, make photometry for
         # all stars in this filter.
-        for filt_name, filt_str in self.filters.iteritems():
+        for filt_name, filt_str in self.filters.items():
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
             print( prt_fmt.format(filt_name, time.time() - startTime))
             
