@@ -1,4 +1,4 @@
-Matt Hosek
+ Matt Hosek
 11/11/15
 
 =========================
@@ -176,5 +176,22 @@ http://perso.ens-lyon.fr/isabelle.baraffe/BHAC15dir/BHAC15_tracks
 
 -Isochrones stored in /g/lu/models/evolution/Baraffe15/iso
 
+=====================================
+Mesa Isochrone and Stellar Tracks (MIST), Choi+16
+=====================================
+Paper reference: Choi+16
+-Downloaded via web interpolator: http://waps.cfa.harvard.edu/MIST/interp_isos.html
+-Apslund+09 solar abundances
+-photometric system: HST WFC3/UVIS+IR
 
 
+***Code procedure:
+
+1) popstar/evolution.py --> class MISTv1, function format_isochrone
+   -takes MIST_iso* files downloaded from web and organize into popstar format. Creates separate *.dat file for each age
+   -can handle multiple metallicities at once, if desired
+
+Note: No need to interpolate MIST isochrones since we can download them at any time step we want
+
+***File Locations:
+Original files are located in appropiate metallicity subdirectory under /g/lu/models/evolution/MISTv1

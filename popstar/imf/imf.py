@@ -13,6 +13,7 @@
 ##################################################
 
 import numpy as np
+import time
 import pdb
 import logging
 
@@ -97,11 +98,18 @@ class IMF(object):
 
             # Convert into the IMF from the inverted CDF
             newMasses = self.dice_star_cl(uniX)
-
+            
+            # Testing for Nans produced in masses
+            test = np.isnan(newMasses)
+            if np.sum(test) > 0:
+                raise ValueError('Nan detected in cluster mass')
+                
             # Dealing with multiplicity
             if self._multi_props != None:
-                compMasses = [[] for newMass in newMasses]
-
+                #compMasses = [[] for newMass in newMasses]
+                compMasses = np.empty((len(newMasses),), dtype=np.object)
+                compMasses.fill([])
+                
                 # Determine the multiplicity of every star
                 MF = self._multi_props.multiplicity_fraction(newMasses)
                 CSF = self._multi_props.companion_star_fraction(newMasses)
@@ -110,33 +118,53 @@ class IMF(object):
 
                 # Copy over the primary masses. Eventually add the companions.
                 newSystemMasses = newMasses.copy()
-        
-                # Calculate number and masses of companions
-                for ii in range(len(newMasses)):
-                    if newIsMultiple[ii]:
-                        # determine number of companions
-                        n_comp = 1 + np.random.poisson((CSF[ii]/MF[ii]) - 1)
 
-                        # Determine the mass ratios of the companions
-                        q_values = self._multi_props.random_q(np.random.rand(n_comp))
+                #------New code-------#
+                new = True
+                if new:
+                    # Function to calculate multiple systems more efficiently
+                    #t1 = time.time()
+                    compMasses, newSystemMasses, newIsMultiple = self.calc_multi(newMasses, compMasses,
+                                                                                 newSystemMasses, newIsMultiple,
+                                                                                 CSF, MF)
 
-                        # Determine the masses of the companions
-                        m_comp = q_values * newMasses[ii]
+                    newTotalMassTally = newSystemMasses.sum()
+                    isMultiple = np.append(isMultiple, newIsMultiple)
+                    systemMasses = np.append(systemMasses, newSystemMasses)
+                    #t2 = time.time()
+                    #print 'Generate multiples: {0}'.format(t2 - t1)
+                #------Previous code------#
+                old = False
+                if old:
+                    # Calculate number and masses of companions
+                    t1 = time.time()
+                    for ii in range(len(newMasses)):
+                        if newIsMultiple[ii]:
+                            # determine number of companions
+                            n_comp = 1 + np.random.poisson((CSF[ii]/MF[ii]) - 1)
 
-                        # Add in seperation information
+                            # Determine the mass ratios of the companions
+                            q_values = self._multi_props.random_q(np.random.rand(n_comp))
 
-                        # Only keep companions that are more than the minimum mass
-                        compMasses[ii] = m_comp[m_comp >= self._mass_limits[0]]
-                        newSystemMasses[ii] += compMasses[ii].sum()
+                            # Determine the masses of the companions
+                            m_comp = q_values * newMasses[ii]
 
-                        # Double check for the case when we drop all companions.
-                        # This happens a lot near the minimum allowed mass.
-                        if len(compMasses) == 0:
-                            newIsMultiple[ii] == False
+                            # Add in seperation information
 
-                newTotalMassTally = newSystemMasses.sum()
-                isMultiple = np.append(isMultiple, newIsMultiple)
-                systemMasses = np.append(systemMasses, newSystemMasses)
+                            # Only keep companions that are more than the minimum mass
+                            compMasses[ii] = m_comp[m_comp >= self._mass_limits[0]]
+                            newSystemMasses[ii] += compMasses[ii].sum()
+
+                            # Double check for the case when we drop all companions.
+                            # This happens a lot near the minimum allowed mass.
+                            if len(compMasses) == 0:
+                                newIsMultiple[ii] == False
+                #-----------------------------------#
+                    newTotalMassTally = newSystemMasses.sum()
+                    isMultiple = np.append(isMultiple, newIsMultiple)
+                    systemMasses = np.append(systemMasses, newSystemMasses)
+                    t2 = time.time()
+                    print 'All loop: {0}'.format(t2 - t1)
             else:
                 newTotalMassTally = newMasses.sum()
 
@@ -173,7 +201,58 @@ class IMF(object):
 
         return (masses, isMultiple, compMasses, systemMasses)
         
+    def calc_multi(self, newMasses, compMasses, newSystemMasses, newIsMultiple, CSF, MF):
+        """
+        Helper function to calculate multiples more efficiently.
+        We will use array operations as much as possible
+        """
+        # Identify multiple systems, calculate number of companions for
+        # each 
+        idx = np.where(newIsMultiple == True)[0]
+        n_comp_arr = 1 + np.random.poisson((CSF[idx] / MF[idx]) - 1)
+        primary = newMasses[idx]
 
+        # We will deal with each number of multiple system independently. This is
+        # so we can put in uniform arrays in _multi_props.random_q.
+        num = np.unique(n_comp_arr)
+        for ii in num:
+            tmp = np.where(n_comp_arr == ii)[0]
+            
+            if ii == 1:
+                # Single companion case
+                q_values = self._multi_props.random_q(np.random.rand(len(tmp)))
+                
+                # Calculate mass of companion
+                m_comp = q_values * primary[tmp]
+
+                # Only keep companions that are more than the minimum mass. Update
+                # compMasses, newSystemMasses, and newIsMultiple appropriately 
+                good = np.where(m_comp >= self._mass_limits[0])[0]
+                for jj in good:
+                    compMasses[idx[tmp[jj]]] = np.transpose([m_comp[jj]])
+                    newSystemMasses[idx[tmp[jj]]] += compMasses[idx[tmp[jj]]]
+
+                bad = np.where(m_comp < self._mass_limits[0])[0]
+                newIsMultiple[idx[tmp[bad]]] = False                
+            else:
+                # Multple companion case
+                q_values = self._multi_props.random_q(np.random.rand(len(tmp), ii))
+
+                # Calculate masses of companions
+                m_comp = np.multiply(q_values, np.transpose([primary[tmp]]))
+
+                # Update compMasses, newSystemMasses, and newIsMultiple appropriately
+                for jj in range(len(tmp)):
+                    m_comp_tmp = m_comp[jj]
+                    compMasses[idx[tmp[jj]]] = m_comp_tmp[m_comp_tmp >= self._mass_limits[0]]
+                    newSystemMasses[idx[tmp[jj]]] += compMasses[idx[tmp[jj]]].sum()
+
+                    # Double check for the case when we drop all companions.
+                    # This happens a lot near the minimum allowed mass.
+                    if len(compMasses[idx[tmp[jj]]]) == 0:
+                        newIsMultiple[idx[tmp[jj]]] = False
+
+        return compMasses, newSystemMasses, newIsMultiple
         
     
 class IMF_broken_powerlaw(IMF):
@@ -448,15 +527,15 @@ class IMF_broken_powerlaw(IMF):
         """
         returnFloat = type(r) == float
         r = np.atleast_1d(r)  # Make sure it is an array
-        
-        x = r * self.lamda[-1]
+
+        x = r * self.lamda[-1] 
         y = np.zeros(len(r), dtype=float)
         z = np.ones(len(r), dtype=float)
 
-        # Loop through the different parts of the power-law.
-        for i in range(self.nterms):
-            aux = x - self.lamda[i]
-
+        # Loop through the different parts of the power law.
+        for i in range(self.nterms): #-----For i = 1 --> n, where n is the number of intervals?
+            aux = x - self.lamda[i] #---Should this be i - 1?
+            
             # Only continue for those entries that are in later segments
             idx = np.where(aux >= 0)[0]
 
@@ -467,17 +546,16 @@ class IMF_broken_powerlaw(IMF):
             x_tmp = x[idx]
             aux_tmp = aux[idx]
 
-            # len(idx) entries
             t1 = aux_tmp / (self.coeffs[i] * self.k)
             t1 += prim_power(self._m_limits_low[i], self._powers[i])
             y_i = gamma_closed(x_tmp, self.lamda[i], self.lamda[i+1])
             y_i *= inv_prim_power(t1, self._powers[i])
-            
+
             # Save results into the y array
             y[idx] += y_i
 
-            # z *= delta(x - self.lamda[i+1]) # new version
-            z *= delta(x - self.lamda[i])   # old version
+            z *= delta(x - self.lamda[i+1]) # new version
+            #z *= delta(x - self.lamda[i])   # old version
 
         if returnFloat:
             return y[0] * z[0]
@@ -550,6 +628,7 @@ def prim_power(m, power):
     val = (m**z) / z
         
     val[power == -1] = np.log(m[power == -1])
+
     
     if returnFloat:
         return val[0]
@@ -576,8 +655,13 @@ def inv_prim_power(x, power):
     
     z = 1.0 + power
     val = (z * x)**(1.0 / z)
-    val[power == -1] = np.exp(x[power == -1])
 
+    #--------------BUG CHECK---------------------#
+    # This line doesn't make sense if x is an N-element array and
+    # power is just a 1-element array, which it appears to be for
+    # imf.generate_cluster
+    val[power == -1] = np.exp(x[power == -1])
+    #-----------------------------------------------#
     if returnFloat:
         return val[0]
     else:

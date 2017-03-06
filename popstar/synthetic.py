@@ -33,11 +33,12 @@ default_atm_func = atm.get_merged_atmosphere
 
 def Vega():
     # Use Vega as our zeropoint... assume V=0.03 mag and all colors = 0.0
+    # These parameters are defined in Girardi+02
     vega = atm.get_kurucz_atmosphere(temperature=9550, 
                                      gravity=3.95,
                                      metallicity=-0.5)
 
-    vega = spectrum.trimSpectrum(vega, 5000, 50000)
+    vega = spectrum.trimSpectrum(vega, 3000, 50000)
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
     # and is used to convert to flux observed at Earth.
@@ -66,7 +67,7 @@ class Cluster(object):
 
     
 class ResolvedCluster(Cluster):
-    def __init__(self, iso, imf, cluster_mass, save_dir='./', verbose=False):
+    def __init__(self, iso, imf, cluster_mass, filters=None, save_dir='./', verbose=True):
         # Save to object variables
         Cluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
 
@@ -96,23 +97,32 @@ class ResolvedCluster(Cluster):
         #####
         mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
 
-        # Figure out the filters we will make:
-        self.filt_names = self.set_filter_names()
-
+        # Figure out the filters we will make. If filters input not defined,
+        # then take the filter headers from the isochrone
+        if filters == None:
+            self.filt_names = self.set_filter_names()
+        else:
+            self.filt_names = filters
+            
         ##### 
         # Make a table to contain all the information about each stellar system.
         #####
+        #t3 = time.time()
         star_systems = self._make_star_systems_table_interp(mass, isMulti, sysMass)
-
+        #t4 = time.time()
+        #print 'make star systems: {0}'.format(t4 - t3)
+        
         # Trim out bad systems
         star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
-
+ 
         ##### 
         # Make a table to contain all the information about companions.
         #####
         if self.imf.make_multiples:
+            #t5 = time.time()
             companions = self._make_companions_table_interp(star_systems, compMass)
-
+            #t6 = time.time()
+            #print 'make comp systems: {0}'.format(t6 - t5)
         #####
         # Save our arrays to the object
         #####
@@ -170,7 +180,7 @@ class ResolvedCluster(Cluster):
 
         for filt in self.filt_names:
             star_systems[filt][idx_good] = self.iso.points[filt][mdx_good]
-        
+    
         return star_systems
 
     def _make_star_systems_table_interp(self, mass, isMulti, sysMass):
@@ -208,7 +218,7 @@ class ResolvedCluster(Cluster):
                                                kind='linear',
                                                bounds_error=False, fill_value=0)
             star_systems[filt] = interp_filt(star_systems['mass'])
-        
+
         return star_systems
 
         
@@ -377,7 +387,7 @@ class ResolvedCluster(Cluster):
 
         star_systems = star_systems[idx]
         N_systems = len(star_systems)
-        
+
         if self.imf.make_multiples:
             # Clean up companion stuff (which we haven't handeled yet)
             compMass = [compMass[ii] for ii in idx]
@@ -386,17 +396,18 @@ class ResolvedCluster(Cluster):
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 red_law=default_red_law, verbose=False):
+                 red_law=default_red_law, filters=None, verbose=False):
 
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, filters=filters, verbose=verbose)
 
         # For a given delta_AKs (sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
+        #t1 = time.time()
         delta_red_filt = {}
         AKs = iso.points.meta['AKS']
         red_vega_lo = vega * red_law.reddening(AKs).resample(vega.wave)
         red_vega_hi = vega * red_law.reddening(AKs + deltaAKs).resample(vega.wave)
-                              
+
         for filt in self.filt_names:
             filt_info = get_filter_info(iso.filters[filt.replace('mag', '')])
             
@@ -415,7 +426,14 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
             assert len(rand_red_comp) == len(self.companions)
             for filt in self.filt_names:
                 self.companions[filt] += rand_red_comp * delta_red_filt[filt]
-            
+
+        # Finally, we'll add a column to star_systems with the overall AKs for each star
+        diff_AKs = deltaAKs * rand_red
+        final_AKs = AKs + diff_AKs
+        col = Column(final_AKs, name='AKs_f')
+        self.star_systems.add_column(col)
+        #t2 = time.time()
+        #print 'Diff redden: {0}'.format(t2 - t1)
         return
 
 class ResolvedClusterDiffRedden2(ResolvedCluster):
@@ -424,9 +442,9 @@ class ResolvedClusterDiffRedden2(ResolvedCluster):
     for asymmetric dAKs distribution
     """
     def __init__(self, iso, imf, cluster_mass, deltaAKs_blue, deltaAKs_red,
-                 red_law=default_red_law, verbose=False):
+                 red_law=default_red_law, filters=None, verbose=False):
 
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, filters=filters, verbose=verbose)
 
         # For a given delta_AKs (sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
@@ -593,7 +611,12 @@ class Isochrone(object):
         evol = evol[::mass_sampling]
 
         # Determine which stars are WR stars.
-        evol['isWR'] = evol['logT'] != evol['logT_WR']
+        keys = evol.keys()
+        if 'logT_WR' in keys:
+            evol['isWR'] = evol['logT'] != evol['logT_WR']
+            isWR_all = evol['isWR']
+        else:
+            isWR_all = ['None'] * len(evol)
 
         # Give luminosity, temperature, mass, radius units (astropy units).
         L_all = 10**evol['logL'] * c.L_sun # luminsoity in erg/s
@@ -601,7 +624,6 @@ class Isochrone(object):
         R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * T_all**4))
         mass_all = evol['mass'] * units.Msun # masses in solar masses
         logg_all = evol['logg']
-        isWR_all = evol['isWR']
 
         # Define the table that contains the "average" properties for each star.
         tab = Table([L_all, T_all, R_all, mass_all, logg_all, isWR_all],
@@ -943,10 +965,10 @@ def get_filter_info(name, vega=vega):
        raise ValueError('Vega spectrum doesnt cover filter wavelength range!')  
 
     vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
-    vega_flux = vega_obs.binflux.sum()
-    #diff = np.diff(vega_obs.binwave)
-    #diff = np.append(diff, diff[-1])
-    #vega_flux = np.sum(vega_obs.binflux * diff)
+    #vega_flux = vega_obs.binflux.sum()
+    diff = np.diff(vega_obs.binwave)
+    diff = np.append(diff, diff[-1])
+    vega_flux = np.sum(vega_obs.binflux * diff)
     
     vega_mag = 0.03
 
@@ -962,10 +984,10 @@ def mag_in_filter(star, filt):
     as filter, and has been applied.
     """
     star_in_filter = obs.Observation(star, filt, binset=filt.wave, force='taper')
-    star_flux = star_in_filter.binflux.sum()
-    #diff = np.diff(star_in_filter.binwave)
-    #diff = np.append(diff, diff[-1])
-    #star_flux = np.sum(star_in_filter.binflux * diff)
+    #star_flux = star_in_filter.binflux.sum()
+    diff = np.diff(star_in_filter.binwave)
+    diff = np.append(diff, diff[-1])
+    star_flux = np.sum(star_in_filter.binflux * diff)
     
     star_mag = -2.5 * math.log10(star_flux / filt.flux0) + filt.mag0
     
