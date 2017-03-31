@@ -1025,7 +1025,7 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         z_list = [0.015]
         
         # populate list of isochrone ages (log scale)
-        age_list = np.arange(6.0, 8.001, 0.01).tolist()
+        age_list = np.arange(6.0, 10.091, 0.01).tolist()
         
         # specify location of model files
         model_dir = models_dir + 'merged/baraffe_pisa_ekstrom_parsec/'
