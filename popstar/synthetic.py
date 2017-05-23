@@ -26,6 +26,7 @@ import time
 import pdb
 from scipy.spatial import cKDTree as KDTree
 
+test
 
 default_evo_model = evolution.MergedBaraffePisaEkstromParsec()
 default_red_law = reddening.RedLawNishiyama09()
