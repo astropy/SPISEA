@@ -1,6 +1,8 @@
 import numpy as np
 from astropy.table import Table
 import pysynphot
+import warnings
+import os
 import pdb
 
 # Set path to filters
@@ -20,8 +22,8 @@ def get_nirc2_filt(name):
     except:
         raise ValueError('Could not find NIRC2 filter file {0}/nirc2/{1}.dat'.format(filters_dir, name))
 
-    wavelength = table[table.keys()[0]]
-    transmission = table[table.keys()[1]]
+    wavelength = t[t.keys()[0]]
+    transmission = t[t.keys()[1]]
 
     # Lets fix wavelength array for duplicate values
     diff = np.diff(wavelength)
@@ -94,7 +96,7 @@ def get_PS1_filt(name):
     """
     # Read in filter info
     try:
-        t = Table.read('{0}/decam/PS1_filters.txt'.format(filters_dir), format='ascii')
+        t = Table.read('{0}/ps1/PS1_filters.txt'.format(filters_dir), format='ascii')
         cols = t.keys()
         idx = np.where(col.startswith(name))
 
