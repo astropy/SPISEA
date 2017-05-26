@@ -3,7 +3,7 @@ import pylab as plt
 from popstar import reddening
 from popstar import evolution
 from popstar import atmospheres as atm
-from popstars import filters 
+from popstar import filters 
 from scipy import interpolate
 from scipy import stats
 from scipy.special import erf
@@ -730,11 +730,9 @@ class IsochronePhot(Isochrone):
                  rebin=True, filters={'127m': 'wfc3,ir,f127m',
                                       '139m': 'wfc3,ir,f139m',
                                       '153m': 'wfc3,ir,f153m',
-                                      'J': 'nirc2,J',
-                                      'H': 'nirc2,H',
-                                      'K': 'nirc2,K',
-                                      'Kp': 'nirc2,Kp',
-                                      'Lp': 'nirc2,Lp',
+                                      'nirc2J': 'nirc2,J',
+                                      'nirc2H': 'nirc2,H',
+                                      'nirc2Kp': 'nirc2,Kp',
                                       '814w': 'acs,wfc1,f814w',
                                       '125w': 'wfc3,ir,f125w',
                                       '160w': 'wfc3,ir,f160w'}):
@@ -785,13 +783,6 @@ class IsochronePhot(Isochrone):
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
         photometry.
-
-        Parameters
-        ----------
-        filters : dictionary
-            A dictionary containing the filter name (for the output columns)
-            and the filter specification string that can be processed by pysynphot.
-
         
         """
         startTime = time.time()
@@ -814,7 +805,7 @@ class IsochronePhot(Isochrone):
             filt = self.get_filter_info(filt_str, rebin=rebin, vega=vega)
 
             # Make the column to hold magnitudes in this filter. Add to points table.
-            col_name = 'mag' + filt_name
+            col_name = 'mag_' + filt_name
             mag_col = Column(np.zeros(npoints, dtype=float), name=col_name)
             self.points.add_column(mag_col)
             
@@ -928,7 +919,7 @@ class IsochronePhot(Isochrone):
             star = self.spec_list[0]
             wave_bin = star.wave
             filt_bin = rebin_spec(filt.wave, filt.throughput, wave_bin)        
-            filt = pysynphot.ArrayBandpass(wave_bin, filt_bin, name=filt_name)
+            filt = pysynphot.ArrayBandpass(wave_bin, filt_bin, name=filt.name)
 
         
         # Check that vega spectrum covers the wavelength range of the filter.
@@ -948,6 +939,18 @@ class IsochronePhot(Isochrone):
         filt.mag0 = vega_mag
     
         return filt
+
+def rebin_spec(wave, specin, wavnew):
+    """
+    Helper function to rebin spectra, from Jessica's post
+    on Astrobetter
+    """
+    spec = spectrum.ArraySourceSpectrum(wave=wave, flux=specin)
+    f = np.ones(len(wave))
+    filt = spectrum.ArraySpectralElement(wave, f, waveunits='angstrom')
+    obs_f = obs.Observation(spec, filt, binset=wavnew, force='taper')
+ 
+    return obs_f.binflux
     
 def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
                         atm_func=default_atm_func, redlaw = default_red_law,
