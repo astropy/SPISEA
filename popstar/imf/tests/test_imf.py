@@ -4,12 +4,15 @@ import nose.tools
 def test_prim_power():
     from .. import imf
 
-    mass_limits = np.array([0.1, 1.0, 100.0])
-    powers = np.array([-1.8, -2.0])
+    #mass_limits = np.array([0.1, 1.0, 100.0])
+    #powers = np.array([-2.0, -1.8])
+    mass_limits = np.array([1.0, 100.0])
+    powers = np.array([-2.0])
 
     imf_tmp = imf.IMF_broken_powerlaw(mass_limits, powers)
 
-    (mass, is_multi, c_mass, s_mass) = imf_tmp.generate_cluster(1e3)
+    Mcl = 1e5
+    (mass, is_multi, c_mass, s_mass) = imf_tmp.generate_cluster(Mcl)
 
     print('mass shape = ', mass.shape)
     print('mass array:')
@@ -22,6 +25,6 @@ def test_prim_power():
     print(s_mass)
     print('np.isfinite(mass):')
     print(np.isfinite(mass))
-    print('Mass Sum: ', mass.sum(), '  (should be 1e3)')
+    print('Mass Sum: ', mass.sum(), '  (should be {0})'.format(Mcl))
 
     return
