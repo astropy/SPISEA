@@ -3,6 +3,7 @@ import pylab as plt
 from popstar import reddening
 from popstar import evolution
 from popstar import atmospheres as atm
+from popstars import filters 
 from scipy import interpolate
 from scipy import stats
 from scipy.special import erf
@@ -23,10 +24,9 @@ import scipy
 import matplotlib
 import matplotlib.pyplot as plt
 import time
+import warnings
 import pdb
 from scipy.spatial import cKDTree as KDTree
-
-test
 
 default_evo_model = evolution.MergedBaraffePisaEkstromParsec()
 default_red_law = reddening.RedLawNishiyama09()
@@ -727,17 +727,17 @@ class IsochronePhot(Isochrone):
     def __init__(self, logAge, AKs, distance,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
-                 filters={'127m': 'wfc3,ir,f127m',
-                          '139m': 'wfc3,ir,f139m',
-                          '153m': 'wfc3,ir,f153m',
-                          'J': 'nirc2,J',
-                          'H': 'nirc2,H',
-                          'K': 'nirc2,K',
-                          'Kp': 'nirc2,Kp',
-                          'Lp': 'nirc2,Lp',
-                          '814w': 'acs,wfc1,f814w',
-                          '125w': 'wfc3,ir,f125w',
-                          '160w': 'wfc3,ir,f160w'}):
+                 rebin=True, filters={'127m': 'wfc3,ir,f127m',
+                                      '139m': 'wfc3,ir,f139m',
+                                      '153m': 'wfc3,ir,f153m',
+                                      'J': 'nirc2,J',
+                                      'H': 'nirc2,H',
+                                      'K': 'nirc2,K',
+                                      'Kp': 'nirc2,Kp',
+                                      'Lp': 'nirc2,Lp',
+                                      '814w': 'acs,wfc1,f814w',
+                                      '125w': 'wfc3,ir,f125w',
+                                      '160w': 'wfc3,ir,f160w'}):
 
         """
         Make an isochrone with photometry in various filters.
@@ -748,7 +748,11 @@ class IsochronePhot(Isochrone):
         or save to file if possible.
 
         Parameters
-        ----------
+        ---------- 
+        rebin: boolean (default=True)
+            If true, rebins the filter functions to match the resolution of the isochrone
+            spectra. This is recommended to increase computing efficiency.
+
 
         Returns
         -------
@@ -767,14 +771,16 @@ class IsochronePhot(Isochrone):
                                evo_model=evo_model, atm_func=atm_func,
                                red_law=red_law, mass_sampling=mass_sampling)
             self.verbose = True
-            self.make_photometry()
+            
+            # Make photometry
+            self.make_photometry(rebin=rebin, vega=vega)
         else:
             self.points = Table.read(self.save_file)
             # Add some error checking.
 
         return
 
-    def make_photometry(self):
+    def make_photometry(self, rebin=True, vega=vega):
         """ 
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
@@ -805,7 +811,7 @@ class IsochronePhot(Isochrone):
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
             print( prt_fmt.format(filt_name, time.time() - startTime))
             
-            filt = get_filter_info(filt_str)
+            filt = self.get_filter_info(filt_str, rebin=rebin, vega=vega)
 
             # Make the column to hold magnitudes in this filter. Add to points table.
             col_name = 'mag' + filt_name
@@ -887,6 +893,61 @@ class IsochronePhot(Isochrone):
             plt.savefig(savefile)
         
         return
+
+    def get_filter_info(self, name, vega=vega, rebin=True):
+        """ 
+        Define filter functions, setting ZP according to
+        Vega spectrum
+        """
+        tmp = name.split(',')
+        filterName = tmp[-1]
+        
+        if name.startswith('nirc2'):
+            filt = filters.get_nirc2_filt(filterName)
+
+        elif name.startswith('vista'):
+            filt = filters.get_vista_filt(filterName)
+
+        elif name.startswith('decam'):
+            filt = filters.get_decam_filt(filterName)
+
+        elif name.startswith('jwst'):
+            filt.filters.get_jwst_filt(filterName)
+
+        else:
+            filt = ObsBandpass(name)
+        
+            # Convert to ArraySpectralElement for resampling.
+            filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
+                                             waveunits=filt.waveunits,
+                                             name=filt.name)
+
+        # If rebin=True, rebin filter function to same resolution as
+        # isochrone stellar spectra
+        if rebin:
+            star = self.spec_list[0]
+            wave_bin = star.wave
+            filt_bin = rebin_spec(filt.wave, filt.throughput, wave_bin)        
+            filt = pysynphot.ArrayBandpass(wave_bin, filt_bin, name=filt_name)
+
+        
+        # Check that vega spectrum covers the wavelength range of the filter.
+        # Otherwise, throw an error
+        if (min(filt.wave) < min(vega.wave)) | (max(filt.wave) > max(vega.wave)):
+            raise ValueError('Vega spectrum doesnt cover filter wavelength range!')  
+
+        vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
+        #vega_flux = vega_obs.binflux.sum()
+        diff = np.diff(vega_obs.binwave)
+        diff = np.append(diff, diff[-1])
+        vega_flux = np.sum(vega_obs.binflux * diff)
+    
+        vega_mag = 0.03
+
+        filt.flux0 = vega_flux
+        filt.mag0 = vega_mag
+    
+        return filt
     
 def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
                         atm_func=default_atm_func, redlaw = default_red_law,
@@ -939,44 +1000,44 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
     return
 
 # Little helper utility to get all the bandpass/zeropoint info.
-def get_filter_info(name, vega=vega):
-    if name.startswith('nirc2'):
-        from nirc2 import synthetic as nirc2syn
-    
-        tmp = name.split(',')
-        filterName = tmp[-1]
-        filt = nirc2syn.FilterNIRC2(filterName)
-    else:
-        filt = ObsBandpass(name)
-        
-        # Convert to ArraySpectralElement for resampling.
-        filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
-                                             waveunits=filt.waveunits,
-                                             name=filt.name)
-        
-    # Resample the filter to have 1500 points across. More is excessive.
-    if len(filt.wave) > 1500:
-        idx = np.where(filt.throughput > 0.001)[0]
-        new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
-        filt = filt.resample(new_wave)
-        
-    # Check that vega spectrum covers the wavelength range of the filter.
-    # Otherwise, throw an error
-    if (min(filt.wave) < min(vega.wave)) | (max(filt.wave) > max(vega.wave)):
-       raise ValueError('Vega spectrum doesnt cover filter wavelength range!')  
-
-    vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
-    #vega_flux = vega_obs.binflux.sum()
-    diff = np.diff(vega_obs.binwave)
-    diff = np.append(diff, diff[-1])
-    vega_flux = np.sum(vega_obs.binflux * diff)
-    
-    vega_mag = 0.03
-
-    filt.flux0 = vega_flux
-    filt.mag0 = vega_mag
-    
-    return filt
+#def get_filter_info(name, vega=vega, rebin=True):
+#    if name.startswith('nirc2'):
+#        from nirc2 import synthetic as nirc2syn
+#    
+#       tmp = name.split(',')
+#        filterName = tmp[-1]
+#        filt = nirc2syn.FilterNIRC2(filterName)
+#    else:
+#        filt = ObsBandpass(name)
+#        
+#        # Convert to ArraySpectralElement for resampling.
+#        filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
+#                                             waveunits=filt.waveunits,
+#                                             name=filt.name)
+#        
+#    # Resample the filter to have 1500 points across. More is excessive.
+#    if len(filt.wave) > 1500:
+#        idx = np.where(filt.throughput > 0.001)[0]
+#        new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
+#        filt = filt.resample(new_wave)
+#        
+#    # Check that vega spectrum covers the wavelength range of the filter.
+#    # Otherwise, throw an error
+#    if (min(filt.wave) < min(vega.wave)) | (max(filt.wave) > max(vega.wave)):
+#       raise ValueError('Vega spectrum doesnt cover filter wavelength range!')  
+#
+#    vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
+#    #vega_flux = vega_obs.binflux.sum()
+#    diff = np.diff(vega_obs.binwave)
+#    diff = np.append(diff, diff[-1])
+#    vega_flux = np.sum(vega_obs.binflux * diff)
+#    
+#    vega_mag = 0.03
+#
+#    filt.flux0 = vega_flux
+#    filt.mag0 = vega_mag
+#    
+#    return filt
 
 # Little helper utility to get the magnitude of an object through a filter.
 def mag_in_filter(star, filt):
