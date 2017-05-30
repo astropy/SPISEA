@@ -48,11 +48,12 @@ def get_vista_filt(name):
     Define vista filter as pysynphot spectrum object
     """
     # Read in filter info
+    tmp = name.split('_')
     try:
-        t = Table.read('{0}/vista/VISTA_Filters_at80K_forETC_{1}.dat'.format(filters_dir, name),
+        t = Table.read('{0}/vista/VISTA_Filters_at80K_forETC_{1}.dat'.format(filters_dir, tmp[-1]),
                            format='ascii')
     except:
-        raise ValueError('Could not find VISTA filter file {0}/vista/{1}.dat'.format(filters_dir, name))    
+        raise ValueError('Could not find VISTA filter file {0}/vista/VISTA_Filters_at80K_forETC_{1}.dat'.format(filters_dir, name))    
 
    # Wavelength must be in angstroms, transmission in fraction
     wave = t['col1'] * 10
@@ -74,18 +75,26 @@ def get_decam_filt(name):
     Define DECAM filter as pysynphot object
     """
     # Read in filter info
+    tmp = name.split('_')
     try:
         t = Table.read('{0}/decam/DECam_filters.txt'.format(filters_dir), format='ascii')
-        cols = t.keys()
-        idx = np.where(col == name)
+        cols = np.array(t.keys())
+        idx = np.where(cols == tmp[-1])[0][0]
 
         trans = t[cols[idx]]
     except:
-        raise ValueError('Could not find DECAM filter {0} in {1}/decam'.format(name, filters_dir))         
+        raise ValueError('Could not find DECAM filter {0} in {1}/decam/DECam_filters.txt'.format(name, filters_dir))         
 
-    # Convert wavelengths from nm to angstroms
-    wave = t['wavelength'] * 10.
+    # Limit to unmasked regions only
+    mask = np.ma.getmask(trans)
+    good = np.where(mask == False)
     
+    # Convert wavelengths from nm to angstroms, while eliminating masked regions
+    wave = t['wavelength'][good] * 10.
+    trans = trans[good]
+    wave = np.ma.filled(wave)
+    trans = np.ma.filled(trans)
+
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='decam_{0}'.format(name))
 
     return spectrum
@@ -95,19 +104,26 @@ def get_PS1_filt(name):
     Define PS1 filter as pysynphot object
     """
     # Read in filter info
+    tmp = name.split('_')
     try:
         t = Table.read('{0}/ps1/PS1_filters.txt'.format(filters_dir), format='ascii')
-        cols = t.keys()
-        idx = np.where(col.startswith(name))
+        t.rename_column('col1', 'wave')
+        t.rename_column('col2', 'open')
+        t.rename_column('col3', 'g')
+        t.rename_column('col4', 'r')
+        t.rename_column('col5', 'i')
+        t.rename_column('col6', 'z')
+        t.rename_column('col7', 'y')
+
+        cols = np.array(t.keys())
+        idx = np.where(cols == tmp[-1])[0][0]
 
         trans = t[cols[idx]]
-        print 'VERIFY FILTER'
-        pdb.set_trace()
     except:
-        raise ValueError('Could not find DECAM filter {0} in {1}/decam'.format(name, filters_dir))         
+        raise ValueError('Could not find PS1 filter {0} in {1}/ps1'.format(name, filters_dir))         
 
     # Convert wavelengths from nm to angstroms
-    wave = t['col1'] * 10.
+    wave = t['wave'] * 10.
     
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='ps1_{0}'.format(name))
 
@@ -118,11 +134,11 @@ def get_jwst_filt(name):
     Define JWST filter as pysynphot object
     """
     # Read in filter info
+    tmp = name.split('_')
     try:
-        t = Table.read('{0}/jwst/{1}.txt'.format(filters_dir, name), format='ascii')
-
+        t = Table.read('{0}/jwst/{1}.txt'.format(filters_dir, tmp[-1]), format='ascii')
     except:
-        raise ValueError('Could not find DECAM filter {0} in {1}/decam'.format(name, filters_dir))         
+        raise ValueError('Could not find JWST filter {0} in {1}/jwst'.format(tmp[-1], filters_dir))         
 
     # Convert wavelengths to angstroms
     wave = t['microns'] * 10**4.
