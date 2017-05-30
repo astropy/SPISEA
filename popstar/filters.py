@@ -78,6 +78,8 @@ def get_decam_filt(name):
     tmp = name.split('_')
     try:
         t = Table.read('{0}/decam/DECam_filters.txt'.format(filters_dir), format='ascii')
+        t.rename_column('Y', 'y')
+        
         cols = np.array(t.keys())
         idx = np.where(cols == tmp[-1])[0][0]
 
