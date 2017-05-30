@@ -748,8 +748,8 @@ class IsochronePhot(Isochrone):
         Parameters
         ---------- 
         rebin: boolean (default=True)
-            If true, rebins the filter functions to match the resolution of the isochrone
-            spectra. This is recommended to increase computing efficiency.
+            If true, rebins the filter functions such that they have no more than 1500 pts
+            over the non-zero throughput region
 
 
         Returns
@@ -801,7 +801,7 @@ class IsochronePhot(Isochrone):
         for filt_name, filt_str in self.filters.items():
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
             print( prt_fmt.format(filt_name, time.time() - startTime))
-            
+
             filt = self.get_filter_info(filt_str, rebin=rebin, vega=vega)
 
             # Make the column to hold magnitudes in this filter. Add to points table.
@@ -902,8 +902,11 @@ class IsochronePhot(Isochrone):
         elif name.startswith('decam'):
             filt = filters.get_decam_filt(filterName)
 
+        elif name.startswith('ps1'):
+            filt = filters.get_PS1_filt(filterName)
+
         elif name.startswith('jwst'):
-            filt.filters.get_jwst_filt(filterName)
+            filt = filters.get_jwst_filt(filterName)
 
         else:
             filt = ObsBandpass(name)
@@ -912,19 +915,19 @@ class IsochronePhot(Isochrone):
             filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
                                              waveunits=filt.waveunits,
                                              name=filt.name)
-
-        # If rebin=True, rebin filter function to same resolution as
-        # isochrone stellar spectra
+           
+        # If rebin=True, limit filter function to <=1500 wavelength points
+        # over the non-zero values
+        idx = np.where(filt.throughput > 0.001)[0]
         if rebin:
-            star = self.spec_list[0]
-            wave_bin = star.wave
-            filt_bin = rebin_spec(filt.wave, filt.throughput, wave_bin)        
-            filt = pysynphot.ArrayBandpass(wave_bin, filt_bin, name=filt.name)
-
-        
+            if len(filt.wave[idx]) > 1500:
+                new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
+                filt = filt.resample(new_wave)
+                
         # Check that vega spectrum covers the wavelength range of the filter.
         # Otherwise, throw an error
-        if (min(filt.wave) < min(vega.wave)) | (max(filt.wave) > max(vega.wave)):
+        idx = np.where(filt.throughput > 0.001)[0]
+        if (min(filt.wave[idx]) < min(vega.wave)) | (max(filt.wave[idx]) > max(vega.wave)):
             raise ValueError('Vega spectrum doesnt cover filter wavelength range!')  
 
         vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
@@ -937,7 +940,7 @@ class IsochronePhot(Isochrone):
 
         filt.flux0 = vega_flux
         filt.mag0 = vega_mag
-    
+
         return filt
 
 def rebin_spec(wave, specin, wavnew):
@@ -951,7 +954,7 @@ def rebin_spec(wave, specin, wavnew):
     obs_f = obs.Observation(spec, filt, binset=wavnew, force='taper')
  
     return obs_f.binflux
-    
+
 def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
                         atm_func=default_atm_func, redlaw = default_red_law,
                         iso_dir = './', mass_sampling=1):
@@ -1055,7 +1058,6 @@ def mag_in_filter(star, filt):
     star_flux = np.sum(star_in_filter.binflux * diff)
     
     star_mag = -2.5 * math.log10(star_flux / filt.flux0) + filt.mag0
-    
     return star_mag
 
 def match_model_mass(isoMasses,theMass):
