@@ -121,7 +121,7 @@ Input:
        wavelength range of output spectra (default = 5000 - 42500 Angstroms)
 
 b) IsochronePhot: returns the stellar parameters + photometry in user-defined filters for the 
-stars in the desired isochrone. DOES SAVE OUPUT IN ISOCHRONE DIRECTORY DEFINED BY USER!
+stars in the desired isochrone. SAVES OUPUT IN ISOCHRONE DIRECTORY DEFINED BY USER!
 Input: 
        age [log years]
        extinction [A_Ks mags]
@@ -133,6 +133,30 @@ Input:
        reddening law object (default = see step 0)
        filters used (defaults = [HST ACS: F814W], [HST WFC3IR: F125W, F127M, F139M, F153M, F160W], 
        [NIRC2: J, H, K, Kp, Lp])
+
+Filters supported:
+HST: all filters supported in pysynphot (must use appropriate
+pysynphot syntax)
+
+NIRC2: J, H, K, Kp, Ks, Lp, Ms, Hcont, Kcont, FeII, Brgamma 
+
+VISTA: Z, Y, J, H, Ks
+
+DECam: u, g, r, i, z, y
+
+PS1: g, r, i, z, y, w
+
+JWST: F090W, F164N, F212N, F323N, F466N
+
+filter syntax (for non-HST filters):
+filterList = {<name>:<telescope>_<filter>, ...}
+	   -In the output isochrone, the output mags will be in column
+	   mag_<name>
+	   -telescope: must be name of telescope, lower case
+	   -filter: name of filter, with proper case (see list above)
+
+filter code: filters.py
+filter file location: $POPSTAR_MODELS/filters
 
 2) Make multiplicity object, if desired.
 -code: imf/multiplicity.py
