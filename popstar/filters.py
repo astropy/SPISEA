@@ -5,12 +5,9 @@ import warnings
 import os
 import pdb
 
-# Set path to filters
-try:
-    filters_dir = '{0}/filters/'.format(os.environ['POPSTAR_MODELS'])
-except:
-    warnings.warn('POPSTAR_MODELS path not defined. Will prevent non-HST filter photometry')
-    filters_dir = ''
+# Set path to filter functions
+code_dir = os.path.dirname(__file__)
+filters_dir = code_dir[:-8]+'/filt_func/'
 
 def get_nirc2_filt(name):
     """
@@ -28,7 +25,13 @@ def get_nirc2_filt(name):
     # Lets fix wavelength array for duplicate values
     diff = np.diff(wavelength)
     idx = np.where(diff <= 0)[0]
-    wavelength[idx+1] += 1.0e-7
+
+    while len(idx) != 0:
+        wavelength[idx+1] += 1.0e-8
+        
+        diff = np.diff(wavelength)
+        idx = np.where(diff <= 0)[0]
+        print 'Duplicate entry loop'
 
     # Get rid of all entries with negative transmission
     idx = np.where(transmission > 1)[0]
@@ -48,9 +51,8 @@ def get_vista_filt(name):
     Define vista filter as pysynphot spectrum object
     """
     # Read in filter info
-    tmp = name.split('_')
     try:
-        t = Table.read('{0}/vista/VISTA_Filters_at80K_forETC_{1}.dat'.format(filters_dir, tmp[-1]),
+        t = Table.read('{0}/vista/VISTA_Filters_at80K_forETC_{1}.dat'.format(filters_dir, name),
                            format='ascii')
     except:
         raise ValueError('Could not find VISTA filter file {0}/vista/VISTA_Filters_at80K_forETC_{1}.dat'.format(filters_dir, name))    
@@ -75,13 +77,12 @@ def get_decam_filt(name):
     Define DECAM filter as pysynphot object
     """
     # Read in filter info
-    tmp = name.split('_')
     try:
         t = Table.read('{0}/decam/DECam_filters.txt'.format(filters_dir), format='ascii')
         t.rename_column('Y', 'y')
         
         cols = np.array(t.keys())
-        idx = np.where(cols == tmp[-1])[0][0]
+        idx = np.where(cols == name)[0][0]
 
         trans = t[cols[idx]]
     except:
@@ -105,8 +106,6 @@ def get_PS1_filt(name):
     """
     Define PS1 filter as pysynphot object
     """
-    # Read in filter info
-    tmp = name.split('_')
     try:
         t = Table.read('{0}/ps1/PS1_filters.txt'.format(filters_dir), format='ascii')
         t.rename_column('col1', 'wave')
@@ -118,7 +117,7 @@ def get_PS1_filt(name):
         t.rename_column('col7', 'y')
 
         cols = np.array(t.keys())
-        idx = np.where(cols == tmp[-1])[0][0]
+        idx = np.where(cols == name)[0][0]
 
         trans = t[cols[idx]]
     except:
@@ -135,10 +134,8 @@ def get_jwst_filt(name):
     """
     Define JWST filter as pysynphot object
     """
-    # Read in filter info
-    tmp = name.split('_')
     try:
-        t = Table.read('{0}/jwst/{1}.txt'.format(filters_dir, tmp[-1]), format='ascii')
+        t = Table.read('{0}/jwst/{1}.txt'.format(filters_dir, name), format='ascii')
     except:
         raise ValueError('Could not find JWST filter {0} in {1}/jwst'.format(tmp[-1], filters_dir))         
 
