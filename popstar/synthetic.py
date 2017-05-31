@@ -923,7 +923,7 @@ class IsochronePhot(Isochrone):
             if len(filt.wave[idx]) > 1500:
                 new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
                 filt = filt.resample(new_wave)
-                
+        
         # Check that vega spectrum covers the wavelength range of the filter.
         # Otherwise, throw an error
         idx = np.where(filt.throughput > 0.001)[0]
