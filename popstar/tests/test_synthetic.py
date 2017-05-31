@@ -1,10 +1,8 @@
 import time
 import pylab as plt
 import numpy as np
-from popstar import synthetic
+from popstar import synthetic, reddening
 import pysynphot
-from pysynphot import observation as obs
-from pysynphot import spectrum
 import pdb
 from scipy.spatial import cKDTree as KDTree
 
@@ -420,56 +418,95 @@ def time_test_mass_match():
 
     return
 
-def test_binning_methods():
+
+def test_phot_consistency(filt='all'):
     """
-    Compare the pysynphot binflux routine on filter integrations at different resolutions.
-    Shows bug in routine: integrated flux depends on the filter resolution! 
+    Test photometric consistency of generated isochrone (IsochronePhot)
+    against pre-generated isochrone with native filter sampling. Requires
+    consistency to within 0.005 mag.
 
-    Fix: manually integrate the binned filter function. Shows that this method performs
-    much better, getting nearly the same output flux for different filter resolutions,
-    as we would expect
+    Base isochrone is at 5 Myr, AKs = 0, 1000 pc, mass_sampling=10 
+
+    Paramters:
+    ----------
+    filt: 'all', 'hst', 'vista', 'decam', 'ps1', 'jwst'
+        Specify what filter set you want to test
+
     """
-    # We'll test an integration of the vega spectrum through the WFC3-IR F127M filter
-    vega = synthetic.Vega()
-    filt = pysynphot.ObsBandpass('wfc3,ir,f127m')
-
-    # Convert to ArraySpectralElement for resampling.
-    filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
-                                             waveunits=filt.waveunits)
+    from astropy.table import Table
+    import os
     
-    # Two rebinning schemes: one coarse and the other fine
-    idx = np.where(filt.throughput > 0.001)[0]
-    new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
-    filt_fine = filt.resample(new_wave)
+    # Load pre-generated isochrone, located in popstar tests directory
+    direct = os.path.dirname(__file__)
+    orig = Table.read(direct+'/iso_6.70_0.00_01000.fits', format='fits')
+    #orig = Table.read(direct+'/iso_6.40_2.40_08000.fits', format='fits')
 
-    wave_bin = vega.wave
-    filt_bin = synthetic.rebin_spec(filt.wave, filt.throughput, wave_bin)        
-    filt_coarse = pysynphot.ArrayBandpass(wave_bin, filt_bin)
+    # Generate new isochrone with popstar code
+    if filt == 'all':
+        filt_list = {'hst_F127M': 'wfc3,ir,f127m', 'hst_F139M': 'wfc3,ir,f139m', 'hst_F153M': 'wfc3,ir,f153m',
+                         'hst_F814W': 'acs,wfc1,f814w', 'hst_F125W': 'wfc3,ir,f125w', 'hst_F160W': 'wfc3,ir,f160w',
+                         'decam_y': 'decam,y', 'decam_i': 'decam,i', 'decam_z': 'decam,z',
+                         'decam_u':'decam,u', 'decam_g':'decam,g', 'decam_r':'decam,r',
+                         'vista_Y':'vista,Y', 'vista_Z':'vista,Z', 'vista_J': 'vista,J',
+                         'vista_H': 'vista,H', 'vista_Ks': 'vista,Ks',
+                         'ps1_z':'ps1,z', 'ps1_g':'ps1,g', 'ps1_r': 'ps1,r',
+                         'ps1_i': 'ps1,i', 'ps1_y':'ps1,y',
+                         'jwst_F090W': 'jwst,F090W', 'jwst_F164N': 'jwst,F164N', 'jwst_F212N': 'jwst,F212N',
+                         'jwst_F323N':'jwst,F323N', 'jwst_F466N': 'jwst,F466N',
+                         'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
+                         'nirc2_Lp': 'nirc2,Lp', 'nirc2_Hcont': 'nirc2,Hcont',
+                         'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma'}
 
-    # Do the filter integration in 2 methods: one with pysynphot binflux,
-    # the other with manual integration
-    vega_obs_fine = obs.Observation(vega, filt_fine, binset=filt_fine.wave, force='taper')
-    vega_obs_coarse = obs.Observation(vega, filt_coarse, binset=filt_coarse.wave, force='taper')
+    elif filt == 'decam':
+        filt_list = {'decam_y': 'decam,y', 'decam_i': 'decam,i', 'decam_z': 'decam,z',
+                         'decam_u':'decam,u', 'decam_g':'decam,g', 'decam_r':'decam,r'}
+    elif filt == 'vista':
+        filt_list = {'vista_Y':'vista,Y', 'vista_Z':'vista,Z', 'vista_J': 'vista,J',
+                         'vista_H': 'vista,H', 'vista_Ks': 'vista,Ks'}
+    elif filt == 'ps1':
+        filt_list = {'ps1_z':'ps1,z', 'ps1_g':'ps1,g', 'ps1_r': 'ps1,r', 'ps1_i': 'ps1,i',
+                         'ps1_y':'ps1,y'}
+    elif filt == 'jwst':
+        filt_list = {'jwst_F090W': 'jwst,F090W', 'jwst_F164N': 'jwst,F164N', 'jwst_F212N': 'jwst,F212N',
+                         'jwst_F323N':'jwst,F323N', 'jwst_F466N': 'jwst,F466N'}
+    elif filt == 'hst':
+        filt_list = {'hst_F127M': 'wfc3,ir,f127m', 'hst_F139M': 'wfc3,ir,f139m', 'hst_F153M': 'wfc3,ir,f153m',
+                         'hst_F814W': 'acs,wfc1,f814w', 'hst_F125W': 'wfc3,ir,f125w', 'hst_F160W': 'wfc3,ir,f160w'}
+    elif filt == 'nirc2':
+        filt_list = {'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
+                         'nirc2_Lp': 'nirc2,Lp','nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
+                         'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma'}
 
-    fine_binflux = vega_obs_fine.binflux.sum()
-    coarse_binflux = vega_obs_coarse.binflux.sum()
+    print 'Making isochrone'
+    iso = synthetic.IsochronePhot(6.7, 0, 1000, mass_sampling=10, filters=filt_list, rebin=True)
+    #redlaw = reddening.RedLawNishiyama09()
+    #iso = synthetic.IsochronePhot(6.4, 2.4, 8000, mass_sampling=10, red_law=redlaw, filters=filt_list, rebin=True)
+    iso = iso.points
 
-    diff_f = np.diff(vega_obs_fine.binwave)
-    diff_f = np.append(diff_f, diff_f[-1])
-    fine_manual = np.sum(vega_obs_fine.binflux * diff_f)
-    
-    diff_c = np.diff(vega_obs_coarse.binwave)
-    diff_c = np.append(diff_c, diff_c[-1])
-    coarse_manual = np.sum(vega_obs_coarse.binflux * diff_c)
+    # First assert that the stellar masses are the same
+    diff = abs(orig['mass'] - iso['mass'])
+    assert np.sum(diff) == 0
 
-    print('**************************************')
-    print('Integrated flux with binflux:')
-    print('fine binning: {0}'.format(fine_binflux))
-    print('coarse binning: {0}'.format(coarse_binflux))
-    print('And with manual integration:')
-    print('fine binning: {0}'.format(fine_manual))
-    print('coarse binning: {0}'.format(coarse_manual))
-    print('**************************************')
+    # Identify the photometry columns
+    cols = iso.keys()
+    idx = []
+    for ii in range(len(cols)):
+        if cols[ii].startswith('mag'):
+            idx.append(ii)
+    mag_cols = np.array(cols)[idx]
 
-    pdb.set_trace()
+    # Test the consistency of each column with the original isochrone
+    for ii in mag_cols:
+        orig_mag = orig[ii]
+        new_mag = iso[ii]
+
+        np.testing.assert_allclose(orig_mag, new_mag, rtol=0.01, err_msg="{0} failed".format(ii))
+
+        # Also report median abs difference
+        diff = abs(orig_mag - new_mag)
+        print('{0} median abs diff: {1}'.format(ii, np.median(diff)))
+
+
+    print('Phot consistency test successful for {0}'.format(filt))
     return
+
