@@ -410,13 +410,15 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         red_vega_hi = vega * red_law.reddening(AKs + deltaAKs).resample(vega.wave)
 
         for filt in self.filt_names:
-            filt_info = get_filter_info(iso.filters[filt.replace('mag', '')])
+            filt_info = get_filter_info(iso.filters[filt.replace('mag_', '')])
             
             mag_lo = mag_in_filter(red_vega_lo, filt_info)
             mag_hi = mag_in_filter(red_vega_hi, filt_info)
             delta_red_filt[filt] = mag_hi - mag_lo
 
-        # Perturb all of star systems' photometry by a random amount.
+        # Perturb all of star systems' photometry by a random amount corresponding to
+        # differential de-reddening. The distribution is normal with a width of
+        # Aks +/- deltaAKs in each filter
         rand_red = np.random.randn(len(self.star_systems))
         for filt in self.filt_names:
             self.star_systems[filt] += rand_red * delta_red_filt[filt]
@@ -758,7 +760,7 @@ class IsochronePhot(Isochrone):
         """
         
         # Make and input/output file name for the stored isochrone photometry.
-        save_file_fmt = '{0}iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
+        save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
         self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5))
 
         # Expected filters
@@ -802,7 +804,7 @@ class IsochronePhot(Isochrone):
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
             print( prt_fmt.format(filt_name, time.time() - startTime))
 
-            filt = self.get_filter_info(filt_str, rebin=rebin, vega=vega)
+            filt = get_filter_info(filt_str, rebin=rebin, vega=vega)
 
             # Make the column to hold magnitudes in this filter. Add to points table.
             col_name = 'mag_' + filt_name
@@ -885,63 +887,64 @@ class IsochronePhot(Isochrone):
         
         return
 
-    def get_filter_info(self, name, vega=vega, rebin=True):
-        """ 
-        Define filter functions, setting ZP according to
-        Vega spectrum
-        """
-        tmp = name.split(',')
-        filterName = tmp[-1]
+def get_filter_info(name, vega=vega, rebin=True):
+    """ 
+    Define filter functions, setting ZP according to
+    Vega spectrum
+    """
+    tmp = name.split(',')
+    filterName = tmp[-1]
         
-        if name.startswith('nirc2'):
-            filt = filters.get_nirc2_filt(filterName)
+    if name.startswith('nirc2'):
+        filt = filters.get_nirc2_filt(filterName)
 
-        elif name.startswith('vista'):
-            filt = filters.get_vista_filt(filterName)
+    elif name.startswith('vista'):
+        filt = filters.get_vista_filt(filterName)
 
-        elif name.startswith('decam'):
-            filt = filters.get_decam_filt(filterName)
+    elif name.startswith('decam'):
+        filt = filters.get_decam_filt(filterName)
 
-        elif name.startswith('ps1'):
-            filt = filters.get_PS1_filt(filterName)
+    elif name.startswith('ps1'):
+        filt = filters.get_PS1_filt(filterName)
 
-        elif name.startswith('jwst'):
-            filt = filters.get_jwst_filt(filterName)
+    elif name.startswith('jwst'):
+        filt = filters.get_jwst_filt(filterName)
 
-        else:
-            filt = ObsBandpass(name)
+    else:
+        filt = ObsBandpass(name)
         
-            # Convert to ArraySpectralElement for resampling.
-            filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
+        # Convert to ArraySpectralElement for resampling.
+        filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
                                              waveunits=filt.waveunits,
                                              name=filt.name)
            
-        # If rebin=True, limit filter function to <=1500 wavelength points
-        # over the non-zero values
-        idx = np.where(filt.throughput > 0.001)[0]
-        if rebin:
-            if len(filt.wave[idx]) > 1500:
-                new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
-                filt = filt.resample(new_wave)
+    # If rebin=True, limit filter function to <=1500 wavelength points
+    # over the non-zero values
+    idx = np.where(filt.throughput > 0.001)[0]
+    if rebin:
+        if len(filt.wave[idx]) > 1500:
+            new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
+            filt = filt.resample(new_wave)
+
         
-        # Check that vega spectrum covers the wavelength range of the filter.
-        # Otherwise, throw an error
-        idx = np.where(filt.throughput > 0.001)[0]
-        if (min(filt.wave[idx]) < min(vega.wave)) | (max(filt.wave[idx]) > max(vega.wave)):
-            raise ValueError('Vega spectrum doesnt cover filter wavelength range!')  
+    # Check that vega spectrum covers the wavelength range of the filter.
+    # Otherwise, throw an error
+    idx = np.where(filt.throughput > 0.001)[0]
+    if (min(filt.wave[idx]) < min(vega.wave)) | (max(filt.wave[idx]) > max(vega.wave)):
+        raise ValueError('Vega spectrum doesnt cover filter wavelength range!')  
 
-        vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
-        #vega_flux = vega_obs.binflux.sum()
-        diff = np.diff(vega_obs.binwave)
-        diff = np.append(diff, diff[-1])
-        vega_flux = np.sum(vega_obs.binflux * diff)
+    vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
+    #vega_flux = vega_obs.binflux.sum()
+    diff = np.diff(vega_obs.binwave)
+    diff = np.append(diff, diff[-1])
+    vega_flux = np.sum(vega_obs.binflux * diff)
     
-        vega_mag = 0.03
+    vega_mag = 0.03
 
-        filt.flux0 = vega_flux
-        filt.mag0 = vega_mag
+    filt.flux0 = vega_flux
+    filt.mag0 = vega_mag
 
-        return filt
+    return filt
 
 def rebin_spec(wave, specin, wavnew):
     """
