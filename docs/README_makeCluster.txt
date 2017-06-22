@@ -96,12 +96,6 @@ c) RedLawRomanZuniga07: RomanZuniga+2007, extinction law in Barnard 59 [1 - 13 m
 
 d) RedLawRiekeLebofsky: Rieke + Lebofsky 1985, extinction law for Galactic Center [1 - 13 microns]
 
-=======================
-Matt 12/10/15
-Update reference when published
-
-e) RedLawWesterlund1: Lu+in prep, extinction law for Westerlund1. [I - K]
-===============================
 
 1) Create the cluster isochrone object.
 -code: synthetic.py --> Isochrone, IsochronePhot
@@ -131,14 +125,13 @@ Input:
        stellar evolution object	  (default = see step 0)
        stellar atmosphere function (default = see step 0)
        reddening law object (default = see step 0)
-       filters used (defaults = [HST ACS: F814W], [HST WFC3IR: F125W, F127M, F139M, F153M, F160W], 
-       [NIRC2: J, H, K, Kp, Lp])
+       filters used
 
 Filters supported:
 HST: all filters supported in pysynphot (must use appropriate
 pysynphot syntax)
 
-NIRC2: J, H, K, Kp, Ks, Lp, Ms, Hcont, Kcont, FeII, Brgamma 
+NIRC2: J, H, K, Kp, Ks, Lp, Hcont, Kcont, FeII, Brgamma 
 
 VISTA: Z, Y, J, H, Ks
 
@@ -149,11 +142,12 @@ PS1: g, r, i, z, y, w
 JWST: F090W, F164N, F212N, F323N, F466N
 
 filter syntax (for non-HST filters):
-filterList = {<name>:<telescope>_<filter>, ...}
-	   -In the output isochrone, the output mags will be in column
-	   mag_<name>
-	   -telescope: must be name of telescope, lower case
-	   -filter: name of filter, with proper case (see list above)
+filterList = {'<user_name>':'<instrument>,<filter>'}
+	   -<user_name> is user specified. The output magnitudes will
+	   be in a column names mag_<user_name>
+	   -<instrument>: name of telescope/instrument for the desired
+	   filter. All letters lower case (i.e. vista, decam, ps1, etc)
+	   -<filter>: name of filter, with proper case (see list above)
 
 filter code: filters.py
 filter file location: $POPSTAR_MODELS/filters
