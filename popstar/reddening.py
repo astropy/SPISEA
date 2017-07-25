@@ -27,7 +27,7 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
-        wave_vals, Alambda_scaled = RedLawNishiyama09.nishiyama09(wave, 1.0)
+        wave_vals, Alambda_scaled = RedLawNishiyama09.derive_nishiyama09(wave)
 
         # Convert wavelength to angstrom
         wave_vals *= 10 ** 4
@@ -38,9 +38,12 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
                                                   name='Nishiyama09',
                                                   litref='Nishiyama+ 2009')
 
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave_vals)
+        self.high_lim = max(wave_vals)
     
     @staticmethod
-    def nishiyama09(wavelength, AKs):
+    def derive_nishiyama09(wavelength):
         """ 
         Calculate the N09 extinction law as defined in the paper:
         a A_lambda/AKs = power law of exponent -2.0 between JHK. Then
@@ -98,19 +101,46 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         wave_vals = np.concatenate((wave_vals, wavelength[long_idx[0]]))
         A_AKs_final = np.concatenate((A_AKs_vjhk, A_AKs_long))
 
-        A_at_wave = A_AKs_final * AKs
+        return wave_vals, A_AKs_final
 
-        # Plot if desired
-        test=False
-        if test:
-            py.figure()
-            py.semilogy(1.0 / wave_vals, A_AKs_final, 'r-')
-            py.xlabel('1 / lambda')
-            py.ylabel('A / AKs')
+    def Nishiyama09(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
 
-            pdb.set_trace()
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
 
-        return wave_vals, A_at_wave
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
+
+        return A_at_wave
         
     @staticmethod
     def nishiyama09_old(wavelength, AKs, makePlot=False):
@@ -182,7 +212,7 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         # This will eventually be scaled by AKs when you
         # call reddening(). Produces A_lambda for AKs = 1, which will be 
         # scaled later. Expects wavelength in microns
-        Alambda_scaled = RedLawCardelli.cardelli(wave, Rv, 1.0)
+        Alambda_scaled = RedLawCardelli.derive_cardelli(wave, Rv)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -193,11 +223,15 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
                                                   name='Cardelli89',
                                                   litref='Cardelli+ 2009')
 
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+
     @staticmethod
-    def cardelli(wavelength, Rv, AKs):
+    def derive_cardelli(wavelength, Rv):
         """
         Cardelli extinction law. This produces extinction values expected
-        for AKs
+        for AKs = 1
         """
         x = 1.0 / np.array(wavelength)
 
@@ -261,11 +295,47 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         
         output = extinction * Av_Aks # (A(lamb) / Av) * (Av / Aks) = (A(lamb) / Aks)
 
-        # Up to this point, AKs = 1; now let's scale to user-defined Aks
-        output *= AKs
-
         return output
 
+    def Cardelli89(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
+
+        return A_at_wave
+    
 class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
     """
     An object that represents the reddening vs. wavelength for the 
@@ -282,7 +352,7 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawRomanZuniga07.romanzuniga07(wave, 1.0, makePlot=False)
+        Alambda_scaled = RedLawRomanZuniga07.derive_romanzuniga07(wave)
 
         # Convert wavelength to angstrom
         wave *= 10**4
@@ -293,8 +363,12 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
                                                   name='RomanZuniga07',
                                                   litref='Roman-Zuniga+ 2007')
 
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+
     @staticmethod
-    def romanzuniga07(wavelength, AKs, makePlot=False):
+    def derive_romanzuniga07(wavelength):
         filters = ['J', 'H', 'Ks', '[3.6]', '[4.5]', '[5.8]', '[8.0]']
         wave =      np.array([1.240, 1.664, 2.164, 3.545, 4.442, 5.675, 7.760])
         A_AKs =     np.array([2.299, 1.550, 1.000, 0.618, 0.525, 0.462, 0.455])
@@ -302,29 +376,46 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
         
         # Interpolate over the curve
         spline_interp = interpolate.splrep(wave, A_AKs, k=3, s=0)
-
         A_AKs_at_wave = interpolate.splev(wavelength, spline_interp)
-        A_at_wave = AKs * A_AKs_at_wave
 
-        if makePlot:
-            py.clf()
-            py.errorbar(wave, A_AKs, yerr=A_AKs_err, fmt='bo', 
-                        markerfacecolor='none', markeredgecolor='blue',
-                        markeredgewidth=2)
+        return A_AKs_at_wave
 
-            # Make an interpolated curve.
-            wavePlot = np.arange(wave.min(), wave.max(), 0.1)
-            extPlot = interpolate.splev(wavePlot, spline_interp)
-            py.loglog(wavePlot, extPlot, 'k-')
+    def RomanZuniga07(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
 
-            # Plot a marker for the computed value.
-            py.plot(wavelength, A_AKs_at_wave, 'rs',
-                    markerfacecolor='none', markeredgecolor='red',
-                    markeredgewidth=2)
-            py.xlabel('Wavelength (microns)')
-            py.ylabel('Extinction (magnitudes)')
-            py.title('Roman Zuniga et al. 2007')
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
 
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
 
         return A_at_wave
     
@@ -343,7 +434,7 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawRiekeLebofsky.RiekeLebofsky(wave, 1.0)
+        Alambda_scaled = RedLawRiekeLebofsky.derive_RiekeLebofsky(wave)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -354,8 +445,12 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
                                                   name='RiekeLebofsky',
                                                   litref='Rieke+Lebovsky 1985')
 
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+
     @staticmethod
-    def RiekeLebofsky(wavelength, AKs, makePlot=False):
+    def derive_RiekeLebofsky(wavelength):
         """
         Calculate the resulting extinction for an array of wavelengths.
         The extinction is normalized with A_Ks.
@@ -386,21 +481,46 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
         
         # Interpolate over the curve
         spline_interp = interpolate.splrep(wave, A_Ak, k=3, s=0)
-
         A_Ak_at_wave = interpolate.splev(wavelength, spline_interp)
-        A_at_wave = AKs * A_Ak_at_wave
 
-        if makePlot:
-            py.clf()
-            py.plot(wave, A_Ak, 'r.', ms = 8)
+        return A_Ak_at_wave
 
-            # Make an interpolated curve.
-            wavePlot = np.arange(wave.min(), wave.max(), 0.1)
-            extPlot = interpolate.splev(wavePlot, spline_interp)
-            py.plot(wavePlot, extPlot, 'k-')
-            py.xlabel('Wavelength (microns)')
-            py.ylabel('Extinction (magnitudes)')
-            py.title('Rieke+Lebofsky 1985')
+    def RiekeLebovsky85(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
 
         return A_at_wave
 
@@ -420,7 +540,7 @@ class RedLawDamineli16(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawDamineli16.Damineli16(wave, 1.0)
+        Alambda_scaled = RedLawDamineli16.derive_Damineli16(wave)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -430,10 +550,14 @@ class RedLawDamineli16(pysynphot.reddening.CustomRedLaw):
                                                   Avscaled=Alambda_scaled,
                                                   name='Damineli16',
                                                   litref='Damineli+ 2016')
+
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
     
 
     @staticmethod
-    def Damineli16(wavelength, AKs):
+    def derive_Damineli16(wavelength):
         """
         Calculate the Damineli+16 extinction law using their equation 19
 
@@ -449,16 +573,51 @@ class RedLawDamineli16(pysynphot.reddening.CustomRedLaw):
         log_A_AKs = -0.015 + 2.33*x + 0.522*x**2. - 3.001*x**3. + 2.034*x**4.
 
         # Now to convert this back to linear space
-        A_AKs = 10**log_A_AKs 
+        A_AKs_at_wave = 10**log_A_AKs 
 
-        # Let's turn this to A_at_wave
-        A_at_wave = AKs * A_AKs
+        return A_AKs_at_wave
+
+    def Damineli16(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
 
         return A_at_wave
 
-    
     @staticmethod
-    def Damineli16_old(wavelength, AKs, makePlot=False):
+    def derive_Damineli16_old(wavelength, AKs, makePlot=False):
         """
         Calculate the resulting extinction for an array of wavelengths.
         The extinction is normalized with A_Ks.
@@ -524,7 +683,7 @@ class RedLawDeMarchi16(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AK when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawDeMarchi16.DeMarchi16(wave, 1.0)
+        Alambda_scaled = RedLawDeMarchi16.derive_DeMarchi16(wave)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -535,8 +694,12 @@ class RedLawDeMarchi16(pysynphot.reddening.CustomRedLaw):
                                                   name='DeMarchi16',
                                                   litref='DeMarchi+ 2016')
 
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+
     @staticmethod
-    def DeMarchi16(wavelength, AK, makePlot=False):
+    def derive_DeMarchi16(wavelength):
         """
         Calculate the resulting extinction for an array of wavelengths.
         The extinction is normalized with A_Ks.
@@ -571,28 +734,46 @@ class RedLawDeMarchi16(pysynphot.reddening.CustomRedLaw):
 
         # Interpolate over the curve
         spline_interp = interpolate.splrep(wave, A_AK, k=3, s=0)
-
         A_AK_at_wave = interpolate.splev(wavelength, spline_interp)
-        A_at_wave = AK * A_AK_at_wave
 
-        if makePlot:
-            py.clf()
-            py.errorbar(wave, A_AK, yerr=A_AK_err, fmt='bo', 
-                        markerfacecolor='none', markeredgecolor='blue',
-                        markeredgewidth=2)
+        return A_AK_at_wave
 
-            # Make an interpolated curve.
-            wavePlot = np.arange(wave.min(), wave.max(), 0.1)
-            extPlot = interpolate.splev(wavePlot, spline_interp)
-            py.loglog(wavePlot, extPlot, 'k-')
+    def DeMarchi16(self, wavelength, AK):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
 
-            # Plot a marker for the computed value.
-            py.plot(wavelength, A_AK_at_wave, 'rs',
-                    markerfacecolor='none', markeredgecolor='red',
-                    markeredgewidth=2)
-            py.xlabel('Wavelength (microns)')
-            py.ylabel('Extinction (magnitudes)')
-            py.title('De Marchi et al. 2016')
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AK : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AK (since law assumes AK = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AK
 
         return A_at_wave
     
@@ -616,7 +797,7 @@ class RedLawFitzpactrick09(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AK when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawFitzpactrick09.Fitzpactrick09(wave, alpha, RV, 1.0)
+        Alambda_scaled = RedLawFitzpactrick09.derive_Fitzpactrick09(wave, alpha, RV)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -627,8 +808,12 @@ class RedLawFitzpactrick09(pysynphot.reddening.CustomRedLaw):
                                                   name='Fitzpactrick09',
                                                   litref='Fitzpactrick+ 2009')
 
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+
     @staticmethod
-    def Fitzpactrick09(wavelength, alpha, RV, AKs):
+    def derive_Fitzpactrick09(wavelength, alpha, RV):
         """
         Calculate the resulting extinction for an array of wavelengths.
         The extinction is normalized with A_Ks.
@@ -645,9 +830,6 @@ class RedLawFitzpactrick09(pysynphot.reddening.CustomRedLaw):
 
         RV: float
             Free parameter RV
-            
-        AKs : float
-            in magnitudes
         """
         alpha = float(alpha)
         RV = float(RV)
@@ -664,9 +846,45 @@ class RedLawFitzpactrick09(pysynphot.reddening.CustomRedLaw):
         idx = np.where(abs(wavelength - 2.14) == min(abs(wavelength - 2.14)))
 
         A_AKs_at_wave = Alam_Av / Alam_Av[idx]
+
+        return A_AKs_at_wave
+
+    def Fitzpactrick09(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
             
-        # Now scale to appropriate overall AKs
-        A_at_wave = AKs * A_AKs_at_wave
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
 
         return A_at_wave
 
@@ -686,7 +904,7 @@ class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AK when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawSchlafly16.Schlafly16(wave, AH_AKs, x, 1.0)
+        Alambda_scaled = RedLawSchlafly16.derive_Schlafly16(wave, AH_AKs, x)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -697,8 +915,12 @@ class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
                                                   name='Schlafly16',
                                                   litref='Schlafly+ 2016')
 
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+
     @staticmethod
-    def Schlafly16(wavelength, AH_AKs, x, AKs):
+    def derive_Schlafly16(wavelength, AH_AKs, x):
         """
         Calculate Schalfly+16 extinction law according to 
         code provided in appendix of the paper. AH_AKs sets the
@@ -715,11 +937,100 @@ class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
         # Now normalize to A_lambda/AKs, rather than A_lambda/A(5420)
         idx = np.where( abs(wavelength - 2.14) == min(abs(wavelength - 2.14)) )
         law_out = law / law[idx]
-
-        A_at_wave = law_out * AKs
         
-        return A_at_wave
+        return law_out
 
+    @staticmethod
+    def Schlafly_appendix(x, rhk):
+        """ 
+        Schlafly+16 extinction law as defined in paper appendix. We've modified
+        the wrapper slightly so that the user has control of rhk and x. Here is 
+        the comments from that code:
+         
+        Returns the extinction curve, A(lambda)/A(5420 A), according to
+        Schlafly+2016, for the parameter "x," which controls the overall shape of
+        the extinction curve in an R(V)-like way.  The extinction curve returned
+        is a callable function, which is then invoked with the wavelength, in
+        angstroms, of interest.
+
+        The extinction curve is based on broad band photometry between the PS1 g
+        band and the WISE W2 band, which have effective wavelengths between 5000
+        and 45000 A.  The extinction curve is blindly extrapolated outside that
+        range.  The gray component of the extinction curve is fixed by enforcing
+        A(H)/A(K) = 1.55 (Indebetouw+2005).  The gray component is relatively
+        uncertain, and its variation with x is largely made up.
+
+        Args:
+            x: some number controlling the shape of the extinction curve
+            ra: extinction vector at anchor wavelengths, default to Schlafly+2016
+            dra: derivative of extinction vector at anchor wavelengths, default to
+             Schlafly+2016
+            lam: anchor wavelengths (angstroms), default to Schlafly+2016
+
+        Returns: the extinction curve E, so the extinction alam = A(lam)/A(5420 A)
+        is given by: 
+            A = extcurve(x)
+            alam = A(lam)
+        """
+        # Schlafly+2016
+        ra = np.array([ 0.65373283,  0.39063843,  0.20197893,  0.07871701, -0.00476316,
+                   -0.14213929, -0.23660605, -0.28522577, -0.321301  , -0.33503192])
+        dra = np.array([-0.54278669,  0.03404903,  0.36841725,  0.42265873,  0.38247769,
+                     0.14148814, -0.04020524, -0.13457319, -0.26883343, -0.36269229])
+
+        # "isoreddening wavelengths" for extinction curve, at E(g-r) = 0.65 reddening
+        # T_eff = 4500, Fe/H = 0, log g = 2.5
+        lam = np.array([  5032.36441067,   6280.53335141,   7571.85928312,   8690.89321059,
+                      9635.52560909,  12377.04268274,  16381.78146718,  21510.20523237,
+                     32949.54009328,  44809.4919175 ])
+
+
+        anchors = ra + x*dra
+        # fix gray component so that A(H)/A(K) = 1.55
+        anchors += (-anchors[6] + rhk*anchors[7])/(1 - rhk)
+        cs0 = CubicSpline(lam, anchors, yp='3d=0')
+        # normalize at 5420 angstroms
+        return CubicSpline(lam, anchors/cs0(5420.), yp='3d=0')
+
+    def Schlafly16(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
+
+        return A_at_wave
+        
     @staticmethod
     def Schlafly16_old(wavelength, AH_AKs, AKs, makePlot=False):
         """
@@ -777,58 +1088,6 @@ class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
         return A_at_wave
 
     @staticmethod
-    def Schlafly_appendix(x, rhk):
-        """ 
-        Schlafly+16 extinction law as defined in paper appendix. We've modified
-        the wrapper slightly so that the user has control of rhk and x. Here is 
-        the comments from that code:
-         
-        Returns the extinction curve, A(lambda)/A(5420 A), according to
-        Schlafly+2016, for the parameter "x," which controls the overall shape of
-        the extinction curve in an R(V)-like way.  The extinction curve returned
-        is a callable function, which is then invoked with the wavelength, in
-        angstroms, of interest.
-
-        The extinction curve is based on broad band photometry between the PS1 g
-        band and the WISE W2 band, which have effective wavelengths between 5000
-        and 45000 A.  The extinction curve is blindly extrapolated outside that
-        range.  The gray component of the extinction curve is fixed by enforcing
-        A(H)/A(K) = 1.55 (Indebetouw+2005).  The gray component is relatively
-        uncertain, and its variation with x is largely made up.
-
-        Args:
-            x: some number controlling the shape of the extinction curve
-            ra: extinction vector at anchor wavelengths, default to Schlafly+2016
-            dra: derivative of extinction vector at anchor wavelengths, default to
-             Schlafly+2016
-            lam: anchor wavelengths (angstroms), default to Schlafly+2016
-
-        Returns: the extinction curve E, so the extinction alam = A(lam)/A(5420 A)
-        is given by: 
-            A = extcurve(x)
-            alam = A(lam)
-        """
-        # Schlafly+2016
-        ra = np.array([ 0.65373283,  0.39063843,  0.20197893,  0.07871701, -0.00476316,
-                   -0.14213929, -0.23660605, -0.28522577, -0.321301  , -0.33503192])
-        dra = np.array([-0.54278669,  0.03404903,  0.36841725,  0.42265873,  0.38247769,
-                     0.14148814, -0.04020524, -0.13457319, -0.26883343, -0.36269229])
-
-        # "isoreddening wavelengths" for extinction curve, at E(g-r) = 0.65 reddening
-        # T_eff = 4500, Fe/H = 0, log g = 2.5
-        lam = np.array([  5032.36441067,   6280.53335141,   7571.85928312,   8690.89321059,
-                      9635.52560909,  12377.04268274,  16381.78146718,  21510.20523237,
-                     32949.54009328,  44809.4919175 ])
-
-
-        anchors = ra + x*dra
-        # fix gray component so that A(H)/A(K) = 1.55
-        anchors += (-anchors[6] + rhk*anchors[7])/(1 - rhk)
-        cs0 = CubicSpline(lam, anchors, yp='3d=0')
-        # normalize at 5420 angstroms
-        return CubicSpline(lam, anchors/cs0(5420.), yp='3d=0')
-
-    @staticmethod
     def derive_schlafly_law(AH):
         """
         Given a value of AH/AK, derive extinction law based on
@@ -877,7 +1136,7 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AK when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawPowerLaw.powerlaw(wave, alpha, K_wave, 1.0)
+        Alambda_scaled = RedLawPowerLaw.derive_powerlaw(wave, alpha, K_wave)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -887,8 +1146,12 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
                                                   Avscaled=Alambda_scaled,
                                                   name='Power law')
 
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+
     @staticmethod
-    def powerlaw(wavelength, alpha, K_wave, AKs, makePlot=False):
+    def derive_powerlaw(wavelength, alpha, K_wave):
         """
         Calculate the resulting extinction for an array of wavelengths.
         The extinction is normalized with A_Ks.
@@ -903,9 +1166,6 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
              
         K_wave: float
             Desired K-band wavelength, in microns
-
-        AKs : float
-            in magnitudes
         """
         # Create extinction law
         law = wavelength**(-1.0 * alpha)
@@ -914,7 +1174,44 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
         idx = np.where(abs(wavelength - K_wave) == min(abs(wavelength - K_wave)))
         A_AKs_at_wave = law / law[idx]
 
-        A_at_wave = AKs * A_AKs_at_wave
+        return A_AKs_at_wave
+
+    def powerlaw(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
 
         return A_at_wave
 
@@ -934,7 +1231,7 @@ class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawFritz11.fritz11(wave, 1.0)
+        Alambda_scaled = RedLawFritz11.derive_Fritz11(wave)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -944,21 +1241,23 @@ class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
                                                   Avscaled=Alambda_scaled,
                                                   name='Nishiyama09',
                                                   litref='Nishiyama+ 2009')
-
+        
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+        
     @staticmethod
-    def fritz11(wavelength, AKs):
+    def derive_Fritz11(wavelength):
         """
         Calculate the resulting extinction for an array of wavelengths.
-        The extinction is normalized with A_Ks.
+        The extinction is normalized to A_Ks = 1
 
         Data pulled from Fritz+11, Table 2
 
         Parameters
         ----------
         wavelength : float
-            in microns
-        AKs : float
-            in magnitudes
+            Wavelength range to derive extinction law over, in microns
         """
         # Extinction law definition
         wave = np.array([1.282, 1.736, 2.166, 2.625, 2.758, 2.873, 3.039, 3.297, 3.74, 3.819, 3.907, 4.052,
@@ -975,10 +1274,47 @@ class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
         idx = np.where( abs(wavelength - 2.14) == min(abs(wavelength - 2.14)) )
         A_AKs_at_wave = A_at_wave / A_at_wave[idx] 
 
-        A_final = AKs * A_AKs_at_wave
+        return A_AKs_at_wave
 
-        return A_final
+    def Fritz11(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
 
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelengths to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
+
+        return A_at_wave
+        
 class RedLawHosek17(pysynphot.reddening.CustomRedLaw):
     """
     An object that represents the reddening vs. wavelength for the 
@@ -995,7 +1331,7 @@ class RedLawHosek17(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawHosek17.Hosek17(wave, 1.0)
+        Alambda_scaled = RedLawHosek17.derive_Hosek17(wave)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -1006,9 +1342,15 @@ class RedLawHosek17(pysynphot.reddening.CustomRedLaw):
                                                   name='Hosek+17',
                                                   litref='Hosek+ 2017')
 
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+        
     @staticmethod
-    def Hosek17(wavelength, AKs):
-        """
+    def derive_Hosek17(wavelength):
+        """ 
+        Derive the Hosek+17 extinction law, using the data from Table 4. 
+        
         Calculate the resulting extinction for an array of wavelengths.
         The extinction is normalized with A_Ks.
 
@@ -1017,9 +1359,7 @@ class RedLawHosek17(pysynphot.reddening.CustomRedLaw):
         Parameters
         ----------
         wavelength : float
-            in microns
-        AKs : float
-            in magnitudes
+            Wavelength range to define extinction law over, in microns
         """
         # Extinction law definition
         wave = np.array([0.8059, 0.962, 1.25, 1.53, 2.14, 3.545])
@@ -1027,91 +1367,48 @@ class RedLawHosek17(pysynphot.reddening.CustomRedLaw):
 
         # Following Hosek+17, Interpolate over the curve with cubic spline interpolation
         spline_interp = interpolate.splrep(wave, A_AKs, k=3, s=0)
-        A_at_wave = interpolate.splev(wavelength, spline_interp)
-
-        # K-band = 2.14 microns
-        idx = np.where( abs(wavelength - 2.14) == min(abs(wavelength - 2.14)) )
-        A_AKs_at_wave = A_at_wave / A_at_wave[idx] 
-
-        A_final = AKs * A_AKs_at_wave
-
-        return A_final    
-
-class RedLawWesterlund1_byhand(pysynphot.reddening.CustomRedLaw):
-    """
-    An object that represents the reddening vs. wavelength for the 
-    Westerlund 1 Extinction law fitted by hand. The returned object is 
-
-    pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
-
-    The wavelength range over which this law is calculated is
-    0.5 - 8.0 microns.
-
-    NOTE: This was derived using outdated zeropoints. For updated
-    zeropoints, use RedLawWesterlund1
-    """
-    def __init__(self):
-        # Fetch the extinction curve, pre-interpolate across 1-8 microns
-        wave = np.arange(0.5, 8.0, 0.001)
-        
-        # This will eventually be scaled by AKs when you
-        # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawWesterlund1.westerlund1(wave, 1.0)
-
-        # Convert wavelength to angstrom
-        wave *= 10 ** 4
-
-        pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
-                                                  waveunits='angstrom',
-                                                  Avscaled=Alambda_scaled,
-                                                  name='Westerlund1',
-                                                  litref='Lu+ 2015')
-
-    @staticmethod
-    def westerlund1(wavelength, AKs, makePlot=False):
-        """
-        Calculate the resulting extinction for an array of wavelengths.
-        The extinction is normalized with A_Ks.
-
-        Data pulled from Nishiyama et al. 2009, Table 1
-        """
-
-        filters = ['V', 'F814W', 'Z', 'Y', 'J', 'F160W', 'H', 'Ks', '[3.6]', '[4.5]', '[5.8]', '[8.0]']
-
-        # Based on Nishiyama+ 2009, but then by-eye fitting to Wd 1 data for 
-        # 0.551, 0.814, 1.25 micron.
-        #wave = np.array([0.551, 0.814, 1.25, 1.63, 2.14, 3.545, 4.442, 5.675, 7.760])
-        #A_AKs = np.array([16.13, 8.15, 3.19, 1.89, 1.00, 0.500, 0.390, 0.360, 0.430])
-
-        # With HST + VISTA Filters
-        wave = np.array([0.551, 0.8059, 0.877, 1.02, 1.25, 1.53, 1.645, 2.14, 3.545, 4.442, 5.675, 7.760])
-        A_AKs = np.array([16.13, 8.52, 6.0, 4.32, 3.02, 2.07, 1.82, 1.00, 0.500, 0.390, 0.360, 0.430])        
-
-        # Interpolate over the curve
-        spline_interp = interpolate.splrep(wave, A_AKs, k=3, s=0)
-
         A_AKs_at_wave = interpolate.splev(wavelength, spline_interp)
-        A_at_wave = AKs * A_AKs_at_wave
 
-        if makePlot:
-            py.clf()
-            py.errorbar(wave, A_AKs, yerr=A_AKs_err, fmt='bo', 
-                        markerfacecolor='none', markeredgecolor='blue',
-                        markeredgewidth=2)
+        # This curve already assumes A_Ks = 1.0, so we can go straight to
+        # output        
+        return A_AKs_at_wave
 
-            # Make an interpolated curve.
-            wavePlot = np.arange(wave.min(), wave.max(), 0.1)
-            extPlot = interpolate.splev(wavePlot, spline_interp)
-            py.loglog(wavePlot, extPlot, 'k-')
+    def Hosek17(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
 
-            # Plot a marker for the computed value.
-            py.plot(wavelength, A_AKs_at_wave, 'rs',
-                    markerfacecolor='none', markeredgecolor='red',
-                    markeredgewidth=2)
-            py.xlabel('Wavelength (microns)')
-            py.ylabel('Extinction (magnitudes)')
-            py.title('Lu et al. 2015')
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
 
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
 
         return A_at_wave
 
