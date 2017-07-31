@@ -46,6 +46,29 @@ def get_nirc2_filt(name):
 
     return spectrum
 
+def get_2mass_filt(name):
+    """
+    Define the 2mass filters as a pysynphot spectrum object
+    """
+    # Read in filter info
+    try:
+        t = Table.read('{0}/2mass/{1}.dat'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find 2MASS filter file {0}/2mass/{1}.dat'.format(filters_dir, name))
+
+    wavelength = t[t.keys()[0]]
+    transmission = t[t.keys()[1]]
+
+    # Convert wavelength to Angstroms
+    wavelength = wavelength * 10**4
+
+    # Make spectrum object
+    spectrum = pysynphot.ArrayBandpass(wavelength, transmission, waveunits='angstrom',
+                                           name='2MASS_{0}'.format(name))
+
+    return spectrum
+    
+
 def get_vista_filt(name):
     """
     Define vista filter as pysynphot spectrum object
