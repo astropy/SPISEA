@@ -1159,6 +1159,9 @@ def get_filter_info(name, vega=vega, rebin=True):
     if name.startswith('nirc2'):
         filt = filters.get_nirc2_filt(filterName)
 
+    elif name.startswith('2mass'):
+        filt = filters.get_2mass_filt(filterName)
+        
     elif name.startswith('vista'):
         filt = filters.get_vista_filt(filterName)
 
