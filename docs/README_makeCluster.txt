@@ -131,7 +131,9 @@ Filters supported:
 HST: all filters supported in pysynphot (must use appropriate
 pysynphot syntax)
 
-NIRC2: J, H, K, Kp, Ks, Lp, Hcont, Kcont, FeII, Brgamma 
+NIRC2: J, H, K, Kp, Ks, Lp, Hcont, Kcont, FeII, Brgamma
+
+2MASS: J, H, Ks
 
 VISTA: Z, Y, J, H, Ks
 
