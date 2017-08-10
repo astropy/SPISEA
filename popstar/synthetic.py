@@ -741,7 +741,7 @@ class IsochronePhot(Isochrone):
     def __init__(self, logAge, AKs, distance,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
-                 min_mass=None, max_mass=None, rebin=True,
+                 min_mass=None, max_mass=None, rebin=True, recomp=False, 
                  filters={'127m': 'wfc3,ir,f127m',
                           '139m': 'wfc3,ir,f139m',
                           '153m': 'wfc3,ir,f153m',
@@ -779,7 +779,7 @@ class IsochronePhot(Isochrone):
         # Expected filters
         self.filters = filters
 
-        if not os.path.exists(self.save_file):
+        if (not os.path.exists(self.save_file)) | (recomp==True):
             Isochrone.__init__(self, logAge, AKs, distance,
                                evo_model=evo_model, atm_func=atm_func,
                                red_law=red_law, mass_sampling=mass_sampling,
@@ -840,7 +840,7 @@ class IsochronePhot(Isochrone):
         print( '      Time taken: {0:.2f} seconds'.format(endTime - startTime))
 
         if self.save_file != None:
-            self.points.write(self.save_file)
+            self.points.write(self.save_file, overwrite=True)
 
         return
 
