@@ -41,6 +41,7 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave_vals)
         self.high_lim = max(wave_vals)
+        self.name = 'N09'
     
     @staticmethod
     def derive_nishiyama09(wavelength):
@@ -226,6 +227,7 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
+        self.name = 'C89'
 
     @staticmethod
     def derive_cardelli(wavelength, Rv):
@@ -366,6 +368,7 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
+        self.name = 'RZ07'
 
     @staticmethod
     def derive_romanzuniga07(wavelength):
@@ -448,6 +451,7 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
+        self.name = 'RL85'
 
     @staticmethod
     def derive_RiekeLebofsky(wavelength):
@@ -485,7 +489,7 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
 
         return A_Ak_at_wave
 
-    def RiekeLebovsky85(self, wavelength, AKs):
+    def RiekeLebofsky85(self, wavelength, AKs):
         """ 
         Return the value of the extinction law at given wavelengths
         with a total overall extinction.
@@ -541,6 +545,7 @@ class RedLawDamineli16(pysynphot.reddening.CustomRedLaw):
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
         Alambda_scaled = RedLawDamineli16.derive_Damineli16(wave)
+        #Alambda_scaled = RedLawDamineli16.derive_Damineli16_old(wave, 1.0)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -554,6 +559,7 @@ class RedLawDamineli16(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
+        self.name = 'D16'
     
 
     @staticmethod
@@ -697,6 +703,7 @@ class RedLawDeMarchi16(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
+        self.name = 'DM16'
 
     @staticmethod
     def derive_DeMarchi16(wavelength):
@@ -811,6 +818,7 @@ class RedLawFitzpactrick09(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
+        self.name = 'F09'
 
     @staticmethod
     def derive_Fitzpactrick09(wavelength, alpha, RV):
@@ -918,6 +926,7 @@ class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
+        self.name = 'S16'
 
     @staticmethod
     def derive_Schlafly16(wavelength, AH_AKs, x):
@@ -1149,6 +1158,7 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
+        self.name = 'pl'
 
     @staticmethod
     def derive_powerlaw(wavelength, alpha, K_wave):
@@ -1245,6 +1255,7 @@ class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
+        self.name = 'F11'
         
     @staticmethod
     def derive_Fritz11(wavelength):
@@ -1345,6 +1356,7 @@ class RedLawHosek17(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
+        self.name = 'H17'
         
     @staticmethod
     def derive_Hosek17(wavelength):
