@@ -4,14 +4,27 @@ PopStar
 
 INSTALL (from git)
 
-* python (preferably via ureka, as it includes some necessary packages, like astropy and pysynphot)
+* python (preferably via AstroConda, as it includes some necessary
+  packages, like astropy and pysynphot)
+  
     python dependencies:
+    
     * astropy
+      
     * pysynphot
-    * ATpy (https://pypi.python.org/pypi/ATpy) 
-    * asciitable (http://www.stecf.org/software/PYTHONtools/astroasciidata/) - note: if python was installed via ureka, the asciitable install folder may need to be copied from the default python site-packages folder to ureka's site-packages folder
+      
+    * ATpy (https://pypi.python.org/pypi/ATpy)
+      
+    * asciitable
+      (http://www.stecf.org/software/PYTHONtools/astroasciidata/) -
+      note: if python was installed via ureka, the asciitable install
+      folder may need to be copied from the default python
+      site-packages folder to ureka's site-packages folder
+      
 * Github respository dependencies (git clone these)
-    * jluastro/JLU-python-code 
+  
+    * jluastro/JLU-python-code
+      
     * jluastro/nirc2
 
 Add all of these to your python path in your .cshrc:
