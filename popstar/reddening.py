@@ -253,13 +253,13 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         y = x - 1.82
 
         # Calculate coefficients for long wavelengths (low wavenumber)
-        # Wavenumger <= 1.1
+        # Wavenumger <= 1.1 (Eq. 2a, 2b)
         idx = np.where(x <= 1.1)[0]
         a[idx] =  0.574 * x[idx] ** 1.61
         b[idx] = -0.527 * x[idx] ** 1.61
-        
+
         # Calculate coefficients for intermediate wavelengths
-        # 1.1 < wavenumber <= 3.3
+        # 1.1 < wavenumber <= 3.3 (Eq. 3a, 3b)
         idx = np.where((x > 1.1) & (x <= 3.3))[0]
         yy = y[idx]
         a[idx] = 1 + (0.17699 * yy) - (0.50447 * yy ** 2) - \
@@ -272,14 +272,14 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
             (2.09002 * yy ** 7)
 
         # Calculate the long wavelength
-        # 3.3 < wavenumber < 5.9
+        # 3.3 < wavenumber < 5.9 (Eq. 4a, 4b)
         idx = np.where((x > 3.3) & (x < 5.9))[0]
         xx = x[idx]
         a[idx] = 1.752 - (0.316 * xx) - (0.104/((xx - 4.67) ** 2 + 0.341))
         b[idx] = -3.090 + (1.825 * xx) + (1.206/((xx - 4.62) ** 2 + 0.263))
 
         # Calculate the longest wavelength
-        # 5.9 <= wavenumber
+        # 5.9 <= wavenumber (Eq. 4a, 4b)
         idx = np.where(x >= 5.9)[0]
         xx = x[idx]
         a[idx] = 1.752 - (0.316 * xx) - (0.104/((xx - 4.67) ** 2 + 0.341)) + \
@@ -287,7 +287,7 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         b[idx] = -3.090 + (1.825 * xx) + (1.206/((xx - 4.62) ** 2 + 0.263)) + \
             (0.2130 * (xx - 5.9) ** 2) + (0.1207 * (xx - 5.9) ** 3)
 
-        # A(lam) / A(V)
+        # A(lam) / A(V), from Eq. 1
         extinction = a + b/Rv
 
         # Now, want to produce A_lambda / AKs, to match other laws
@@ -1326,10 +1326,10 @@ class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
 
         return A_at_wave
         
-class RedLawHosek17(pysynphot.reddening.CustomRedLaw):
+class RedLawHosek18(pysynphot.reddening.CustomRedLaw):
     """
     An object that represents the reddening vs. wavelength for the 
-    Hosek+17 reddening law (Wd1 + Arches RC stars). The returned object is 
+    Hosek+18 reddening law (Wd1 + Arches RC stars). The returned object is 
 
     pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
 
@@ -1342,7 +1342,7 @@ class RedLawHosek17(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawHosek17.derive_Hosek17(wave)
+        Alambda_scaled = RedLawHosek18.derive_Hosek18(wave)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -1350,18 +1350,18 @@ class RedLawHosek17(pysynphot.reddening.CustomRedLaw):
         pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
                                                   waveunits='angstrom',
                                                   Avscaled=Alambda_scaled,
-                                                  name='Hosek+17',
-                                                  litref='Hosek+ 2017')
+                                                  name='Hosek+18',
+                                                  litref='Hosek+ 2018')
 
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
-        self.name = 'H17'
+        self.name = 'H18'
         
     @staticmethod
-    def derive_Hosek17(wavelength):
+    def derive_Hosek18(wavelength):
         """ 
-        Derive the Hosek+17 extinction law, using the data from Table 4. 
+        Derive the Hosek+18 extinction law, using the data from Table 4. 
         
         Calculate the resulting extinction for an array of wavelengths.
         The extinction is normalized with A_Ks.
@@ -1375,7 +1375,7 @@ class RedLawHosek17(pysynphot.reddening.CustomRedLaw):
         """
         # Extinction law definition
         wave = np.array([0.8059, 0.962, 1.25, 1.53, 2.14, 3.545])
-        A_AKs = np.array([9.92, 6.41, 3.63, 2.38, 1.0, 0.50])
+        A_AKs = np.array([9.66, 6.29, 3.56, 2.33, 1.0, 0.50])
 
         # Following Hosek+17, Interpolate over the curve with cubic spline interpolation
         spline_interp = interpolate.splrep(wave, A_AKs, k=3, s=0)
@@ -1385,7 +1385,7 @@ class RedLawHosek17(pysynphot.reddening.CustomRedLaw):
         # output        
         return A_AKs_at_wave
 
-    def Hosek17(self, wavelength, AKs):
+    def Hosek18(self, wavelength, AKs):
         """ 
         Return the value of the extinction law at given wavelengths
         with a total overall extinction.
