@@ -1366,7 +1366,7 @@ class RedLawHosek18(pysynphot.reddening.CustomRedLaw):
         Calculate the resulting extinction for an array of wavelengths.
         The extinction is normalized with A_Ks.
 
-        Data pulled from Hosek+17, Table 4
+        Data pulled from Hosek+18, Table 4
 
         Parameters
         ----------
@@ -1376,8 +1376,9 @@ class RedLawHosek18(pysynphot.reddening.CustomRedLaw):
         # Extinction law definition
         wave = np.array([0.8059, 0.962, 1.25, 1.53, 2.14, 3.545])
         A_AKs = np.array([9.66, 6.29, 3.56, 2.33, 1.0, 0.50])
+        
 
-        # Following Hosek+17, Interpolate over the curve with cubic spline interpolation
+        # Following Hosek+18, Interpolate over the curve with cubic spline interpolation
         spline_interp = interpolate.splrep(wave, A_AKs, k=3, s=0)
         A_AKs_at_wave = interpolate.splev(wavelength, spline_interp)
 
