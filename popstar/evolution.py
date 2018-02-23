@@ -364,7 +364,7 @@ class Parsec(StellarEvolution):
             age_idx = searchsorted(self.age_list, log_age, side='right')
         else:
             age_idx = searchsorted(self.age_list, log_age, side='left')
-        iso_file = 'iso_' + str(self.age_list[age_idx]) + '.fits'
+        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
         z_idx = searchsorted(self.z_list, z_defined, side='left')
@@ -450,26 +450,18 @@ class Pisa(StellarEvolution):
         Define intrinsic properties for the Pisa (Tognelli+11) stellar
         models.
         """
-        # populate list of model masses (in solar masses)
-        #mass_list = [(0.1 + i*0.005) for i in range(181)]
-        
-        # define metallicity parameters for Geneva models
-        #z_list = [0.01, 0.02, 0.03]
+        # define metallicity parameters for Pisa models
+        self.z_list = [0.015]
         
         # populate list of isochrone ages (log scale)
-        #age_list = [round(5.5 + 0.01*i, 2) for i in range(190)]
-        #age_list += [round(7.4 + 0.05*i, 2) for i in range(12)]
-        #age_list += [round(math.log10(1.e8*x), 2) for x in range(1, 10)]
-        #age_list += [round(math.log10(1.e9*x), 2) for x in range(1, 10)]
-        #age_list = age_list
+        self.age_list = np.arange(6.0, 8.01+0.005, 0.01)
         
-        # specify location of model files
-        #model_dir = '../models/geneva_merged/'
+        # Specify location of model files
+        self.model_dir = models_dir+'Pisa2011/'
 
-        #super().__init__(model_dir, age_list, mass_list, z_list)
-
-        #self.z_solar = 0.02
-        #self.z_file_map = {0.01: 'z01/', 0.02: 'z02/', 0.03: 'z03/'}
+        # Specifying metallicity
+        self.z_solar = 0.015
+        self.z_file_map = {0.015: 'z015/'}
         
         
         
@@ -488,28 +480,43 @@ class Pisa(StellarEvolution):
         collection.
         """
         # convert metallicity to mass fraction
-        #z_defined = self.z_solar*10.**metallicity
+        z_defined = self.z_solar*10.**metallicity
+
+        log_age = math.log10(age)
         
         # check age and metallicity are within bounds
-        #if (math.log10(age) < 5.5) or (math.log10(age) > 9.78):
-        #    logger.error('Requested age is out of bounds.')
+        if ((log_age < 6.0) or (log_age > 8.01)) :
+            logger.error('Requested age is out of bounds.')
             
-        #if (z_defined < 0.01) or (z_defined > 0.03):
-        #    logger.error('Requested metallicity is out of bounds.')
+        if not z_defined in self.z_list:
+            logger.error('Requested metallicity is out of bounds.')
         
-        # convert age (in yrs) to log scale and find nearest value in grid
-        #age_idx = searchsorted(self.age_list, math.log10(age), side='right')
-        #iso_file = 'iso_' + str(self.age_list[age_idx]) + '.fits'
+        # Find nearest age in grid to input grid
+        if log_age != self.age_list[0]:
+            age_idx = searchsorted(self.age_list, log_age, side='right')
+        else:
+            age_idx = searchsorted(self.age_list, log_age, side='left')
+        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        #z_idx = searchsorted(self.z_list, z_defined, side='left')
-        #z_dir = self.z_file_map[self.z_list[z_idx]]
+        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        z_dir = self.z_file_map[self.z_list[z_idx]]
         
         # generate isochrone file string
-        #full_iso_file = self.model_dir + 'iso/' + z_dir + iso_file
+        full_iso_file = self.model_dir + 'iso/' + z_dir + iso_file
         
         # return isochrone data
-        return genfromtxt(full_iso_file, comments='#')
+        iso = Table.read(full_iso_file, format='fits')
+        iso.rename_column('col1', 'logL')
+        iso.rename_column('col2', 'logT')
+        iso.rename_column('col3', 'mass')
+        iso.rename_column('col4', 'logg')
+        iso['logT_WR'] = iso['logT']
+
+        iso.meta['log_age'] = log_age
+        iso.meta['metallicity'] = metallicity
+
+        return iso
 
     def format_isochrones(input_iso_dir, metallicity_list):
         r"""
@@ -899,7 +906,7 @@ class MISTv1(StellarEvolution):
         self.z_list = [0.015]
         
         # populate list of isochrone ages (log scale)
-        self.age_list = np.arange(6.0, 10.01, 0.01)
+        self.age_list = np.arange(6.0, 10.01+0.005, 0.01)
         
         # Specify location of model files
         self.model_dir = models_dir+'MISTv1/'
@@ -940,7 +947,7 @@ class MISTv1(StellarEvolution):
             age_idx = searchsorted(self.age_list, log_age, side='right')
         else:
             age_idx = searchsorted(self.age_list, log_age, side='left')
-        iso_file = 'iso_' + str(self.age_list[age_idx]) + '.fits'
+        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
         z_idx = searchsorted(self.z_list, z_defined, side='left')
@@ -957,6 +964,7 @@ class MISTv1(StellarEvolution):
         iso.rename_column('col4', 'logT')
         iso.rename_column('col5', 'logg')
         iso.rename_column('col6', 'logL')
+        iso['logT_WR'] = iso['logT']
 
         iso.meta['log_age'] = log_age
         iso.meta['metallicity'] = metallicity
