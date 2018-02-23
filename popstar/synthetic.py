@@ -115,7 +115,7 @@ class ResolvedCluster(Cluster):
         
         # Trim out bad systems
         star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
- 
+
         ##### 
         # Make a table to contain all the information about companions.
         #####
@@ -410,6 +410,16 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         red_vega_hi = vega * red_law.reddening(AKs + deltaAKs).resample(vega.wave)
 
         for filt in self.filt_names:
+            #=======BUG HERE=====#
+            # This is only because I changed column header conventions in popstar after
+            # generating the IMF grid. I will need to fix this for new isochrones
+            #if filt == 'mag_127m':
+            #    filt_info = get_filter_info(iso.filters['hst_F127M'])
+            #elif filt == 'mag_153m':
+            #    filt_info = get_filter_info(iso.filters['hst_F153M'])
+            #elif filt == 'mag_139m':
+            #    filt_info = get_filter_info(iso.filters['hst_F139M'])
+            #====================#
             filt_info = get_filter_info(iso.filters[filt.replace('mag_', '')])
             
             mag_lo = mag_in_filter(red_vega_lo, filt_info)
@@ -457,9 +467,19 @@ class ResolvedClusterDiffRedden2(ResolvedCluster):
         red_vega_blue = vega * red_law.reddening(AKs - deltaAKs_blue).resample(vega.wave)
         red_vega = vega * red_law.reddening(AKs).resample(vega.wave)
         red_vega_red = vega * red_law.reddening(AKs + deltaAKs_red).resample(vega.wave)
-        
+
         for filt in self.filt_names:
-            filt_info = get_filter_info(iso.filters[filt.replace('mag', '')])
+            #=======BUG HERE=====#
+            # This is only because I changed column header conventions in popstar after
+            # generating the IMF grid. I will need to fix this for new isochrones
+            #if filt == 'mag_127m':
+            #    filt_info = get_filter_info(iso.filters['hst_F127M'])
+            #elif filt == 'mag_153m':
+            #    filt_info = get_filter_info(iso.filters['hst_F153M'])
+            #elif filt == 'mag_139m':
+            #    filt_info = get_filter_info(iso.filters['hst_F139M'])
+            #====================#
+            filt_info = get_filter_info(iso.filters[filt.replace('mag_', '')])
             
             mag_blue = mag_in_filter(red_vega_blue, filt_info)
             mag = mag_in_filter(red_vega, filt_info)
@@ -659,7 +679,7 @@ class Isochrone(object):
             # Get the atmosphere model now. Wavelength is in Angstroms
             # This is the time-intensive call... everything else is negligable.
             star = atm_func(temperature=T, gravity=gravity)
-            
+
             # Trim wavelength range down to JHKL range (0.5 - 4.25 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
 
@@ -1174,6 +1194,9 @@ def get_filter_info(name, vega=vega, rebin=True):
     elif name.startswith('jwst'):
         filt = filters.get_jwst_filt(filterName)
 
+    elif name.startswith('jg'):
+        filt = filters.get_Johnson_Glass_filt(filterName)
+
     else:
         filt = ObsBandpass(name)
         
@@ -1190,7 +1213,6 @@ def get_filter_info(name, vega=vega, rebin=True):
             new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
             filt = filt.resample(new_wave)
 
-        
     # Check that vega spectrum covers the wavelength range of the filter.
     # Otherwise, throw an error
     idx = np.where(filt.throughput > 0.001)[0]
@@ -1224,22 +1246,42 @@ def rebin_spec(wave, specin, wavnew):
 
 def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
                         atm_func=default_atm_func, redlaw = default_red_law,
-                        iso_dir = './', mass_sampling=1):
+                        iso_dir = './', mass_sampling=1,
+                        filters={'127m': 'wfc3,ir,f127m',
+                                 '139m': 'wfc3,ir,f139m',
+                                 '153m': 'wfc3,ir,f153m'}):
     """
     Wrapper routine to generate a grid of isochrones of different ages,
-    extinctions, and distances
+    extinctions, and distances. 
 
-    age_arr: array of ages to loop over (logAge)
-    Aks_arr: array of Aks values to loop over (mag)
-    dist_arr: array of distances to loop over (pc)
+    Parameters:
+    ----------
+    age_arr: array
+        Array of ages to loop over, in log years
 
-    evo_models: evolution models to adopt
-    atm_models: atmosphere models to adopt
-    redlaw: reddening law to adopt
-    iso_dir: directory isochrones will be stored
-    mass_sampling: mass sampling of isochrone, relative to original mass sampling
+    Aks_arr: array
+        Array of Aks values to loop over, in magnitudes
 
-    NOTE: This code only makes isochrones with the Ekstrom rotating models, for now. 
+    dist_arr: array
+        Array of distances to loop over (pc)
+ 
+    evo_models: popstar evolution object
+        Which evolution models to use
+
+    atm_models: popstar atmospheres object
+        Which atmosphere models to use
+
+    redlaw: popstar reddening object
+        Which reddening law to use
+
+    iso_dir: str
+        Directory to write the isochrones to
+
+    mass_sampling: int
+        Mass sampling of isochrone, relative to original mass sampling
+
+    filters: dictionary
+        Which filters to do the synthetic photometry on    
     """
     print( '**************************************')
     print( 'Start generating isochrones')
@@ -1258,7 +1300,8 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
                     iso = IsochronePhot(age_arr[i], AKs_arr[j], dist_arr[k],
                                         evo_model=evo_model, atm_func=atm_func,
                                         red_law=redlaw, iso_dir=iso_dir,
-                                        mass_sampling=mass_sampling)
+                                        mass_sampling=mass_sampling,
+                                        filters=filters)
                     iteration += 1
                     print( 'Done ' + str(iteration) + ' of ' + str(num_models))
 
