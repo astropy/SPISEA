@@ -160,7 +160,7 @@ def get_jwst_filt(name):
     try:
         t = Table.read('{0}/jwst/{1}.txt'.format(filters_dir, name), format='ascii')
     except:
-        raise ValueError('Could not find JWST filter {0} in {1}/jwst'.format(tmp[-1], filters_dir))         
+        raise ValueError('Could not find JWST filter {0} in {1}/jwst'.format(name, filters_dir))         
 
     # Convert wavelengths to angstroms
     wave = t['microns'] * 10**4.
@@ -174,4 +174,24 @@ def get_jwst_filt(name):
 
     return spectrum    
 
+def get_Johnson_Glass_filt(name):
+    """
+    Define Johnson-Glass filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/Johnson_Glass/{1}.txt'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find Johnson-Glass filter {0} in {1}/Johnson_Glass'.format(name, filters_dir))         
+
+    # Convert wavelengths to angstroms
+    wave = t['col1'] * 10.
+    trans = t['col2']
+
+    # Change any negative numbers to 0
+    bad = np.where(trans < 0)
+    trans[bad] = 0
+    
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='jg_{0}'.format(name))
+
+    return spectrum    
 
