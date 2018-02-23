@@ -24,6 +24,7 @@ def test_isochrone(plot=False):
     assert iso.points.meta['DISTANCE'] == distance
     assert len(iso.points) > 100
 
+    
     if plot:
         plt.figure(1) 
         iso.plot_HR_diagram()
@@ -392,7 +393,7 @@ def time_test_mass_match():
     def match_model_masses2(isoMasses, starMasses):
         isoMasses_tmp = isoMasses.reshape((len(isoMasses), 1))
         kdt = KDTree(isoMasses_tmp)
-
+ 
         starMasses_tmp = starMasses.reshape((len(starMasses), 1))
         q_results = kdt.query(starMasses_tmp, k=1)
         indices = q_results[1]
@@ -455,7 +456,8 @@ def test_phot_consistency(filt='all'):
                          'jwst_F323N':'jwst,F323N', 'jwst_F466N': 'jwst,F466N',
                          'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
                          'nirc2_Lp': 'nirc2,Lp', 'nirc2_Hcont': 'nirc2,Hcont',
-                         'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma'}
+                         'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
+                         'jg_j': 'jg,J', 'jg_h': 'jg,H', 'jg_k': 'jg,K'}
 
     elif filt == 'decam':
         filt_list = {'decam_y': 'decam,y', 'decam_i': 'decam,i', 'decam_z': 'decam,z',
@@ -476,7 +478,10 @@ def test_phot_consistency(filt='all'):
         filt_list = {'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
                          'nirc2_Lp': 'nirc2,Lp','nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
                          'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma'}
-
+    elif filt == 'jg':
+        filt_list = {'jg_j': 'jg,J', 'jg_h': 'jg,H', 'jg_k': 'jg,K'}
+        
+            
     print 'Making isochrone'
     iso = synthetic.IsochronePhot(6.7, 0, 1000, mass_sampling=10, filters=filt_list, rebin=True)
     #redlaw = reddening.RedLawNishiyama09()
