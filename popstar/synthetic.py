@@ -68,7 +68,7 @@ class Cluster(object):
 
     
 class ResolvedCluster(Cluster):
-    def __init__(self, iso, imf, cluster_mass, filters=None, save_dir='./', verbose=True):
+    def __init__(self, iso, imf, cluster_mass, save_dir='./', verbose=True):
         # Save to object variables
         Cluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
 
@@ -98,13 +98,9 @@ class ResolvedCluster(Cluster):
         #####
         mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
 
-        # Figure out the filters we will make. If filters input not defined,
-        # then take the filter headers from the isochrone
-        if filters == None:
-            self.filt_names = self.set_filter_names()
-        else:
-            self.filt_names = filters
-            
+        # Figure out the filters we will make.
+        self.filt_names = self.set_filter_names()
+
         ##### 
         # Make a table to contain all the information about each stellar system.
         #####
@@ -138,7 +134,7 @@ class ResolvedCluster(Cluster):
         filt_names = []
         
         for col_name in self.iso.points.colnames:
-            if 'mag' in col_name:
+            if 'm_' in col_name:
                 filt_names.append(col_name)
 
         return filt_names
@@ -397,11 +393,11 @@ class ResolvedCluster(Cluster):
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 red_law=default_red_law, filters=None, verbose=False):
+                 red_law=default_red_law, verbose=False):
 
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, filters=filters, verbose=verbose)
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
 
-        # For a given delta_AKs (sigma of reddening distribution at Ks),
+        # For a given delta_AKs (Gaussian sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
         #t1 = time.time()
         delta_red_filt = {}
@@ -410,17 +406,8 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         red_vega_hi = vega * red_law.reddening(AKs + deltaAKs).resample(vega.wave)
 
         for filt in self.filt_names:
-            #=======BUG HERE=====#
-            # This is only because I changed column header conventions in popstar after
-            # generating the IMF grid. I will need to fix this for new isochrones
-            #if filt == 'mag_127m':
-            #    filt_info = get_filter_info(iso.filters['hst_F127M'])
-            #elif filt == 'mag_153m':
-            #    filt_info = get_filter_info(iso.filters['hst_F153M'])
-            #elif filt == 'mag_139m':
-            #    filt_info = get_filter_info(iso.filters['hst_F139M'])
-            #====================#
-            filt_info = get_filter_info(iso.filters[filt.replace('mag_', '')])
+            obs_str = get_obs_str(filt)
+            filt_info = get_filter_info(obs_str)
             
             mag_lo = mag_in_filter(red_vega_lo, filt_info)
             mag_hi = mag_in_filter(red_vega_hi, filt_info)
@@ -762,15 +749,10 @@ class IsochronePhot(Isochrone):
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False, 
-                 filters={'127m': 'wfc3,ir,f127m',
-                          '139m': 'wfc3,ir,f139m',
-                          '153m': 'wfc3,ir,f153m',
-                          'nirc2J': 'nirc2,J',
-                          'nirc2H': 'nirc2,H',
-                          'nirc2Kp': 'nirc2,Kp',
-                          '814w': 'acs,wfc1,f814w',
-                          '125w': 'wfc3,ir,f125w',
-                          '160w': 'wfc3,ir,f160w'}):
+                 filters={'wfc3,ir,f127m', 'wfc3,ir,f139m',
+                          'wfc3,ir,f153m', 'acs,wfc1,f814w',
+                          'wfc3,ir,f125w', 'wfc3,ir,f160w',
+                          'nirc2,J', 'nirc2,H', 'nirc2,Kp',}):
 
         """
         Make an isochrone with photometry in various filters.
@@ -834,14 +816,15 @@ class IsochronePhot(Isochrone):
 
         # Loop through the filters, get filter info, make photometry for
         # all stars in this filter.
-        for filt_name, filt_str in self.filters.items():
+        for ii in self.filters:
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
-            print( prt_fmt.format(filt_name, time.time() - startTime))
+            print( prt_fmt.format(ii, time.time() - startTime))
 
-            filt = get_filter_info(filt_str, rebin=rebin, vega=vega)
+            filt = get_filter_info(ii, rebin=rebin, vega=vega)
+            filt_name = get_filter_col_name(ii)
 
             # Make the column to hold magnitudes in this filter. Add to points table.
-            col_name = 'mag_' + filt_name
+            col_name = 'm_' + filt_name
             mag_col = Column(np.zeros(npoints, dtype=float), name=col_name)
             self.points.add_column(mag_col)
             
@@ -1171,7 +1154,8 @@ class iso_table(object):
 def get_filter_info(name, vega=vega, rebin=True):
     """ 
     Define filter functions, setting ZP according to
-    Vega spectrum
+    Vega spectrum. Input name is the popstar
+    obs_string
     """
     tmp = name.split(',')
     filterName = tmp[-1]
@@ -1231,6 +1215,52 @@ def get_filter_info(name, vega=vega, rebin=True):
     filt.mag0 = vega_mag
 
     return filt
+
+def get_filter_col_name(obs_str):
+    """
+    Get standard column name for synthetic photometry based on 
+    the input string. The input string is expected to be an
+    appropriate popstar obs_string
+    """
+    # How we deal with obs_string is slightly different depending
+    # if it is an hst filter (and thus pysynphot syntax) or our
+    # own defined filters
+    tmp = obs_str.split(',')
+
+    if len(tmp) == 3:
+        filt_name = 'hst_{0}'.format(tmp[-1])
+    else:
+        filt_name = '{0}_{1}'.format(tmp[0], tmp[1])
+        
+    return filt_name
+
+def get_obs_str(col):
+    """
+    Helper function to get the associated popstar obs_str given
+    a column name
+    """
+    # Remove the trailing m_
+    name = col[2:]
+    
+    # Define dictionary for filters
+    filt_list = {'hst_f127m': 'wfc3,ir,f127m', 'hst_f139m': 'wfc3,ir,f139m', 'hst_f153m': 'wfc3,ir,f153m',
+                 'hst_f814w': 'acs,wfc1,f814w', 'hst_f125w': 'wfc3,ir,f125w', 'hst_f160w': 'wfc3,ir,f160w',
+                 'decam_y': 'decam,y', 'decam_i': 'decam,i', 'decam_z': 'decam,z',
+                 'decam_u':'decam,u', 'decam_g':'decam,g', 'decam_r':'decam,r',
+                 'vista_Y':'vista,Y', 'vista_Z':'vista,Z', 'vista_J': 'vista,J',
+                 'vista_H': 'vista,H', 'vista_Ks': 'vista,Ks',
+                 'ps1_z':'ps1,z', 'ps1_g':'ps1,g', 'ps1_r': 'ps1,r',
+                 'ps1_i': 'ps1,i', 'ps1_y':'ps1,y',
+                 'jwst_F090W': 'jwst,F090W', 'jwst_F164N': 'jwst,F164N', 'jwst_F212N': 'jwst,F212N',
+                 'jwst_F323N':'jwst,F323N', 'jwst_F466N': 'jwst,F466N',
+                 'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
+                 'nirc2_Lp': 'nirc2,Lp', 'nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
+                 'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
+                 'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K'}
+
+    obs_str = filt_list[name]
+        
+    return obs_str
 
 def rebin_spec(wave, specin, wavnew):
     """
