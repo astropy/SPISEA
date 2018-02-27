@@ -126,7 +126,7 @@ class IMF(object):
                     #t1 = time.time()
                     compMasses, newSystemMasses, newIsMultiple = self.calc_multi(newMasses, compMasses,
                                                                                  newSystemMasses, newIsMultiple,
-                                                                                 CSF, MF)
+                                                                                    CSF, MF)
 
                     newTotalMassTally = newSystemMasses.sum()
                     isMultiple = np.append(isMultiple, newIsMultiple)
