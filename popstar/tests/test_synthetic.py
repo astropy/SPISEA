@@ -40,9 +40,12 @@ def test_IsochronePhot(plot=False):
     logAge = 6.7
     AKs = 2.7
     distance = 4000
+    filt_list = ['wfc3,ir,f127m', 'nirc2,J']
+    mass_sampling=1
 
     startTime = time.time()
-    iso = syn.IsochronePhot(logAge, AKs, distance)
+    iso = syn.IsochronePhot(logAge, AKs, distance, filters=filt_list,
+                                mass_sampling=mass_sampling)
     endTime = time.time()
     print 'Test completed in: %d seconds' % (endTime - startTime)
     # Typically takes 120 seconds if file is regenerated.
@@ -53,7 +56,7 @@ def test_IsochronePhot(plot=False):
     assert iso.points.meta['DISTANCE'] == distance
     assert len(iso.points) > 100
 
-    assert 'magJ' in iso.points.colnames
+    assert 'm_nirc2_J' in iso.points.colnames
 
     if plot:
         plt.figure(1) 
@@ -72,10 +75,22 @@ def test_ResolvedCluster():
     from popstar.imf import imf
     from popstar.imf import multiplicity
 
+    # Define cluster parameters
     logAge = 6.7
     AKs = 2.4
     distance = 4000
-    cluster_mass = 100000
+    cluster_mass = 10**5.
+    mass_sampling=5
+
+    # Test all filters
+    filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m', 'acs,wfc1,f814w',
+                     'wfc3,ir,f125w', 'wfc3,ir,f160w', 'decam,y', 'decam,i', 'decam,z',
+                         'decam,u', 'decam,g', 'decam,r', 'vista,Y', 'vista,Z',
+                         'vista,J', 'vista,H', 'vista,Ks', 'ps1,z', 'ps1,g', 'ps1,r',
+                         'ps1,i', 'ps1,y', 'jwst,F090W', 'jwst,F164N', 'jwst,F212N',
+                         'jwst,F323N', 'jwst,F466N', 'nirc2,J', 'nirc2,H', 'nirc2,Kp',
+                         'nirc2,K', 'nirc2,Lp', 'nirc2,Ms', 'nirc2,Hcont', 'nirc2,FeII',
+                         'nirc2,Brgamma', 'jg,J', 'jg,H', 'jg,K']
 
     startTime = time.time()
     
@@ -86,10 +101,12 @@ def test_ResolvedCluster():
     
     iso = syn.IsochronePhot(logAge, AKs, distance,
                             evo_model=evo, atm_func=atm_func,
-                            red_law=red_law)
+                            red_law=red_law, filters=filt_list,
+                            mass_sampling=mass_sampling)
 
     print 'Constructed isochrone: %d seconds' % (time.time() - startTime)
 
+    # Now to create the cluster.
     imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
     imf_powers = np.array([-1.3, -2.3, -2.3])
 
@@ -106,8 +123,8 @@ def test_ResolvedCluster():
 
     plt.figure(3)
     plt.clf()
-    plt.plot(clust1['magJ'] - clust1['magKp'], clust1['magJ'], 'r.')
-    plt.plot(iso.points['magJ'] - iso.points['magKp'], iso.points['magJ'], 'c.')
+    plt.plot(clust1['m_nirc2_J'] - clust1['m_nirc2_Kp'], clust1['m_nirc2_J'], 'r.')
+    plt.plot(iso.points['m_nirc2_J'] - iso.points['m_nirc2_Kp'], iso.points['m_nirc2_J'], 'c.')
     plt.gca().invert_yaxis()
 
     # *** Visual Inspections: ***
@@ -131,9 +148,9 @@ def test_ResolvedCluster():
     # Plot an IR CMD and compare cluster members to isochrone.
     plt.figure(1)
     plt.clf()
-    plt.plot(clust1['magJ'] - clust1['magKp'], clust1['magJ'], 'r.')
-    plt.plot(clust2['magJ'] - clust2['magKp'], clust2['magJ'], 'b.')
-    plt.plot(iso.points['magJ'] - iso.points['magKp'], iso.points['magJ'], 'c-')
+    plt.plot(clust1['m_nirc2_J'] - clust1['m_nirc2_Kp'], clust1['m_nirc2_J'], 'r.')
+    plt.plot(clust2['m_nirc2_J'] - clust2['m_nirc2_Kp'], clust2['m_nirc2_J'], 'b.')
+    plt.plot(iso.points['m_nirc2_J'] - iso.points['m_nirc2_Kp'], iso.points['m_nirc2_J'], 'c-')
     plt.gca().invert_yaxis()
     plt.xlabel('J - Kp (mag)')
     plt.ylabel('J (mag')
@@ -141,8 +158,8 @@ def test_ResolvedCluster():
     # Plot a mass-magnitude relationship.
     plt.figure(2)
     plt.clf()
-    plt.semilogx(clust1['mass'], clust1['magJ'], 'r.')
-    plt.semilogx(clust2['mass'], clust2['magJ'], 'r.')
+    plt.semilogx(clust1['mass'], clust1['m_nirc2_J'], 'r.')
+    plt.semilogx(clust2['mass'], clust2['m_nirc2_J'], 'r.')
     plt.gca().invert_yaxis()
     plt.xlabel('Mass (Msun)')
     plt.ylabel('J (mag)')
@@ -170,8 +187,19 @@ def test_ResolvedClusterDiffRedden():
     logAge = 6.7
     AKs = 2.4
     distance = 4000
-    cluster_mass = 100000
+    cluster_mass = 10**5.
     deltaAKs = 0.05
+    mass_sampling=5
+
+    # Test all filters
+    filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m', 'acs,wfc1,f814w',
+                     'wfc3,ir,f125w', 'wfc3,ir,f160w', 'decam,y', 'decam,i', 'decam,z',
+                         'decam,u', 'decam,g', 'decam,r', 'vista,Y', 'vista,Z',
+                         'vista,J', 'vista,H', 'vista,Ks', 'ps1,z', 'ps1,g', 'ps1,r',
+                         'ps1,i', 'ps1,y', 'jwst,F090W', 'jwst,F164N', 'jwst,F212N',
+                         'jwst,F323N', 'jwst,F466N', 'nirc2,J', 'nirc2,H', 'nirc2,Kp',
+                         'nirc2,K', 'nirc2,Lp', 'nirc2,Ms', 'nirc2,Hcont', 'nirc2,FeII',
+                         'nirc2,Brgamma', 'jg,J', 'jg,H', 'jg,K']
     
     startTime = time.time()
     
@@ -182,7 +210,8 @@ def test_ResolvedClusterDiffRedden():
     
     iso = syn.IsochronePhot(logAge, AKs, distance,
                             evo_model=evo, atm_func=atm_func,
-                            red_law=red_law)
+                            red_law=red_law, filters=filt_list,
+                                mass_sampling=mass_sampling)
 
     print 'Constructed isochrone: %d seconds' % (time.time() - startTime)
 
@@ -202,8 +231,8 @@ def test_ResolvedClusterDiffRedden():
 
     plt.figure(3)
     plt.clf()
-    plt.plot(clust1['magJ'] - clust1['magKp'], clust1['magJ'], 'r.')
-    plt.plot(iso.points['magJ'] - iso.points['magKp'], iso.points['magJ'], 'c.')
+    plt.plot(clust1['m_nirc2_J'] - clust1['m_nirc2_Kp'], clust1['m_nirc2_J'], 'r.')
+    plt.plot(iso.points['m_nirc2_J'] - iso.points['m_nirc2_Kp'], iso.points['m_nirc2_J'], 'c.')
     plt.gca().invert_yaxis()
 
     # *** Visual Inspections: ***
@@ -227,9 +256,9 @@ def test_ResolvedClusterDiffRedden():
     # Plot an IR CMD and compare cluster members to isochrone.
     plt.figure(1)
     plt.clf()
-    plt.plot(clust1['magJ'] - clust1['magKp'], clust1['magJ'], 'r.')
-    plt.plot(clust2['magJ'] - clust2['magKp'], clust2['magJ'], 'b.')
-    plt.plot(iso.points['magJ'] - iso.points['magKp'], iso.points['magJ'], 'c-')
+    plt.plot(clust1['m_nirc2_J'] - clust1['m_nirc2_Kp'], clust1['m_nirc2_J'], 'r.')
+    plt.plot(clust2['m_nirc2_J'] - clust2['m_nirc2_Kp'], clust2['m_nirc2_J'], 'b.')
+    plt.plot(iso.points['m_nirc2_J'] - iso.points['m_nirc2_Kp'], iso.points['m_nirc2_J'], 'c-')
     plt.gca().invert_yaxis()
     plt.xlabel('J - Kp (mag)')
     plt.ylabel('J (mag')
@@ -237,8 +266,8 @@ def test_ResolvedClusterDiffRedden():
     # Plot a mass-magnitude relationship.
     plt.figure(2)
     plt.clf()
-    plt.semilogx(clust1['mass'], clust1['magJ'], 'r.')
-    plt.semilogx(clust2['mass'], clust2['magJ'], 'r.')
+    plt.semilogx(clust1['mass'], clust1['m_nirc2_J'], 'r.')
+    plt.semilogx(clust2['mass'], clust2['m_nirc2_J'], 'r.')
     plt.gca().invert_yaxis()
     plt.xlabel('Mass (Msun)')
     plt.ylabel('J (mag)')
@@ -444,48 +473,46 @@ def test_phot_consistency(filt='all'):
 
     # Generate new isochrone with popstar code
     if filt == 'all':
-        filt_list = {'hst_F127M': 'wfc3,ir,f127m', 'hst_F139M': 'wfc3,ir,f139m', 'hst_F153M': 'wfc3,ir,f153m',
-                         'hst_F814W': 'acs,wfc1,f814w', 'hst_F125W': 'wfc3,ir,f125w', 'hst_F160W': 'wfc3,ir,f160w',
-                         'decam_y': 'decam,y', 'decam_i': 'decam,i', 'decam_z': 'decam,z',
-                         'decam_u':'decam,u', 'decam_g':'decam,g', 'decam_r':'decam,r',
-                         'vista_Y':'vista,Y', 'vista_Z':'vista,Z', 'vista_J': 'vista,J',
-                         'vista_H': 'vista,H', 'vista_Ks': 'vista,Ks',
-                         'ps1_z':'ps1,z', 'ps1_g':'ps1,g', 'ps1_r': 'ps1,r',
-                         'ps1_i': 'ps1,i', 'ps1_y':'ps1,y',
-                         'jwst_F090W': 'jwst,F090W', 'jwst_F164N': 'jwst,F164N', 'jwst_F212N': 'jwst,F212N',
-                         'jwst_F323N':'jwst,F323N', 'jwst_F466N': 'jwst,F466N',
-                         'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
-                         'nirc2_Lp': 'nirc2,Lp', 'nirc2_Hcont': 'nirc2,Hcont',
-                         'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
-                         'jg_j': 'jg,J', 'jg_h': 'jg,H', 'jg_k': 'jg,K'}
+        filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m',
+                         'acs,wfc1,f814w', 'wfc3,ir,f125w', 'wfc3,ir,f160w',
+                         'decam,y', 'decam,i', 'decam,z',
+                         'decam,u', 'decam,g', 'decam,r',
+                         'vista,Y', 'vista,Z', 'vista,J',
+                         'vista,H',  'vista,Ks',
+                         'ps1,z', 'ps1,g', 'ps1,r',
+                         'ps1,i', 'ps1,y',
+                         'jwst,F090W', 'jwst,F164N''jwst,F212N',
+                         'jwst,F323N',  'jwst,F466N',
+                         'nirc2,J', 'nirc2,H', 'nirc2,Kp', 'nirc2,K',
+                         'nirc2,Lp', 'nirc2,Hcont',
+                         'nirc2,FeII', 'nirc2,Brgamma',
+                         'jg,J', 'jg,H', 'jg,K']
 
     elif filt == 'decam':
-        filt_list = {'decam_y': 'decam,y', 'decam_i': 'decam,i', 'decam_z': 'decam,z',
-                         'decam_u':'decam,u', 'decam_g':'decam,g', 'decam_r':'decam,r'}
+        filt_list = {'decam,y', 'decam,i', 'decam,z',
+                         'decam,u', 'decam,g', 'decam,r'}
     elif filt == 'vista':
-        filt_list = {'vista_Y':'vista,Y', 'vista_Z':'vista,Z', 'vista_J': 'vista,J',
-                         'vista_H': 'vista,H', 'vista_Ks': 'vista,Ks'}
+        filt_list = {'vista,Y', 'vista,Z', 'vista,J',
+                         'vista,H', 'vista,Ks'}
     elif filt == 'ps1':
-        filt_list = {'ps1_z':'ps1,z', 'ps1_g':'ps1,g', 'ps1_r': 'ps1,r', 'ps1_i': 'ps1,i',
-                         'ps1_y':'ps1,y'}
+        filt_list = {'ps1,z', 'ps1,g', 'ps1,r',  'ps1,i',
+                         'ps1,y'}
     elif filt == 'jwst':
-        filt_list = {'jwst_F090W': 'jwst,F090W', 'jwst_F164N': 'jwst,F164N', 'jwst_F212N': 'jwst,F212N',
-                         'jwst_F323N':'jwst,F323N', 'jwst_F466N': 'jwst,F466N'}
+        filt_list = {'jwst,F090W', 'jwst,F164N', 'jwst,F212N',
+                        'jwst,F323N',  'jwst,F466N'}
     elif filt == 'hst':
-        filt_list = {'hst_F127M': 'wfc3,ir,f127m', 'hst_F139M': 'wfc3,ir,f139m', 'hst_F153M': 'wfc3,ir,f153m',
-                         'hst_F814W': 'acs,wfc1,f814w', 'hst_F125W': 'wfc3,ir,f125w', 'hst_F160W': 'wfc3,ir,f160w'}
+        filt_list = {'wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m',
+                         'acs,wfc1,f814w', 'wfc3,ir,f125w', 'wfc3,ir,f160w'}
     elif filt == 'nirc2':
-        filt_list = {'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
-                         'nirc2_Lp': 'nirc2,Lp','nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
-                         'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma'}
+        filt_list = { 'nirc2,J', 'nirc2,H','nirc2,Kp', 'nirc2,K',
+                         'nirc2,Lp', 'nirc2,Ms', 'nirc2,Hcont',
+                         'nirc2,FeII', 'nirc2,Brgamma'}
     elif filt == 'jg':
-        filt_list = {'jg_j': 'jg,J', 'jg_h': 'jg,H', 'jg_k': 'jg,K'}
+        filt_list = {'jg,J', 'jg,H', 'jg,K'}
         
             
     print 'Making isochrone'
     iso = synthetic.IsochronePhot(6.7, 0, 1000, mass_sampling=10, filters=filt_list, rebin=True)
-    #redlaw = reddening.RedLawNishiyama09()
-    #iso = synthetic.IsochronePhot(6.4, 2.4, 8000, mass_sampling=10, red_law=redlaw, filters=filt_list, rebin=True)
     iso = iso.points
 
     # First assert that the stellar masses are the same
