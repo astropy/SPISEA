@@ -469,7 +469,6 @@ def test_phot_consistency(filt='all'):
     # Load pre-generated isochrone, located in popstar tests directory
     direct = os.path.dirname(__file__)
     orig = Table.read(direct+'/iso_6.70_0.00_01000.fits', format='fits')
-    #orig = Table.read(direct+'/iso_6.40_2.40_08000.fits', format='fits')
 
     # Generate new isochrone with popstar code
     if filt == 'all':
@@ -486,38 +485,47 @@ def test_phot_consistency(filt='all'):
                          'nirc2,J', 'nirc2,H', 'nirc2,Kp', 'nirc2,K',
                          'nirc2,Lp', 'nirc2,Hcont',
                          'nirc2,FeII', 'nirc2,Brgamma',
-                         'jg,J', 'jg,H', 'jg,K']
+                         'jg,J', 'jg,H', 'jg,K',
+                         'nirc1,K', 'ctio_osiris,K']
 
     elif filt == 'decam':
-        filt_list = {'decam,y', 'decam,i', 'decam,z',
-                         'decam,u', 'decam,g', 'decam,r'}
+        filt_list = ['decam,y', 'decam,i', 'decam,z',
+                         'decam,u', 'decam,g', 'decam,r']
     elif filt == 'vista':
-        filt_list = {'vista,Y', 'vista,Z', 'vista,J',
-                         'vista,H', 'vista,Ks'}
+        filt_list = ['vista,Y', 'vista,Z', 'vista,J',
+                         'vista,H', 'vista,Ks']
     elif filt == 'ps1':
-        filt_list = {'ps1,z', 'ps1,g', 'ps1,r',  'ps1,i',
-                         'ps1,y'}
+        filt_list = ['ps1,z', 'ps1,g', 'ps1,r',  'ps1,i',
+                         'ps1,y']
     elif filt == 'jwst':
-        filt_list = {'jwst,F090W', 'jwst,F164N', 'jwst,F212N',
-                        'jwst,F323N',  'jwst,F466N'}
+        filt_list = ['jwst,F090W', 'jwst,F164N', 'jwst,F212N',
+                        'jwst,F323N',  'jwst,F466N']
     elif filt == 'hst':
-        filt_list = {'wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m',
-                         'acs,wfc1,f814w', 'wfc3,ir,f125w', 'wfc3,ir,f160w'}
+        filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m',
+                         'acs,wfc1,f814w', 'wfc3,ir,f125w', 'wfc3,ir,f160w']
     elif filt == 'nirc2':
-        filt_list = { 'nirc2,J', 'nirc2,H','nirc2,Kp', 'nirc2,K',
+        filt_list = ['nirc2,J', 'nirc2,H','nirc2,Kp', 'nirc2,K',
                          'nirc2,Lp', 'nirc2,Ms', 'nirc2,Hcont',
-                         'nirc2,FeII', 'nirc2,Brgamma'}
+                         'nirc2,FeII', 'nirc2,Brgamma']
     elif filt == 'jg':
-        filt_list = {'jg,J', 'jg,H', 'jg,K'}
+        filt_list = ['jg,J', 'jg,H', 'jg,K']
+        
+    elif filt == 'misc':
+        filt_list=['nirc1,K', 'ctio_osiris,K']
         
             
     print 'Making isochrone'
     iso = synthetic.IsochronePhot(6.7, 0, 1000, mass_sampling=10, filters=filt_list, rebin=True)
     iso = iso.points
 
-    # First assert that the stellar masses are the same
-    diff = abs(orig['mass'] - iso['mass'])
-    assert np.sum(diff) == 0
+    # First find masses that are the same
+    foo = []
+    for ii in iso['mass']:
+        tmp = np.where( orig['mass'] == ii)[0][0]
+        foo.append(tmp)
+        
+    assert len(foo) == len(iso)
+    orig = orig[foo]
 
     # Identify the photometry columns
     cols = iso.keys()
@@ -540,5 +548,8 @@ def test_phot_consistency(filt='all'):
 
 
     print('Phot consistency test successful for {0}'.format(filt))
+
+    # Remove iso file we just wrote, since it was only a test
+    os.remove('iso_6.70_0.00_01000.fits')
     return
 
