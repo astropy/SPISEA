@@ -829,6 +829,7 @@ class IsochronePhot(Isochrone):
             self.points.add_column(mag_col)
             
             # Loop through each star in the isochrone and do the filter integration
+            print('Starting synthetic photometry')
             for ss in range(npoints):
                 star = self.spec_list[ss]  # These are already extincted, observed spectra.
                 star_mag = mag_in_filter(star, filt)
@@ -1180,6 +1181,12 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('jg'):
         filt = filters.get_Johnson_Glass_filt(filterName)
+        
+    elif name.startswith('nirc1'):
+        filt = filters.get_nirc1_filt(filterName)
+        
+    elif name.startswith('ctio_osiris'):
+        filt = filters.get_ctio_osiris_filt(filterName)
 
     else:
         filt = ObsBandpass(name)
@@ -1256,7 +1263,8 @@ def get_obs_str(col):
                  'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
                  'nirc2_Lp': 'nirc2,Lp', 'nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
                  'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
-                 'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K'}
+                 'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K',
+                 'nirc1_K':'nirc1,K', 'ctio_osiris_K': 'ctio_osirirs,K'}
 
     obs_str = filt_list[name]
         
@@ -1277,9 +1285,9 @@ def rebin_spec(wave, specin, wavnew):
 def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
                         atm_func=default_atm_func, redlaw = default_red_law,
                         iso_dir = './', mass_sampling=1,
-                        filters={'127m': 'wfc3,ir,f127m',
-                                 '139m': 'wfc3,ir,f139m',
-                                 '153m': 'wfc3,ir,f153m'}):
+                        filters=['wfc3,ir,f127m',
+                                 'wfc3,ir,f139m',
+                                 'wfc3,ir,f153m']):
     """
     Wrapper routine to generate a grid of isochrones of different ages,
     extinctions, and distances. 
@@ -1344,46 +1352,6 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
     _out.write('Isochrone Mass: {0}'.format(mass_sampling))
     _out.close()
     return
-
-# Little helper utility to get all the bandpass/zeropoint info.
-#def get_filter_info(name, vega=vega, rebin=True):
-#    if name.startswith('nirc2'):
-#        from nirc2 import synthetic as nirc2syn
-#    
-#       tmp = name.split(',')
-#        filterName = tmp[-1]
-#        filt = nirc2syn.FilterNIRC2(filterName)
-#    else:
-#        filt = ObsBandpass(name)
-#        
-#        # Convert to ArraySpectralElement for resampling.
-#        filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
-#                                             waveunits=filt.waveunits,
-#                                             name=filt.name)
-#        
-#    # Resample the filter to have 1500 points across. More is excessive.
-#    if len(filt.wave) > 1500:
-#        idx = np.where(filt.throughput > 0.001)[0]
-#        new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
-#        filt = filt.resample(new_wave)
-#        
-#    # Check that vega spectrum covers the wavelength range of the filter.
-#    # Otherwise, throw an error
-#    if (min(filt.wave) < min(vega.wave)) | (max(filt.wave) > max(vega.wave)):
-#       raise ValueError('Vega spectrum doesnt cover filter wavelength range!')  
-#
-#    vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
-#    #vega_flux = vega_obs.binflux.sum()
-#    diff = np.diff(vega_obs.binwave)
-#    diff = np.append(diff, diff[-1])
-#    vega_flux = np.sum(vega_obs.binflux * diff)
-#    
-#    vega_mag = 0.03
-#
-#    filt.flux0 = vega_flux
-#    filt.mag0 = vega_mag
-#    
-#    return filt
 
 # Little helper utility to get the magnitude of an object through a filter.
 def mag_in_filter(star, filt):
