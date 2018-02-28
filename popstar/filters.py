@@ -195,3 +195,55 @@ def get_Johnson_Glass_filt(name):
 
     return spectrum    
 
+def get_nirc1_filt(name):
+    """
+    Define Keck/NIRC filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/nirc1/{1}.txt'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find NIRC1 filter {0} in {1}/nirc1'.format(name, filters_dir))         
+
+    # Convert wavelengths to angstroms
+    wave = t['col1'] * 10**4
+    trans = t['col2']
+    
+    # Lets fix wavelength array for duplicate values or negative vals;
+    # delete these entries
+    diff = np.diff(wave)
+    idx = np.where(diff <= 0)[0]
+
+    if len(idx) != 0:
+        bad = idx + 1
+
+        wave = np.delete(wave, bad)
+        trans = np.delete(trans, bad)
+    
+    # Change any negative transmission vals to 0
+    bad = np.where(trans < 0)
+    trans[bad] = 0
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='nirc1_{0}'.format(name))
+
+    return spectrum    
+
+def get_ctio_osiris_filt(name):
+    """
+    Define CTIO/OSIRIS filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/CTIO_OSIRIS/{1}.txt'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find CTIO/OSIRIS filter {0} in {1}/CTIO_OSIRIS'.format(name, filters_dir))         
+
+    # Convert wavelengths to angstroms
+    wave = t['col1'] * 10**4
+    trans = t['col2']
+
+    # Change any negative numbers to 0
+    bad = np.where(trans < 0)
+    trans[bad] = 0
+    
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='ctio_osiris_{0}'.format(name))
+
+    return spectrum    
