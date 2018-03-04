@@ -1,7 +1,15 @@
 ##########################################################
 #
+#
 #This IFMF comes from Raithel et al. 2017
 #https://arxiv.org/pdf/1712.00021.pdf
+#
+#
+#Casey's note to self on how to run this:
+#from ifmf import IFMF
+#t = IFMF()
+#t.generate_death_mass_distribution([array here])
+#
 #
 #########################################################
 
@@ -9,6 +17,7 @@ import numpy as np
 
 class IFMF(object):
     def __init__(self):
+        pass
         """
         The IFMF class.
         """
@@ -43,7 +52,7 @@ class IFMF(object):
         Paper: 15 < MZAMS < 40
         Us extending: 15 < MZAMS < 42.22
         """
-        return f_ej * BH_mass_core_low(MZAMS) + (1 - f_ej) * BH_mass_all(MZAMS)
+        return f_ej * self.BH_mass_core_low(MZAMS) + (1 - f_ej) * self.BH_mass_all_low(MZAMS)
 
     def NS_mass(self, MZAMS):
         """
@@ -65,68 +74,70 @@ class IFMF(object):
         WD: typecode = 1
         NS: typecode = 2
         BH: typecode = 3
-        MZAMS > 120: big
-        MZAMS < 0.5: small
+        MZAMS > 120: typecode = -2
+        MZAMS < 0.5: typecode = -1
+        output_array[0] contains the remnant mass
+        output_array[1] contains the typecode
         """
+        output_array = np.zeros((2, len(mass_array)))
         for i in np.arange(len(mass_array)):
             MZAMS = mass_array[i]
-            n = random.randint(1,101)
+            n = np.random.randint(1,101)
             if (MZAMS >= 0.5) and (MZAMS < 9):
-                typecode = 1
-                return WD_mass(MZAMS), typecode
+                output_array[0][i] = self.WD_mass(MZAMS)
+                output_array[1][i] = 1
             elif (MZAMS >=9) and (MZAMS <= 15):
-                typecode = 2
-                return NS_mass(MZAMS), typecode
+                output_array[0][i] = self.NS_mass(MZAMS)
+                output_array[1][i] = 2
             elif (MZAMS > 15) and (MZAMS <= 17.8):
                 if n > 68:
-                    typecode = 3
-                    return BH_mass_low(MZAMS, 0.9), typecode
+                    output_array[0][i] = self.BH_mass_low(MZAMS, 0.9)
+                    output_array[1][i] = 3
                 else:
-                    typecode = 2
-                    return NS_mass(MZAMS), typecode
+                    output_array[0][i] = self.NS_mass(MZAMS)
+                    output_array[1][i] = 2
             elif (MZAMS > 17.8) and (MZAMS <= 18.5):
                 if n > 83:
-                    typecode = 3
-                    return BH_mass_low(MZAMS, 0.9), typecode
+                    output_array[0][i] = self.BH_mass_low(MZAMS, 0.9)
+                    output_array[1][i] = 3
                 else:
-                    typecode = 2
-                    return NS_mass(MZAMS), typecode
+                    output_array[0][i] = self.NS_mass(MZAMS)
+                    output_array[1][i] = 2
             elif (MZAMS > 18.5) and (MZAMS <= 21.7):
                 if n > 50:
-                    typecode = 3
-                    return BH_mass_low(MZAMS, 0.9), typecode
+                    output_array[0][i] = self.BH_mass_low(MZAMS, 0.9)
+                    output_array[1][i] = 3
                 else:
-                    typecode = 2
-                    return NS_mass(MZAMS), typecode
+                    output_array[0][i] = self.NS_mass(MZAMS)
+                    output_array[1][i] = 2
             elif (MZAMS > 21.7) and (MZAMS <= 25.2):
-                typecode = 3
-                return BH_mass_low(MZAMS, 0.9), typecode
+                output_array[0][i] = self.BH_mass_low(MZAMS, 0.9)
+                output_array[1][i] = 3
             elif (MZAMS > 25.2) and (MZAMS <= 27.5):
                 if n > 65:
-                    typecode = 3
-                    return BH_mass_low(MZAMS, 0.9), typecode
+                    output_array[0][i] = self.BH_mass_low(MZAMS, 0.9)
+                    output_array[1][i] = 3
                 else: 
-                    typecode = 2
-                    return NS_mass(MZAMS), typecode
+                    output_array[0][i] = self.NS_mass(MZAMS)
+                    output_array[1][i] = 2
             elif (MZAMS > 27.5) and (MZAMS <= 60):
-                typecode = 3
                 if MZAMS > 42.22:
-                    return BH_mass_high(MZAMS), typecode
+                    output_array[0][i] = self.BH_mass_high(MZAMS)
+                    output_array[1][i] = 3
                 else:
-                    return BH_mass_low(MZAMS, 0.9), typecode
+                    output_array[0][i] = self.BH_mass_low(MZAMS, 0.9)
+                    output_array[1][i] = 3
             elif (MZAMS > 60) and (MZAMS <= 120):
                 if n > 40:
-                    typecode = 3
-                    return BH_mass_high(MZAMS), typecode
+                    output_array[0][i] = self.BH_mass_high(MZAMS)
+                    output_array[1][i] = 3
                 else:
-                    typecode = 2
-                    return NS_mass(MZAMS), typecode
+                    output_array[0][i] = self.NS_mass(MZAMS)
+                    output_array[1][i] = 2
             elif MZAMS < 0.5:
-                typecode = 'small'
-                return 0, typecode
+                output_array[0][i] = -99
+                output_array[1][i] = -1
             else:
-                typecode = 'big'
-                return 0, typecode
-                    
-    
-                                                                                       
+                output_array[0][i] = -99
+                output_array[1][i] = -2
+        return output_array
