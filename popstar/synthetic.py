@@ -12,7 +12,7 @@ from pysynphot import ObsBandpass
 from pysynphot import observation as obs
 import pysynphot
 from astropy import constants, units
-from astropy.table import Table, Column
+from astropy.table import Table, Column, MaskedColumn
 from popstar.imf import imf, multiplicity
 from popstar.utils import objects
 import pickle
@@ -50,7 +50,7 @@ def Vega():
 vega = Vega()
 
 class Cluster(object):
-    def __init__(self, iso, imf, cluster_mass, verbose=False):
+    def __init__(self, iso, imf, ifmf, cluster_mass, verbose=False):
         """
         Code to model a cluster with user-specified logAge, AKs, and distance.
         Must also specify directory containing the isochrone (made using popstar
@@ -62,36 +62,16 @@ class Cluster(object):
         self.verbose = verbose
         self.iso = iso
         self.imf = imf
+        self.ifmf = ifmf
         self.cluster_mass = cluster_mass
 
         return
 
-    
 class ResolvedCluster(Cluster):
-    def __init__(self, iso, imf, cluster_mass, save_dir='./', verbose=True):
+    def __init__(self, iso, imf, cluster_mass, ifmf=None, save_dir='./', verbose=True):
         # Save to object variables
-        Cluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
+        Cluster.__init__(self, iso, imf, ifmf, cluster_mass, verbose=verbose)
 
-        # ##### 
-        # # Use saved cluster if all parameters (except distance) match.
-        # #####
-        # # Unique parameters
-        # log_age = self.iso.points.meta['LOGAGE']
-        # AKs = self.iso.points.meta['AKS']
-        # dist = self.iso.points.meta['DISTANCE']
-        
-        # # Make and input/output file name for the stored cluster. 
-        # save_file_fmt = '{0}clust_{1:05.2f}_{2:4.2f}_{3:5s}{4:s}'
-        # save_sys_file = save_file_fmt.format(save_dir, log_age, AKs, str(dist).zfill(5), '.fits')
-        # save_comp_file = save_file_fmt.format(save_dir, log_age, AKs, str(dist).zfill(5), '_comp.fits')
-
-        # if os.path.exists(save_sys_file):
-        #     self.star_systems = Table.read(save_sys_file)
-
-        #     if self.imf.make_multiples:
-        #         self.companions = Table.read(save_comp_file)
-            
-            
         t1 = time.time()
         ##### 
         # Sample the IMF to build up our cluster mass.
@@ -109,15 +89,31 @@ class ResolvedCluster(Cluster):
         #t4 = time.time()
         #print 'make star systems: {0}'.format(t4 - t3)
         
-        # Trim out bad systems
-        star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
+        # Trim out bad systems; specifically, stars with masses outside those provided
+        # by the model isochrone
+        star_systems, compMass = self._remove_bad_systems(star_systems, compMass, self.ifmf)
 
+        ###
+        # Calculate remnant masses and identity using ifmf, if desired
+        ###
+        if self.ifmf != None:
+            remnant_mass, remnant_id = self.ifmf.generate_death_mass_distribution(star_systems['mass'])
+
+            # Mask remnant mass where it is not relevant (e.g. not a compact object)
+            remnant_mass = np.ma.masked_less(remnant_mass, 0)
+            
+            # Add columns to star_systems table
+            remnant_mass_col = MaskedColumn(remnant_mass, name='Rem_mass')
+            remnant_id_col = Column(remnant_id, name='Rem_ID')
+            star_systems.add_column(remnant_id_col)
+            star_systems.add_column(remnant_mass_col)
+        
         ##### 
         # Make a table to contain all the information about companions.
         #####
         if self.imf.make_multiples:
             #t5 = time.time()
-            companions = self._make_companions_table_interp(star_systems, compMass)
+            companions = self._make_companions_table_interp(star_systems, compMass, self.ifmf)
             #t6 = time.time()
             #print 'make comp systems: {0}'.format(t6 - t5)
         #####
@@ -374,11 +370,25 @@ class ResolvedCluster(Cluster):
         return companions
 
     
-    def _remove_bad_systems(self, star_systems, compMass):
+    def _remove_bad_systems(self, star_systems, compMass, ifmf):
+        """
+        Helper function to remove stars with masses outside the isochrone
+        mass range from the cluster. These stars are identified by having 
+        a Teff = 0, as set up by _make_companions_table_interp.
+
+        If ifmf == None, then both high and low-mass bad systems are 
+        removed. If ifmf != None, then we will save the high mass systems 
+        since they will be pluggedd into an ifmf later.
+        """
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
-        idx = np.where(star_systems['Teff'] > 0)[0]
+        if ifmf == None:
+            idx = np.where(star_systems['Teff'] > 0)[0]
+        else:
+            highest_mass_iso = np.max(star_systems['mass'][np.where(star_systems['Teff'] > 0)])
+            idx = np.where( (star_systems['Teff'] > 0) | (star_systems['mass'] > highest_mass_iso))[0]
+
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
 
@@ -388,14 +398,14 @@ class ResolvedCluster(Cluster):
         if self.imf.make_multiples:
             # Clean up companion stuff (which we haven't handeled yet)
             compMass = [compMass[ii] for ii in idx]
-            
+        
         return star_systems, compMass
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 red_law=default_red_law, verbose=False):
+                 ifmf=None, red_law=default_red_law, verbose=False):
 
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmf=ifmf, verbose=verbose)
 
         # For a given delta_AKs (Gaussian sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
@@ -415,10 +425,15 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
 
         # Perturb all of star systems' photometry by a random amount corresponding to
         # differential de-reddening. The distribution is normal with a width of
-        # Aks +/- deltaAKs in each filter
+        # Aks +/- deltaAKs in each filter.
         rand_red = np.random.randn(len(self.star_systems))
         for filt in self.filt_names:
             self.star_systems[filt] += rand_red * delta_red_filt[filt]
+
+            # If ifmf is specified, then return photometry of compact objects to 0
+            if self.ifmf != None:
+                compact = np.where(self.star_systems['Rem_ID'] > 0)
+                self.star_systems[filt][compact] = 0
 
         # Perturb the companions by the same amount.
         if self.imf.make_multiples:
