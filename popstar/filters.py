@@ -213,12 +213,16 @@ def get_nirc1_filt(name):
     diff = np.diff(wave)
     idx = np.where(diff <= 0)[0]
 
-    if len(idx) != 0:
+    while(len(idx) != 0):
         bad = idx + 1
 
         wave = np.delete(wave, bad)
         trans = np.delete(trans, bad)
-    
+
+        diff = np.diff(wave)
+        idx = np.where(diff <= 0)[0]
+        print('Duplicate entry loop')
+        
     # Change any negative transmission vals to 0
     bad = np.where(trans < 0)
     trans[bad] = 0
