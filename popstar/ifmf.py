@@ -71,13 +71,16 @@ class IFMF(object):
     
     def generate_death_mass_distribution(self, mass_array):
         """
+        typecode tells what compact object formed:
         WD: typecode = 1
         NS: typecode = 2
         BH: typecode = 3
-        MZAMS > 120: typecode = -2
-        MZAMS < 0.5: typecode = -1
+        typecode of value -1 means you're outside the range of validity for applying the ifmf formula
+        remnant mass of -99 means you're outside the range of validity for applying the ifmf formula
+        range of validity: 0.5 < MZAMS < 120
         output_array[0] contains the remnant mass
         output_array[1] contains the typecode
+        
         """
         output_array = np.zeros((2, len(mass_array)))
         for i in np.arange(len(mass_array)):
@@ -139,5 +142,5 @@ class IFMF(object):
                 output_array[1][i] = -1
             else:
                 output_array[0][i] = -99
-                output_array[1][i] = -2
+                output_array[1][i] = -1
         return output_array
