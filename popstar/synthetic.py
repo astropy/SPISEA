@@ -97,17 +97,31 @@ class ResolvedCluster(Cluster):
         # Calculate remnant masses and identity using ifmf, if desired
         ###
         if self.ifmf != None:
-            remnant_mass, remnant_id = self.ifmf.generate_death_mass_distribution(star_systems['mass'])
+            # Initialize remnant ID, remnant_mass columns. Default ID is 0, mass = -99 for
+            # non-compact objects
+            remnant_id = np.zeros(len(star_systems['mass']))
+            remnant_mass = np.ones(len(star_systems['mass'])) * -99
 
-            # Mask remnant mass where it is not relevant (e.g. not a compact object)
-            remnant_mass = np.ma.masked_less(remnant_mass, 0)
+            # Identify compact objects as those with Teff = 0 (indicating they are not
+            # present in isochrone)
+            idx_rem = np.where(star_systems['Teff'] == 0)
+            
+            # Calculate remnant mass and ID for compact objects; update remnant_id and
+            # remnant_mass arrays accordingly
+            r_mass_tmp, r_id_tmp = self.ifmf.generate_death_mass_distribution(star_systems['mass'][idx_rem])
+            remnant_mass[idx_rem] = r_mass_tmp
+            remnant_id[idx_rem] = r_id_tmp
+
+            # Mask remnant mass where it is not relevant (e.g. not a compact object or
+            # outside mass range IFMF is defined for)
+            remnant_mass = np.ma.masked_where((remnant_id <= 0), remnant_mass)
             
             # Add columns to star_systems table
             remnant_mass_col = MaskedColumn(remnant_mass, name='Rem_mass')
             remnant_id_col = Column(remnant_id, name='Rem_ID')
             star_systems.add_column(remnant_id_col)
             star_systems.add_column(remnant_mass_col)
-        
+            
         ##### 
         # Make a table to contain all the information about companions.
         #####
