@@ -486,7 +486,7 @@ def test_phot_consistency(filt='all'):
                          'nirc2,Lp', 'nirc2,Hcont',
                          'nirc2,FeII', 'nirc2,Brgamma',
                          'jg,J', 'jg,H', 'jg,K',
-                         'nirc1,K', 'ctio_osiris,K']
+                         'nirc1,K', 'nirc1_H', 'ctio_osiris,K', 'ctio_osiris,H']
 
     elif filt == 'decam':
         filt_list = ['decam,y', 'decam,i', 'decam,z',
@@ -511,7 +511,7 @@ def test_phot_consistency(filt='all'):
         filt_list = ['jg,J', 'jg,H', 'jg,K']
         
     elif filt == 'misc':
-        filt_list=['nirc1,K', 'ctio_osiris,K']
+        filt_list=['nirc1,K', 'nirc1,H', 'ctio_osiris,K', 'ctio_osiris,H']
         
             
     print 'Making isochrone'
