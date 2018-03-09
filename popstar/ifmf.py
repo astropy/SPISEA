@@ -5,12 +5,6 @@
 #https://arxiv.org/pdf/1712.00021.pdf
 #
 #
-#Casey's note to self on how to run this:
-#from ifmf import IFMF
-#t = IFMF()
-#t.generate_death_mass_distribution([array here])
-#
-#
 #########################################################
 
 import numpy as np
@@ -79,8 +73,7 @@ class IFMF(object):
         remnant mass of -99 means you're outside the range of validity for applying the ifmf formula
         range of validity: 0.5 < MZAMS < 120
         output_array[0] contains the remnant mass
-        output_array[1] contains the typecode
-        
+        output_array[1] contains the typecode        
         """
         output_array = np.zeros((2, len(mass_array)))
         for i in np.arange(len(mass_array)):
@@ -200,10 +193,28 @@ class IFMF_new(object):
         return 0.109*MZAMS + 0.394
 
     def generate_death_mass_distribution(self, mass_array):
+        """
+        typecode tells what compact object formed:
+        WD: typecode = 1                                                                                        
+        NS: typecode = 2                                                                                                        
+        BH: typecode = 3                                                                                                              
+        typecode of value -1 means you're outside the range of validity for applying the ifmf formula                                 
+        remnant mass of -99 means you're outside the range of validity for applying the ifmf formula                                     
+        range of validity: 0.5 < MZAMS < 120                                                                                         
+        output_array[0] contains the remnant mass                                                                                    
+        output_array[1] contains the typecode                                                                                            
+        """
+
+        #output_array[0] holds the remnant mass
+        #output_array[1] holds the remnant type
         output_array = np.zeros((2, len(mass_array)))
 
+        #Random array to get probabilities for what type of object will form
         random_array = np.random.randint(1, 101, size = len(mass_array))
-
+        
+        """
+        The id_arrays are to separate all the different formation regimes
+        """
         id_array0 = np.where((mass_array < 0.5) | (mass_array >= 120))
         output_array[0][id_array0] = -99 * np.ones(len(id_array0))
         output_array[1][id_array0]  = -1 * np.ones(len(id_array0))
