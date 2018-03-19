@@ -80,11 +80,15 @@ performance.
 You need to notify python where these models are going to live. This
 is done in two steps.
 
-In your .cshrc or .bashrc, set the PSYN_CDBS variable to point to the
-CDBS directory:
+In your .cshrc or .bashrc, set the PYSYN_CDBS and POPSTAR_MODELS variables:
 
-    setenv PSYN_CDBS /g/lu/models/cdbs
-    export PSYN_CDBS=/g/lu/models/cdbs
+    setenv PYSYN_CDBS /g/lu/models/cdbs
+    setenv POPSTAR_MODELS /g/lu/models
+
+or
+
+    export PYSYN_CDBS=/g/lu/models/cdbs
+    export POPSTAR_MODELS=/g/lu/models
 
 
 ## Other Resources
