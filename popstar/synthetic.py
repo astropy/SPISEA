@@ -39,7 +39,7 @@ def Vega():
                                      gravity=3.95,
                                      metallicity=-0.5)
 
-    vega = spectrum.trimSpectrum(vega, 3000, 50000)
+    vega = spectrum.trimSpectrum(vega, 3000, 52000)
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
     # and is used to convert to flux observed at Earth.
