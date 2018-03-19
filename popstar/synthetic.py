@@ -506,7 +506,7 @@ class ResolvedClusterDiffRedden2(ResolvedCluster):
 
 class UnresolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass,
-                 wave_range=[5000, 50000], verbose=False):
+                 wave_range=[5000, 52000], verbose=False):
         """
         iso : Isochrone
         """
@@ -583,7 +583,7 @@ class Isochrone(object):
     def __init__(self, logAge, AKs, distance,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  red_law=default_red_law, mass_sampling=1,
-                 wave_range=[5000, 42500], min_mass=None, max_mass=None):
+                 wave_range=[5000, 52000], min_mass=None, max_mass=None):
         """
         Parameters
         ----------
@@ -667,7 +667,7 @@ class Isochrone(object):
             # This is the time-intensive call... everything else is negligable.
             star = atm_func(temperature=T, gravity=gravity)
 
-            # Trim wavelength range down to JHKL range (0.5 - 4.25 microns)
+            # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
 
             # Convert into flux observed at Earth (unreddened)
@@ -912,7 +912,7 @@ class IsochronePhot(Isochrone):
 class iso_table(object):
     def __init__(self, logAge, distance, evo_model=default_evo_model,
                  atm_func=default_atm_func, mass_sampling=1,
-                 min_mass=None, max_mass=None, wave_range=[5000, 30000],
+                 min_mass=None, max_mass=None, wave_range=[5000, 52000],
                  rebin=True):
         """
         Generate an isochrone table containing star mass, temp, radius,
@@ -1015,7 +1015,7 @@ class iso_table(object):
             # This is the time-intensive call... everything else is negligable.
             star = atm_func(temperature=T, gravity=gravity)
             
-            # Trim wavelength range down to JHKL range (0.5 - 4.25 microns)
+            # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
 
             # Convert into flux observed at Earth (unreddened)
