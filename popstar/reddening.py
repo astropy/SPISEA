@@ -1425,6 +1425,95 @@ class RedLawHosek18(pysynphot.reddening.CustomRedLaw):
 
         return A_at_wave
 
+class RedLawHosek18_extended(pysynphot.reddening.CustomRedLaw):
+    """
+    An object that represents the reddening vs. wavelength for the 
+    Hosek+18 reddening law (Wd1 + Arches RC stars) for lambda < 2.2
+    microns and the Schlafly+16 extinction law for lambda > 2.2 microns
+
+    pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
+
+    The wavelength range over which this law is calculated is
+    0.7 - 5.2 microns.
+    """
+    def __init__(self):
+        # Calculate Hosek+18 extinction curve for 0.7 -- 2.2 microns
+        # and Schlafly+16 extinction curve for 2.2 -- 5.2 microns, 0.6 -- 0.7 microns
+        wave_h18 = np.arange(0.7, 2.2, 0.001) * 10**4
+        wave_s16 = np.arange(2.2, 5.2, 0.002) * 10**4
+        wave_s16 = np.arange(0.6, 0.7, 0.001) * 10**4
+
+        h18 = RedLawHosek18()
+        s16 = RedLawSchlafly16(1.9, -0.1)
+
+        # Let's stitch the law together appropriately
+        idx_h18 = np.where( (h18.wave <= 22000) & (h18.wave >= 7000)) 
+        idx_s16_short = np.where(s16.wave <= 7000)
+        idx_s16_long = np.where(s16.wave >= 22000)
+
+        # At the boundaries, we'll find the difference between the H18 and S16 laws and
+        # just subtract the difference (so S16 law --> H18)
+        diff_short = np.flip(s16.obscuration[idx_s16_short], axis=0)[0] - h18.obscuration[idx_h18][0]
+        diff_long = np.flip(s16.obscuration[idx_s16_long], axis=0)[-1] - h18.obscuration[idx_h18][-1]
+        
+        wave_f = np.append(np.flip(s16.wave[idx_s16_long], axis=0), np.flip(h18.wave[idx_h18], axis=0))
+        wave_f = np.append(wave_f, np.flip(s16.wave[idx_s16_short], axis=0))
+        
+        Alambda_f = np.append(np.flip(s16.obscuration[idx_s16_long], axis=0) - diff_long, np.flip(h18.obscuration[idx_h18], axis=0))
+        Alambda_f = np.append(Alambda_f, np.flip(s16.obscuration[idx_s16_short], axis=0) - diff_short)
+
+        
+
+        pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave_f, 
+                                                  waveunits='angstrom',
+                                                  Avscaled=Alambda_f,
+                                                  name='S16 + H18',
+                                                  litref='Schlafly+16, Hosek+18')
+
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave_f)
+        self.high_lim = max(wave_f)
+        self.name = 'S16_H18'
+        
+    def Hosek18_extended(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
+
+        return A_at_wave
+
 #---------------------------#
 # Cubic spline function from Schalfly+16 appendix
 #---------------------------#
