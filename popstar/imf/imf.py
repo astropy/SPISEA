@@ -126,13 +126,13 @@ class IMF(object):
                     #t1 = time.time()
                     compMasses, newSystemMasses, newIsMultiple = self.calc_multi(newMasses, compMasses,
                                                                                  newSystemMasses, newIsMultiple,
-                                                                                 CSF, MF)
+                                                                                    CSF, MF)
 
                     newTotalMassTally = newSystemMasses.sum()
                     isMultiple = np.append(isMultiple, newIsMultiple)
                     systemMasses = np.append(systemMasses, newSystemMasses)
                     #t2 = time.time()
-                    #print 'Generate multiples: {0}'.format(t2 - t1)
+                    #print('Generate multiples: {0}'.format(t2 - t1))
                 #------Previous code------#
                 old = False
                 if old:
@@ -363,12 +363,18 @@ class IMF_broken_powerlaw(IMF):
         mass value.
         """
         return self.int_xi(massLo, massHi)
-    
+
     def int_xi(self, massLo, massHi):
         """Return the integrated probability between some low and high 
         mass value.
         """
         return self.prim_xi(massHi) - self.prim_xi(massLo)
+    
+    def getMassBetween(self, massLo, massHi):
+        """Return the integrated mass between some low and high 
+        mass value.
+        """
+        return self.int_mxi(massLo, massHi)
     
     def int_mxi(self, massLo, massHi):
         """Return the integrated total mass between some low and high stellar
@@ -440,6 +446,7 @@ class IMF_broken_powerlaw(IMF):
             Mmax = self._m_limits_high[-1]
 
         if Mmin == None:
+
             Mmin = self._m_limits_low[0]
 
         if Mmax > Mcl:

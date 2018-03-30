@@ -3,6 +3,7 @@ import pylab as plt
 from popstar import reddening
 from popstar import evolution
 from popstar import atmospheres as atm
+from popstar import filters 
 from scipy import interpolate
 from scipy import stats
 from scipy.special import erf
@@ -23,9 +24,9 @@ import scipy
 import matplotlib
 import matplotlib.pyplot as plt
 import time
+import warnings
 import pdb
 from scipy.spatial import cKDTree as KDTree
-
 
 default_evo_model = evolution.MergedBaraffePisaEkstromParsec()
 default_red_law = reddening.RedLawNishiyama09()
@@ -38,7 +39,7 @@ def Vega():
                                      gravity=3.95,
                                      metallicity=-0.5)
 
-    vega = spectrum.trimSpectrum(vega, 3000, 50000)
+    vega = spectrum.trimSpectrum(vega, 3000, 52000)
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
     # and is used to convert to flux observed at Earth.
@@ -67,7 +68,7 @@ class Cluster(object):
 
     
 class ResolvedCluster(Cluster):
-    def __init__(self, iso, imf, cluster_mass, filters=None, save_dir='./', verbose=True):
+    def __init__(self, iso, imf, cluster_mass, save_dir='./', verbose=True):
         # Save to object variables
         Cluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
 
@@ -97,13 +98,9 @@ class ResolvedCluster(Cluster):
         #####
         mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
 
-        # Figure out the filters we will make. If filters input not defined,
-        # then take the filter headers from the isochrone
-        if filters == None:
-            self.filt_names = self.set_filter_names()
-        else:
-            self.filt_names = filters
-            
+        # Figure out the filters we will make.
+        self.filt_names = self.set_filter_names()
+
         ##### 
         # Make a table to contain all the information about each stellar system.
         #####
@@ -114,7 +111,7 @@ class ResolvedCluster(Cluster):
         
         # Trim out bad systems
         star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
- 
+
         ##### 
         # Make a table to contain all the information about companions.
         #####
@@ -137,7 +134,7 @@ class ResolvedCluster(Cluster):
         filt_names = []
         
         for col_name in self.iso.points.colnames:
-            if 'mag' in col_name:
+            if 'm_' in col_name:
                 filt_names.append(col_name)
 
         return filt_names
@@ -396,11 +393,11 @@ class ResolvedCluster(Cluster):
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 red_law=default_red_law, filters=None, verbose=False):
+                 red_law=default_red_law, verbose=False):
 
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, filters=filters, verbose=verbose)
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
 
-        # For a given delta_AKs (sigma of reddening distribution at Ks),
+        # For a given delta_AKs (Gaussian sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
         #t1 = time.time()
         delta_red_filt = {}
@@ -409,13 +406,16 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         red_vega_hi = vega * red_law.reddening(AKs + deltaAKs).resample(vega.wave)
 
         for filt in self.filt_names:
-            filt_info = get_filter_info(iso.filters[filt.replace('mag', '')])
+            obs_str = get_obs_str(filt)
+            filt_info = get_filter_info(obs_str)
             
             mag_lo = mag_in_filter(red_vega_lo, filt_info)
             mag_hi = mag_in_filter(red_vega_hi, filt_info)
             delta_red_filt[filt] = mag_hi - mag_lo
 
-        # Perturb all of star systems' photometry by a random amount.
+        # Perturb all of star systems' photometry by a random amount corresponding to
+        # differential de-reddening. The distribution is normal with a width of
+        # Aks +/- deltaAKs in each filter
         rand_red = np.random.randn(len(self.star_systems))
         for filt in self.filt_names:
             self.star_systems[filt] += rand_red * delta_red_filt[filt]
@@ -454,9 +454,19 @@ class ResolvedClusterDiffRedden2(ResolvedCluster):
         red_vega_blue = vega * red_law.reddening(AKs - deltaAKs_blue).resample(vega.wave)
         red_vega = vega * red_law.reddening(AKs).resample(vega.wave)
         red_vega_red = vega * red_law.reddening(AKs + deltaAKs_red).resample(vega.wave)
-        
+
         for filt in self.filt_names:
-            filt_info = get_filter_info(iso.filters[filt.replace('mag', '')])
+            #=======BUG HERE=====#
+            # This is only because I changed column header conventions in popstar after
+            # generating the IMF grid. I will need to fix this for new isochrones
+            #if filt == 'mag_127m':
+            #    filt_info = get_filter_info(iso.filters['hst_F127M'])
+            #elif filt == 'mag_153m':
+            #    filt_info = get_filter_info(iso.filters['hst_F153M'])
+            #elif filt == 'mag_139m':
+            #    filt_info = get_filter_info(iso.filters['hst_F139M'])
+            #====================#
+            filt_info = get_filter_info(iso.filters[filt.replace('mag_', '')])
             
             mag_blue = mag_in_filter(red_vega_blue, filt_info)
             mag = mag_in_filter(red_vega, filt_info)
@@ -496,7 +506,7 @@ class ResolvedClusterDiffRedden2(ResolvedCluster):
 
 class UnresolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass,
-                 wave_range=[5000, 50000], verbose=False):
+                 wave_range=[5000, 52000], verbose=False):
         """
         iso : Isochrone
         """
@@ -568,13 +578,12 @@ class UnresolvedCluster(Cluster):
         print( 'Total cluster mass is {0:f} M_sun'.format(self.mass_tot))
 
         return
-
         
 class Isochrone(object):
     def __init__(self, logAge, AKs, distance,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  red_law=default_red_law, mass_sampling=1,
-                 wave_range=[5000, 42500]):
+                 wave_range=[5000, 52000], min_mass=None, max_mass=None):
         """
         Parameters
         ----------
@@ -591,7 +600,13 @@ class Isochrone(object):
                        an integer value.
         wave_range : list
             length=2 list with the wavelength min/max of the final spectra.
-            Units are Angstroms.
+            Units are Angstroms. 
+        min_mass: float or None
+            If float, defines the minimum mass in the isochrone.
+            Units: solar masses
+        max_mass: float or None
+            If float, defines the maxmimum mass in the isochrone.
+            Units: solar masses
         """
 
         t1 = time.time()
@@ -605,6 +620,14 @@ class Isochrone(object):
         # Eliminate cases where log g is less than 0
         idx = np.where(evol['logg'] > 0)
         evol = evol[idx]
+
+        # Trim to desired mass range
+        if min_mass != None:
+            idx = np.where(evol['mass'] >= min_mass)
+            evol = evol[idx]
+        if max_mass != None:
+            idx = np.where(evol['mass'] <= max_mass)
+            evol = evol[idx] 
 
         # Trim down the table by selecting every Nth point where
         # N = mass sampling factor.
@@ -635,7 +658,6 @@ class Isochrone(object):
         # For each temperature extract the synthetic photometry.
         for ii in range(len(tab['Teff'])):
             # Loop is currently taking about 0.11 s per iteration
-
             gravity = float( logg_all[ii] )
             L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
             T = float( T_all[ii] / units.K)               # in Kelvin
@@ -644,8 +666,8 @@ class Isochrone(object):
             # Get the atmosphere model now. Wavelength is in Angstroms
             # This is the time-intensive call... everything else is negligable.
             star = atm_func(temperature=T, gravity=gravity)
-            
-            # Trim wavelength range down to JHKL range (0.5 - 4.25 microns)
+
+            # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
 
             # Convert into flux observed at Earth (unreddened)
@@ -726,17 +748,11 @@ class IsochronePhot(Isochrone):
     def __init__(self, logAge, AKs, distance,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
-                 filters={'127m': 'wfc3,ir,f127m',
-                          '139m': 'wfc3,ir,f139m',
-                          '153m': 'wfc3,ir,f153m',
-                          'J': 'nirc2,J',
-                          'H': 'nirc2,H',
-                          'K': 'nirc2,K',
-                          'Kp': 'nirc2,Kp',
-                          'Lp': 'nirc2,Lp',
-                          '814w': 'acs,wfc1,f814w',
-                          '125w': 'wfc3,ir,f125w',
-                          '160w': 'wfc3,ir,f160w'}):
+                 min_mass=None, max_mass=None, rebin=True, recomp=False, 
+                 filters={'wfc3,ir,f127m', 'wfc3,ir,f139m',
+                          'wfc3,ir,f153m', 'acs,wfc1,f814w',
+                          'wfc3,ir,f125w', 'wfc3,ir,f160w',
+                          'nirc2,J', 'nirc2,H', 'nirc2,Kp',}):
 
         """
         Make an isochrone with photometry in various filters.
@@ -747,7 +763,11 @@ class IsochronePhot(Isochrone):
         or save to file if possible.
 
         Parameters
-        ----------
+        ---------- 
+        rebin: boolean (default=True)
+            If true, rebins the filter functions such that they have no more than 1500 pts
+            over the non-zero throughput region
+
 
         Returns
         -------
@@ -755,36 +775,32 @@ class IsochronePhot(Isochrone):
         """
         
         # Make and input/output file name for the stored isochrone photometry.
-        save_file_fmt = '{0}iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
+        save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
         self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5))
 
         # Expected filters
         self.filters = filters
 
-        if not os.path.exists(self.save_file):
+        if (not os.path.exists(self.save_file)) | (recomp==True):
             Isochrone.__init__(self, logAge, AKs, distance,
                                evo_model=evo_model, atm_func=atm_func,
-                               red_law=red_law, mass_sampling=mass_sampling)
+                               red_law=red_law, mass_sampling=mass_sampling,
+                               min_mass=min_mass, max_mass=max_mass)
             self.verbose = True
-            self.make_photometry()
+            
+            # Make photometry
+            self.make_photometry(rebin=rebin, vega=vega)
         else:
             self.points = Table.read(self.save_file)
             # Add some error checking.
 
         return
 
-    def make_photometry(self):
+    def make_photometry(self, rebin=True, vega=vega):
         """ 
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
         photometry.
-
-        Parameters
-        ----------
-        filters : dictionary
-            A dictionary containing the filter name (for the output columns)
-            and the filter specification string that can be processed by pysynphot.
-
         
         """
         startTime = time.time()
@@ -800,18 +816,20 @@ class IsochronePhot(Isochrone):
 
         # Loop through the filters, get filter info, make photometry for
         # all stars in this filter.
-        for filt_name, filt_str in self.filters.items():
+        for ii in self.filters:
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
-            print( prt_fmt.format(filt_name, time.time() - startTime))
-            
-            filt = get_filter_info(filt_str)
+            print( prt_fmt.format(ii, time.time() - startTime))
+
+            filt = get_filter_info(ii, rebin=rebin, vega=vega)
+            filt_name = get_filter_col_name(ii)
 
             # Make the column to hold magnitudes in this filter. Add to points table.
-            col_name = 'mag' + filt_name
+            col_name = 'm_' + filt_name
             mag_col = Column(np.zeros(npoints, dtype=float), name=col_name)
             self.points.add_column(mag_col)
             
             # Loop through each star in the isochrone and do the filter integration
+            print('Starting synthetic photometry')
             for ss in range(npoints):
                 star = self.spec_list[ss]  # These are already extincted, observed spectra.
                 star_mag = mag_in_filter(star, filt)
@@ -826,7 +844,7 @@ class IsochronePhot(Isochrone):
         print( '      Time taken: {0:.2f} seconds'.format(endTime - startTime))
 
         if self.save_file != None:
-            self.points.write(self.save_file)
+            self.points.write(self.save_file, overwrite=True)
 
         return
 
@@ -886,25 +904,446 @@ class IsochronePhot(Isochrone):
             plt.savefig(savefile)
         
         return
+
+#===================================================#
+# Iso table: same as IsochronePhot object, but doesn't do reddening application
+# or photometry automatically. These are separate functions on the object.
+#===================================================#
+class iso_table(object):
+    def __init__(self, logAge, distance, evo_model=default_evo_model,
+                 atm_func=default_atm_func, mass_sampling=1,
+                 min_mass=None, max_mass=None, wave_range=[5000, 52000],
+                 rebin=True):
+        """
+        Generate an isochrone table containing star mass, temp, radius,
+        luminosity, and logg, as well as a table of spectra for those
+        stars. Also produce set of corresponding spectra which are
+        flux calibrated by distance but not reddened in any way.
+
+        Functions on this object:
+        apply_reddening (Apply reddening with defined redlaw and AKs)
+        make_photometry (make synthetic photometry for spectra)
+                 
+        Parameters
+        ----------
+        logAge : float
+            The log of the age of the isochrone.
+        distance : float
+            The distance in pc.
+        evo_model : PopStar evolution object
+            Stellar evolution models used
+        atm_func: PopStar atmosphere object
+            Atmospheric models used
+        mass_sampling - Sample the raw isochrone every ## steps. The default
+                       is mass_sampling = 10, which takes every 10th point.
+                       The isochrones are already very finely sampled. Must be
+                       an integer value.
+        min_mass: float or None
+            If float, defines the minimum mass in the iso_table.
+            Units: solar masses
+        max_mass: float or None
+            If float, defines the maxmimum mass in the iso_table.
+            Units: solar masses
+        wave_range : list
+            length=2 list with the wavelength min/max of the final spectra.
+            Units are Angstroms.
+        dir_to_VISTA: string (default = './') or None
+            Path to files which define the VISTA bandpasses. If None, will not
+            have access to VISTA filters
+        dir_to_DEC: string (default = './') or None
+            Path to files which define the DECam bandpasses. If None, will not
+            have access to DECam filter
+        dir_to_PS1: string (default = './') or None
+            Path to files which define the PS1 bandpasses. If None, will not
+            have access to PS1 filters
+        rebin: boolean
+            If true, rebin the VISTA filter functions to match the synthetic
+            spectrum. This is very useful to save computation time down the
+            road.
+        """
+        t1 = time.time()        
+        c = constants
+
+        # Get solar metallicity models for a population at a specific age.
+        # Takes about 0.1 seconds.
+        evol = evo_model.isochrone(age=10**logAge)  # solar metallicity 
+        
+        # Eliminate cases where log g is less than 0
+        idx = np.where(evol['logg'] > 0)
+        evol = evol[idx]
+
+        # Trim to desired mass range
+        if min_mass != None:
+            idx = np.where(evol['mass'] >= min_mass)
+            evol = evol[idx]
+        if max_mass != None:
+            idx = np.where(evol['mass'] <= max_mass)
+            evol = evol[idx]            
+ 
+        # Trim down the table by selecting every Nth point where
+        # N = mass sampling factor.
+        evol = evol[::mass_sampling]
+
+        # Determine which stars are WR stars.
+        evol['isWR'] = evol['logT'] != evol['logT_WR']
+
+        # Give luminosity, temperature, mass, radius units (astropy units).
+        L_all = 10**evol['logL'] * c.L_sun # luminsoity in erg/s
+        T_all = 10**evol['logT'] * units.K
+        R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * T_all**4))
+        mass_all = evol['mass'] * units.Msun # masses in solar masses
+        logg_all = evol['logg']
+        isWR_all = evol['isWR']
+
+        # Define the table that contains the "average" properties for each star.
+        tab = Table([L_all, T_all, R_all, mass_all, logg_all, isWR_all],
+                    names=['L', 'Teff', 'R', 'mass', 'logg', 'isWR'])
+
+        # Initialize output for stellar spectra
+        self.spec_list = []
+
+        # For each temperature extract the synthetic photometry.
+        for ii in range(len(tab['Teff'])):
+            # Loop is currently taking about 0.11 s per iteration
+
+            gravity = float( logg_all[ii] )
+            L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
+            T = float( T_all[ii] / units.K)               # in Kelvin
+            R = float( R_all[ii].to('pc') / units.pc)              # in pc
+
+            # Get the atmosphere model now. Wavelength is in Angstroms
+            # This is the time-intensive call... everything else is negligable.
+            star = atm_func(temperature=T, gravity=gravity)
+            
+            # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
+            star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
+
+            # Convert into flux observed at Earth (unreddened)
+            star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
+            
+            # Save the final spectrum to our spec_list for later use.            
+            self.spec_list.append(star)
+
+        # Append all the meta data to the summary table.
+        
+        tab.meta['ATMFUNC'] = atm_func.__name__
+        tab.meta['EVOMODEL'] = type(evo_model).__name__
+        tab.meta['LOGAGE'] = logAge
+        tab.meta['DISTANCE'] = distance
+        tab.meta['WAVEMIN'] = wave_range[0]
+        tab.meta['WAVEMAX'] = wave_range[1]
+
+        self.points = tab
     
+        t2 = time.time()
+        print('Isochrone generation took {0:f} s.'.format(t2-t1))
+        
+        return
+
+    def apply_reddening(self, AKs, extinction_law, dAKs=0, dist='uniform', dAKs_max=None):
+        """
+        Apply extinction to the spectra in iso_table, using the defined
+        extinction law
+
+        Parameters:
+        ----------
+        AKs: float
+            Total extinction in AKs
+            
+        extinction_law: popstar extinction object
+            Extinction law to be used on the spectra
+
+        dAks: float (default = 0)
+            Differential extinction to apply to star, if desired.
+            Will draw reddening from Aks +/- dAks
+
+        dAKs_max: float or None
+            If not none, defines the maximum |dAKs| a star can
+            have in gaussian distribution case 
+
+        dist: string, 'uniform' or 'gaussian'
+            Distribution to draw differential reddening from. If uniform,
+            dAKs will cut off at Aks +/- dAKs. Otherwise, will draw
+            from Gaussian of width AKs +/- dAks
+            
+        """
+        self.AKs = np.ones(len(self.spec_list))
+        # Apply reddening to each object in the spec list
+        for i in range(len(self.spec_list)):
+            star = self.spec_list[i]
+
+            # Calculate reddening at extinction value using defined
+            # extinction law
+            if dAKs != 0:
+                if dist == 'gaussian':
+                    AKs_act = np.random.normal(loc=AKs, scale=dAKs)
+                    # Apply dAKs_max if desired. Redo if diff > dAKs_max
+                    if dAKs_max != None:
+                        diff = abs(AKs_act - AKs)
+                        while diff > dAKs_max:
+                            print('While loop active')
+                            AKs_act = np.random.normal(loc=AKs, scale=dAKs)
+                            diff = abs(AKs_act - AKs)
+                elif dist == 'uniform':
+                    low = AKs - dAKs
+                    high = AKs + dAKs
+                    AKs_act = np.random.uniform(low=low, high=high)
+                else:
+                    print('dist {0} undefined'.format(dist))
+                    return
+            else:
+                AKs_act = AKs
+
+            red = extinction_law.reddening(AKs_act).resample(star.wave) 
+            star *= red
+
+            # Update the spectrum in spec list
+            self.spec_list[i] = star
+            self.AKs[i] = AKs_act
+
+        # Update the table to reflect the AKs used
+        self.points.meta['AKS'] = AKs
+
+        return
+
+    def make_photometry(self, filters, rebin=True):
+        """ 
+        Make synthetic photometry for the specified filters. This function
+        udpates the self.points table to include new columns with the
+        photometry.
+
+        Parameters
+        ----------
+        filters : dictionary
+            A dictionary containing the filter name (for the output columns)
+            and the filter specification string that can be processed by pysynphot.
+                   
+        rebin: boolean
+            True to rebin filter function (only used if non-zero transmission points are 
+            larger than 1500 points)
+ 
+        """
+        npoints = len(self.points)
+
+        # Loop through the filters, get filter info, make photometry for
+        # all stars in this filter.
+        ts = time.time()
+        for filt_name, filt_str in filters.items():
+            # Define filter info
+            prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
+            print( prt_fmt.format(filt_name, time.time() - ts))
+            filt = get_filter_info(filt_str, rebin=rebin, vega=vega)
+
+            # Make the column to hold magnitudes in this filter. Add to points table.
+            col_name = 'mag_' + filt_name
+            mag_col = Column(np.zeros(npoints, dtype=float), name=col_name)
+            self.points.add_column(mag_col)
+            
+            # Loop through each star in the isochrone and do the filter integration
+            for ss in range(npoints):
+                star = self.spec_list[ss]  # These are already extincted, observed spectra.
+                star_mag = mag_in_filter(star, filt)
+                
+                self.points[col_name][ss] = star_mag
+        
+
+        endTime = time.time()
+        print( '      Time taken: {0:.2f} seconds'.format(endTime - ts))
+
+        return
+
+def get_filter_info(name, vega=vega, rebin=True):
+    """ 
+    Define filter functions, setting ZP according to
+    Vega spectrum. Input name is the popstar
+    obs_string
+    """
+    tmp = name.split(',')
+    filterName = tmp[-1]
+        
+    if name.startswith('nirc2'):
+        filt = filters.get_nirc2_filt(filterName)
+
+    elif name.startswith('2mass'):
+        filt = filters.get_2mass_filt(filterName)
+        
+    elif name.startswith('vista'):
+        filt = filters.get_vista_filt(filterName)
+
+    elif name.startswith('decam'):
+        filt = filters.get_decam_filt(filterName)
+
+    elif name.startswith('ps1'):
+        filt = filters.get_PS1_filt(filterName)
+
+    elif name.startswith('jwst'):
+        filt = filters.get_jwst_filt(filterName)
+
+    elif name.startswith('jg'):
+        filt = filters.get_Johnson_Glass_filt(filterName)
+        
+    elif name.startswith('nirc1'):
+        filt = filters.get_nirc1_filt(filterName)
+        
+    elif name.startswith('ctio_osiris'):
+        filt = filters.get_ctio_osiris_filt(filterName)
+
+    else:
+        filt = ObsBandpass(name)
+        
+        # Convert to ArraySpectralElement for resampling.
+        filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
+                                             waveunits=filt.waveunits,
+                                             name=filt.name)
+           
+    # If rebin=True, limit filter function to <=1500 wavelength points
+    # over the non-zero values
+    idx = np.where(filt.throughput > 0.001)[0]
+    if rebin:
+        if len(filt.wave[idx]) > 1500:
+            new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
+            filt = filt.resample(new_wave)
+
+    # Check that vega spectrum covers the wavelength range of the filter.
+    # Otherwise, throw an error
+    idx = np.where(filt.throughput > 0.001)[0]
+    if (min(filt.wave[idx]) < min(vega.wave)) | (max(filt.wave[idx]) > max(vega.wave)):
+        raise ValueError('Vega spectrum doesnt cover filter wavelength range!')  
+
+    vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
+    #vega_flux = vega_obs.binflux.sum()
+    diff = np.diff(vega_obs.binwave)
+    diff = np.append(diff, diff[-1])
+    vega_flux = np.sum(vega_obs.binflux * diff)
+    
+    vega_mag = 0.03
+
+    filt.flux0 = vega_flux
+    filt.mag0 = vega_mag
+
+    return filt
+
+def get_filter_col_name(obs_str):
+    """
+    Get standard column name for synthetic photometry based on 
+    the input string. The input string is expected to be an
+    appropriate popstar obs_string
+    """
+    # How we deal with obs_string is slightly different depending
+    # if it is an hst filter (and thus pysynphot syntax) or our
+    # own defined filters
+    tmp = obs_str.split(',')
+
+    if len(tmp) == 3:
+        filt_name = 'hst_{0}'.format(tmp[-1])
+    else:
+        filt_name = '{0}_{1}'.format(tmp[0], tmp[1])
+        
+    return filt_name
+
+def get_obs_str(col):
+    """
+    Helper function to get the associated popstar obs_str given
+    a column name
+    """
+    # Remove the trailing m_
+    name = col[2:]
+    
+    # Define dictionary for filters
+    filt_list = {'hst_f127m': 'wfc3,ir,f127m', 'hst_f139m': 'wfc3,ir,f139m', 'hst_f153m': 'wfc3,ir,f153m',
+                 'hst_f814w': 'acs,wfc1,f814w', 'hst_f125w': 'wfc3,ir,f125w', 'hst_f160w': 'wfc3,ir,f160w',
+                 'decam_y': 'decam,y', 'decam_i': 'decam,i', 'decam_z': 'decam,z',
+                 'decam_u':'decam,u', 'decam_g':'decam,g', 'decam_r':'decam,r',
+                 'vista_Y':'vista,Y', 'vista_Z':'vista,Z', 'vista_J': 'vista,J',
+                 'vista_H': 'vista,H', 'vista_Ks': 'vista,Ks',
+                 'ps1_z':'ps1,z', 'ps1_g':'ps1,g', 'ps1_r': 'ps1,r',
+                 'ps1_i': 'ps1,i', 'ps1_y':'ps1,y',
+                 'jwst_F090W': 'jwst,F090W', 'jwst_F164N': 'jwst,F164N', 'jwst_F212N': 'jwst,F212N',
+                 'jwst_F323N':'jwst,F323N', 'jwst_F466N': 'jwst,F466N',
+                 'jwst_F070W': 'jwst,F070W',
+                 'jwst_F115W': 'jwst,F115W',
+                 'jwst_F140M': 'jwst,F140M',
+                 'jwst_F150W': 'jwst,F150W',
+                 'jwst_F150W2': 'jwst,F150W2',
+                 'jwst_F162M': 'jwst,F162M',
+                 'jwst_F182M': 'jwst,F182M',
+                 'jwst_F187N': 'jwst,F187N',
+                 'jwst_F200W': 'jwst,F200W',
+                 'jwst_F210M': 'jwst,F210M',
+                 'jwst_F250M': 'jwst,F250M', 
+                 'jwst_F277W': 'jwst,F277W',
+                 'jwst_F300M': 'jwst,F300M',
+                 'jwst_F322W2': 'jwst,F322W2',
+                 'jwst_F335M': 'jwst,F335M',
+                 'jwst_F356W': 'jwst,F356W',
+                 'jwst_F360M': 'jwst,F360M',
+                 'jwst_F405N': 'jwst,F405N',
+                 'jwst_F410M': 'jwst,F410M',
+                 'jwst_F430M': 'jwst,F430M',
+                 'jwst_F440W': 'jwst,F440W',
+                 'jwst_F460M': 'jwst,F460M',
+                 'jwst_F470N': 'jwst,F470N',
+                 'jwst_F480M': 'jwst,F480M',
+                 'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
+                 'nirc2_Lp': 'nirc2,Lp', 'nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
+                 'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
+                 'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K',
+                 'nirc1_K':'nirc1,K', 'ctio_osiris_K': 'ctio_osirirs,K'}
+
+    obs_str = filt_list[name]
+        
+    return obs_str
+
+def rebin_spec(wave, specin, wavnew):
+    """
+    Helper function to rebin spectra, from Jessica's post
+    on Astrobetter
+    """
+    spec = spectrum.ArraySourceSpectrum(wave=wave, flux=specin)
+    f = np.ones(len(wave))
+    filt = spectrum.ArraySpectralElement(wave, f, waveunits='angstrom')
+    obs_f = obs.Observation(spec, filt, binset=wavnew, force='taper')
+ 
+    return obs_f.binflux
+
 def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
                         atm_func=default_atm_func, redlaw = default_red_law,
-                        iso_dir = './', mass_sampling=1):
+                        iso_dir = './', mass_sampling=1,
+                        filters=['wfc3,ir,f127m',
+                                 'wfc3,ir,f139m',
+                                 'wfc3,ir,f153m']):
     """
     Wrapper routine to generate a grid of isochrones of different ages,
-    extinctions, and distances
+    extinctions, and distances. 
 
-    age_arr: array of ages to loop over (logAge)
-    Aks_arr: array of Aks values to loop over (mag)
-    dist_arr: array of distances to loop over (pc)
+    Parameters:
+    ----------
+    age_arr: array
+        Array of ages to loop over, in log years
 
-    evo_models: evolution models to adopt
-    atm_models: atmosphere models to adopt
-    redlaw: reddening law to adopt
-    iso_dir: directory isochrones will be stored
-    mass_sampling: mass sampling of isochrone, relative to original mass sampling
+    Aks_arr: array
+        Array of Aks values to loop over, in magnitudes
 
-    NOTE: This code only makes isochrones with the Ekstrom rotating models, for now. 
+    dist_arr: array
+        Array of distances to loop over (pc)
+ 
+    evo_models: popstar evolution object
+        Which evolution models to use
+
+    atm_models: popstar atmospheres object
+        Which atmosphere models to use
+
+    redlaw: popstar reddening object
+        Which reddening law to use
+
+    iso_dir: str
+        Directory to write the isochrones to
+
+    mass_sampling: int
+        Mass sampling of isochrone, relative to original mass sampling
+
+    filters: dictionary
+        Which filters to do the synthetic photometry on    
     """
     print( '**************************************')
     print( 'Start generating isochrones')
@@ -923,7 +1362,8 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
                     iso = IsochronePhot(age_arr[i], AKs_arr[j], dist_arr[k],
                                         evo_model=evo_model, atm_func=atm_func,
                                         red_law=redlaw, iso_dir=iso_dir,
-                                        mass_sampling=mass_sampling)
+                                        mass_sampling=mass_sampling,
+                                        filters=filters)
                     iteration += 1
                     print( 'Done ' + str(iteration) + ' of ' + str(num_models))
 
@@ -936,46 +1376,6 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
     _out.write('Isochrone Mass: {0}'.format(mass_sampling))
     _out.close()
     return
-
-# Little helper utility to get all the bandpass/zeropoint info.
-def get_filter_info(name, vega=vega):
-    if name.startswith('nirc2'):
-        from nirc2 import synthetic as nirc2syn
-    
-        tmp = name.split(',')
-        filterName = tmp[-1]
-        filt = nirc2syn.FilterNIRC2(filterName)
-    else:
-        filt = ObsBandpass(name)
-        
-        # Convert to ArraySpectralElement for resampling.
-        filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
-                                             waveunits=filt.waveunits,
-                                             name=filt.name)
-        
-    # Resample the filter to have 1500 points across. More is excessive.
-    if len(filt.wave) > 1500:
-        idx = np.where(filt.throughput > 0.001)[0]
-        new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
-        filt = filt.resample(new_wave)
-        
-    # Check that vega spectrum covers the wavelength range of the filter.
-    # Otherwise, throw an error
-    if (min(filt.wave) < min(vega.wave)) | (max(filt.wave) > max(vega.wave)):
-       raise ValueError('Vega spectrum doesnt cover filter wavelength range!')  
-
-    vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
-    #vega_flux = vega_obs.binflux.sum()
-    diff = np.diff(vega_obs.binwave)
-    diff = np.append(diff, diff[-1])
-    vega_flux = np.sum(vega_obs.binflux * diff)
-    
-    vega_mag = 0.03
-
-    filt.flux0 = vega_flux
-    filt.mag0 = vega_mag
-    
-    return filt
 
 # Little helper utility to get the magnitude of an object through a filter.
 def mag_in_filter(star, filt):
@@ -990,7 +1390,6 @@ def mag_in_filter(star, filt):
     star_flux = np.sum(star_in_filter.binflux * diff)
     
     star_mag = -2.5 * math.log10(star_flux / filt.flux0) + filt.mag0
-    
     return star_mag
 
 def match_model_mass(isoMasses,theMass):

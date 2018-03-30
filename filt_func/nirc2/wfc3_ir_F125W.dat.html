@@ -1,0 +1,6562 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<HTML>
+<HEAD>
+<link rel="SHORTCUT ICON" href="favicon.ico" />
+
+  
+
+  <TITLE>
+      WFC3 Instrument Handbook for Cycle 20 
+    </TITLE>
+
+
+<META HTTP-EQUIV="Content-Type" CONTENT="text/html; charset=iso-8859-1">
+
+  
+
+<style type="text/css"><!--
+        
+
+/* STScI Zope Page Styles */
+
+body 
+{
+background-color:FFFFFF;
+font-family: Verdana,Arial,Helvetica,sans-serif; 
+color:#333333; 
+font-size:90%;
+}
+
+.navsecondary { font-size: 1em; color: #666666; margin-left: 14px; vertical-align: text-top; padding-top: 4px}
+.navprimary { font-size: 1em; color: #666666; font-weight: bold; margin-left: 4px; margin-top: 10px; line-height: 18px; vertical-align: baseline}
+.navbreadcrumb { font-size: .9em; color: #336699; margin-left: 4px; vertical-align: text-top; padding-top: 0px}
+.navbreadcrumbselect { font-size: .9em; color: #336699; margin-left: 4px; vertical-align: text-top; padding-top: 4px}
+
+/* New header */
+.supportnav {color: #6699cc;font-weight: bold; font-size: x-small;}
+.headernav {color: #ffffff; font-weight: bold; font-size: x-small;}
+.currentportallink {color: #000000; text-decoration: none; font-size: x-small;}
+.portallink {color: #ffffff; text-decoration: none; font-size: x-small;}
+.xsmall {font-size: x-small;}
+.smaller {font-size: smaller;}
+.navdot {color:#336699; font-size: smaller;}
+
+/* Search formatting */
+.searchtitle {font-size: 90%; color: #333333; font-weight: bold}
+.searchtext {font-size: 85%; color: #333333}
+.searchsubmit {font-family: Verdana,Arial,Helvetica,sans-serif; font-weight: bold; font-size:1.2em; color:#336699; background-color: transparent; text-decoration: none; border: none; cursor: pointer; cursor: hand;}
+.querytext {font-size: 1.2em; color: #333333}
+
+div.AppFigureCaption
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppFigureCaption_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+}
+
+.AppFigureCaption_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppFigureCaptionTOC
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppFigureCaptionTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.AppFigureCaptionTOC_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppFigureCaptionTop
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppFigureCaptionTop_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+}
+
+.AppFigureCaptionTop_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppHead
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 19.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: center;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppHead_outer
+{
+  margin-bottom: 19.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.AppHead_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: center;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppHeadTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppHeadTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+}
+
+.AppHeadTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppNumber
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 19.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: center;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppNumber_outer
+{
+  margin-bottom: 19.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.AppNumber_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: center;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppNumberTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+  text-align: left;
+  text-indent: -18pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppNumberTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+}
+
+.AppNumberTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppSectNum
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 12.0pt;
+  margin-left: 40pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppSectNum_outer
+{
+  margin-bottom: 12.0pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+}
+
+.AppSectNum_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppSectNumTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  text-align: left;
+  text-indent: -18pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppSectNumTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+}
+
+.AppSectNumTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppSubSectNum
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 4.0pt;
+  margin-left: 50px;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+  text-align: left;
+  text-indent: -36pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppSubSectNum_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+}
+
+.AppSubSectNum_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppSubSectNumTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  text-align: left;
+  text-indent: -18pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppSubSectNumTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+}
+
+.AppSubSectNumTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppTableCaption
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppTableCaption_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.AppTableCaption_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppTableCaptionLOT
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+  text-align: left;
+  text-indent: -18pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppTableCaptionLOT_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+}
+
+.AppTableCaptionLOT_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.AppTableCaptionTOC
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.AppTableCaptionTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.AppTableCaptionTOC_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.Body
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.Body_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.Body_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyAside
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: italic;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 12.0pt;
+  margin-left: auto;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyAside_outer
+{
+  margin-bottom: 12.0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+}
+
+.BodyAside_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: italic;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyBulletList
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 6.0pt;
+  margin-left: 30pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+  text-align: left;
+  text-indent: -14pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyBulletList_outer
+{
+  margin-bottom: 6.0pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+}
+
+.BodyBulletList_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyBulletList1
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: italic;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 6.0pt;
+  margin-left: 30pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+  text-align: left;
+  text-indent: -14pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyBulletList1_outer
+{
+  margin-bottom: 6.0pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+}
+
+.BodyBulletList1_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: italic;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyBulletSubList
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 2.0pt;
+  margin-left: 40pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: -14pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyBulletSubList_outer
+{
+  margin-bottom: 2.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.BodyBulletSubList_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyCode
+{
+  color: #000000;
+  font-family: 'Courier New';
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 6.0pt;
+  margin-left: 5pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+  white-space: pre;
+}
+
+.BodyCode_outer
+{
+  margin-bottom: 6.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.BodyCode_inner
+{
+  color: #000000;
+  font-family: 'Courier New';
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  white-space: pre;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyEnumerList
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 6.0pt;
+  margin-left: 30pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+  text-align: left;
+  text-indent: -14pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyEnumerList_outer
+{
+  margin-bottom: 6.0pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+}
+
+.BodyEnumerList_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyEnumerListInit
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 6.0pt;
+  margin-left: 30pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+  text-align: left;
+  text-indent: -14pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyEnumerListInit_outer
+{
+  margin-bottom: 6.0pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+}
+
+.BodyEnumerListInit_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyEquation
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 6.0pt;
+  margin-left: 5pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+  text-align: left;
+  text-indent: 14.400000000000005pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyEquation_outer
+{
+  margin-bottom: 6.0pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+}
+
+.BodyEquation_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyExample
+{
+  color: #000000;
+  font-family: "Courier New";
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyExample_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.BodyExample_inner
+{
+  color: #000000;
+  font-family: "Courier New";
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyExampleCaption
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 8.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyExampleCaption_outer
+{
+  margin-bottom: 8.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.BodyExampleCaption_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyIndent
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 14pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyIndent_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.BodyIndent_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyNoIndent
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyNoIndent_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.BodyNoIndent_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyQuote
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 11.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 2.0pt;
+  margin-left: 5pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyQuote_outer
+{
+  margin-bottom: 2.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.BodyQuote_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 11.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BodyURL
+{
+  color: #0000ff;
+  font-family: "Courier New";
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 5.0pt;
+  margin-left: 10px;
+  margin-right: 0.0pt;
+  margin-top: 5.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BodyURL_outer
+{
+  margin-bottom: 5.0pt;
+  margin-right: 0.0pt;
+  margin-top: 5.0pt;
+}
+
+.BodyURL_inner
+{
+  color: #0000ff;
+  font-family: "Courier New";
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.BullSubList
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 2.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: -14pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.BullSubList_outer
+{
+  margin-bottom: 2.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.BullSubList_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.CellBody
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.CellBody_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.CellBody_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ChapHead
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 19.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: center;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ChapHead_outer
+{
+  margin-bottom: 19.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.ChapHead_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: center;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ChapHeadNoNum
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 19.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: center;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ChapHeadNoNum_outer
+{
+  margin-bottom: 19.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.ChapHeadNoNum_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: center;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ChapHeadNoNumTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ChapHeadNoNumTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+}
+
+.ChapHeadNoNumTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ChapHeadAppTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 7.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ChapHeadAppTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 7.0pt;
+}
+
+.ChapHeadAppTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ChapHeadNoNum
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 19.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: center;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ChapHeadNoNum_outer
+{
+  margin-bottom: 19.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.ChapHeadNoNum_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: center;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ChapHeadNoNumTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ChapHeadNoNumTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+}
+
+.ChapHeadNoNumTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ChapHeadTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+  text-align: left;
+  text-indent: -18pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ChapHeadTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+}
+
+.ChapHeadTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ChapInsideHead
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 2.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 108pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ChapInsideHead_outer
+{
+  margin-bottom: 2.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.ChapInsideHead_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ChapInsideLine
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 2.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ChapInsideLine_outer
+{
+  margin-bottom: 2.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.ChapInsideLine_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ChapIntro
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 56.0pt;
+  text-align: left;
+  text-indent: 14pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ChapIntro_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 56.0pt;
+}
+
+.ChapIntro_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ChapNumber
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 19.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: center;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ChapNumber_outer
+{
+  margin-bottom: 19.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.ChapNumber_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: center;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ChapNumberless
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 19.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: center;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ChapNumberless_outer
+{
+  margin-bottom: 19.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.ChapNumberless_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: center;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.CoverAddress
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.CoverAddress_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.CoverAddress_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.CoverFooter
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.CoverFooter_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.CoverFooter_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.CoverHead
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 12pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.CoverHead_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+}
+
+.CoverHead_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 12pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.CoverHeadSect
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 12pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.CoverHeadSect_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+}
+
+.CoverHeadSect_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 12pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.CoverTitle
+{
+  background-color: WhiteSmoke;
+  color: DimGray;
+  font-family: Arial;
+  font-size: xx-large;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: auto;
+  margin-left: auto;
+  margin-right: auto;
+  margin-top: auto;
+  text-align: center;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.CoverTitle_outer
+{
+  background-color: WhiteSmoke;
+  margin-bottom: auto;
+  margin-right: auto;
+  margin-top: auto;
+}
+
+.CoverTitle_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: xx-large;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: center;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.CoverVersion
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: x-small;
+  font-style: italic;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.CoverVersion_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.CoverVersion_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: x-small;
+  font-style: italic;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.FigureCaption
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 10.0pt;
+  margin-left: 5px;
+  margin-right: 8.0pt;
+  margin-top: 6.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.FigureCaption_outer
+{
+  margin-bottom: 10.0pt;
+  margin-right: 8.0pt;
+  margin-top: 6.0pt;
+}
+
+.FigureCaption_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.FigureTitle
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.FigureTitle_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+}
+
+.FigureTitle_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.FigureTitleLOF
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+  text-align: left;
+  text-indent: -18pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.FigureTitleLOF_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+}
+
+.FigureTitleLOF_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.FlowChartTag
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.FlowChartTag_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.FlowChartTag_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.Footer
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.Footer_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.Footer_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.Footnote
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 8.0pt;
+  margin-top: 6.0pt;
+  text-align: left;
+  text-indent: 14pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.Footnote_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 8.0pt;
+  margin-top: 6.0pt;
+}
+
+.Footnote_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.FootnoteAdditional
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 8.0pt;
+  margin-top: 6.0pt;
+  text-align: left;
+  text-indent: 14pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.FootnoteAdditional_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 8.0pt;
+  margin-top: 6.0pt;
+}
+
+.FootnoteAdditional_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.GlossaryEntry
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 4.0pt;
+  text-align: left;
+  text-indent: -36pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.GlossaryEntry_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 4.0pt;
+}
+
+.GlossaryEntry_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.GroupTitlesIX
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 7.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 14.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.GroupTitlesIX_outer
+{
+  margin-bottom: 7.0pt;
+  margin-right: 0.0pt;
+  margin-top: 14.0pt;
+}
+
+.GroupTitlesIX_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeaderLeft
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeaderLeft_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.HeaderLeft_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeaderRight
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeaderRight_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.HeaderRight_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSect
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 12.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSect_outer
+{
+  margin-bottom: 12.0pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+}
+
+.HeadSect_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSectNum
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 12.0pt;
+  margin-left: 5pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSectNum_outer
+{
+  margin-bottom: 12.0pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+}
+
+.HeadSectNum_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSectNumTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  text-align: left;
+  text-indent: -18pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSectNumTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+}
+
+.HeadSectNumTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSectRef
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSectRef_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+}
+
+.HeadSectRef_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSectTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: italic;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  text-align: left;
+  text-indent: -18pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSectTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+}
+
+.HeadSectTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: italic;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSubHeadSubSubSect
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: italic;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 2.0pt;
+  margin-left: 30px;
+  margin-right: 0.0pt;
+  margin-top: 8.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSubHeadSubSubSect_outer
+{
+  margin-bottom: 2.0pt;
+  margin-right: 0.0pt;
+  margin-top: 8.0pt;
+}
+
+.HeadSubHeadSubSubSect_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: italic;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSubSect
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 4.0pt;
+  margin-left: 10pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSubSect_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+}
+
+.HeadSubSect_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSubSectNum
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 4.0pt;
+  margin-left: 20pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSubSectNum_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+}
+
+.HeadSubSectNum_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSubSectNumTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  text-align: left;
+  text-indent: -18pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSubSectNumTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+}
+
+.HeadSubSectNumTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSubSectTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  text-align: left;
+  text-indent: -18pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSubSectTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+}
+
+.HeadSubSectTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSubSubSect
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 2.0pt;
+  margin-left: 25px;
+  margin-right: 0.0pt;
+  margin-top: 8.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSubSubSect_outer
+{
+  margin-bottom: 2.0pt;
+  margin-right: 0.0pt;
+  margin-top: 8.0pt;
+}
+
+.HeadSubSubSect_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSubSubSectTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSubSubSectTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+}
+
+.HeadSubSubSectTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.HeadSubSubSubSect
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: italic;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 2.0pt;
+  margin-left: 30px;
+  margin-right: 0.0pt;
+  margin-top: 8.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.HeadSubSubSubSect_outer
+{
+  margin-bottom: 2.0pt;
+  margin-right: 0.0pt;
+  margin-top: 8.0pt;
+}
+
+.HeadSubSubSubSect_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: italic;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.IndexHeader
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 19.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.IndexHeader_outer
+{
+  margin-bottom: 19.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.IndexHeader_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.IndexHeaderTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.IndexHeaderTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+}
+
+.IndexHeaderTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.InsideLine
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.InsideLine_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.InsideLine_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.Institute
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.Institute_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.Institute_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.LandscapeAnchor
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 7.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.LandscapeAnchor_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.LandscapeAnchor_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 7.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.Level1IX
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: -36pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.Level1IX_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.Level1IX_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.Level2IX
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: -36pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.Level2IX_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.Level2IX_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.ListCaption
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.ListCaption_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+}
+
+.ListCaption_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.Mapping_Table_Cell
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 2.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.Mapping_Table_Cell_outer
+{
+  margin-bottom: 2.0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+}
+
+.Mapping_Table_Cell_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.Mapping_Table_Title
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 2.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.Mapping_Table_Title_outer
+{
+  margin-bottom: 2.0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+}
+
+.Mapping_Table_Title_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.PartHead
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 36.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.PartHead_outer
+{
+  margin-bottom: 36.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.PartHead_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.PartHeadTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 20.0pt;
+  text-align: left;
+  text-indent: -36pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.PartHeadTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 20.0pt;
+}
+
+.PartHeadTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.PartIntro
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5pt;
+  margin-right: 0.0pt;
+  margin-top: 56.0pt;
+  text-align: left;
+  text-indent: 14pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.PartIntro_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 56.0pt;
+}
+
+.PartIntro_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.RefFigureAnnotation
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 11.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.RefFigureAnnotation_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.RefFigureAnnotation_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 11.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.RefFigureCaption
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.RefFigureCaption_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+}
+
+.RefFigureCaption_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.RefFigureCaptionTop
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.RefFigureCaptionTop_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+}
+
+.RefFigureCaptionTop_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.RefHeadSect
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.RefHeadSect_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 30.0pt;
+}
+
+.RefHeadSect_inner
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 14.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.RefHeadSubSect
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 2.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 8.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.RefHeadSubSect_outer
+{
+  margin-bottom: 2.0pt;
+  margin-right: 0.0pt;
+  margin-top: 8.0pt;
+}
+
+.RefHeadSubSect_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.RefHeadSubSectTop
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 2.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 8.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.RefHeadSubSectTop_outer
+{
+  margin-bottom: 2.0pt;
+  margin-right: 0.0pt;
+  margin-top: 8.0pt;
+}
+
+.RefHeadSubSectTop_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.RefTableCaption
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.RefTableCaption_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+}
+
+.RefTableCaption_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.RefTableCaptionTop
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 4.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.RefTableCaptionTop_outer
+{
+  margin-bottom: 4.0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+}
+
+.RefTableCaptionTop_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.RefText
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 11.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 6.0pt;
+  margin-left: 20pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 18pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.RefText_outer
+{
+  margin-bottom: 6.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.RefText_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 11.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.RefTextBullet
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 11.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 3.0pt;
+  margin-left: 30pt;
+  margin-right: 0.0pt;
+  margin-top: 3.0pt;
+  text-align: left;
+  text-indent: -7.2pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.RefTextBullet_outer
+{
+  margin-bottom: 3.0pt;
+  margin-right: 0.0pt;
+  margin-top: 3.0pt;
+}
+
+.RefTextBullet_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 11.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.TableCaption
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 18.0pt;
+  margin-top: 0.0pt;
+  text-align: Left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.TableCaption_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 18.0pt;
+  margin-top: 0.0pt;
+}
+
+.TableCaption_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: Left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.TableCell
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.TableCell_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.TableCell_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.TableCellBull
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: -12pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.TableCellBull_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.TableCellBull_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.TableCellCenter
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.TableCellCenter_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.TableCellCenter_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.TableCellDecAlign
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.TableCellDecAlign_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.TableCellDecAlign_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.TableColHead
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.TableColHead_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.TableColHead_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.TableColHeadCenter
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.TableColHeadCenter_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.TableColHeadCenter_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 9.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.TableFootnote
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 10pt;
+  margin-right: 18.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.TableFootnote_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 18.0pt;
+  margin-top: 0.0pt;
+}
+
+.TableFootnote_inner
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.TableTitle
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+  text-align: Left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.TableTitle_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+}
+
+.TableTitle_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: Left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.TableTitleLOT
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+  text-align: left;
+  text-indent: -18pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.TableTitleLOT_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 6.0pt;
+}
+
+.TableTitleLOT_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.TOCHeader
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 36.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 19.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.TOCHeader_outer
+{
+  margin-bottom: 19.0pt;
+  margin-right: 0.0pt;
+  margin-top: 0.0pt;
+}
+
+.TOCHeader_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 36.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+div.TOCHeaderTOC
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  margin-bottom: 0.0pt;
+  margin-left: 5px;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+  text-align: left;
+  text-indent: 0pt;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+.TOCHeaderTOC_outer
+{
+  margin-bottom: 0.0pt;
+  margin-right: 0.0pt;
+  margin-top: 10.0pt;
+}
+
+.TOCHeaderTOC_inner
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: left;
+  text-transform: none;
+  vertical-align: baseline;
+  margin-left: 0pt;
+  margin-right: 0pt;
+  margin-top: 0pt;
+  margin-bottom: 0pt;
+  padding-left: 0pt;
+  padding-right: 0pt;
+  padding-top: 0pt;
+  padding-bottom: 0pt;
+}
+
+span.Annotation
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 10.0pt;
+  font-style: normal;
+  font-weight: normal;
+  vertical-align: baseline;
+}
+
+span.Bold
+{
+  color: #000000;
+  font-weight: bold;
+  vertical-align: baseline;
+}
+
+span.Bold-Oblique
+{
+  color: #000000;
+  font-style: italic;
+  font-weight: bold;
+  vertical-align: baseline;
+}
+
+span.ChapNum
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-weight: normal;
+  vertical-align: baseline;
+}
+
+span.Courier
+{
+  color: #000000;
+  font-family: "Courier New";
+  font-style: normal;
+  font-weight: normal;
+  vertical-align: baseline;
+}
+
+span.Emphasis
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-style: italic;
+  font-variant: normal;
+  font-weight: normal;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+span.EnumNumb
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-style: normal;
+  font-weight: bold;
+  vertical-align: baseline;
+}
+
+span.EquationVariables
+{
+  font-style: italic;
+}
+
+span.Helvetica
+{
+  color: #000000;
+  font-family: Arial;
+  font-variant: normal;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+span.InitialCap
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 36.0pt;
+  font-style: normal;
+  font-weight: normal;
+  vertical-align: baseline;
+}
+
+span.Keyword
+{
+  font-family: "Courier New";
+  text-transform: uppercase;
+}
+
+span.LinkURL
+{
+  color: #0000ff;
+}
+
+span.Overline
+{
+  color: #000000;
+  vertical-align: baseline;
+}
+
+span.PageNumber
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 12.0pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: normal;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+span.PartNum
+{
+  color: #000000;
+  font-family: Arial;
+  font-size: 18.0pt;
+  font-style: normal;
+  font-weight: normal;
+  vertical-align: baseline;
+}
+
+span.PkgName
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-size: 12.0pt;
+  font-style: normal;
+  font-weight: bold;
+  vertical-align: baseline;
+}
+
+span.Subscript
+{
+  vertical-align: sub;
+}
+
+span.Superscript
+{
+  vertical-align: super;
+}
+
+span.Symbol
+{
+  color: black;
+  font-variant: normal;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+span.TaskName
+{
+  color: #000000;
+  font-family: "Times New Roman";
+  font-style: normal;
+  font-weight: bold;
+  vertical-align: baseline;
+}
+
+span.Underline
+{
+  color: #000000;
+  font-variant: normal;
+  text-decoration: underline;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+span.Xref
+{
+  color: #0000ff;
+  font-variant: normal;
+  text-transform: none;
+  vertical-align: baseline;
+}
+
+table.PortRight
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+}
+
+table.Filter_table2
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 3.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  padding-bottom: 4pt;
+  padding-left: 3pt;
+  padding-right: 3pt;
+  padding-top: 4pt;
+  text-align: left;
+}
+
+table.Filter_table3
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 2.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  padding-bottom: 4pt;
+  padding-left: 3pt;
+  padding-right: 3pt;
+  padding-top: 4pt;
+  text-align: left;
+}
+
+table.Filter_table6
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 2.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  padding-bottom: 3pt;
+  padding-left: 2pt;
+  padding-right: 0pt;
+  padding-top: 4pt;
+  text-align: left;
+}
+
+table.RefTableCenter
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 14.0pt;
+  padding-bottom: 1pt;
+  padding-left: 2pt;
+  padding-right: 2pt;
+  padding-top: 3pt;
+  text-align: center;
+}
+
+table.Filter_table8
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 2.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 2.0pt;
+  padding-bottom: 5pt;
+  padding-left: 3pt;
+  padding-right: 3pt;
+  padding-top: 3pt;
+  text-align: center;
+}
+
+table.Format_A
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+}
+
+table.Format_B
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 12.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: left;
+}
+
+table.BodyCodeTable
+{
+  border-bottom-color: Black;
+  border-bottom-style: hidden;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: hidden;
+  border-left-width: 0pt;
+  border-right-color: Black;
+  border-right-style: hidden;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: hidden;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  table-layout: fixed;
+  text-align: right;
+}
+
+table.LandCenter
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: center;
+}
+
+table.PortLeft
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: left;
+}
+
+table.Aside
+{
+  border-bottom-color: White;
+  border-bottom-style: hidden;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: White;
+  border-left-style: hidden;
+  border-left-width: thin;
+  border-right-color: White;
+  border-right-style: hidden;
+  border-right-width: thin;
+  border-top-color: White;
+  border-top-style: hidden;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+  width: 100%;
+}
+
+table.PortCenterNoTitle
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: center;
+}
+
+table.PortLeftNoTitle
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: center;
+}
+
+table.RefTableTopNoCap
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: center;
+}
+
+table.BodyFigure
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: center;
+}
+
+table.Mapping_Table
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+}
+
+table.Format_L
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+}
+
+table.FormatAD
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+}
+
+table.AppendTable
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+}
+
+table.FormatAL
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+}
+
+table.LandCenterTight
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+}
+
+table.FormatAC
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+}
+
+table.Format_E
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+}
+
+table.Format_C
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+}
+
+table.Format_D
+{
+  border-bottom-color: Black;
+  border-bottom-style: solid;
+  border-bottom-width: thin;
+  border-collapse: collapse;
+  border-left-color: Black;
+  border-left-style: solid;
+  border-left-width: thin;
+  border-right-color: Black;
+  border-right-style: solid;
+  border-right-width: thin;
+  border-top-color: Black;
+  border-top-style: solid;
+  border-top-width: thin;
+  margin-bottom: 14.0pt;
+  margin-left: 0pt;
+  margin-right: 0.0pt;
+  margin-top: 12.0pt;
+  padding-bottom: 4pt;
+  padding-left: 6pt;
+  padding-right: 6pt;
+  padding-top: 6pt;
+  text-align: right;
+}
+
+img.Default
+{
+  bottom: 0pt;
+  left: 0pt;
+  margin-left: 0px;
+  margin-right: auto;
+  vertical-align: top;
+}
+
+/* Default style for links */
+/*                         */
+/* a:link:active  { color: #0000CC}
+a:link:hover   { color: #CC0033}
+a:link         { color: #3366CC}
+a:visited      { color: #9999CC} */
+
+.WebWorks_Paragraph_List_Outer
+{
+  margin-left: 0pt;
+  text-indent: 0pt;
+}
+
+.WebWorks_Paragraph_List_Inner
+{
+  background: transparent none
+  border: 0pt;
+  clear: none;
+  margin: 0pt;
+  padding: 0pt;
+  text-indent: 0pt;
+}
+
+h2.WebWorks_TOC_Title
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: center;
+}
+
+a.WebWorks_TOC_Link
+{
+}
+
+div.WebWorks_TOC_Level1
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: center;
+
+}
+
+div.WebWorks_TOC_Level2
+{
+  margin-left: 24pt;
+  font-size: 14pt;
+  font-style: normal;
+  font-variant: normal;
+  margin-top: 10.0pt;
+
+}
+
+div.WebWorks_TOC_Level3
+{
+  margin-left: 36pt;
+}
+
+div.WebWorks_TOC_Level4
+{
+  margin-left: 48pt;
+}
+
+div.WebWorks_TOC_Level5
+{
+  margin-left: 60pt;
+}
+
+div.WebWorks_TOC_Level6
+{
+  margin-left: 72pt;
+}
+
+div.WebWorks_TOC_Level7
+{
+  margin-left: 84pt;
+}
+
+div.WebWorks_TOC_Level8
+{
+  margin-left: 96pt;
+}
+
+div.WebWorks_TOC_Level9
+{
+  margin-left: 108pt;
+}
+
+div.WebWorks_TOC_Level10
+{
+  margin-left: 120pt;
+}
+
+h2.WebWorks_Index_Title
+{
+  color: DimGray;
+  font-family: Arial;
+  font-size: 18pt;
+  font-style: normal;
+  font-variant: normal;
+  font-weight: bold;
+  text-align: center;
+}
+
+div.WebWorks_Index_Group
+{
+}
+
+a.WebWorks_Index_Link
+{
+}
+
+div.WebWorks_Index_Level1
+{
+  margin-left: 12pt;
+}
+
+div.WebWorks_Index_Level2
+{
+  margin-left: 24pt;
+}
+
+div.WebWorks_Index_Level3
+{
+  margin-left: 36pt;
+}
+
+div.WebWorks_Index_Level4
+{
+  margin-left: 48pt;
+}
+
+div.WebWorks_Index_Level5
+{
+  margin-left: 60pt;
+}
+
+div.WebWorks_Index_Level6
+{
+  margin-left: 72pt;
+}
+
+div.WebWorks_Index_Level7
+{
+  margin-left: 84pt;
+}
+
+div.WebWorks_Index_Level8
+{
+  margin-left: 96pt;
+}
+
+div.WebWorks_Index_Level9
+{
+  margin-left: 108pt;
+}
+
+div.WebWorks_Index_Level10
+{
+  margin-left: 120pt;
+}
+
+div.WebWorks_Breadcrumbs
+{
+  color: #999999;
+  font-family: sans-serif;
+  font-size: 10pt;
+}
+
+a.WebWorks_Breadcrumb_Link
+{
+  text-decoration: none;
+}
+
+div.WebWorks_MiniTOC
+{
+  background-color: #EEEEEE;
+  border-color: #000000;
+  border-width: 1px;
+  border-style: solid;
+  padding: 10px;
+  margin-bottom: 10px;
+  font-family: sans-serif;
+}
+
+a.WebWorks_MiniTOC_Link
+{
+  text-decoration: none;
+}
+
+div.WebWorks_MiniTOC_Level1
+{
+  margin-left: 0pt;
+}
+
+div.WebWorks_MiniTOC_Level2
+{
+  margin-left: 12pt;
+}
+
+div.WebWorks_MiniTOC_Level3
+{
+  margin-left: 24pt;
+}
+
+div.WebWorks_MiniTOC_Level4
+{
+  margin-left: 36pt;
+}
+
+div.WebWorks_MiniTOC_Level5
+{
+  margin-left: 48pt;
+}
+
+div.WebWorks_MiniTOC_Level6
+{
+  margin-left: 60pt;
+}
+
+div.WebWorks_MiniTOC_Level7
+{
+  margin-left: 72pt;
+}
+
+div.WebWorks_MiniTOC_Level8
+{
+  margin-left: 84pt;
+}
+
+div.WebWorks_MiniTOC_Level9
+{
+  margin-left: 96pt;
+}
+
+div.WebWorks_MiniTOC_Level10
+{
+  margin-left: 108pt;
+}
+
+/* Company Info */
+/*              */
+td.WebWorks_Company_Logo_Top
+{
+  text-align: left;
+}
+
+td.WebWorks_Company_Name_Top
+{
+  text-align: left;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+td.WebWorks_Company_Phone_Top
+{
+  text-align: left;
+  font-size: 12px;
+}
+
+td.WebWorks_Company_Fax_Top
+{
+  text-align: left;
+  font-size: 12px; 
+}
+
+td.WebWorks_Company_Email_Top
+{
+  text-align: left;
+  font-size: 12px;
+}
+
+td.WebWorks_Company_Logo_Bottom
+{
+  text-align: left;
+}
+
+td.WebWorks_Company_Name_Bottom
+{
+  text-align: left;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+td.WebWorks_Company_Phone_Bottom
+{
+  text-align: left;
+  font-size: 12px;
+}
+
+td.WebWorks_Company_Fax_Bottom
+{
+  text-align: left;
+  font-size: 12px; 
+}
+
+td.WebWorks_Company_Email_Bottom
+{
+  text-align: left;
+  font-size: 12px;
+}
+
+    --></style>
+</HEAD>
+
+<!--<body link="#336699" vlink="#336699" bgcolor="#FFFFFF" leftmargin="0" marginwidth="0" marginheight="0" topmargin="0">-->
+<body link="#336699" vlink="#336699" bgcolor="#FFFFFF">
+
+
+
+
+
+
+      
+   
+         
+
+        
+<TABLE WIDTH="717" BORDER="0" CELLPADDING=0 CELLSPACING=0 align="center">
+        <!-- start TOP NAVIGATION -->   
+ <tr>
+  <td colspan="2" rowspan="4" bgcolor="#f1f2f2"><a href="http://www.stsci.edu/"><img border="0" src="/images/H1.jpg" width="144" height="81" alt="STScI Logo"></a></td>
+  <td colspan="6" bgcolor="#F1F2F2"> 
+        <table border="0" width="100%" cellpadding=0 cellspacing=0 width="574">
+        <tr>
+          <td width="362" style="vertical-align:bottom;padding-bottom:0px;margin-bottom:0px;">
+          <a href="http://www.stsci.edu/">
+          <img border="0" src="/images/H2.jpg" width="367" height="27" alt="STScI Logo"></a>
+          </td>
+          <td style="padding:4px 4px 0px 0px;margin:0px;">
+          <div class="supportnav" align="right">
+  <!-- Google CSE Search Box Begins  -->
+<form action="http://www.stsci.edu/hst/wfc3/documents/handbooks/currentIHB/stSearchResults" id="cse-search-box">
+  <input type="hidden" name="cx" value="001581200362539404959:zbwublrjs6g" />
+  <input type="hidden" name="cof" value="FORID:11" />
+  <input type="hidden" name="filter" value="p" />
+  <input type="submit" name="sa" class="searchsubmit" value="Search" tabindex="1" title="Search the STScI site">
+  <input class="querytext" name="q" id="fld_searchquery" title="Enter search terms" type="text" size="14" maxlength="128" />
+</form>
+<script type="text/javascript" src="http://www.google.com/coop/cse/brand?form=cse-search-box&lang=en"></script>
+<!-- Google CSE Search Box Ends -->
+
+
+
+
+          </div>
+          </td>
+          <td bgcolor="#f1f2f2"></td>
+        </tr>
+<!--</form>-->
+        </table>
+          </td>
+        </tr>
+        <tr>
+
+    <TD bgcolor="#cccccc" rowspan="1"><IMG SRC="/images/spacer.gif" WIDTH=1 HEIGHT="20" alt=""></TD>
+  <td colspan="6" bgcolor="#6699cc"> 
+<table width="100%" border="0" cellpadding="0" cellspacing="0">
+        <tr> 
+    <TD bgcolor="#6699cc"><IMG SRC="/images/spacer.gif" WIDTH="3" HEIGHT=1 alt=""></TD>
+          <td bgcolor="#6699cc" align="center" valign="top">
+          <div class="headernav">
+          <a class="portallink" href="http://www.stsci.edu/institute/">The Institute</a>
+          </div></td>
+    <TD bgcolor="#6699cc"><IMG SRC="/images/spacer.gif" WIDTH="3" HEIGHT=1 alt=""></TD>
+    <TD bgcolor="#cccccc"><IMG SRC="/images/spacer.gif" WIDTH=1 HEIGHT=1 alt=""></TD>
+    <TD bgcolor="#6699cc"><IMG SRC="/images/spacer.gif" WIDTH="3" HEIGHT=1 alt=""></TD>
+<td  bgcolor="#6699cc" align="center" valign="top"><div class="headernav">
+                    <a class="currentportallink" href="http://www.stsci.edu/hst/">HST</a>
+          </div></td>
+    <TD bgcolor="#6699cc"><IMG SRC="/images/spacer.gif" WIDTH="3" HEIGHT=1 alt=""></TD>
+    <TD bgcolor="#cccccc"><IMG SRC="/images/spacer.gif" WIDTH=1 HEIGHT=1 alt=""></TD>
+    <TD bgcolor="#6699cc"><IMG SRC="/images/spacer.gif" WIDTH="3" HEIGHT=1 alt=""></TD>
+<td  bgcolor="#6699cc" align="center" valign="top"><div class="headernav">
+                    <a class="portallink" href="http://www.stsci.edu/jwst/">JWST</a>  
+          </div></td>
+    <TD bgcolor="#6699cc"><IMG SRC="/images/spacer.gif" WIDTH="3" HEIGHT=1 alt=""></TD>
+    <TD bgcolor="#cccccc"><IMG SRC="/images/spacer.gif" WIDTH=1 HEIGHT=1 alt=""></TD>
+    <TD bgcolor="#6699cc"><IMG SRC="/images/spacer.gif" WIDTH="3" HEIGHT=1 alt=""></TD>
+<td  bgcolor="#6699cc" align="center" valign="top"><div class="headernav">
+          <a class="portallink" href="http://cmo.stsci.edu">Community Missions</a>
+</div></td>
+    <TD bgcolor="#6699cc"><IMG SRC="/images/spacer.gif" WIDTH="3" HEIGHT=1 alt=""></TD>
+    <TD bgcolor="#cccccc"><IMG SRC="/images/spacer.gif" WIDTH=1 HEIGHT=1 alt=""></TD>
+    <TD bgcolor="#6699cc"><IMG SRC="/images/spacer.gif" WIDTH="3" HEIGHT=1 alt=""></TD>
+<td  bgcolor="#6699cc" align="center" valign="top"><div class="headernav">
+          <a class="portallink" href="http://archive.stsci.edu">Data Archives</a>
+</div></td>
+    <TD bgcolor="#6699cc"><IMG SRC="/images/spacer.gif" WIDTH="3" HEIGHT=1 alt=""></TD>
+    <TD bgcolor="#cccccc"><IMG SRC="/images/spacer.gif" WIDTH=1 HEIGHT=1 alt=""></TD>
+    <TD bgcolor="#6699cc"><IMG SRC="/images/spacer.gif" WIDTH="3" HEIGHT=1 alt=""></TD>
+<td  bgcolor="#6699cc" align="center" valign="top"><div class="headernav">
+          <a class="portallink" href="http://www.stsci.edu/outreach/">News and Outreach</a>
+</div></td>
+
+
+    <TD bgcolor="#6699cc"><IMG SRC="/images/spacer.gif" WIDTH="3" HEIGHT=1 alt=""></TD>
+        </tr></table>
+</td></tr>
+        <!-- end TOP NAVIGATION -->
+
+</td></tr>
+<tr>
+<TD bgcolor="#cccccc" colspan="5"><IMG SRC="/images/spacer.gif" WIDTH=1 HEIGHT=1 alt=""></TD>
+</tr>
+
+
+
+<tr>
+    <TD bgcolor="#cccccc"><IMG SRC="/images/spacer.gif" WIDTH=1 HEIGHT=1 alt=""></TD>
+
+  <td colspan="5">
+
+        <!-- start TIER 2 BANNER -->
+<a href="/hst/wfc3/"><img src="/hst/wfc3/images/L2Banner.gif" width=574 height=33 alt="Banner" border="0"></a>
+        <!-- end TIER 2 BANNER -->
+</td></tr>
+
+ <TR>
+    <TD COLSPAN=8 bgcolor="#CCCCCC"><IMG SRC="/images/spacer.gif" WIDTH=1 HEIGHT=1 alt=""></TD>
+ </TR>
+ <TR>
+  
+    <TD ROWSPAN=2 bgcolor="#CCCCCC"><IMG SRC="/images/spacer.gif" WIDTH=1 HEIGHT=300 alt=""></TD>
+
+     <!-- start NAVIGATION -->   
+    <TD rowspan="1"  width="144" bgcolor="#f1f2f2" valign="top" align="left"> 
+              
+
+   <div class="navbreadcrumb"><a href="/hst/">HST</a></div>
+
+   
+   <div class="navbreadcrumbselect"><img width="6" vspace=1 height="6" src="/images/nav_select.gif" alt=""><a href="/hst/wfc3/">WFC3</a></div><img vspace=4 hspace=6 border=0 height=1 width=128 src="/images/nav_divider.gif" alt="">
+   
+   <div class="navprimary"><a href="/hst/wfc3/design/">Instrument Design</a></div>
+ 
+   
+   <div class="navsecondary"><a href="/hst/wfc3/design/at_a_glance/">WFC3 at a glance</a></div>
+
+   <div class="navsecondary"><a href="/hst/wfc3/ins_performance/filters/">Filters</a></div>
+
+
+   <div class="navprimary"><a href="/hst/wfc3/ins_performance">Performance</a></div>
+ 
+   
+   <div class="navsecondary"><a href="/hst/wfc3/ins_performance/detectors">Detectors</a></div>
+
+   <div class="navsecondary"><a href="/hst/wfc3/ins_performance/throughputs">Throughputs</a></div>
+
+   <div class="navsecondary"><a href="/hst/wfc3/ins_performance/CTE/">CTE</a></div>
+
+   <div class="navsecondary"><a href="anonymous">Primary</a></div>
+
+   <div class="navsecondary"><a href="/hst/wfc3/ins_performance/ground/full_inst">Ground</a></div>
+
+   <div class="navsecondary"><a href="/hst/wfc3/ins_performance/image_quality">Image Quality</a></div>
+
+   <div class="navsecondary"><a href="/hst/wfc3/ins_performance/anomalies">Anomalies</a></div>
+
+   <div class="navsecondary"><a href="/hst/wfc3/ins_performance/monitoring/index_html">Monitoring</a></div>
+
+   <div class="navprimary"><a href="/hst/wfc3/Proposing">Proposing</a></div>
+ 
+   
+   <div class="navsecondary"><a href="/hst/wfc3/Proposing/Phase1">Phase I</a></div>
+
+   <div class="navsecondary"><a href="/hst/wfc3/Proposing/Phase2">Phase II</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/observatory/apertures/wfc3.html">Aperture Fiducial Points</a></div>
+
+   <div class="navsecondary"><a href="hst/wfc3/tools/dither">Dithering Strategies</a></div>
+
+   <div class="navsecondary"><a href="http://apst.stsci.edu/apt/external/help/documentation/buffer-dumps.html">Parallel SI Buffering</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/analysis/grism_obs/wfc3-grism-resources.html#Proposal_Documentation__Information_hdr">Spectroscopy</a></div>
+
+
+   <div class="navprimary"><a href="/hst/wfc3/analysis">Data Analysis</a></div>
+ 
+   
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/analysis/post_observation">Post-Observation</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/analysis/should_I_recalibrate">Should I Recalibrate</a></div>
+
+   <div class="navsecondary"><a href="http://archive.stsci.edu/hst/index.html">Retrieving Data</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/observatory/cdbs/SIfileInfo/WFC3/reftablequeryindex">Reference Files</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/pam/pixel_area_maps">Pixel Area Maps</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/analysis/uvis_flats">UVIS Flats</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/analysis/ir_flats">IR Flats</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/ins_performance/persistence/">IR Persistence</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/phot_zp_lbn">Zeropoints</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/analysis/full_well_depth">Full Well Depth</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/analysis/grism_obs/wfc3-grism-resources.html#Data_Analysis_Documentation_hdr">Spectroscopy</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/analysis/idctab_testing/index_html">IDCTAB Testing</a></div>
+
+   <div class="navsecondary"><a href="userSupport/VisitingSTScI.doc">Visiting STScI</a></div>
+
+   <div class="navprimary"><a href="/hst/wfc3/calibration">Calibration</a></div>
+ 
+   
+   <div class="navsecondary"><a href="/hst/wfc3/calibration/SMOV">SMOV</a></div>
+
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/analysis/grism_obs/wfc3-grism-resources.html#Calibration_Files_and_Information_hdr">Spectroscopy</a></div>
+
+   <div class="navprimary"><a href="/hst/wfc3/documents/">Document Archive</a></div>
+ 
+   
+   <div class="navprimary"><a href="/hst/wfc3/tools/">Software Tools</a></div>
+ 
+   
+   <div class="navsecondary"><a href="http://www.stsci.edu/hst/wfc3/tools/MultiDrizzle/">MultiDrizzle</a></div>
+
+   <div class="navsecondary"><a href="/hst/wfc3/pipeline/wfc3_pipeline">Pipeline</a></div>
+
+
+
+
+
+
+   <div class="navprimary"><a href="wfc3team_only/wfc3_only">[WFC3 Team Members Only]</a></div>
+ 
+   
+
+            <IMG SRC="/images/spacer.gif" WIDTH=142 HEIGHT=8 alt="">
+    </TD>
+    <!-- end NAVIGATION --> 
+
+    <TD bgcolor="#CCCCCC"><IMG SRC="/images/spacer.gif" WIDTH=1 HEIGHT=1 alt=""></TD>
+  
+    <TD> <IMG SRC="/images/spacer.gif" WIDTH=7 HEIGHT=1 alt=""></TD>
+  
+    <TD valign="top" width="554"> 
+
+
+    <!-- start SUPPORTINGCOLUMN -->
+
+<!-- start PAGE CONTENT -->
+
+
+
+    <table align="right" summary="">
+      <tr>
+        <td class="WebWorks_Company_Name_Top">
+          <a href="http://www.stsci.edu/hst" target="external_window">Space Telescope Science Institute</a>
+        </td>
+      </tr>
+      <tr>
+        <td class="WebWorks_Company_Phone_Top">WFC3 Instrument Handbook</td>
+      </tr>
+      <tr>
+        <td class="WebWorks_Company_Email_Top">
+          <a href="mailto:help@stsci.edu">help@stsci.edu</a>
+        </td>
+      </tr>
+    </table>
+    <div style="text-align: left;">
+      <table cellspacing="0" summary="">
+        <tr>
+          <td>
+            <a href="toc.html"><img src="images/toc.gif" alt="Table of Contents" border="0" /></a>
+          </td>
+          <td>
+            <a href="appendixA68.html"><img src="images/prev.gif" alt="Previous" border="0" /></a>
+          </td>
+          <td>
+            <a href="appendixA70.html"><img src="images/next.gif" alt="Next" border="0" /></a>
+          </td>
+          <td>
+            <a href="ix.html"><img src="images/index.gif" alt="Index" border="0" /></a>
+          </td>
+          <td>
+            <a href="wfc3_ihb.pdf">
+              <img src="images/print.gif" alt="Print" border="0" />
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
+    <br clear="all" />
+    <br />
+    <div class="WebWorks_Breadcrumbs" style="text-align: left;">
+      <a class="WebWorks_Breadcrumb_Link" href="wfc3_cover.html#399082">Wide Field Camera 3 Instrument Handbook for Cycle 20</a> &gt; <a class="WebWorks_Breadcrumb_Link" href="appendixA01.html#399082">Appendix A:  WFC3 Filter Throughputs</a> &gt; IR/F125W</div>
+    <hr align="left" />
+    <blockquote>
+      <div class="RefHeadSect"><a name="399082">IR/F125W</a></div>
+      <div class="RefHeadSubSect"><a name="399083">Description</a></div>
+      <div class="RefText"><a name="399084">Wide</a><span class="Emphasis"> J</span> filter.</div>
+      <div class="AppFigureCaption">
+        <span class="Bold">Figure A.196: </span><a name="399087">Integrated system throughput for F125W. <img class="Default" src="images/appendixA69.1.jpg" width="477" height="482" style="display: block; float: none; top: 0.0;" alt="" /></a></div>
+      <div class="AppFigureCaption">
+        <span class="Bold">Figure A.197: </span><a name="399088">Point source S/N vs. V+AB</a><span class="Symbol">&#957;</span> for the F125W filter, assuming high sky backgrounds and a 3<span class="Symbol" style="font-size: 12.0pt;">×</span>3 pixel aperture. <img class="Default" src="images/appendixA69.2.jpg" width="409" height="275" style="display: block; float: none; top: 0.0;" alt="" /></div>
+      <div class="AppFigureCaption">
+        <span class="Bold">Figure A.198: </span><a name="399091">Extended source S/N vs. V+AB</a><span class="Symbol">&#957;</span> for the F125W filter, assuming high sky backgrounds and a source uniformly filling a 1 arcsec<span class="Superscript">2</span> aperture. <img class="Default" src="images/appendixA69.3.jpg" width="408" height="253" style="display: block; float: none; top: 0.0;" alt="" /></div>
+    </blockquote>
+    <hr align="left" />
+    <div style="text-align: right;">
+      <table cellspacing="0" summary="">
+        <tr>
+          <td>
+            <a href="toc.html"><img src="images/toc.gif" alt="Table of Contents" border="0" /></a>
+          </td>
+          <td>
+            <a href="appendixA68.html"><img src="images/prev.gif" alt="Previous" border="0" /></a>
+          </td>
+          <td>
+            <a href="appendixA70.html"><img src="images/next.gif" alt="Next" border="0" /></a>
+          </td>
+          <td>
+            <a href="ix.html"><img src="images/index.gif" alt="Index" border="0" /></a>
+          </td>
+          <td>
+            <a href="wfc3_ihb.pdf">
+              <img src="images/print.gif" alt="Print" border="0" />
+            </a>
+          </td>
+        </tr>
+      </table>
+    </div>
+  
+<!-- end PAGE CONTENT -->
+
+          <br>
+    </td>
+  <TD><IMG border=0 SRC="/images/spacer.gif" WIDTH=7 HEIGHT=1 alt=""></TD>
+
+  <TD bgcolor="#CCCCCC"><IMG SRC="/images/spacer.gif" WIDTH=1 HEIGHT=1 alt=""></TD>
+
+
+  </tr>
+  <tr>
+    <td colspan="6" bgcolor="#999999" height="1"><img src="/images/spacer.gif"
+    alt="" width="546" height="1"></td>
+  </tr>
+
+
+
+
+
+
+<tr><td colspan="7" align="left" style="padding-top:2px;">
+<div style="float:left; width:40%;">
+<a href="/institute/Copyright"><small>Copyright</small></a>
+&nbsp;|&nbsp;<a href="help.html"><small>Help</small></a>
+&nbsp;|&nbsp;<a href="http://www.stsci.edu/hst/wfc3/documents/handbooks/currentIHB/appendixA69.html?printable=1"><small>Printable Page</small></a>
+</div>
+<div style="float:right; width:58%; text-align:right;">
+</div>
+</td>
+</tr>
+
+
+
+</table>
+
+  
+
+</body>
+</html>

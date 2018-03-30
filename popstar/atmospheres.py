@@ -414,7 +414,7 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 #---------------------------------------------------------------------#
 def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False):
     """
-    **If T >= 20,000 K : CMFGEN** NOT ACTIVE YET, ALL ATLAS
+    **If T >= 20,000 K : CMFGEN** NOT ACTIVE YET, ALL ATLAS FOR NOW
     5500 <= T < 20000: ATLAS (ck04)
     5000 <= T < 5500: ATLAS/PHOENIX merge
     3800 <= T < 5000: PHOENIXv16 (Husser+13)
