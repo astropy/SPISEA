@@ -281,6 +281,11 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=3000, gravity=4, rebi
         logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
         print( logg_msg.format(2.5, temperature, gravity))
         gravity = 2.5
+
+    if (gravity > 5.0):
+        logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
+        print( logg_msg.format(5.0, temperature, gravity))
+        gravity = 5.0
         
     if rebin == True:
         sp = pysynphot.Icat('BTSettl_2015_rebin', temperature, metallicity, gravity)

@@ -11,7 +11,7 @@ from scipy import interpolate
 import pylab as py
 from popstar.utils import objects
 
-log = logging.getLogger('evolution')
+logger = logging.getLogger('evolution')
 
 # Fetch root directory of evolution models.
 try:
@@ -908,7 +908,7 @@ class MISTv1(StellarEvolution):
         r"""
         Extract an individual isochrone from the MISTv1
         collection.
-        """
+p        """
         # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity
 
@@ -1025,7 +1025,7 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         z_list = [0.015]
         
         # populate list of isochrone ages (log scale)
-        age_list = np.arange(6.0, 8.001, 0.01).tolist()
+        age_list = np.arange(6.0, 10.000, 0.01).tolist()
         
         # specify location of model files
         model_dir = models_dir + 'merged/baraffe_pisa_ekstrom_parsec/'
