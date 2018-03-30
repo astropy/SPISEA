@@ -88,11 +88,13 @@ is done in two steps.
 In your .cshrc or .bashrc, set the PYSYN_CDBS and POPSTAR_MODELS variables:
 
     setenv PYSYN_CDBS /g/lu/models/cdbs
+    
     setenv POPSTAR_MODELS /g/lu/models
 
 or
 
     export PYSYN_CDBS=/g/lu/models/cdbs
+    
     export POPSTAR_MODELS=/g/lu/models
 
 
