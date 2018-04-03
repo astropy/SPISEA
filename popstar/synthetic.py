@@ -640,6 +640,7 @@ class Isochrone(object):
             isWR_all = evol['isWR']
         elif 'phase' in keys:
             evol['isWR'] = evol['phase'] == 9
+            isWR_all = evol['isWR']
         else:
             isWR_all = ['None'] * len(evol)
 
