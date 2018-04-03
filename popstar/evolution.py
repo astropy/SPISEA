@@ -11,7 +11,7 @@ from scipy import interpolate
 import pylab as py
 from popstar.utils import objects
 
-log = logging.getLogger('evolution')
+logger = logging.getLogger('evolution')
 
 # Fetch root directory of evolution models.
 try:
@@ -929,7 +929,7 @@ class MISTv1(StellarEvolution):
         r"""
         Extract an individual isochrone from the MISTv1
         collection.
-        """
+p        """
         # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity
 
