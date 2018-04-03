@@ -964,7 +964,7 @@ class MISTv1(StellarEvolution):
         iso.rename_column('col4', 'logT')
         iso.rename_column('col5', 'logg')
         iso.rename_column('col6', 'logL')
-        iso['logT_WR'] = iso['logT']
+        iso.rename_column('col65', 'phase')
 
         iso.meta['log_age'] = log_age
         iso.meta['metallicity'] = metallicity
