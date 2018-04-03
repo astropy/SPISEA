@@ -640,7 +640,6 @@ class Isochrone(object):
             isWR_all = evol['isWR']
         elif 'phase' in keys:
             evol['isWR'] = evol['phase'] == 9
-            pdb.set_trace()
         else:
             isWR_all = ['None'] * len(evol)
 
