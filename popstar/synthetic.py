@@ -100,6 +100,7 @@ class ResolvedCluster(Cluster):
 
         # Figure out the filters we will make.
         self.filt_names = self.set_filter_names()
+        self.cluster_mass = cluster_mass
 
         ##### 
         # Make a table to contain all the information about each stellar system.
@@ -130,6 +131,17 @@ class ResolvedCluster(Cluster):
 
         return
 
+    def save_to_file(self, fileroot, overwrite=True):
+        # Unique parameters
+        save_sys_file = fileroot + '.fits'
+        save_comp_file = fileroot + '_comp.fits'
+
+        self.star_systems.write(save_sys_file, format='fits', overwrite=overwrite)
+        self.companions.write(save_comp_file, format='fits', overwrite=overwrite)
+                
+        return
+    
+        
     def set_filter_names(self):
         filt_names = []
         
@@ -390,6 +402,7 @@ class ResolvedCluster(Cluster):
             compMass = [compMass[ii] for ii in idx]
             
         return star_systems, compMass
+
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
