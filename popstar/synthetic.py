@@ -50,7 +50,7 @@ def Vega():
 vega = Vega()
 
 class Cluster(object):
-    def __init__(self, iso, imf, ifmf, cluster_mass, verbose=False):
+    def __init__(self, iso, imf, cluster_mass, ifmf=None, verbose=False):
         """
         Code to model a cluster with user-specified logAge, AKs, and distance.
         Must also specify directory containing the isochrone (made using popstar
@@ -70,7 +70,7 @@ class Cluster(object):
 class ResolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass, ifmf=None, save_dir='./', verbose=True):
         # Save to object variables
-        Cluster.__init__(self, iso, imf, ifmf, cluster_mass, verbose=verbose)
+        Cluster.__init__(self, iso, imf, cluster_mass, ifmf=ifmf, verbose=verbose)
 
         t1 = time.time()
         ##### 
