@@ -68,7 +68,7 @@ class Cluster(object):
 
     
 class ResolvedCluster(Cluster):
-    def __init__(self, iso, imf, cluster_mass, save_dir='./', verbose=True):
+    def __init__(self, iso, imf, cluster_mass, ifmf=None, save_dir='./', verbose=True):
         Cluster.__init__(self, iso, imf, cluster_mass, ifmf=ifmf, verbose=verbose)
 
         # if os.path.exists(save_sys_file):
@@ -392,9 +392,9 @@ class ResolvedCluster(Cluster):
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 red_law=default_red_law, verbose=False):
+                 ifmf=None, red_law=default_red_law, verbose=False):
 
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmf=ifmf, verbose=verbose)
 
         # For a given delta_AKs (Gaussian sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
@@ -441,9 +441,9 @@ class ResolvedClusterDiffRedden2(ResolvedCluster):
     for asymmetric dAKs distribution
     """
     def __init__(self, iso, imf, cluster_mass, deltaAKs_blue, deltaAKs_red,
-                 red_law=default_red_law, filters=None, verbose=False):
+                 ifmf=None, red_law=default_red_law, filters=None, verbose=False):
 
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, filters=filters, verbose=verbose)
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmf=ifmf, filters=filters, verbose=verbose)
 
         # For a given delta_AKs (sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
