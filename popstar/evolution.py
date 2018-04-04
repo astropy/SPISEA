@@ -929,12 +929,12 @@ class MISTv1(StellarEvolution):
         r"""
         Extract an individual isochrone from the MISTv1
         collection.
-p        """
+        """
         # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity
 
         log_age = math.log10(age)
-        
+
         # check age and metallicity are within bounds
         if ((log_age < 6.0) or (log_age > 10.01)) :
             logger.error('Requested age is out of bounds.')
