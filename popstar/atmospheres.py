@@ -5,6 +5,7 @@ import os
 import glob
 from astropy.io import fits
 from astropy.table import Table
+import pysynphot
 import time
 import pdb
 
@@ -177,6 +178,12 @@ def get_cmfgenRot_atmosphere(metallicity=0, temperature=24000, gravity=4.3, rebi
 
     rebin=True: pull from atmospheres at ck04model resolution.
     """
+    # Take care of atmospheres outside the catalog boundaries
+    logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
+    if gravity > 4.3:
+        print( logg_msg.format(4.3, temperature, gravity))
+        gravity = 4.3
+        
     if rebin:
         sp = pysynphot.Icat('cmfgen_rot_rebin', temperature, metallicity, gravity)
     else:
@@ -189,6 +196,82 @@ def get_cmfgenRot_atmosphere(metallicity=0, temperature=24000, gravity=4.3, rebi
         print( '  temperature = %d' % temperature)
         print( '  metallicity = %.1f' % metallicity)
         print( '  log gravity = %.1f' % gravity)
+
+    return sp
+
+def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4.3, rebin=True,
+                                         verbose=False):
+    """
+    For a given stellar atmosphere, get extract the closest possible match in 
+    Teff/logg space. Note that this is different from the normal routine
+    which interpolates along the input grid to get final spectrum. We can't
+    do this here because the Fierro+15 atmosphere grid is so sparse
+
+    rebin=True: pull from atmospheres at ck04model resolution.
+
+    If verbose, print out the parameters of the match
+    """
+    # Set up the proper root directory
+    if rebin == True:
+        root_dir = '/g/lu/models/cdbs/grid/cmfgen_rot_rebin'
+    else:
+        root_dir = '/g/lu/models/cdbs/grid/cmfgen_rot'
+
+    # Read in catalog, extract atmosphere info
+    cat = Table.read('{0}/catalog.fits'.format(root_dir), format='fits')
+    teff_arr = []
+    z_arr = []
+    logg_arr = []
+    for ii in range(len(cat)):
+        index = cat['INDEX'][ii]
+        tmp = index.split(',')
+        teff_arr.append(float(tmp[0]))
+        z_arr.append(float(tmp[1]))
+        logg_arr.append(float(tmp[2]))
+    teff_arr = np.array(teff_arr)
+    z_arr = np.array(z_arr)
+    logg_arr = np.array(logg_arr)
+
+    # Now find the closest atmosphere in parameter space to
+    # the one we want. We'll find the match with the lowest
+    # fractional difference
+    teff_diff = (teff_arr - temperature) / temperature
+    logg_diff = (logg_arr - gravity) / gravity
+    
+    diff_tot = abs(teff_diff) + abs(logg_diff)
+    idx_f = np.where(diff_tot == min(diff_tot))[0][0]
+
+    # Extract the filename of the best-match model and read as
+    # pysynphot object
+    infile = cat[idx_f]['FILENAME'].split('.')
+    spec = Table.read('{0}/{1}.fits'.format(root_dir, infile[0]))
+    
+    # Now, the CMFGEN atmospheres assume a distance of 1 kpc, while the the
+    # ATLAS models are in FLAM at the surface. So, we need to multiply the
+    # CMFGEN atmospheres by (1000/R)**2. in order to convert to FLAM on surface.
+    # We'll calculate radius from Teff and logL, which is given in the Table_*.txt file
+    t = Table.read('{0}/Table_rot.txt'.format(root_dir), format='ascii')
+    tmp = np.where(t['col1'] == infile[0])
+
+    lum = t['col3'][tmp] * (3.839*10**33) # cgs
+    sigma = 5.6704 * 10**-5 # cgs
+    teff = teff_arr[idx_f] # cgs
+
+    radius = np.sqrt( lum / (4.0 * np.pi * teff**4. * sigma) ) # in cm
+    radius /= 3.08*10**18 # in pc
+    
+
+    # Make the pysynphot spectrum
+    w = spec['Wavelength']
+    f = spec['Flux'] * (1000 / radius)**2.
+    sp = pysynphot.ArraySpectrum(w,f)
+    
+    #sp = pysynphot.FileSpectrum('{0}/{1}.fits'.format(root_dir, infile[0]))
+
+    # Print out parameters of match, if desired
+    if verbose:
+        print('Teff match: Input: {0}, Output: {1}'.format(temperature, teff_arr[idx_f]))
+        print('logg match: Input: {0}, Output: {1}'.format(gravity, logg_arr[idx_f]))
 
     return sp
 
@@ -448,12 +531,12 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
             print( 'ATLAS/Phoenix merged atmosphere')
         return get_atlas_phoenix_atmosphere(metallicity=metallicity,
                                         temperature=temperature,
-                                         gravity=gravity)
+                                        gravity=gravity)
         #return get_phoenixv16_atmosphere(metallicity=metallicity,
         #                              temperature=temperature,
         #                              gravity=gravity)
     
-    if temperature >= 5500:
+    if (temperature >= 5500) & (temperature < 20000):
         if verbose:
             print( 'ATLAS merged atmosphere')
         return get_castelli_atmosphere(metallicity=metallicity,
@@ -467,7 +550,8 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
                                        temperature=temperature,
                                        gravity=gravity)
 
-        #return get_cmfgenrot_atmosphere(metallicity=metallicity,
+        #print('CMFGEN')
+        #return get_cmfgenRot_atmosphere_closest(metallicity=metallicity,
         #                               temperature=temperature,
         #                               gravity=gravity)    
 

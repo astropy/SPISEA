@@ -12,7 +12,7 @@ from pysynphot import ObsBandpass
 from pysynphot import observation as obs
 import pysynphot
 from astropy import constants, units
-from astropy.table import Table, Column, MaskedColumn
+from astropy.table import Table, Column
 from popstar.imf import imf, multiplicity
 from popstar.utils import objects
 import pickle
@@ -39,7 +39,7 @@ def Vega():
                                      gravity=3.95,
                                      metallicity=-0.5)
 
-    vega = spectrum.trimSpectrum(vega, 3000, 50000)
+    vega = spectrum.trimSpectrum(vega, 3000, 52000)
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
     # and is used to convert to flux observed at Earth.
@@ -62,16 +62,22 @@ class Cluster(object):
         self.verbose = verbose
         self.iso = iso
         self.imf = imf
-        self.ifmf = ifmf
         self.cluster_mass = cluster_mass
 
         return
 
+    
 class ResolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass, ifmf=None, save_dir='./', verbose=True):
-        # Save to object variables
         Cluster.__init__(self, iso, imf, cluster_mass, ifmf=ifmf, verbose=verbose)
 
+        # if os.path.exists(save_sys_file):
+        #     self.star_systems = Table.read(save_sys_file)
+
+        #     if self.imf.make_multiples:
+        #         self.companions = Table.read(save_comp_file)
+            
+            
         t1 = time.time()
         ##### 
         # Sample the IMF to build up our cluster mass.
@@ -80,6 +86,7 @@ class ResolvedCluster(Cluster):
 
         # Figure out the filters we will make.
         self.filt_names = self.set_filter_names()
+        self.cluster_mass = cluster_mass
 
         ##### 
         # Make a table to contain all the information about each stellar system.
@@ -89,45 +96,15 @@ class ResolvedCluster(Cluster):
         #t4 = time.time()
         #print 'make star systems: {0}'.format(t4 - t3)
         
-        # Trim out bad systems; specifically, stars with masses outside those provided
-        # by the model isochrone
-        star_systems, compMass = self._remove_bad_systems(star_systems, compMass, self.ifmf)
+        # Trim out bad systems
+        star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
 
-        ###
-        # Calculate remnant masses and identity using ifmf, if desired
-        ###
-        if self.ifmf != None:
-            # Initialize remnant ID, remnant_mass columns. Default ID is 0, mass = -99 for
-            # non-compact objects
-            remnant_id = np.zeros(len(star_systems['mass']))
-            remnant_mass = np.ones(len(star_systems['mass'])) * -99
-
-            # Identify compact objects as those with Teff = 0 (indicating they are not
-            # present in isochrone)
-            idx_rem = np.where(star_systems['Teff'] == 0)
-            
-            # Calculate remnant mass and ID for compact objects; update remnant_id and
-            # remnant_mass arrays accordingly
-            r_mass_tmp, r_id_tmp = self.ifmf.generate_death_mass_distribution(star_systems['mass'][idx_rem])
-            remnant_mass[idx_rem] = r_mass_tmp
-            remnant_id[idx_rem] = r_id_tmp
-
-            # Mask remnant mass where it is not relevant (e.g. not a compact object or
-            # outside mass range IFMF is defined for)
-            remnant_mass = np.ma.masked_where((remnant_id <= 0), remnant_mass)
-            
-            # Add columns to star_systems table
-            remnant_mass_col = MaskedColumn(remnant_mass, name='Rem_mass')
-            remnant_id_col = Column(remnant_id, name='Rem_ID')
-            star_systems.add_column(remnant_id_col)
-            star_systems.add_column(remnant_mass_col)
-            
         ##### 
         # Make a table to contain all the information about companions.
         #####
         if self.imf.make_multiples:
             #t5 = time.time()
-            companions = self._make_companions_table_interp(star_systems, compMass, self.ifmf)
+            companions = self._make_companions_table_interp(star_systems, compMass)
             #t6 = time.time()
             #print 'make comp systems: {0}'.format(t6 - t5)
         #####
@@ -140,6 +117,17 @@ class ResolvedCluster(Cluster):
 
         return
 
+    def save_to_file(self, fileroot, overwrite=True):
+        # Unique parameters
+        save_sys_file = fileroot + '.fits'
+        save_comp_file = fileroot + '_comp.fits'
+
+        self.star_systems.write(save_sys_file, format='fits', overwrite=overwrite)
+        self.companions.write(save_comp_file, format='fits', overwrite=overwrite)
+                
+        return
+    
+        
     def set_filter_names(self):
         filt_names = []
         
@@ -384,25 +372,11 @@ class ResolvedCluster(Cluster):
         return companions
 
     
-    def _remove_bad_systems(self, star_systems, compMass, ifmf):
-        """
-        Helper function to remove stars with masses outside the isochrone
-        mass range from the cluster. These stars are identified by having 
-        a Teff = 0, as set up by _make_companions_table_interp.
-
-        If ifmf == None, then both high and low-mass bad systems are 
-        removed. If ifmf != None, then we will save the high mass systems 
-        since they will be pluggedd into an ifmf later.
-        """
+    def _remove_bad_systems(self, star_systems, compMass):
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
-        if ifmf == None:
-            idx = np.where(star_systems['Teff'] > 0)[0]
-        else:
-            highest_mass_iso = np.max(star_systems['mass'][np.where(star_systems['Teff'] > 0)])
-            idx = np.where( (star_systems['Teff'] > 0) | (star_systems['mass'] > highest_mass_iso))[0]
-
+        idx = np.where(star_systems['Teff'] > 0)[0]
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
 
@@ -412,8 +386,9 @@ class ResolvedCluster(Cluster):
         if self.imf.make_multiples:
             # Clean up companion stuff (which we haven't handeled yet)
             compMass = [compMass[ii] for ii in idx]
-        
+            
         return star_systems, compMass
+
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
@@ -439,15 +414,10 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
 
         # Perturb all of star systems' photometry by a random amount corresponding to
         # differential de-reddening. The distribution is normal with a width of
-        # Aks +/- deltaAKs in each filter.
+        # Aks +/- deltaAKs in each filter
         rand_red = np.random.randn(len(self.star_systems))
         for filt in self.filt_names:
             self.star_systems[filt] += rand_red * delta_red_filt[filt]
-
-            # If ifmf is specified, then return photometry of compact objects to 0
-            if self.ifmf != None:
-                compact = np.where(self.star_systems['Rem_ID'] > 0)
-                self.star_systems[filt][compact] = 0
 
         # Perturb the companions by the same amount.
         if self.imf.make_multiples:
@@ -471,9 +441,9 @@ class ResolvedClusterDiffRedden2(ResolvedCluster):
     for asymmetric dAKs distribution
     """
     def __init__(self, iso, imf, cluster_mass, deltaAKs_blue, deltaAKs_red,
-                 red_law=default_red_law, filters=None, verbose=False):
+                 ifmf=None, red_law=default_red_law, filters=None, verbose=False):
 
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, filters=filters, verbose=verbose)
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmf=ifmf, filters=filters, verbose=verbose)
 
         # For a given delta_AKs (sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
@@ -535,7 +505,7 @@ class ResolvedClusterDiffRedden2(ResolvedCluster):
 
 class UnresolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass,
-                 wave_range=[5000, 50000], verbose=False):
+                 wave_range=[5000, 52000], verbose=False):
         """
         iso : Isochrone
         """
@@ -612,7 +582,7 @@ class Isochrone(object):
     def __init__(self, logAge, AKs, distance,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  red_law=default_red_law, mass_sampling=1,
-                 wave_range=[5000, 42500], min_mass=None, max_mass=None):
+                 wave_range=[5000, 52000], min_mass=None, max_mass=None):
         """
         Parameters
         ----------
@@ -667,6 +637,9 @@ class Isochrone(object):
         if 'logT_WR' in keys:
             evol['isWR'] = evol['logT'] != evol['logT_WR']
             isWR_all = evol['isWR']
+        elif 'phase' in keys:
+            evol['isWR'] = evol['phase'] == 9
+            isWR_all = evol['isWR']
         else:
             isWR_all = ['None'] * len(evol)
 
@@ -696,7 +669,7 @@ class Isochrone(object):
             # This is the time-intensive call... everything else is negligable.
             star = atm_func(temperature=T, gravity=gravity)
 
-            # Trim wavelength range down to JHKL range (0.5 - 4.25 microns)
+            # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
 
             # Convert into flux observed at Earth (unreddened)
@@ -941,7 +914,7 @@ class IsochronePhot(Isochrone):
 class iso_table(object):
     def __init__(self, logAge, distance, evo_model=default_evo_model,
                  atm_func=default_atm_func, mass_sampling=1,
-                 min_mass=None, max_mass=None, wave_range=[5000, 30000],
+                 min_mass=None, max_mass=None, wave_range=[5000, 52000],
                  rebin=True):
         """
         Generate an isochrone table containing star mass, temp, radius,
@@ -1044,7 +1017,7 @@ class iso_table(object):
             # This is the time-intensive call... everything else is negligable.
             star = atm_func(temperature=T, gravity=gravity)
             
-            # Trim wavelength range down to JHKL range (0.5 - 4.25 microns)
+            # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
 
             # Convert into flux observed at Earth (unreddened)
@@ -1289,6 +1262,30 @@ def get_obs_str(col):
                  'ps1_i': 'ps1,i', 'ps1_y':'ps1,y',
                  'jwst_F090W': 'jwst,F090W', 'jwst_F164N': 'jwst,F164N', 'jwst_F212N': 'jwst,F212N',
                  'jwst_F323N':'jwst,F323N', 'jwst_F466N': 'jwst,F466N',
+                 'jwst_F070W': 'jwst,F070W',
+                 'jwst_F115W': 'jwst,F115W',
+                 'jwst_F140M': 'jwst,F140M',
+                 'jwst_F150W': 'jwst,F150W',
+                 'jwst_F150W2': 'jwst,F150W2',
+                 'jwst_F162M': 'jwst,F162M',
+                 'jwst_F182M': 'jwst,F182M',
+                 'jwst_F187N': 'jwst,F187N',
+                 'jwst_F200W': 'jwst,F200W',
+                 'jwst_F210M': 'jwst,F210M',
+                 'jwst_F250M': 'jwst,F250M', 
+                 'jwst_F277W': 'jwst,F277W',
+                 'jwst_F300M': 'jwst,F300M',
+                 'jwst_F322W2': 'jwst,F322W2',
+                 'jwst_F335M': 'jwst,F335M',
+                 'jwst_F356W': 'jwst,F356W',
+                 'jwst_F360M': 'jwst,F360M',
+                 'jwst_F405N': 'jwst,F405N',
+                 'jwst_F410M': 'jwst,F410M',
+                 'jwst_F430M': 'jwst,F430M',
+                 'jwst_F440W': 'jwst,F440W',
+                 'jwst_F460M': 'jwst,F460M',
+                 'jwst_F470N': 'jwst,F470N',
+                 'jwst_F480M': 'jwst,F480M',
                  'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
                  'nirc2_Lp': 'nirc2,Lp', 'nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
                  'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',

@@ -14,9 +14,11 @@ Here is a brief list of things that PopStar can simulation built-in:
 We encourage contributions to PopStar, particular those that add support for star formation histories, metallicity distributions, new models, higher spectral resolution, etc.
 
 
-## INSTALL (from git)
+INSTALL (from git)
+==================
 
-### Dependencies
+Dependencies
+------------
 * python (preferably via AstroConda, as it includes some necessary
   packages, like astropy and pysynphot)
 * astropy
@@ -25,13 +27,15 @@ We encourage contributions to PopStar, particular those that add support for sta
 * numpy
 * matplotlib
 
-### Path Setup      
+Path Setup
+----------
 Add all of these to your python path in your .cshrc:
 
     set CODE_DIR = /path/to/top/level/python/code
     setenv PYTHONPATH ${CODE_DIR}/popstar/PopStar
 
-### Install Evolution and Atmosphere Models
+Install Evolution and Atmosphere Models
+---------------------------------------
 Once you have cloned the popstar repository, you will need to download the
 grid of evolution and atmosphere models. The evolution models can be
 found here:
@@ -75,19 +79,27 @@ Ready:
 performance.
 
 
-#### Setup Path to Models
+Setup Path to Models
+--------------------
 
 You need to notify python where these models are going to live. This
 is done in two steps.
 
-In your .cshrc or .bashrc, set the PSYN_CDBS variable to point to the
-CDBS directory:
+In your .cshrc or .bashrc, set the PYSYN_CDBS and POPSTAR_MODELS variables:
 
-    setenv PSYN_CDBS /g/lu/models/cdbs
-    export PSYN_CDBS=/g/lu/models/cdbs
+    setenv PYSYN_CDBS /g/lu/models/cdbs
+    
+    setenv POPSTAR_MODELS /g/lu/models
+
+or
+
+    export PYSYN_CDBS=/g/lu/models/cdbs
+    
+    export POPSTAR_MODELS=/g/lu/models
 
 
-## Other Resources
+Other Resources
+===============
 
 * _Astropy: http://www.astropy.org/
 * _git: http://git-scm.com/
