@@ -50,7 +50,7 @@ def Vega():
 vega = Vega()
 
 class Cluster(object):
-    def __init__(self, iso, imf, cluster_mass, verbose=False):
+    def __init__(self, iso, imf, cluster_mass, ifmf=None, verbose=False):
         """
         Code to model a cluster with user-specified logAge, AKs, and distance.
         Must also specify directory containing the isochrone (made using popstar
@@ -69,21 +69,7 @@ class Cluster(object):
     
 class ResolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass, save_dir='./', verbose=True):
-        # Save to object variables
-        Cluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
-
-        # ##### 
-        # # Use saved cluster if all parameters (except distance) match.
-        # #####
-        # # Unique parameters
-        # log_age = self.iso.points.meta['LOGAGE']
-        # AKs = self.iso.points.meta['AKS']
-        # dist = self.iso.points.meta['DISTANCE']
-        
-        # # Make and input/output file name for the stored cluster. 
-        # save_file_fmt = '{0}clust_{1:05.2f}_{2:4.2f}_{3:5s}{4:s}'
-        # save_sys_file = save_file_fmt.format(save_dir, log_age, AKs, str(dist).zfill(5), '.fits')
-        # save_comp_file = save_file_fmt.format(save_dir, log_age, AKs, str(dist).zfill(5), '_comp.fits')
+        Cluster.__init__(self, iso, imf, cluster_mass, ifmf=ifmf, verbose=verbose)
 
         # if os.path.exists(save_sys_file):
         #     self.star_systems = Table.read(save_sys_file)
