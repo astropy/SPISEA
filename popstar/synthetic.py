@@ -12,7 +12,7 @@ from pysynphot import ObsBandpass
 from pysynphot import observation as obs
 import pysynphot
 from astropy import constants, units
-from astropy.table import Table, Column
+from astropy.table import Table, Column, MaskedColumn
 from popstar.imf import imf, multiplicity
 from popstar.utils import objects
 import pickle
@@ -62,6 +62,7 @@ class Cluster(object):
         self.verbose = verbose
         self.iso = iso
         self.imf = imf
+        self.ifmf = ifmf
         self.cluster_mass = cluster_mass
 
         return
@@ -76,8 +77,7 @@ class ResolvedCluster(Cluster):
 
         #     if self.imf.make_multiples:
         #         self.companions = Table.read(save_comp_file)
-            
-            
+        
         t1 = time.time()
         ##### 
         # Sample the IMF to build up our cluster mass.
@@ -96,15 +96,45 @@ class ResolvedCluster(Cluster):
         #t4 = time.time()
         #print 'make star systems: {0}'.format(t4 - t3)
         
-        # Trim out bad systems
-        star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
+        # Trim out bad systems; specifically, stars with masses outside those provided
+        # by the model isochrone
+        star_systems, compMass = self._remove_bad_systems(star_systems, compMass, self.ifmf)
+
+        ###
+        # Calculate remnant masses and identity using ifmf, if desired
+        ###
+        if self.ifmf != None:
+            # Initialize remnant ID, remnant_mass columns. Default ID is 0, mass = -99 for
+            # non-compact objects
+            remnant_id = np.zeros(len(star_systems['mass']))
+            remnant_mass = np.ones(len(star_systems['mass'])) * -99
+
+            # Identify compact objects as those with Teff = 0 (indicating they are not
+            # present in isochrone)
+            idx_rem = np.where(star_systems['Teff'] == 0)
+            
+            # Calculate remnant mass and ID for compact objects; update remnant_id and
+            # remnant_mass arrays accordingly
+            r_mass_tmp, r_id_tmp = self.ifmf.generate_death_mass_distribution(star_systems['mass'][idx_rem])
+            remnant_mass[idx_rem] = r_mass_tmp
+            remnant_id[idx_rem] = r_id_tmp
+
+            # Mask remnant mass where it is not relevant (e.g. not a compact object or
+            # outside mass range IFMF is defined for)
+            remnant_mass = np.ma.masked_where((remnant_id <= 0), remnant_mass)
+            
+            # Add columns to star_systems table
+            remnant_mass_col = MaskedColumn(remnant_mass, name='Rem_mass')
+            remnant_id_col = Column(remnant_id, name='Rem_ID')
+            star_systems.add_column(remnant_id_col)
+            star_systems.add_column(remnant_mass_col)
 
         ##### 
         # Make a table to contain all the information about companions.
         #####
         if self.imf.make_multiples:
             #t5 = time.time()
-            companions = self._make_companions_table_interp(star_systems, compMass)
+            companions = self._make_companions_table_interp(star_systems, compMass, self.ifmf)
             #t6 = time.time()
             #print 'make comp systems: {0}'.format(t6 - t5)
         #####
@@ -372,11 +402,24 @@ class ResolvedCluster(Cluster):
         return companions
 
     
-    def _remove_bad_systems(self, star_systems, compMass):
+    def _remove_bad_systems(self, star_systems, compMass, ifmf):
+        """
+        Helper function to remove stars with masses outside the isochrone
+        mass range from the cluster. These stars are identified by having 
+        a Teff = 0, as set up by _make_companions_table_interp.
+        If ifmf == None, then both high and low-mass bad systems are 
+        removed. If ifmf != None, then we will save the high mass systems 
+        since they will be pluggedd into an ifmf later.
+        """
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
-        idx = np.where(star_systems['Teff'] > 0)[0]
+        if ifmf == None:
+            idx = np.where(star_systems['Teff'] > 0)[0]
+        else:
+            highest_mass_iso = np.max(star_systems['mass'][np.where(star_systems['Teff'] > 0)])
+            idx = np.where( (star_systems['Teff'] > 0) | (star_systems['mass'] > highest_mass_iso))[0]
+
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
 
@@ -386,7 +429,7 @@ class ResolvedCluster(Cluster):
         if self.imf.make_multiples:
             # Clean up companion stuff (which we haven't handeled yet)
             compMass = [compMass[ii] for ii in idx]
-            
+        
         return star_systems, compMass
 
 
