@@ -97,6 +97,11 @@ or
     
     export POPSTAR_MODELS=/g/lu/models
 
+Quick Start Guide
+-------------------
+For a quick tutorial on how to make a star cluster with popstar, see
+the jupyter notebook at Popstar/docs/Quick_Start_Make_Cluster.ipynb
+    
 
 Other Resources
 ===============
