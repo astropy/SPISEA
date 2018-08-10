@@ -1514,6 +1514,104 @@ class RedLawHosek18_extended(pysynphot.reddening.CustomRedLaw):
 
         return A_at_wave
 
+class RedLawHosek18_tmp(pysynphot.reddening.CustomRedLaw):
+    """
+    An object that represents the reddening vs. wavelength for the 
+    Hosek+18 reddening law (Wd1 + Arches RC stars). The returned object is 
+
+    pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
+
+    The wavelength range over which this law is calculated is
+    0.7 - 3.545 microns.
+    """
+    def __init__(self):
+        # Fetch the extinction curve, pre-interpolate across 3-8 microns
+        wave = np.arange(0.7, 3.545, 0.001)
+        
+        # This will eventually be scaled by AKs when you
+        # call reddening(). Right now, calc for AKs=1
+        Alambda_scaled = RedLawHosek18_tmp.derive_Hosek18(wave)
+
+        # Convert wavelength to angstrom
+        wave *= 10 ** 4
+
+        pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
+                                                  waveunits='angstrom',
+                                                  Avscaled=Alambda_scaled,
+                                                  name='Hosek+18',
+                                                  litref='Hosek+ 2018')
+
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+        self.name = 'H18'
+        
+    @staticmethod
+    def derive_Hosek18(wavelength):
+        """ 
+        Derive the Hosek+18 extinction law, using the data from Table 4. 
+        
+        Calculate the resulting extinction for an array of wavelengths.
+        The extinction is normalized with A_Ks.
+
+        Data pulled from Hosek+18, Table 4
+
+        Parameters
+        ----------
+        wavelength : float
+            Wavelength range to define extinction law over, in microns
+        """
+        # Extinction law definition
+        wave = np.array([0.8059, 0.962, 1.25, 1.53, 2.14, 3.545])
+        A_AKs = np.array([7.943, 5.715, 3.142, 2.04, 1.0, 0.50])
+        
+        # Following Hosek+18, Interpolate over the curve with cubic spline interpolation
+        spline_interp = interpolate.splrep(wave, A_AKs, k=3, s=0)
+        A_AKs_at_wave = interpolate.splev(wavelength, spline_interp)
+
+        # This curve already assumes A_Ks = 1.0, so we can go straight to
+        # output        
+        return A_AKs_at_wave
+
+    def Hosek18(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
+
+        return A_at_wave
+
 #---------------------------#
 # Cubic spline function from Schalfly+16 appendix
 #---------------------------#
