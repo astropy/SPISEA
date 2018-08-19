@@ -1,7 +1,7 @@
 ====================
 PopStar
 ====================
-PopStar is an astropy affiliated package for generating simple stellar populations from synthetic evolution and atmosphere models. Currently, PopStar generates single-age, single-metallicity populations (i.e. star clusters). It supports different initial mass functions, multiplicity perscriptions, reddening laws, filter functions, atmosphere models, and evolution models. The pacakge is object oriented and is extensible. 
+PopStar is a package for generating simple stellar populations from synthetic evolution and atmosphere models. Currently, PopStar generates single-age, single-metallicity populations (i.e. star clusters). It supports different initial mass functions, multiplicity perscriptions, reddening laws, filter functions, atmosphere models, and evolution models. The pacakge is object oriented and is extensible. 
 
 PopStar's primary strength is the large set of models that are accessible. In particular, we have created a set of models that "merge" the best-in-class evolution and atmosphere models to cover the full range of masses from 0.08 - 150 Msun at very young ages, including pre-main-sequence evolution.
 
@@ -72,7 +72,7 @@ can download from here:
 GIT SITE -- load these up
 /g/lu/models/cdbs
 
-Ready: 
+Ready:
 
 * phoenix\_v16 - high resolution (reformatted for CDBS)
 * phoenix\_v16_rebin - downgraded to improve synthetic photometry
@@ -88,20 +88,20 @@ is done in two steps.
 In your .cshrc or .bashrc, set the PYSYN_CDBS and POPSTAR_MODELS variables:
 
     setenv PYSYN_CDBS /g/lu/models/cdbs
-    
+
     setenv POPSTAR_MODELS /g/lu/models
 
 or
 
     export PYSYN_CDBS=/g/lu/models/cdbs
-    
+
     export POPSTAR_MODELS=/g/lu/models
 
 Quick Start Guide
 -------------------
 For a quick tutorial on how to make a star cluster with popstar, see
 the jupyter notebook at Popstar/docs/Quick_Start_Make_Cluster.ipynb
-    
+
 
 Other Resources
 ===============
