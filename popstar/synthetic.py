@@ -1204,6 +1204,9 @@ def get_filter_info(name, vega=vega, rebin=True):
     elif name.startswith('ctio_osiris'):
         filt = filters.get_ctio_osiris_filt(filterName)
 
+    elif name.startswith('naco'):
+        filt = filters.get_naco_filt(filterName)
+
     else:
         filt = ObsBandpass(name)
         
@@ -1434,4 +1437,67 @@ def match_model_masses(isoMasses, starMasses):
 def get_evo_model_by_string(evo_model_string):
     return getattr(evolution, evo_model_string)
 
+
+def calc_ab_vega_filter_conversion(filt_str):
+    """
+    Function to calculate the conversion between
+    AB and Vega magnitudes for a given filter:
+    m_AB - m_vega
+
+    Note: this conversion is just the vega magnitude in 
+    AB system
+
+    Parameters:
+    -----------
+    filt_str: string
+        Filter identification string
+    """
+    # Get filter info
+    filt = get_filter_info(filt_str)
+
+    # Let's convert everything into frequency space
+    c = 2.997*10**18 # A / s
+    vega_wave = vega.wave
+    vega_mu = c / vega_wave
+    vega_flux_mu = vega.flux * (vega_wave **2 / c)
+
+    filt_wave = filt.wave
+    filt_mu = c / filt_wave
+    s_filt = filt.throughput
+    
+    # Interpolate the filter function, determine what the
+    # filter function is at the exact sampling of the
+    # vega spectrum (in freq space)
+    filt_interp = scipy.interpolate.interp1d(filt_mu, s_filt, kind='linear', bounds_error=False,
+                                                 fill_value=0)
+    s_interp = filt_interp(vega_mu)
+    
+    # Now for the m_ab calculation
+    mu_diff = np.diff(vega_mu)
+    numerator = np.sum(vega_flux_mu[:-1] * s_interp[:-1] * mu_diff)
+    denominator = np.sum(s_interp[:-1] * mu_diff)
+
+    vega_mag_ab = -2.5 * np.log10(numerator / denominator) - 48.6
+
+    print('For {0}, m_ab - m_vega = {1}'.format(filt_str, vega_mag_ab))
+
+    #--Same calculation, in lambda space. Less accurate for some reason---#
+    # Interpolate the filter function to be the exact same sampling as the
+    # vega spectrum
+    #c = 3*10**18 # A / s
+    #filt_interp = scipy.interpolate.interp1d(filt.wave, filt.throughput, kind='linear', bounds_error=False,
+    #                                             fill_value=0)
+    #s_interp = filt_interp(vega.wave)
+
+    # Calculate the numerator 
+    #diff = np.diff(vega.wave)
+    #numerator2 = np.sum((vega.wave[:-1]**2. / c) * vega.flux[:-1] * s_interp[:-1] * diff)
+    
+    # Now we need to intergrate the filter response for the denominator
+    #denominator2 = np.sum(s_interp[:-1] * diff)
+
+    # Calculate vega AB magnitude. This is the conversion
+    #vega_mag_ab2 = -2.5 * np.log10(numerator2 / denominator2) - 48.6
+
+    return vega_mag_ab
 
