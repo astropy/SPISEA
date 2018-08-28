@@ -31,7 +31,7 @@ class IMF(object):
             self.make_multiples = False
         else:
             self.make_multiples = True
-
+ 
         return
             
 
