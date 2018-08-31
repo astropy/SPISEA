@@ -56,9 +56,9 @@ class Geneva(StellarEvolution):
         age_list = age_list
         
         # specify location of model files
-        model_dir = '../models/geneva_merged/'
+        model_dir = models_dir + 'geneva/'
 
-        StellarEvolution.__init__(model_dir, age_list, mass_list, z_list)
+        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
 
         self.z_solar = 0.02
         self.z_file_map = {0.01: 'z01/', 0.02: 'z02/', 0.03: 'z03/'}
@@ -180,6 +180,9 @@ class Ekstrom12(StellarEvolution):
         iso.rename_column('col8', 'logT')
         iso.rename_column('col22', 'logg')
         iso.rename_column('col9', 'logT_WR')
+
+        # Add a phase column... everything is just a star.
+        iso.add_column( Column(np.ones(len(iso)), name = 'phase'))
 
         iso.meta['log_age'] = log_age
         iso.meta['metallicity'] = metallicity
@@ -382,6 +385,7 @@ class Parsec(StellarEvolution):
         iso.rename_column('col5', 'logL')
         iso.rename_column('col6', 'logT')
         iso.rename_column('col7', 'logg')
+        iso.rename_column('col15', 'phase')
         iso['logT_WR'] = iso['logT']
 
         iso.meta['log_age'] = log_age
@@ -513,6 +517,10 @@ class Pisa(StellarEvolution):
         iso.rename_column('col4', 'logg')
         iso['logT_WR'] = iso['logT']
 
+        # Add columns for current mass and phase. 
+        iso.add_column( Column(np.ones(len(iso)), name = 'phase'))
+        iso.add_column( Column(iso['mass'], name = 'current_mass'))
+        
         iso.meta['log_age'] = log_age
         iso.meta['metallicity'] = metallicity
 
@@ -929,7 +937,7 @@ class MISTv1(StellarEvolution):
         r"""
         Extract an individual isochrone from the MISTv1
         collection.
-p        """
+        """
         # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity
 
@@ -965,6 +973,7 @@ p        """
         iso.rename_column('col5', 'logg')
         iso.rename_column('col6', 'logL')
         iso.rename_column('col65', 'phase')
+        iso.add_column( Column(iso['mass'], name = 'current_mass'))
 
         iso.meta['log_age'] = log_age
         iso.meta['metallicity'] = metallicity
@@ -1102,7 +1111,9 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         iso.rename_column('col3', 'logL')
         iso.rename_column('col4', 'logg')
         iso.rename_column('col5', 'logT_WR')
-        iso.rename_column('col6', 'model_ref')
+        iso.rename_column('col6', 'mass_current')
+        iso.rename_column('col7', 'phase')
+        iso.rename_column('col8', 'model_ref')
 
         iso.meta['log_age'] = log_age
         iso.meta['metallicity'] = metallicity

@@ -88,55 +88,30 @@ class ResolvedCluster(Cluster):
         self.filt_names = self.set_filter_names()
         self.cluster_mass = cluster_mass
 
+        #####
+        # Make isochrone interpolators
+        #####
+        interp_keys = ['Teff', 'L', 'logg', 'isWR', 'mass_current', 'phase'] + self.filt_names
+        self.iso_interps = {}
+        for ikey in interp_keys:
+            self.iso_interps[ikey] = interpolate.interp1d(self.iso.points['mass'], self.iso.points[ikey],
+                                                          kind='linear', bounds_error=False, fill_value=0)
+        
         ##### 
         # Make a table to contain all the information about each stellar system.
         #####
-        #t3 = time.time()
-        star_systems = self._make_star_systems_table_interp(mass, isMulti, sysMass)
-        #t4 = time.time()
-        #print 'make star systems: {0}'.format(t4 - t3)
+        star_systems = self._make_star_systems_table(mass, isMulti, sysMass)
         
         # Trim out bad systems; specifically, stars with masses outside those provided
-        # by the model isochrone
-        star_systems, compMass = self._remove_bad_systems(star_systems, compMass, self.ifmf)
-
-        ###
-        # Calculate remnant masses and identity using ifmf, if desired
-        ###
-        if self.ifmf != None:
-            # Initialize remnant ID, remnant_mass columns. Default ID is 0, mass = -99 for
-            # non-compact objects
-            remnant_id = np.zeros(len(star_systems['mass']))
-            remnant_mass = np.ones(len(star_systems['mass'])) * -99
-
-            # Identify compact objects as those with Teff = 0 (indicating they are not
-            # present in isochrone)
-            idx_rem = np.where(star_systems['Teff'] == 0)
-            
-            # Calculate remnant mass and ID for compact objects; update remnant_id and
-            # remnant_mass arrays accordingly
-            r_mass_tmp, r_id_tmp = self.ifmf.generate_death_mass_distribution(star_systems['mass'][idx_rem])
-            remnant_mass[idx_rem] = r_mass_tmp
-            remnant_id[idx_rem] = r_id_tmp
-
-            # Mask remnant mass where it is not relevant (e.g. not a compact object or
-            # outside mass range IFMF is defined for)
-            remnant_mass = np.ma.masked_where((remnant_id <= 0), remnant_mass)
-            
-            # Add columns to star_systems table
-            remnant_mass_col = MaskedColumn(remnant_mass, name='Rem_mass')
-            remnant_id_col = Column(remnant_id, name='Rem_ID')
-            star_systems.add_column(remnant_id_col)
-            star_systems.add_column(remnant_mass_col)
+        # by the model isochrone (except for compact objects).
+        star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
 
         ##### 
         # Make a table to contain all the information about companions.
         #####
         if self.imf.make_multiples:
-            #t5 = time.time()
-            companions = self._make_companions_table_interp(star_systems, compMass, self.ifmf)
-            #t6 = time.time()
-            #print 'make comp systems: {0}'.format(t6 - t5)
+            companions = self._make_companions_table(star_systems, compMass)
+            
         #####
         # Save our arrays to the object
         #####
@@ -167,7 +142,6 @@ class ResolvedCluster(Cluster):
 
         return filt_names
         
-
     def _make_star_systems_table(self, mass, isMulti, sysMass):
         """
         Make a star_systems table and get synthetic photometry for each primary star.
@@ -176,76 +150,55 @@ class ResolvedCluster(Cluster):
                              names=['mass', 'isMultiple', 'systemMass'])
         N_systems = len(star_systems)
 
-        # Add columns for the Teff, L, logg, isWR for the primary stars.
+        # Add columns for the Teff, L, logg, isWR, mass_current, phase for the primary stars.
         star_systems.add_column( Column(np.zeros(N_systems, dtype=float), name='Teff') )
         star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='L') )
         star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='logg') )
         star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='isWR') )
+        star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='mass_current') )
+        star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='phase') )
 
         # Add the filter columns to the table. They are empty so far.
         # Keep track of the filter names in : filt_names
         for filt in self.filt_names:
             star_systems.add_column( Column(np.empty(N_systems, dtype=float), name=filt) )
 
-        mdx_all = match_model_masses(self.iso.points['mass'], star_systems['mass'])
-        idx_good = np.where(mdx_all >= 0)[0]
-        mdx_good = mdx_all[idx_good]
-
-        if len(idx_good) != len(mdx_all):
-            msg = 'Rejected {0:d} of {1:d} primary stars' 
-            print( msg.format(len(mdx_all) - len(idx_good), N_systems))
-            foo = np.where(mdx_all == -1)[0]
-            print( star_systems['mass'][foo])
-
-        
-        star_systems['Teff'][idx_good] = self.iso.points['Teff'][mdx_good]
-        star_systems['L'][idx_good] = self.iso.points['L'][mdx_good]
-        star_systems['logg'][idx_good] = self.iso.points['logg'][mdx_good]
-        star_systems['isWR'][idx_good] = self.iso.points['isWR'][mdx_good]
+        # Use our pre-built interpolators to fetch values from the isochrone for each star.
+        star_systems['Teff'] = self.iso_interps['Teff'](star_systems['mass'])
+        star_systems['L']    = self.iso_interps['L'](star_systems['mass'])
+        star_systems['logg'] = self.iso_interps['logg'](star_systems['mass'])
+        star_systems['isWR'] = np.round(self.iso_interps['isWR'](star_systems['mass']))
+        star_systems['mass_current'] = self.iso_interps['mass_current'](star_systems['mass'])
+        star_systems['phase'] = np.round(self.iso_interps['phase'](star_systems['mass']))
 
         for filt in self.filt_names:
-            star_systems[filt][idx_good] = self.iso.points[filt][mdx_good]
-    
-        return star_systems
+            star_systems[filt] = self.iso_interps[filt](star_systems['mass'])
 
-    def _make_star_systems_table_interp(self, mass, isMulti, sysMass):
-        """
-        Make a star_systems table and get synthetic photometry for each primary star.
-        """
-        star_systems = Table([mass, isMulti, sysMass],
-                             names=['mass', 'isMultiple', 'systemMass'])
-        N_systems = len(star_systems)
 
-        # Add columns for the Teff, L, logg, isWR for the primary stars.
-        star_systems.add_column( Column(np.zeros(N_systems, dtype=float), name='Teff') )
-        star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='L') )
-        star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='logg') )
-        star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='isWR') )
+        #####
+        # Make Remnants
+        #     Note: Some models already have WDs in them. If they do, then they shouldn't
+        #     be handled by this code here (because their Teff > 0).
+        # 
+        # Remnants have flux = 0 in all bands if they are generated here.
+        ##### 
+        if self.ifmf != None:
+            # Identify compact objects as those with Teff = 0 or with phase > 100.
+            highest_mass_iso = iso_pts['mass'].max()
+            idx_rem = np.where((star_systems['Teff'] == 0) & (star_systems['mass'] > highest_mass_iso))[0]
+            
+            # Calculate remnant mass and ID for compact objects; update remnant_id and
+            # remnant_mass arrays accordingly
+            r_mass_tmp, r_id_tmp = self.ifmf.generate_death_mass_distribution(star_systems['mass'][idx_rem])
 
-        # Add the filter columns to the table. They are empty so far.
-        # Keep track of the filter names in : filt_names
-        for filt in self.filt_names:
-            star_systems.add_column( Column(np.empty(N_systems, dtype=float), name=filt) )
+            # Drop remnants where it is not relevant (e.g. not a compact object or
+            # outside mass range IFMF is defined for)
+            idx_rem_good = idx_rem[r_id_tmp > 0]
 
-        iso_pts = self.iso.points
-        interp_Teff = interpolate.interp1d(iso_pts['mass'], iso_pts['Teff'], kind='linear', bounds_error=False, fill_value=0)
-        interp_L = interpolate.interp1d(iso_pts['mass'], iso_pts['L'], kind='linear', bounds_error=False, fill_value=0)
-        interp_logg = interpolate.interp1d(iso_pts['mass'], iso_pts['logg'], kind='linear', bounds_error=False, fill_value=0)
-        interp_isWR = interpolate.interp1d(iso_pts['mass'], iso_pts['isWR'], kind='linear', bounds_error=False, fill_value=0)
-
-        star_systems['Teff'] = interp_Teff(star_systems['mass'])
-        star_systems['L'] = interp_L(star_systems['mass'])
-        star_systems['logg'] = interp_logg(star_systems['mass'])
-        star_systems['isWR'] = np.round(interp_isWR(star_systems['mass']))
-
-        for filt in self.filt_names:
-            interp_filt = interpolate.interp1d(iso_pts['mass'], iso_pts[filt],
-                                               kind='linear',
-                                               bounds_error=False, fill_value=0)
-            star_systems[filt] = interp_filt(star_systems['mass'])
+            star_systems['mass_current'][idx_rem_good] = r_mass_tmp
+            star_systems['phase'][idx_rem_good] = r_id_tmp
 
         return star_systems
-
         
     def _make_companions_table(self, star_systems, compMass):
 
@@ -265,76 +218,14 @@ class ResolvedCluster(Cluster):
 
         companions = Table([system_index], names=['system_idx'])
 
-        # Add columns for the Teff, L, logg, isWR, filters for the companion stars.
+        # Add columns for the Teff, L, logg, isWR mass_current, phase, and filters for the companion stars.
         companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='mass') )
         companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Teff') )
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='L') )
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='logg') )
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='isWR') )
-        for filt in self.filt_names:
-            companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
-
-        kk = 0
-
-        # Loop through each star system
-        for ii in range(N_systems):
-            # Determine if this system is a multiple star system.
-            if star_systems['isMultiple'][ii]:
-
-                # Loop through the companions in this system
-                for cc in range(N_companions[ii]):
-                    companions['mass'][kk] = compMass[ii][cc]
-                    mdx_cc = match_model_mass(self.iso.points['mass'], compMass[ii][cc])
-
-                    if mdx_cc != None:
-                        companions['Teff'][kk] = self.iso.points['Teff'][mdx_cc]
-                        companions['L'][kk] = self.iso.points['L'][mdx_cc]
-                        companions['logg'][kk] = self.iso.points['logg'][mdx_cc]
-                        companions['isWR'][kk] = self.iso.points['isWR'][mdx_cc]
-
-                        for filt in self.filt_names:
-                            f1 = 10**(-star_systems[filt][ii] / 2.5)
-                            f2 = 10**(-self.iso.points[filt][mdx_cc] / 2.5)
-
-                            companions[filt][kk] = self.iso.points[filt][mdx_cc]
-                            star_systems[filt][ii] = -2.5 * np.log10(f1 + f2)
-
-                        kk += 1
-
-        # Notify if we have a lot of bad ones.
-        idx = np.where(companions['Teff'] > 0)[0]
-        if len(idx) != N_comp_tot and self.verbose:
-            print( 'Found {0:d} companions out of mass range'.format(N_comp_tot - len(idx)))
-
-        # Double check that everything behaved properly.
-        assert companions['mass'][idx].min() > 0
-
-        return companions
-
-    def _make_companions_table_interp(self, star_systems, compMass):
-
-        N_systems = len(star_systems)
-        
-        #####
-        #    MULTIPLICITY                 
-        # Make a second table containing all the companion-star masses.
-        # This table will be much longer... here are the arrays:
-        #    sysIndex - the index of the system this star belongs too
-        #    mass - the mass of this individual star.
-        N_companions = np.array([len(star_masses) for star_masses in compMass])
-        star_systems.add_column( Column(N_companions, name='N_companions') )
-
-        N_comp_tot = N_companions.sum()
-        system_index = np.repeat(np.arange(N_systems), N_companions)
-
-        companions = Table([system_index], names=['system_idx'])
-
-        # Add columns for the Teff, L, logg, isWR, filters for the companion stars.
-        companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='mass') )
-        companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Teff') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='L') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='logg') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='isWR') )
+        companions.add_column( Column(np.empty(N_systems, dtype=float), name='mass_current') )
+        companions.add_column( Column(np.empty(N_systems, dtype=float), name='phase') )
         for filt in self.filt_names:
             companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
 
@@ -349,18 +240,6 @@ class ResolvedCluster(Cluster):
                 comp_index[ii][cc] = kk
                 kk += 1
 
-        # Setup interpolaters.
-        iso_pts = self.iso.points
-        interp_Teff = interpolate.interp1d(iso_pts['mass'], iso_pts['Teff'], kind='linear', bounds_error=False, fill_value=0)
-        interp_L = interpolate.interp1d(iso_pts['mass'], iso_pts['L'], kind='linear', bounds_error=False, fill_value=0)
-        interp_logg = interpolate.interp1d(iso_pts['mass'], iso_pts['logg'], kind='linear', bounds_error=False, fill_value=0)
-        interp_isWR = interpolate.interp1d(iso_pts['mass'], iso_pts['isWR'], kind='linear', bounds_error=False, fill_value=0)
-        interp_filt = {}
-        for filt in self.filt_names:
-            interp_filt[filt] = interpolate.interp1d(iso_pts['mass'], iso_pts[filt],
-                                                    kind='linear',
-                                                    bounds_error=False, fill_value=0)
-                
         # Find all the systems with at least one companion... add the flux
         # of that companion to the primary. Repeat for 2 companions,
         # 3 companions, etc.
@@ -376,25 +255,47 @@ class ResolvedCluster(Cluster):
             comp_mass = companions['mass'][cdx]
 
             if len(idx) > 0:
-                companions['Teff'][cdx] = interp_Teff(comp_mass)
-                companions['L'][cdx] = interp_L(comp_mass)
-                companions['logg'][cdx] = interp_logg(comp_mass)
-                companions['isWR'][cdx] = np.round(interp_isWR(comp_mass))
+                companions['Teff'][cdx] = self.iso_interps['Teff'](comp_mass)
+                companions['L'][cdx] = self.iso_interps['L'](comp_mass)
+                companions['logg'][cdx] = self.iso_interps['logg'](comp_mass)
+                companions['isWR'][cdx] = np.round(self.iso_interps['isWR'](comp_mass))
+                companions['mass_current'] = self.iso_interps['mass_current'](companions['mass'])
+                companions['phase'] = np.round(self.iso_interps['phase'](companions['mass']))
 
                 for filt in self.filt_names:
                     # Magnitude of companion
-                    companions[filt][cdx] = interp_filt[filt](comp_mass)
+                    companions[filt][cdx] = self.iso_interps[filt](comp_mass)
 
                     # Add companion flux to system flux.
                     f1 = 10**(-star_systems[filt][idx] / 2.5)
                     f2 = 10**(-companions[filt][cdx] / 2.5)
                     star_systems[filt][idx] = -2.5 * np.log10(f1 + f2)
-                    
+
+                #####
+                # Make Remnants with flux = 0 in all bands.
+                ##### 
+                if self.ifmf != None:
+                    # Identify compact objects as those with Teff = 0 or with phase > 100.
+                    highest_mass_iso = self.iso.points['mass'].max()
+                    cdx_rem = np.where((companions['Teff'][cdx] == 0) &
+                                       (companions['mass'][cdx] > highest_mass_iso))[0]
+            
+                    # Calculate remnant mass and ID for compact objects; update remnant_id and
+                    # remnant_mass arrays accordingly
+                    r_mass_tmp, r_id_tmp = self.ifmf.generate_death_mass(companions['mass'][cdx][cdx_rem])
+
+                    # Drop remnants where it is not relevant (e.g. not a compact object or
+                    # outside mass range IFMF is defined for)
+                    cdx_rem_good = cdx_rem[r_id_tmp > 0]
+
+                    companions['mass_current'][cdx][cdx_rem_good] = r_mass_tmp
+                    companions['phase'][cdx][cdx_rem_good] = r_id_tmp
+                
 
         # Notify if we have a lot of bad ones.
         idx = np.where(companions['Teff'] > 0)[0]
         if len(idx) != N_comp_tot and self.verbose:
-            print( 'Found {0:d} companions out of mass range'.format(N_comp_tot - len(idx)))
+            print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
 
         # Double check that everything behaved properly.
         assert companions['mass'][idx].min() > 0
@@ -402,23 +303,24 @@ class ResolvedCluster(Cluster):
         return companions
 
     
-    def _remove_bad_systems(self, star_systems, compMass, ifmf):
+    def _remove_bad_systems(self, star_systems, compMass):
         """
         Helper function to remove stars with masses outside the isochrone
         mass range from the cluster. These stars are identified by having 
-        a Teff = 0, as set up by _make_companions_table_interp.
-        If ifmf == None, then both high and low-mass bad systems are 
-        removed. If ifmf != None, then we will save the high mass systems 
+        a Teff = 0, as set up by _make_star_systems_table_interp.
+        If self.ifmf == None, then both high and low-mass bad systems are 
+        removed. If self.ifmf != None, then we will save the high mass systems 
         since they will be pluggedd into an ifmf later.
         """
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
-        if ifmf == None:
+        if self.ifmf == None:
+            # Keep only those stars with Teff assigned.
             idx = np.where(star_systems['Teff'] > 0)[0]
         else:
-            highest_mass_iso = np.max(star_systems['mass'][np.where(star_systems['Teff'] > 0)])
-            idx = np.where( (star_systems['Teff'] > 0) | (star_systems['mass'] > highest_mass_iso))[0]
+            # Keep stars (with Teff) and any other compact objects (with phase info). 
+            idx = np.where( (star_systems['Teff'] > 0) | (star_systems['phase'] >= 0) )
 
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
@@ -692,10 +594,12 @@ class Isochrone(object):
         R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * T_all**4))
         mass_all = evol['mass'] * units.Msun # masses in solar masses
         logg_all = evol['logg']
+        mass_curr_all = evol['mass_current'] * units.Msun
+        phase_all = evol['phase']
 
         # Define the table that contains the "average" properties for each star.
-        tab = Table([L_all, T_all, R_all, mass_all, logg_all, isWR_all],
-                    names=['L', 'Teff', 'R', 'mass', 'logg', 'isWR'])
+        tab = Table([L_all, T_all, R_all, mass_all, logg_all, isWR_all, mass_curr_all, phase_all],
+                    names=['L', 'Teff', 'R', 'mass', 'logg', 'isWR', 'mass_current', 'phase'])
 
         # Initialize output for stellar spectra
         self.spec_list = []
