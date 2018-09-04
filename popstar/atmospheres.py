@@ -459,11 +459,23 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
     """
     # Handle white dwarfs - assume all H atmospheres from Koester 2010
     if gravity >= 6:
-        if verbose:
-            print('wdKoester atmosphere')
-        return get_wdKoester_atmosphere(metallicity=metallicity,
+        try:
+            if verbose:
+                print('wdKoester atmosphere')
+
+            return get_wdKoester_atmosphere(metallicity=metallicity,
                                             temperature=temperature,
                                             gravity=gravity)
+        except pysynphot.exceptions.ParameterOutOfBounds:
+            if verbose:
+                print('BB atmosphere')
+                
+            # Use a blackbody.
+            bbspec = pysynphot.spectrum.BlackBody(temperature)
+            bbspec.convert('flam')
+            bbspec *= (1000 * 3.08e18 / 6.957e10)**2
+            return bbspec
+                
     
     if temperature <= 3200:
         if verbose:

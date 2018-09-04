@@ -905,19 +905,35 @@ def compare_Baraffe_Pisa(BaraffeIso, PisaIso):
 # MIST v.1 (Choi+16)
 #===============================#
 class MISTv1(StellarEvolution):
-    def __init__(self):
+    def __init__(self, version=1.2):
         r"""
         Define intrinsic properties for the MIST version 1 stellar
         models.
+
+        Parameters:
+        -----------
+        version: either 1.0 or 1.2
+            Specify which version of MIST models you want. Version 1.0
+            was downloaded from MIST website on 2/2017, while Version 1.2
+            was downloaded on 8/2018
         """
         # define metallicity parameters for Parsec models
         self.z_list = [0.015]
         
         # populate list of isochrone ages (log scale)
         self.age_list = np.arange(6.0, 10.01+0.005, 0.01)
+
+        # Set version direcotry
+        self.version = version
+        if self.version == 1.0:
+            version_dir = 'v1.0/'
+        elif self.version == 1.2:
+            version_dir = 'v1.2/'
+        else:
+            raise ValueError('Version {0} not supported for MIST isochrones'.format(version))
         
         # Specify location of model files
-        self.model_dir = models_dir+'MISTv1/'
+        self.model_dir = models_dir+'MISTv1/' + version_dir
 
         # Specifying metallicity
         self.z_solar = 0.015
@@ -942,7 +958,7 @@ class MISTv1(StellarEvolution):
         z_defined = self.z_solar*10.**metallicity
 
         log_age = math.log10(age)
-        
+
         # check age and metallicity are within bounds
         if ((log_age < 6.0) or (log_age > 10.01)) :
             logger.error('Requested age is out of bounds.')
@@ -964,23 +980,31 @@ class MISTv1(StellarEvolution):
         # generate isochrone file string
         full_iso_file = self.model_dir + 'iso/' + z_dir + iso_file
         
-        # return isochrone data
+        # return isochrone data. Column locations depend on
+        # version
         iso = Table.read(full_iso_file, format='fits')
-        iso.rename_column('col7', 'Z')
-        iso.rename_column('col2', 'logAge')
-        iso.rename_column('col3', 'mass')
-        iso.rename_column('col4', 'logT')
-        iso.rename_column('col5', 'logg')
-        iso.rename_column('col6', 'logL')
-        iso.rename_column('col65', 'phase')
-        iso.add_column( Column(iso['mass'], name = 'current_mass'))
-
+        if self.version == 1.0:
+            iso.rename_column('col7', 'Z')
+            iso.rename_column('col2', 'logAge')
+            iso.rename_column('col3', 'mass')
+            iso.rename_column('col4', 'logT')
+            iso.rename_column('col5', 'logg')
+            iso.rename_column('col6', 'logL')
+            iso.rename_column('col65', 'phase')
+        elif self.version == 1.2:
+            iso.rename_column('col2', 'logAge')
+            iso.rename_column('col3', 'mass')
+            iso.rename_column('col4', 'mass_current')
+            iso.rename_column('col9', 'logL')
+            iso.rename_column('col14', 'logT')
+            iso.rename_column('col17', 'logg')
+            iso.rename_column('col79', 'phase')
+            
         iso.meta['log_age'] = log_age
         iso.meta['metallicity'] = metallicity
 
         return iso
         
-
     def format_isochrones(self, input_iso_dir, metallicity_list):
         r"""
         Parse isochrone file downloaded from MIST web server,
