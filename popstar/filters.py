@@ -31,7 +31,7 @@ def get_nirc2_filt(name):
         
         diff = np.diff(wavelength)
         idx = np.where(diff <= 0)[0]
-        print( 'Duplicate entry loop' )
+        #print( 'Duplicate entry loop' )
 
     # Get rid of all entries with negative transmission
     idx = np.where(transmission > 1)[0]

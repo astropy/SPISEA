@@ -385,6 +385,24 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=3000, gravity=4, rebi
 
     return sp
 
+def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
+    """
+    metallicity = [M/H] (def = 0)
+    temperature = Kelvin (def = 5000)
+    gravity = log gravity (def = 4.0)
+    """
+    sp = pysynphot.Icat('wdKoester', temperature, metallicity, gravity)
+
+    # Do some error checking
+    idx = np.where(sp.flux != 0)[0]
+    if len(idx) == 0:
+        print( 'Could not find WD Koester (Koester+ 2010 atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
+        
+    return sp
+
 def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     """
     Return atmosphere that is a linear merge of atlas ck04 model and phoenixV16.
@@ -427,73 +445,6 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 
     return sp
 
-#---------OLD MERGED ATMOSPHERES------------#
-#def test_merged_atmospheres(metallicity=0, gravity=4):
-#    """
-#    Compare spectra from Castelli and NextGen at the boundary
-#    temperature of 8000 K.
-#
-#    Compare spectra from NextGen and Phoenix at the boundary
-#    temperature of 4000 K.
-#    """
-#    cast = get_castelli_atmosphere(temperature=8000, 
-#                                   metallicity=metallicity, gravity=gravity)
-#
-#    ngen = get_nextgen_atmosphere(temperature=8000,
-#                                  metallicity=metallicity, gravity=gravity)
-#
-#    # Now Plot the spectra
-#    py.figure(1)
-#    py.clf()
-#    py.loglog(cast.wave, cast.flux, 'r-', label='Castelli')
-#    py.plot(ngen.wave, ngen.flux, 'b-', label='NextGen')
-#    py.xlabel('Wavelength')
-#    py.ylabel('Flux')
-#    py.legend()
-#    py.xlim(3000, 50000)
-#    py.ylim(1e3, 1e8)
-#
-#
-#    ngen = get_nextgen_atmosphere(temperature=4000,
-#                                  metallicity=metallicity, gravity=gravity)
-#
-#    phoe = get_phoenix_atmosphere(temperature=4000,
-#                                  metallicity=metallicity, gravity=gravity)
-#    # Now Plot the spectra
-#    py.figure(2)
-#    py.clf()
-#    py.loglog(phoe.wave, phoe.flux, 'r-', label='Phoenix')
-#    py.plot(ngen.wave, ngen.flux, 'b-', label='NextGen')
-#    py.xlabel('Wavelength')
-#    py.ylabel('Flux')
-#    py.legend()
-#    py.xlim(3000, 50000)
-#    py.ylim(1, 1e8)
-#
-#    
-#def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4):
-#    if temperature < 4000 or (temperature < 7000 and gravity < 4.0):
-#        print( 'Phoenix Model Atmosphere Used')
-#        return get_phoenix_atmosphere(metallicity=metallicity,
-#                                      temperature=temperature,
-#                                      gravity=gravity)
-#
-#    # if temperature < 4000:
-#    #     return get_amesdusty_atmosphere(metallicity=metallicity,
-#    #                                     temperature=temperature,
-#    #                                     gravity=gravity)
-#
-#    if temperature >= 4000 and temperature < 7000 and gravity >= 4.0:
-#        print( 'Nextgen atmosphere used')
-#        return get_nextgen_atmosphere(metallicity=metallicity,
-#                                      temperature=temperature,
-#                                      gravity=gravity)
-#
-#    if temperature >= 7000: 
-#        return get_castelli_atmosphere(metallicity=metallicity,
-#                                       temperature=temperature,
-#                                       gravity=gravity)
-#
 #---------------------------------------------------------------------#
 def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False):
     """
@@ -503,7 +454,29 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
     3800 <= T < 5000: PHOENIXv16 (Husser+13)
     3200 <= T < 3800: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge
     3200 < T <= 1200: BTSettl_CIFITS2011_2015
-    """    
+
+    6.0 <= logg <= 9.0: WD Koester 2010 
+    """
+    # Handle white dwarfs - assume all H atmospheres from Koester 2010
+    if gravity >= 6:
+        try:
+            if verbose:
+                print('wdKoester atmosphere')
+
+            return get_wdKoester_atmosphere(metallicity=metallicity,
+                                            temperature=temperature,
+                                            gravity=gravity)
+        except pysynphot.exceptions.ParameterOutOfBounds:
+            if verbose:
+                print('BB atmosphere')
+                
+            # Use a blackbody.
+            bbspec = pysynphot.spectrum.BlackBody(temperature)
+            bbspec.convert('flam')
+            bbspec *= (1000 * 3.08e18 / 6.957e10)**2
+            return bbspec
+                
+    
     if temperature <= 3200:
         if verbose:
             print( 'BTSettl_2015 atmosphere')
@@ -797,7 +770,7 @@ def cdbs_cmfgen(path_to_dir, path_to_cdbs_dir):
         prihdu = fits.PrimaryHDU()
     
         finalhdu = fits.HDUList([prihdu, tbhdu])
-        finalhdu.writeto(i[:-4]+'.fits', clobber=True)
+        finalhdu.writeto(i[:-4]+'.fits', overwrite=True)
         
         print( 'Done {0:2.0f} of {1:2.0f}'.format(counter, len(files)))
 
@@ -1122,7 +1095,7 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
         tbhdu.header['TUNIT14'] = 'FLAM'
     
         finalhdu = fits.HDUList([prihdu, tbhdu])
-        finalhdu.writeto(i, clobber=True)
+        finalhdu.writeto(i, overwrite=True)
 
         hdu.close()
         print( 'Done {0:2.0f} of {1:2.0f}'.format(counter, len(files)))
@@ -1213,7 +1186,7 @@ def rebin_phoenixV16(cdbs_path):
 
             # Write hdu
             finalhdu = fits.HDUList([prihdu, tbhdu])
-            # don't have clobber to protect original files.
+            # don't have overwrite to protect original files.
             finalhdu.writeto(path + outfile)   
 
             print( 'Finished file ' + outfile + ' with gravities: ', logg_exist)
@@ -1288,7 +1261,7 @@ def organize_BTSettl_atmospheres(path_to_dir):
         hdu_new = fits.HDUList([prihdu, tbhdu])
         
         # Write new fits table in cdbs directory
-        hdu_new.writeto('/g/lu/models/cdbs/grid/BTSettl_2015/'+i, clobber=True)
+        hdu_new.writeto('/g/lu/models/cdbs/grid/BTSettl_2015/'+i, overwrite=True)
 
         hdu.close()
         hdu_new.close()
@@ -1387,7 +1360,7 @@ def rebin_BTSettl(cdbs_path='/g/lu/models/cdbs/'):
 
         outfile = path + files_all[ff].split('[')[0]
         finalhdu = fits.HDUList([prihdu, tbhdu])
-        finalhdu.writeto(outfile, clobber=True)        
+        finalhdu.writeto(outfile, overwrite=True)        
 
     return
 
@@ -1418,9 +1391,150 @@ def make_wavelength_unique(files):
             tbhdu.header['TUNIT1'] = 'ANGSTROM'
             tbhdu.header['TUNIT2'] = 'FLAM'
             finalhdu = fits.HDUList([prihdu, tbhdu])
-            finalhdu.writeto(i, clobber=True)
+            finalhdu.writeto(i, overwrite=True)
 
     return
             
+def organize_WDKoester_atmospheres(path_to_dir):
+    """
+    Construct cdbs-ready wdKoester WD atmospheres for each model. (from Koester 2010)
+    Will convert wavelength units to angstroms and flux units to [erg/s/cm^2/A]
+
+    path_to_dir is the path to the directory containing all of the downloaded
+    files
+
+    Saves cdbs-ready atmospheres into /g/lu/models/cdbs/grid/wdKoeseter
+    (assumes this directory exists)
+    """
+    # Save current directory for return later, move into working dir
+    start_dir = os.getcwd()
+    os.chdir(path_to_dir)
+
+    # Process each atmosphere file independently
+    print( 'Creating cdbs-ready files')
+    files = glob.glob('*.dk.dat.txt')
+
+    for i in files:
+        data = Table.read(i, format='ascii')
+        
+        wave = data['col1']   # angstrom
+        flux = data['col2']   # erg/s/cm^2/A
+
+        # Make new fits table
+        c0 = fits.Column(name='Wavelength', format='D', array=wave)
+        c1 = fits.Column(name='Flux', format='E', array=flux)
+
+        cols = fits.ColDefs([c0, c1])
+        tbhdu = fits.BinTableHDU.from_columns(cols)
+
+        # Copy over headers, update unit keywords
+        prihdu = fits.PrimaryHDU()
+        tbhdu.header['TUNIT1'] = 'ANGSTROM'
+        tbhdu.header['TUNIT2'] = 'FLAM'
+        hdu_new = fits.HDUList([prihdu, tbhdu])
+        
+        # Write new fits table in cdbs directory
+        hdu_new.writeto('/g/lu/models/cdbs/grid/wdKoester/'+i.replace('.txt', '.fits'), overwrite=True)
+
+        hdu_new.close()
+    
+    # Return to original directory
+    os.chdir(start_dir)
+    return
+
+def make_WDKoester_catalog(path_to_dir):
+    """
+    Create cdbs catalog.fits of wdKoester grid.
+    THIS IS STEP 2, after organize_WDKoester_atmospheres has
+    been run.
+
+    path_to_dir is from current working directory to the cdbs directory.
+    Will create catalog.fits file in atmosphere directory with
+    description of each model
+    """
+    # Record current working directory for later
+    start_dir = os.getcwd()
+    
+    # Enter atmosphere directory
+    os.chdir(path_to_dir)
+   
+    # Extract parameters for each atmosphere from the filename,
+    # construct columns for catalog file
+    files = glob.glob("*dk.dat.fits")
+    index_str = []
+    name_str = []
+    for name in files:
+        tmp = name.split('.')
+        tmp2 = tmp[0].split('_')
+        temp = float(tmp2[0][2:]) # Kelvin
+        logg = float(tmp2[1]) / 100.0   # log(g)
+
+        index_str.append('{0:5.0f},0.0,{1:3.2f}'.format(temp, logg))
+        name_str.append('{0}[Flux]'.format(name))
+
+    # Make catalog
+    catalog = Table([index_str, name_str], names = ('INDEX', 'FILENAME'))
+
+    # Create catalog.fits file in directory with the models
+    catalog.write('catalog.fits', format = 'fits', overwrite=True)
+    
+    # Move back to original directory, create the catalog.fits file
+    os.chdir(start_dir)
+    
+    return
+
+def rebin_WDKoester(cdbs_path='/g/lu/models/cdbs/'):
+    """
+    Rebin wdKoester models to atlas ck04 resolution; this makes
+    spectrophotometry MUCH faster
+
+    makes new directory in cdbs/grid: wdKoester_rebin
+
+    cdbs_path: path to cdbs directory
+    """
+    # Get an atlas ck04 model, we will use this to set wavelength grid
+    sp_atlas = get_castelli_atmosphere()
+
+    # Open a fits table for an existing model; we will steal the header
+    tmp = cdbs_path+'/grid/wdKoester/da70000_800.dk.dat.fits'
+    wdkoester_hdu = fits.open(tmp)
+    header0 = wdkoester_hdu[0].header
+    wdkoester_hdu.close()
+
+    # Create cdbs/grid directory for rebinned models
+    path = cdbs_path+'/grid/wdKoester_rebin/'
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    # Read in the existing catalog.fits file and rebin every spectrum.
+    cat = fits.getdata(cdbs_path + '/grid/wdKoester/catalog.fits')
+    files_all = [cat[ii][1].split('[')[0] for ii in range(len(cat))]
+
+    print( 'Rebinning wdKoester spectra')
+    for ff in range(len(files_all)):
+        vals = cat[ff][0].split(',')
+        temp = float(vals[0])
+        metal = float(vals[1])
+        logg = float(vals[2])
+
+        # Fetch the wdKoester spectrum, rebin flux
+        sp = pysynphot.Icat('wdKoester', temp, metal, logg)
+        flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
+
+        # Make new output
+        c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
+        c1 = fits.Column(name='Flux', format='E', array=flux_rebin) 
+        
+        cols = fits.ColDefs([c0, c1])
+        tbhdu = fits.BinTableHDU.from_columns(cols)
+        prihdu = fits.PrimaryHDU(header=header0)
+        tbhdu.header['TUNIT1'] = 'ANGSTROM'
+        tbhdu.header['TUNIT2'] = 'FLAM'
+
+        outfile = path + files_all[ff].split('[')[0]
+        finalhdu = fits.HDUList([prihdu, tbhdu])
+        finalhdu.writeto(outfile, overwrite=True)        
+
+    return
             
     
