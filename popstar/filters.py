@@ -272,14 +272,14 @@ def get_naco_filt(name):
 
     return spectrum
 
-def get_Johnson_Cousin_filt(name):
+def get_ubv_filt(name):
     """
-    Define Johnson-Cousin filters as pysynphot object
+    Define ubv (Johnson-Cousin filters) as pysynphot object
     """
     try:
-        t = Table.read('{0}/Johnson_Cousin/{1}.txt'.format(filters_dir, name), format='ascii')
+        t = Table.read('{0}/ubv/{1}.txt'.format(filters_dir, name), format='ascii')
     except:
-        raise ValueError('Could not find Johnson-Cousin filter {0} in {1}/Johnson_Cousin'.format(name, filters_dir))
+        raise ValueError('Could not find ubv filter {0} in {1}/ubv'.format(name, filters_dir))
 
     # Convert wavelengths to angstroms
     wave = t['col1'] * 10.
@@ -289,6 +289,6 @@ def get_Johnson_Cousin_filt(name):
     bad = np.where(trans < 0)
     trans[bad] = 0
 
-    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='jc_{0}'.format(name))
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='ubv_{0}'.format(name))
 
     return spectrum
