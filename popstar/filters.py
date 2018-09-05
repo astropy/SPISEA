@@ -271,3 +271,24 @@ def get_naco_filt(name):
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='naco_{0}'.format(name))
 
     return spectrum
+
+def get_Johnson_Cousin_filt(name):
+    """
+    Define Johnson-Cousin filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/Johnson_Cousin/{1}.txt'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find Johnson-Cousin filter {0} in {1}/Johnson_Cousin'.format(name, filters_dir))
+
+    # Convert wavelengths to angstroms
+    wave = t['col1'] * 10.
+    trans = t['col2']
+
+    # Change any negative numbers to 0
+    bad = np.where(trans < 0)
+    trans[bad] = 0
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='jc_{0}'.format(name))
+
+    return spectrum
