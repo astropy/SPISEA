@@ -701,7 +701,9 @@ class IsochronePhot(Isochrone):
                  filters={'wfc3,ir,f127m', 'wfc3,ir,f139m',
                           'wfc3,ir,f153m', 'acs,wfc1,f814w',
                           'wfc3,ir,f125w', 'wfc3,ir,f160w',
-                          'nirc2,J', 'nirc2,H', 'nirc2,Kp',}):
+                          'nirc2,J', 'nirc2,H', 'nirc2,Kp',
+                          'ubv,U', 'ubv,B', 'ubv,V',
+                          'ubv,R', 'ubv,I',}):
 
         """
         Make an isochrone with photometry in various filters.

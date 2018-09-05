@@ -292,3 +292,20 @@ def get_ubv_filt(name):
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='ubv_{0}'.format(name))
 
     return spectrum
+
+def get_ukirt_filt(name):
+    """
+    Define UKIRT filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/ukirt/{1}.txt'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find ukirt filter {0} in {1}/ukirt'.format(name, filters_dir))
+
+    # Convert wavelengths to angstroms (from microns)
+    wave = t['col1'] * 10000.
+    trans = t['col2']
+
+    # Change any negative numbers to 0
+    bad = np.where(trans < 0)
+    trans[bad] = 0
