@@ -1142,6 +1142,12 @@ def get_filter_info(name, vega=vega, rebin=True):
     elif name.startswith('naco'):
         filt = filters.get_naco_filt(filterName)
 
+    elif name.startswith('ubv'):
+        filt = filters.get_ubv_filt(filterName)
+
+    elif name.startswith('ukirt'):
+        filt = filters.get_ukirt_filt(filterName)
+
     else:
         filt = ObsBandpass(name)
         

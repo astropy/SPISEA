@@ -277,13 +277,14 @@ def get_ubv_filt(name):
     Define ubv (Johnson-Cousin filters) as pysynphot object
     """
     try:
-        t = Table.read('{0}/ubv/{1}.txt'.format(filters_dir, name), format='ascii')
+        t = Table.read('{0}/ubv/{1}.dat'.format(filters_dir, name), format='ascii')
     except:
         raise ValueError('Could not find ubv filter {0} in {1}/ubv'.format(name, filters_dir))
 
-    # Convert wavelengths to angstroms
-    wave = t['col1'] * 10.
-    trans = t['col2']
+    # Convert wavelength from nm to angstroms 
+    wave = t[t.keys()[0]] * 10.
+    # Convert transmission to ratio (from percent)
+    trans = t[t.keys()[1]] / 100.
 
     # Change any negative numbers to 0
     bad = np.where(trans < 0)
@@ -298,14 +299,16 @@ def get_ukirt_filt(name):
     Define UKIRT filters as pysynphot object
     """
     try:
-        t = Table.read('{0}/ukirt/{1}.txt'.format(filters_dir, name), format='ascii')
+        t = Table.read('{0}/ukirt/{1}.dat'.format(filters_dir, name), format='ascii')
     except:
         raise ValueError('Could not find ukirt filter {0} in {1}/ukirt'.format(name, filters_dir))
 
     # Convert wavelengths to angstroms (from microns)
-    wave = t['col1'] * 10000.
-    trans = t['col2']
+    wavelength = t[t.keys()[0]] * 10000.
+    transmission = t[t.keys()[1]]
 
     # Change any negative numbers to 0
-    bad = np.where(trans < 0)
-    trans[bad] = 0
+    bad = np.where(transmission < 0)
+    transmission[bad] = 0
+
+    spectrum = pysynphot.ArrayBandpass(wavelength, transmission, waveunits='angstrom', name='ukirt_{0}'.format(name))
