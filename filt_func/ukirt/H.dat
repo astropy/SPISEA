@@ -2,7 +2,7 @@
 # 1.0mm water vapour, 1.3 airmass
 # Col 1: wavelength (microns)
 # Col 2: throughput
-#Wavelength(nm) Transmission
+#Wavelength(micron) Transmission
  1.3510 0.0000
  1.3515 0.0000
  1.3520 0.0000

@@ -304,11 +304,13 @@ def get_ukirt_filt(name):
         raise ValueError('Could not find ukirt filter {0} in {1}/ukirt'.format(name, filters_dir))
 
     # Convert wavelengths to angstroms (from microns)
-    wavelength = t[t.keys()[0]] * 10000.
-    transmission = t[t.keys()[1]]
+    wave = t[t.keys()[0]] * 10000.
+    trans = t[t.keys()[1]]
 
     # Change any negative numbers to 0
-    bad = np.where(transmission < 0)
-    transmission[bad] = 0
+    bad = np.where(trans < 0)
+    trans[bad] = 0
 
-    spectrum = pysynphot.ArrayBandpass(wavelength, transmission, waveunits='angstrom', name='ukirt_{0}'.format(name))
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='ukirt_{0}'.format(name))
+
+    return spectrum

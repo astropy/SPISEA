@@ -770,7 +770,7 @@ class IsochronePhot(Isochrone):
         for ii in self.filters:
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
             print( prt_fmt.format(ii, time.time() - startTime))
-
+            
             filt = get_filter_info(ii, rebin=rebin, vega=vega)
             filt_name = get_filter_col_name(ii)
 
@@ -1155,7 +1155,7 @@ def get_filter_info(name, vega=vega, rebin=True):
         filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
                                              waveunits=filt.waveunits,
                                              name=filt.name)
-           
+
     # If rebin=True, limit filter function to <=1500 wavelength points
     # over the non-zero values
     idx = np.where(filt.throughput > 0.001)[0]
