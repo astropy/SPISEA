@@ -1,7 +1,7 @@
 ##########################################################
 #
 #
-#This IFMF comes from Raithel et al. 2017
+#This IFMR comes from Raithel et al. 2017
 #https://arxiv.org/pdf/1712.00021.pdf
 #
 #
@@ -10,10 +10,10 @@
 import numpy as np
 
 
-class IFMF_new(object):
+class IFMR(object):
     def __init__(self):
         """
-        The IFMF class, without all the for loops
+        The IFMR class, without all the for loops
         """
         pass
 
@@ -71,8 +71,8 @@ class IFMF_new(object):
         NS: typecode = 102
         BH: typecode = 103
 
-        typecode of value -1 means you're outside the range of validity for applying the ifmf formula
-        remnant mass of -99 means you're outside the range of validity for applying the ifmf formula
+        typecode of value -1 means you're outside the range of validity for applying the ifmr formula
+        remnant mass of -99 means you're outside the range of validity for applying the ifmr formula
         range of validity: 0.5 < MZAMS < 120
         output_array[0] contains the remnant mass
         output_array[1] contains the typecode

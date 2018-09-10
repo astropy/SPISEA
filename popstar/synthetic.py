@@ -50,7 +50,7 @@ def Vega():
 vega = Vega()
 
 class Cluster(object):
-    def __init__(self, iso, imf, cluster_mass, ifmf=None, verbose=False):
+    def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=False):
         """
         Code to model a cluster with user-specified logAge, AKs, and distance.
         Must also specify directory containing the isochrone (made using popstar
@@ -62,15 +62,15 @@ class Cluster(object):
         self.verbose = verbose
         self.iso = iso
         self.imf = imf
-        self.ifmf = ifmf
+        self.ifmr = ifmr
         self.cluster_mass = cluster_mass
 
         return
 
     
 class ResolvedCluster(Cluster):
-    def __init__(self, iso, imf, cluster_mass, ifmf=None, save_dir='./', verbose=True):
-        Cluster.__init__(self, iso, imf, cluster_mass, ifmf=ifmf, verbose=verbose)
+    def __init__(self, iso, imf, cluster_mass, ifmr=None, save_dir='./', verbose=True):
+        Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose)
 
         # if os.path.exists(save_sys_file):
         #     self.star_systems = Table.read(save_sys_file)
@@ -182,17 +182,17 @@ class ResolvedCluster(Cluster):
         # 
         # Remnants have flux = 0 in all bands if they are generated here.
         ##### 
-        if self.ifmf != None:
+        if self.ifmr != None:
             # Identify compact objects as those with Teff = 0 or with phase > 100.
-            highest_mass_iso = iso_pts['mass'].max()
+            highest_mass_iso = self.iso.points['mass'].max()
             idx_rem = np.where((star_systems['Teff'] == 0) & (star_systems['mass'] > highest_mass_iso))[0]
             
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
-            r_mass_tmp, r_id_tmp = self.ifmf.generate_death_mass_distribution(star_systems['mass'][idx_rem])
+            r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(star_systems['mass'][idx_rem])
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
-            # outside mass range IFMF is defined for)
+            # outside mass range IFMR is defined for)
             idx_rem_good = idx_rem[r_id_tmp > 0]
 
             star_systems['mass_current'][idx_rem_good] = r_mass_tmp
@@ -274,7 +274,7 @@ class ResolvedCluster(Cluster):
                 #####
                 # Make Remnants with flux = 0 in all bands.
                 ##### 
-                if self.ifmf != None:
+                if self.ifmr != None:
                     # Identify compact objects as those with Teff = 0 or with phase > 100.
                     highest_mass_iso = self.iso.points['mass'].max()
                     cdx_rem = np.where((companions['Teff'][cdx] == 0) &
@@ -282,10 +282,10 @@ class ResolvedCluster(Cluster):
             
                     # Calculate remnant mass and ID for compact objects; update remnant_id and
                     # remnant_mass arrays accordingly
-                    r_mass_tmp, r_id_tmp = self.ifmf.generate_death_mass(companions['mass'][cdx][cdx_rem])
+                    r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(companions['mass'][cdx][cdx_rem])
 
                     # Drop remnants where it is not relevant (e.g. not a compact object or
-                    # outside mass range IFMF is defined for)
+                    # outside mass range IFMR is defined for)
                     cdx_rem_good = cdx_rem[r_id_tmp > 0]
 
                     companions['mass_current'][cdx][cdx_rem_good] = r_mass_tmp
@@ -308,14 +308,14 @@ class ResolvedCluster(Cluster):
         Helper function to remove stars with masses outside the isochrone
         mass range from the cluster. These stars are identified by having 
         a Teff = 0, as set up by _make_star_systems_table_interp.
-        If self.ifmf == None, then both high and low-mass bad systems are 
-        removed. If self.ifmf != None, then we will save the high mass systems 
-        since they will be pluggedd into an ifmf later.
+        If self.ifmr == None, then both high and low-mass bad systems are 
+        removed. If self.ifmr != None, then we will save the high mass systems 
+        since they will be pluggedd into an ifmr later.
         """
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
-        if self.ifmf == None:
+        if self.ifmr == None:
             # Keep only those stars with Teff assigned.
             idx = np.where(star_systems['Teff'] > 0)[0]
         else:
@@ -337,9 +337,9 @@ class ResolvedCluster(Cluster):
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 ifmf=None, red_law=default_red_law, verbose=False):
+                 ifmr=None, red_law=default_red_law, verbose=False):
 
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmf=ifmf, verbose=verbose)
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose)
 
         # For a given delta_AKs (Gaussian sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
@@ -386,9 +386,9 @@ class ResolvedClusterDiffRedden2(ResolvedCluster):
     for asymmetric dAKs distribution
     """
     def __init__(self, iso, imf, cluster_mass, deltaAKs_blue, deltaAKs_red,
-                 ifmf=None, red_law=default_red_law, filters=None, verbose=False):
+                 ifmr=None, red_law=default_red_law, filters=None, verbose=False):
 
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmf=ifmf, filters=filters, verbose=verbose)
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, filters=filters, verbose=verbose)
 
         # For a given delta_AKs (sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
