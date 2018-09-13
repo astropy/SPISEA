@@ -312,6 +312,7 @@ class ResolvedCluster(Cluster):
         removed. If self.ifmr != None, then we will save the high mass systems 
         since they will be pluggedd into an ifmr later.
         """
+        
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
@@ -320,7 +321,7 @@ class ResolvedCluster(Cluster):
             idx = np.where(star_systems['Teff'] > 0)[0]
         else:
             # Keep stars (with Teff) and any other compact objects (with phase info). 
-            idx = np.where( (star_systems['Teff'] > 0) | (star_systems['phase'] >= 0) )
+            idx = np.where( (star_systems['Teff'] > 0) | (star_systems['phase'] >= 0) )[0]
 
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
@@ -329,7 +330,7 @@ class ResolvedCluster(Cluster):
         N_systems = len(star_systems)
 
         if self.imf.make_multiples:
-            # Clean up companion stuff (which we haven't handeled yet)
+            # Clean up companion stuff (which we haven't handled yet)
             compMass = [compMass[ii] for ii in idx]
         
         return star_systems, compMass
