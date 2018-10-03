@@ -15,7 +15,7 @@ def test_isochrone(plot=False):
 
     startTime = time.time()
     iso = syn.Isochrone(logAge, AKs, distance)
-    print 'Test completed in: %d seconds' % (time.time() - startTime)
+    print('Test completed in: %d seconds' % (time.time() - startTime))
     # Typically takes 104 - 120 seconds.
     # Limited by pysynphot.Icat call in atmospheres.py
 
@@ -47,7 +47,7 @@ def test_IsochronePhot(plot=False):
     iso = syn.IsochronePhot(logAge, AKs, distance, filters=filt_list,
                                 mass_sampling=mass_sampling)
     endTime = time.time()
-    print 'Test completed in: %d seconds' % (endTime - startTime)
+    print('Test completed in: %d seconds' % (endTime - startTime))
     # Typically takes 120 seconds if file is regenerated.
     # Limited by pysynphot.Icat call in atmospheres.py
 
@@ -104,7 +104,7 @@ def test_ResolvedCluster():
                             red_law=red_law, filters=filt_list,
                             mass_sampling=mass_sampling)
 
-    print 'Constructed isochrone: %d seconds' % (time.time() - startTime)
+    print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
     # Now to create the cluster.
     imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
@@ -115,11 +115,11 @@ def test_ResolvedCluster():
     ##########
     my_imf1 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=None)
-    print 'Constructed IMF: %d seconds' % (time.time() - startTime)
+    print('Constructed IMF: %d seconds' % (time.time() - startTime))
     
     cluster1 = syn.ResolvedCluster(iso, my_imf1, cluster_mass)
     clust1 = cluster1.star_systems
-    print 'Constructed cluster: %d seconds' % (time.time() - startTime)
+    print('Constructed cluster: %d seconds' % (time.time() - startTime))
 
     plt.figure(3)
     plt.clf()
@@ -136,11 +136,11 @@ def test_ResolvedCluster():
     multi = multiplicity.MultiplicityUnresolved()
     my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=multi)
-    print 'Constructed IMF with multiples: %d seconds' % (time.time() - startTime)
+    print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
     
     cluster2 = syn.ResolvedCluster(iso, my_imf2, cluster_mass)
     clust2 = cluster2.star_systems
-    print 'Constructed cluster with multiples: %d seconds' % (time.time() - startTime)
+    print('Constructed cluster with multiples: %d seconds' % (time.time() - startTime))
 
     ##########
     # Plots 
@@ -213,7 +213,7 @@ def test_ResolvedClusterDiffRedden():
                             red_law=red_law, filters=filt_list,
                                 mass_sampling=mass_sampling)
 
-    print 'Constructed isochrone: %d seconds' % (time.time() - startTime)
+    print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
     imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
     imf_powers = np.array([-1.3, -2.3, -2.3])
@@ -223,11 +223,11 @@ def test_ResolvedClusterDiffRedden():
     ##########
     my_imf1 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=None)
-    print 'Constructed IMF: %d seconds' % (time.time() - startTime)
+    print('Constructed IMF: %d seconds' % (time.time() - startTime))
     
     cluster1 = syn.ResolvedClusterDiffRedden(iso, my_imf1, cluster_mass, deltaAKs)
     clust1 = cluster1.star_systems
-    print 'Constructed cluster: %d seconds' % (time.time() - startTime)
+    print('Constructed cluster: %d seconds' % (time.time() - startTime))
 
     plt.figure(3)
     plt.clf()
@@ -244,11 +244,11 @@ def test_ResolvedClusterDiffRedden():
     multi = multiplicity.MultiplicityUnresolved()
     my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=multi)
-    print 'Constructed IMF with multiples: %d seconds' % (time.time() - startTime)
+    print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
     
     cluster2 = syn.ResolvedClusterDiffRedden(iso, my_imf2, cluster_mass, deltaAKs)
     clust2 = cluster2.star_systems
-    print 'Constructed cluster with multiples: %d seconds' % (time.time() - startTime)
+    print('Constructed cluster with multiples: %d seconds' % (time.time() - startTime))
 
     ##########
     # Plots 
@@ -291,10 +291,10 @@ def test_UnresolvedCluster():
     imf_in = imf.Kroupa_2001(multiplicity=multi)
     evo = evolution.MergedBaraffePisaEkstromParsec()
     iso = syn.Isochrone(log_age, AKs, distance, evo, mass_sampling=10)
-    print 'Made cluster: %d seconds' % (time.time() - startTime)
+    print('Made cluster: %d seconds' % (time.time() - startTime))
 
     cluster = syn.UnresolvedCluster(iso, imf_in, cluster_mass)
-    print 'Constructed unresolved cluster: %d seconds' % (time.time() - startTime)
+    print('Constructed unresolved cluster: %d seconds' % (time.time() - startTime))
 
     # Plot an integrated spectrum of the whole cluster.
     wave = cluster.spec_trim.wave
@@ -326,16 +326,16 @@ def time_test_cluster():
     iso = syn.IsochronePhot(logAge, AKs, distance,
                             evo_model=evo, atm_func=atm_func,
                             red_law=red_law)
-    print 'Constructed isochrone: %d seconds' % (time.time() - startTime)
+    print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
     imf_limits = np.array([0.07, 0.5, 150])
     imf_powers = np.array([-1.3, -2.35])
     multi = multiplicity.MultiplicityUnresolved()
     my_imf = imf.IMF_broken_powerlaw(imf_limits, imf_powers, multiplicity=multi)
-    print 'Constructed IMF with multiples: %d seconds' % (time.time() - startTime)
+    print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
     
     cluster = syn.ResolvedCluster(iso, my_imf, cluster_mass)
-    print 'Constructed cluster: %d seconds' % (time.time() - startTime)
+    print('Constructed cluster: %d seconds' % (time.time() - startTime))
 
     return
     
@@ -364,7 +364,7 @@ def model_young_cluster_object(resolved=False):
 
     # Plot the spectrum of the most massive star
     idx = cluster.mass_all.argmax()
-    print 'Most massive star is {0:f} M_sun.'.format(cluster.mass_all[idx])
+    print('Most massive star is {0:f} M_sun.'.format(cluster.mass_all[idx]))
     #bigstar = cluster.spec_list_trim[idx]
     plt.figure(1)
     plt.clf()
@@ -395,11 +395,11 @@ def time_test_mass_match():
     start_time = time.time()
     iso = syn.IsochronePhot(log_age, AKs, distance)
     iso_masses = iso.points['mass']
-    print 'Generated iso masses in {0:.0f} s'.format(time.time() - start_time)
+    print('Generated iso masses in {0:.0f} s'.format(time.time() - start_time))
 
     start_time = time.time()
     star_masses, isMulti, compMass, sysMass = imf_in.generate_cluster(cluster_mass)
-    print 'Generated cluster masses in {0:.0f} s'.format(time.time() - start_time)
+    print('Generated cluster masses in {0:.0f} s'.format(time.time() - start_time))
     
     def match_model_masses1(isoMasses, starMasses):
         indices = np.empty(len(starMasses), dtype=int)
@@ -434,17 +434,17 @@ def time_test_mass_match():
         
         return indices
 
-    print 'Test #1 START'
+    print('Test #1 START')
     start_time = time.time()
     idx1 = match_model_masses1(iso_masses, star_masses)
     stop_time = time.time()
-    print 'Test #1 STOPPED after {0:.0f} seconds'.format(stop_time - start_time)
+    print('Test #1 STOPPED after {0:.0f} seconds'.format(stop_time - start_time))
 
-    print 'Test #2 START'
+    print('Test #2 START')
     start_time = time.time()
     idx2 = match_model_masses2(iso_masses, star_masses)
     stop_time = time.time()
-    print 'Test #2 STOPPED after {0:.0f} seconds'.format(stop_time - start_time)
+    print('Test #2 STOPPED after {0:.0f} seconds'.format(stop_time - start_time))
 
     return
 
@@ -527,7 +527,7 @@ def test_phot_consistency(filt='all'):
                        'naco,H', 'naco,Ks']
         
             
-    print 'Making isochrone'
+    print('Making isochrone')
     iso = synthetic.IsochronePhot(6.7, 0, 1000, mass_sampling=10, filters=filt_list, rebin=True)
     iso = iso.points
 
@@ -541,7 +541,7 @@ def test_phot_consistency(filt='all'):
     orig = orig[foo]
 
     # Identify the photometry columns
-    cols = iso.keys()
+    cols = list(iso.keys())
     idx = []
     for ii in range(len(cols)):
         if cols[ii].startswith('mag'):
@@ -557,10 +557,10 @@ def test_phot_consistency(filt='all'):
 
         # Also report median abs difference
         diff = abs(orig_mag - new_mag)
-        print('{0} median abs diff: {1}'.format(ii, np.median(diff)))
+        print(('{0} median abs diff: {1}'.format(ii, np.median(diff))))
 
 
-    print('Phot consistency test successful for {0}'.format(filt))
+    print(('Phot consistency test successful for {0}'.format(filt)))
 
     # Remove iso file we just wrote, since it was only a test
     os.remove('iso_6.70_0.00_01000.fits')

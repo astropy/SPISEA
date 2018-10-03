@@ -1,9 +1,9 @@
 #################################################################################
 This file describes how to generate a cluster using the popstar package. 
 
-Authors:
+Documentation Authors:
 Matt Hosek
-Lucy Jia
+Siyao Jia
 
 Notes/to-do bracketed by ======
 #################################################################################
@@ -19,26 +19,67 @@ All code paths provided below have base path Popstar/popstar/
 
 Step-by-step Instructions:
 
-0) Choose the stellar evolution models, stellar atmosphere models, and reddening 
-law to be used in the isochrone.
-
 User can choose own models/reddening law to use, or they could just use 
 the defaults:
--evolution.MergedBaraffePisaEkstromParsec
+
+1) Choose the stellar evolution model object that you would like to use.
+code: evolution.py
+
+example: evo_model = evolution.MergedBaraffePisaEkstromParsec
+
+Options: 
+
+a) MergedBaraffePisaEkstromParsec (default)
+age range: logAge = 6.00 -- 9.99
+mass range: 0.08 M_sun -- 500 M_sun (though age dependent)
+metallicity: solar
+
+For logAge < 7.4:
+Baraffe et al. 2015 models from 0.08 - 0.4 M_sun
+Transition region between 0.4 - 0.5 M_sun between Baraffe+15 and Pisa models
+Pisa models (Tognelli et al. 2011) from 0.5 M_sun to the highest mass
+available at that age (typically 5-7 M_sun), and then switching to
+Geneva models (Ekstrom et al. 2012) for the rest of the way.
+
+For logAge > 7.4:
+Use the Parsec v1.2s (Bressan et al. 2012) models throughout entire
+mass range
+
+b) MergedPisaEkstromParsec: 
+age range: logAge = 6.00 -- 8.0
+mass range: 0.08 M_sun -- 500 M_sun (though age dependent)
+
+Same as MergedBaraffePisaEkstromParsec, but without the Baraffe+15
+models. As a result, the lower mass limit for logAge < 7.4 models is
+0.2 M_sun
+
+
+c) 
+
+
+1) Choose the stellar atmosphere model object 
+code: atmospheres.py
+
+example: atmo_model = atmospheres.get_merged_atmosphere
+
+Options:
+
+a) get_merged_atmosphere (default)
+Teff range: 1200 K -- ~50,000 K
+
+BTStettl [1200 K -- 3200 K
+PHOENIX v16 (Husser+2013) [2300 K - 5000 K]
+PHOENIX/ATLAS merge [5000 K - 5500 K]
+ATLAS (Castelli+2004) [5500K - 50000 K]
+
+
+
 -atmosphere.get_merged_atmosphere
 -reddening.RedLawNishiyama09
 
-If user does not define own model/reddening law, the defaults will automatically 
-be adopted in the isochrone.
-
-Evolution Models:
--code: evolution.py
-
-Options:
-a) MergedBaraffePisaEkstromParsec:
 
 
-b) Merged PisaEkstromParsec: 
+
 
 
 ==============================
@@ -63,9 +104,7 @@ Atmosphere Models:
 
 Options:
 a) get_merged_atmosphere: merge between 
-PHOENIX v16 (Husser+2013) [2300 K - 5000 K]
-PHOENIX/ATLAS merge [5000 K - 5500 K]
-ATLAS (Castelli+2004) [5500K - 50000 K]
+
 
 b) get_kurucz_atmosphere: Kurucz+1993
 
@@ -128,28 +167,59 @@ Input:
        filters used
 
 Filters supported:
-HST: all filters supported in pysynphot (must use appropriate
-pysynphot syntax)
+HST: all ACS and WFC3 filters supported 
+(must use appropriate pysynphot syntax)
+e.g. 'wfc3,ir,f125w'
 
-NIRC2: J, H, K, Kp, Ks, Lp, Hcont, Kcont, FeII, Brgamma
+NIRC2: 
+'nirc2,J'
+'nirc2,H'
+'nirc2,K'
+'nirc2,Kp'
+'nirc2,Ks'
+'nirc2,Lp'
+'nirc2,Hcont'
+'nirc2,Kcont'
+'nirc2,FeII'
+'nirc2,Brgamma'
 
-2MASS: J, H, Ks
+2MASS: 
+'2mass,J'
+'2mass,H'
+'2mass,Ks'
 
-VISTA: Z, Y, J, H, Ks
+VISTA:
+'vista,Z'
+'vista,Y'
+'vista,J'
+'vista,H'
+'vista,Ks'
 
 DECam: u, g, r, i, z, y
+'decam,u'
+'decam,g'
+'decam,r'
+'decam,i'
+'decam,z'
+'decam,y'
 
 PS1: g, r, i, z, y, w
+'ps1,g'
+'ps1,r'
+'ps1,i'
+'ps1,z'
+'ps1,y'
+'ps1,w'
 
 JWST: F090W, F164N, F212N, F323N, F466N
+'jwst,F090W'
+'jwst,F164N'
+'jwst,F212N'
+'jwst,F323N'
+'jwst,F466N'
 
-filter syntax (for non-HST filters):
-filterList = {'<user_name>':'<instrument>,<filter>'}
-	   -<user_name> is user specified. The output magnitudes will
-	   be in a column names mag_<user_name>
-	   -<instrument>: name of telescope/instrument for the desired
-	   filter. All letters lower case (i.e. vista, decam, ps1, etc)
-	   -<filter>: name of filter, with proper case (see list above)
+filterList = {filtstring1, filtstring2, etc}
+	   -use filtstrings as defined above
 
 filter code: filters.py
 filter file location: $POPSTAR_MODELS/filters
