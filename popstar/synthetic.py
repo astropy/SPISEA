@@ -1162,7 +1162,7 @@ class iso_table(object):
                 
                 self.points[col_name][ss] = star_mag
         
-
+            
         endTime = time.time()
         print( '      Time taken: {0:.2f} seconds'.format(endTime - ts))
 
