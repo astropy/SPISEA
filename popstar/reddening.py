@@ -1616,11 +1616,11 @@ class RedLawNoguerasLara18(RedLawPowerLaw):
     which consists of a power law with alpha = 2.3
 
     The wavelength range over which this law is calculated is
-    1.0 - 2.5 microns. The law is derived from HAWK-I JHKs 
+    0.8 - 2.5 microns. The law is derived from HAWK-I JHKs 
     observations
     """
     def __init__(self):
-        wave_min = 1.0
+        wave_min = 0.8
         wave_max = 2.5
         RedLawPowerLaw.__init__(self, 2.30, 2.15, wave_min=wave_min, wave_max=wave_max)
         
