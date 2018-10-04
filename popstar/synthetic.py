@@ -1148,7 +1148,10 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('ukirt'):
         filt = filters.get_ukirt_filt(filterName)
-
+        
+    elif name.startswith('keck_osiris'):
+        filt = filters.get_keck_osiris_filt(filterName)
+        
     else:
         filt = ObsBandpass(name)
         
