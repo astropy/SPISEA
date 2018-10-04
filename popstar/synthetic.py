@@ -590,11 +590,11 @@ class Isochrone(object):
             isWR_all = ['None'] * len(evol)
 
         # Give luminosity, temperature, mass, radius units (astropy units).
-        L_all = 10**evol['logL'] * c.L_sun # luminsoity in erg/s
+        L_all = 10**evol['logL'] * c.L_sun # luminsoity in W
         T_all = 10**evol['logT'] * units.K
         R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * T_all**4))
         mass_all = evol['mass'] * units.Msun # masses in solar masses
-        logg_all = evol['logg']
+        logg_all = evol['logg'] # in cgs
         mass_curr_all = evol['mass_current'] * units.Msun
         phase_all = evol['phase']
 
