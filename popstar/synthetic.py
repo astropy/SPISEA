@@ -224,8 +224,8 @@ class ResolvedCluster(Cluster):
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='L') )
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='logg') )
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='isWR') )
-        companions.add_column( Column(np.empty(N_systems, dtype=float), name='mass_current') )
-        companions.add_column( Column(np.empty(N_systems, dtype=float), name='phase') )
+        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='mass_current') )
+        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='phase') )
         for filt in self.filt_names:
             companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
 
