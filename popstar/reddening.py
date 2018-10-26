@@ -1508,10 +1508,10 @@ class RedLawHosek18_extended(pysynphot.reddening.CustomRedLaw):
 
         return A_at_wave
 
-class RedLawHosek18_tmp(pysynphot.reddening.CustomRedLaw):
+class RedLawHosek18b(pysynphot.reddening.CustomRedLaw):
     """
     An object that represents the reddening vs. wavelength for the 
-    Hosek+18 reddening law (Wd1 + Arches RC stars). The returned object is 
+    Hosek+18b (Arches IMF) reddening law (Wd1 + Arches RC stars). The returned object is 
 
     pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
 
@@ -1524,7 +1524,7 @@ class RedLawHosek18_tmp(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawHosek18_tmp.derive_Hosek18(wave)
+        Alambda_scaled = RedLawHosek18_tmp.derive_Hosek18b(wave)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -1532,16 +1532,16 @@ class RedLawHosek18_tmp(pysynphot.reddening.CustomRedLaw):
         pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
                                                   waveunits='angstrom',
                                                   Avscaled=Alambda_scaled,
-                                                  name='Hosek+18',
-                                                  litref='Hosek+ 2018')
+                                                  name='Hosek+18b',
+                                                  litref='Hosek+ 2018b')
 
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
-        self.name = 'H18_tmp'
+        self.name = 'H18b'
         
     @staticmethod
-    def derive_Hosek18(wavelength):
+    def derive_Hosek18b(wavelength):
         """ 
         Derive the Hosek+18 extinction law, using the data from Table 4. 
         
@@ -1567,7 +1567,7 @@ class RedLawHosek18_tmp(pysynphot.reddening.CustomRedLaw):
         # output        
         return A_AKs_at_wave
 
-    def Hosek18(self, wavelength, AKs):
+    def Hosek18b(self, wavelength, AKs):
         """ 
         Return the value of the extinction law at given wavelengths
         with a total overall extinction.
