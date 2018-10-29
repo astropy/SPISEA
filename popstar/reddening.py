@@ -1524,7 +1524,7 @@ class RedLawHosek18b(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawHosek18_tmp.derive_Hosek18b(wave)
+        Alambda_scaled = RedLawHosek18b.derive_Hosek18b(wave)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
