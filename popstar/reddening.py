@@ -88,13 +88,6 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         A_AKs_long = interpolate.splev(wavelength[long_idx], spline_interp)
         
         # Stitch together sections for the final law
-        #wave_vals = np.concatenate((np.flip(wavelength[jhk_idx[0]], axis=0), np.flip(wavelength[jv_idx[0]], axis=0)))
-        #A_AKs_vjhk = np.concatenate((np.flip(A_Ks_jhk, axis=0), np.flip(A_Ks_jv, axis=0)))
-
-        # Now add the long-wavelength law
-        #wave_vals = np.concatenate((np.flip(wavelength[long_idx[0]], axis=0), wave_vals))
-        #A_AKs_final = np.concatenate((np.flip(A_AKs_long, axis=0), A_AKs_vjhk))
-        # Stitch together sections for the final law
         wave_vals = np.concatenate((wavelength[jv_idx[0]], wavelength[jhk_idx[0]]))
         A_AKs_vjhk = np.concatenate((A_Ks_jv, A_Ks_jhk))
 
@@ -1133,15 +1126,16 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
     Power law extinction law, i.e. A_lambda ~ lambda^(-alpha). The
     returned object is a pysynphot CustomRedLaw. 
 
-    The wavelength range is 0.5 - 3 microns. 
+    The wavelength range is 0.5 - 5.0 microns, by default. But user can change
+    this with wave_min and wave_max parameters (in microns!)
 
     Law is normalized such that AKs = 1, but user specifies which
     K-band wavelength to use
 
     """
-    def __init__(self, alpha, K_wave):
+    def __init__(self, alpha, K_wave, wave_min=0.5, wave_max=5.0):
         # Fetch the extinction curve, pre-interpolate across 1-8 microns
-        wave = np.arange(0.5, 5.0, 0.001)
+        wave = np.arange(wave_min, wave_max, 0.001)
         
         # This will eventually be scaled by AK when you
         # call reddening(). Right now, calc for AKs=1
@@ -1514,10 +1508,10 @@ class RedLawHosek18_extended(pysynphot.reddening.CustomRedLaw):
 
         return A_at_wave
 
-class RedLawHosek18_tmp(pysynphot.reddening.CustomRedLaw):
+class RedLawHosek18b(pysynphot.reddening.CustomRedLaw):
     """
     An object that represents the reddening vs. wavelength for the 
-    Hosek+18 reddening law (Wd1 + Arches RC stars). The returned object is 
+    Hosek+18b (Arches IMF) reddening law (Wd1 + Arches RC stars). The returned object is 
 
     pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
 
@@ -1530,7 +1524,7 @@ class RedLawHosek18_tmp(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawHosek18_tmp.derive_Hosek18(wave)
+        Alambda_scaled = RedLawHosek18b.derive_Hosek18b(wave)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -1538,16 +1532,16 @@ class RedLawHosek18_tmp(pysynphot.reddening.CustomRedLaw):
         pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
                                                   waveunits='angstrom',
                                                   Avscaled=Alambda_scaled,
-                                                  name='Hosek+18',
-                                                  litref='Hosek+ 2018')
+                                                  name='Hosek+18b',
+                                                  litref='Hosek+ 2018b')
 
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
-        self.name = 'H18'
+        self.name = 'H18b'
         
     @staticmethod
-    def derive_Hosek18(wavelength):
+    def derive_Hosek18b(wavelength):
         """ 
         Derive the Hosek+18 extinction law, using the data from Table 4. 
         
@@ -1573,7 +1567,7 @@ class RedLawHosek18_tmp(pysynphot.reddening.CustomRedLaw):
         # output        
         return A_AKs_at_wave
 
-    def Hosek18(self, wavelength, AKs):
+    def Hosek18b(self, wavelength, AKs):
         """ 
         Return the value of the extinction law at given wavelengths
         with a total overall extinction.
@@ -1611,6 +1605,68 @@ class RedLawHosek18_tmp(pysynphot.reddening.CustomRedLaw):
         A_at_wave = np.array(A_AKs_at_wave) * AKs
 
         return A_at_wave
+
+class RedLawNoguerasLara18(RedLawPowerLaw):
+    """
+    An object that returns the reddening vs. wavelength for the 
+    Nogueras-Lara+18 reddening law. The returned object is 
+
+    pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
+
+    which consists of a power law with alpha = 2.3
+
+    The wavelength range over which this law is calculated is
+    0.8 - 2.5 microns. The law is derived from HAWK-I JHKs 
+    observations
+    """
+    def __init__(self):
+        wave_min = 0.8
+        wave_max = 2.5
+        RedLawPowerLaw.__init__(self, 2.30, 2.15, wave_min=wave_min, wave_max=wave_max)
+        
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = wave_min*10**4
+        self.high_lim = wave_max*10**4
+        self.name = 'NL18'
+
+    def NoguerasLara18(self, wavelength, AKs):
+        """ 
+        Return the value of the extinction law at given wavelengths
+        with a total overall extinction.
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to derive extinction for, in microns
+        AKs : float
+            in magnitudes
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))    
+
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
+
+        return A_at_wave    
 
 #---------------------------#
 # Cubic spline function from Schalfly+16 appendix

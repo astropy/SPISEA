@@ -224,8 +224,8 @@ class ResolvedCluster(Cluster):
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='L') )
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='logg') )
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='isWR') )
-        companions.add_column( Column(np.empty(N_systems, dtype=float), name='mass_current') )
-        companions.add_column( Column(np.empty(N_systems, dtype=float), name='phase') )
+        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='mass_current') )
+        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='phase') )
         for filt in self.filt_names:
             companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
 
@@ -590,11 +590,11 @@ class Isochrone(object):
             isWR_all = ['None'] * len(evol)
 
         # Give luminosity, temperature, mass, radius units (astropy units).
-        L_all = 10**evol['logL'] * c.L_sun # luminsoity in erg/s
+        L_all = 10**evol['logL'] * c.L_sun # luminsoity in W
         T_all = 10**evol['logT'] * units.K
         R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * T_all**4))
         mass_all = evol['mass'] * units.Msun # masses in solar masses
-        logg_all = evol['logg']
+        logg_all = evol['logg'] # in cgs
         mass_curr_all = evol['mass_current'] * units.Msun
         phase_all = evol['phase']
 
@@ -1098,7 +1098,7 @@ class iso_table(object):
                 
                 self.points[col_name][ss] = star_mag
         
-
+            
         endTime = time.time()
         print( '      Time taken: {0:.2f} seconds'.format(endTime - ts))
 
@@ -1148,7 +1148,10 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('ukirt'):
         filt = filters.get_ukirt_filt(filterName)
-
+        
+    elif name.startswith('keck_osiris'):
+        filt = filters.get_keck_osiris_filt(filterName)
+        
     else:
         filt = ObsBandpass(name)
         

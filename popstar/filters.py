@@ -314,3 +314,20 @@ def get_ukirt_filt(name):
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='ukirt_{0}'.format(name))
 
     return spectrum
+
+def get_keck_osiris_filt(name):
+    """
+    Define keck osiris filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/keck_osiris/{1}.txt'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find keck_osiris filter {0} in {1}/keck_osiris'.format(name, filters_dir))
+
+    # Convert wavelengths to angstroms (from nm), percentage throughput to fraction
+    wave = t['col1'] * 10
+    trans = t['col2'] / 100.
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='keck_osiris_{0}'.format(name))
+
+    return spectrum
