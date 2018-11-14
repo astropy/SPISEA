@@ -198,7 +198,7 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
     """
     An object that represents the reddening vs. wavelength for the 
     Cardelli et al. 1989 reddening law. The returned object is 
-
+    
     pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
 
     The wavelength range over which this law is calculated is
