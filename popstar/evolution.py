@@ -921,9 +921,9 @@ class MISTv1(StellarEvolution):
         self.z_list = [0.015]
         
         # populate list of isochrone ages (log scale)
-        self.age_list = np.arange(6.0, 10.01+0.005, 0.01)
+        self.age_list = np.arange(5.01, 10.30+0.005, 0.01)
 
-        # Set version direcotry
+        # Set version directory
         self.version = version
         if self.version == 1.0:
             version_dir = 'v1.0/'
@@ -960,7 +960,7 @@ class MISTv1(StellarEvolution):
         log_age = math.log10(age)
 
         # check age and metallicity are within bounds
-        if ((log_age < 6.0) or (log_age > 10.01)) :
+        if ((log_age < 5.01) or (log_age > 10.30)) :
             logger.error('Requested age is out of bounds.')
             
         if not z_defined in self.z_list:
