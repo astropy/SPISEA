@@ -1,5 +1,8 @@
- Matt Hosek
+Matt Hosek
 11/11/15
+
+Casey Lam
+11/22/18 (Updated MIST section)
 
 =========================
 Models Used
@@ -195,3 +198,28 @@ Note: No need to interpolate MIST isochrones since we can download them at any t
 
 ***File Locations:
 Original files are located in appropiate metallicity subdirectory under /g/lu/models/evolution/MISTv1
+
+***Gory details on how to download isochrones below -CYL
+
+1) Go to MIST isochrone page [http://waps.cfa.harvard.edu/MIST/interp_isos.html]
+   Note: We have been downloading isochrones with the following convention:
+         Version: 1.2
+         Rotation: Initial v/v_crit = 0.4
+         Age: Log10 Scale with spacing of 0.01
+         Composition: Fe/H = 0
+         Output Option: Theoretical, Full (79 columns)
+    There's a limit on how many isochrones you can download at a time, so break up downloads into smaller chunks if necessary. 
+    
+2) Move the downloaded .iso file into the directory where you want to unpack the isochrone file.
+   Note: For our current purposes this is /g/lu/models/evolution/MISTv1/v1.2/iso/z015. 
+   But you should put it into the directory of the relevant version/metallicity.
+
+3) Unpack the isochrone with format_isochrones function. An example of how to call in iPython:
+   ```
+   from popstar import evolution
+   import numpy as np
+   evo = evolution.MISTv1()
+   input_iso_dir = /g/lu/models/evolution/MISTv1/v1.2/iso
+   metallicity_list = np.array(['z015'])
+   evo.format_isochrones(input_iso_dir, metallicity_list)
+   ```
