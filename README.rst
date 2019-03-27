@@ -91,15 +91,15 @@ In your .cshrc or .bashrc, set the PYSYN_CDBS and POPSTAR_MODELS variables:
 
     setenv PYSYN_CDBS /<path_to_popstar_models_directory>/cdbs
     
-    setenv POPSTAR_MODELS /<path_to_popstar_models_direcotry>/
+    setenv POPSTAR_MODELS /<path_to_popstar_models_directory>/
 
 or
 
     export PYSYN_CDBS=/<path_to_popstar_models_directory>/cdbs
     
-    export POPSTAR_MODELS=/<path_to_popstar_models_direcotry>
+    export POPSTAR_MODELS=/<path_to_popstar_models_directory>
 
-Where the popstar_models direcotry is wherever you unzipped the popstar_models.tar.gz file. 
+Where the popstar_models directory is wherever you unzipped the popstar_models.tar.gz file. 
 
 Testing PopStar Setup
 ---------------------
