@@ -56,7 +56,7 @@ use:
 * MIST v1.2 (solar metallicity)
 
 See PopStar/docs/README_EvolutionModels.txt for a description of these models and the
-associated references. 
+associated references. [under construction]
 
 Evolution models supported by code but not in popstar_models.tar.gz (yet):
 
@@ -71,14 +71,17 @@ Evolution models supported by code but not in popstar_models.tar.gz (yet):
 
 The atmosphere models use the CDBS framework (which is supported by
 pysynphot). We have added new grids of atmosphere models (including
-merged sets of atmospheres). These grids are found in the "cdbs" directory of 
-popstar_models.tar.gz
+merged sets of atmospheres). These grids are found in the "cdbs/grid" directory of 
+popstar_models.tar.gz. 
 
 Ready: 
-
+* merged\_atlas\_phoenix 
 * phoenix\_v16 - high resolution (reformatted for CDBS)
 * phoenix\_v16_rebin - downgraded to improve synthetic photometry
 performance.
+
+See PopStar/docs/README_AtmoModels.txt for a description of these models sets and the
+associated references. [under construction]
 
 
 Setup Path to Models
@@ -86,7 +89,6 @@ Setup Path to Models
 
 You need to notify python where these models are going to live. This
 is done in two steps.
-
 In your .cshrc or .bashrc, set the PYSYN_CDBS and POPSTAR_MODELS variables:
 
     setenv PYSYN_CDBS /<path_to_popstar_models_directory>/cdbs
