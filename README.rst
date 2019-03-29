@@ -36,17 +36,21 @@ standard `python setup.py install` or you can simply modify your path
 environment variables to point to the git python location.
 
 If the installation directory for PopStar (where you cloned the repo),
-is `<path_to_popstar>`, then for BASH, edit your `.bash_profile` to include:
-```sh
+is `<path_to_popstar>`, then for BASH, edit your `.bash_profile` to
+include:
+
+```
 export PYTHONPATH=$PYTHONPATH:<path_to_popstar>/PopStar
 ```
+
 where you replace `<path_to_postar>` with the appropriate directory. 
 
 For C-shell, edit your `.cshrc` to include:
 
-```sh
+```
 setenv PYTHONPATH <path_to_popstar>/PopStar
 ```
+
 where you replace `<path_to_postar>` with the appropriate
 directory. Note, the python path should point to the top-level "PopStar"
 directory. The actual python functions should be found in the
@@ -62,7 +66,9 @@ STScI CDBS conventions and should be copied into your already installed
 CDBS directory.
 
 The two files to download (but not yet expand) are:
+
 <http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz>  (YY GB)
+
 <http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz>  (YY GB)
 
 The `popstar_cdbs.tar` file should be expanded in the directory that
@@ -74,9 +80,11 @@ For instance, if your cdbs install is in
 `/g/lu/models/cdbs/` then you should:
 
 
-```sh
+```
 cd /g/lu/models/
+
 tar xvf popstar_cdbs.tar
+
 tar xvf popstar_models.tar
 ```
 
@@ -106,12 +114,14 @@ You need to notify python where these models are going to live. This
 is done in two steps.
 In your .cshrc or .bashrc, set the PYSYN_CDBS and POPSTAR_MODELS variables:
 
-```sh
+```
 setenv PYSYN_CDBS /<path_to_models_directory>/cdbs
 setenv POPSTAR_MODELS /<path_models_directory>/
 ```
+
 or
-```sh
+
+```
 export PYSYN_CDBS=/<path_to_models_directory>/cdbs
 export POPSTAR_MODELS=/<path_to_models_directory>
 ```
