@@ -1,6 +1,5 @@
-====================
-PopStar
-====================
+# PopStar
+
 PopStar is an python package for generating simple stellar populations from synthetic evolution and atmosphere models. Currently, PopStar generates single-age, single-metallicity populations (i.e. star clusters). It supports different initial mass functions, multiplicity perscriptions, reddening laws, filter functions, atmosphere models, and evolution models. The pacakge is object oriented and is extensible. 
 
 PopStar's primary strength is the large set of models that are accessible. In particular, we have created a set of models that "merge" the best-in-class evolution and atmosphere models to cover the full range of masses from 0.08 - 150 Msun at very young ages, including pre-main-sequence evolution.
@@ -14,11 +13,10 @@ Here is a brief list of things that PopStar can simulation built-in:
 We encourage contributions to PopStar, particular those that add support for star formation histories, metallicity distributions, new models, higher spectral resolution, etc.
 
 
-INSTALL (from git)
-==================
+## INSTALL (from git)
 
-Dependencies
-------------
+### Dependencies
+
 * python (preferably via AstroConda, as it includes some necessary
   packages, like astropy and pysynphot)
 * astropy
@@ -26,44 +24,67 @@ Dependencies
 * scipy
 * numpy
 * matplotlib
+* STScI CDBS data package
 
-Path Setup
-----------
-Add the following to your python path in your .cshrc:
+### Build
 
-    setenv PYTHONPATH /<path_to_python_direcotries>/PopStar
+Clone the git repo.
+PopStar only consists of python codes, so you can either run the
+standard `python setup.py install` or you can simply modify your path
+environment variables to point to the git python location.
 
-or, if using bash, add this to your .bashrc:
+If the installation directory for PopStar (where you cloned the repo),
+is `<path_to_popstar>`, then for BASH, edit your `.bash_profile` to
+include:
 
-    export PYTHONPATH=/<path_to_python_direcotries>/PopStar
+    export PYTHONPATH=$PYTHONPATH:<path_to_popstar>/PopStar
 
-This path should point to the top-level "PopStar" directory. The actual python functions
-should be found in the "popstar" sub-directory immediately below this. 
+where you replace `<path_to_postar>` with the appropriate directory. 
 
-Install Evolution and Atmosphere Models
----------------------------------------
+For C-shell, edit your .cshrc to include:
+
+    setenv PYTHONPATH <path_to_popstar>/PopStar
+
+where you replace `<path_to_postar>` with the appropriate
+directory. Note, the python path should point to the top-level "PopStar"
+directory. The actual python functions should be found in the
+`PopStar/popstar/` sub-directory.
+
+
+### Install Evolution and Atmosphere Models
+
 Once you have cloned the popstar repository, you will need to download the
-grid of evolution and atmosphere models. Both sets of models can be found here:
+grid of evolution and atmosphere models. The evolution models are
+stand-alone and specific to PopStar. The atmosphere models use the
+STScI CDBS conventions and should be copied into your already installed
+CDBS directory.
 
-http://w.astro.berkeley.edu/~jlu/popstar/
+The two files to download (but not yet expand) are:
 
-The required file is poster_models.tar.gz. Note that it is quite large (7.7 GB).
+[popstar_models.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz)  (2.6 GB)
 
-The following evolution models are stored in the "evolution" directory and are ready for 
-use:
+[postar_cdbs.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs.tar.gz)  (7 GB)
 
-* baraffe\_pisa\_ekstrom\_parsec (solar metallicity, with and without rotation)
-* MIST v1.2 (solar metallicity)
+The `popstar_cdbs.tar` file should be expanded in the directory that
+houses `cdbs`.
+The `popstar_models.tar` file can be expanded anywhere as you will set
+an environment variable to the install location. However, we recommend
+installing it in the same location as your cdbs. 
+For instance, if your cdbs install is in
+`/g/lu/models/cdbs/` then you should:
 
-See PopStar/docs/README_EvolutionModels.txt for a description of these models and the
-associated references, as well as other evolution models supported by the code (but not in popstar_models.tar.gz).
 
-The atmosphere models use the CDBS framework (which is supported by
-pysynphot). We have added new grids of atmosphere models (including
-merged sets of atmospheres). These grids are found in the "cdbs/grid" directory of 
-popstar_models.tar.gz. 
+```console
+cd /g/lu/models/
+tar xvf popstar_cdbs.tar
+tar xvf popstar_models.tar
+```
 
-Ready: 
+See PopStar/docs/README_EvolutionModels.txt for a description of these
+models and the associated references, as well as other evolution
+models supported by the code.
+
+The list of supported evolution models includes
 
 * merged grid: ATLAS9, PHOENIXv16, BTSettl
 * ATLAS9: Castelli & Kurucz 2004
@@ -73,31 +94,36 @@ Ready:
 * Kurucz 1993
 * NextGen
 * AMESdusty
+  
+See PopStar/docs/README_AtmoModels.txt for a description of these
+models sets and the associated references. 
 
-See PopStar/docs/README_AtmoModels.txt for a description of these models sets and the
-associated references. 
 
-Setup Path to Models
---------------------
+### Setup Path to Models
+
 
 You need to notify python where these models are going to live. This
 is done in two steps.
 In your .cshrc or .bashrc, set the PYSYN_CDBS and POPSTAR_MODELS variables:
 
-    setenv PYSYN_CDBS /<path_to_popstar_models_directory>/cdbs
-    
-    setenv POPSTAR_MODELS /<path_to_popstar_models_directory>/
+```sh
+setenv PYSYN_CDBS /<path_to_models_directory>/cdbs
+setenv POPSTAR_MODELS /<path_models_directory>/
+```
 
 or
 
-    export PYSYN_CDBS=/<path_to_popstar_models_directory>/cdbs
-    
-    export POPSTAR_MODELS=/<path_to_popstar_models_directory>
+```sh
+export PYSYN_CDBS=/<path_to_models_directory>/cdbs
+export POPSTAR_MODELS=/<path_to_models_directory>
+```
 
-Where the popstar_models directory is wherever you unzipped the popstar_models.tar.gz file. 
+Where the models directory contains the PopStar `evolution/` and CDBS
+`cdbs/grid` directories with PopStar atmospheres in it.
 
-Testing PopStar Setup
----------------------
+
+## Testing PopStar Setup
+
 If all goes well, you should be able to import any of the PopStar functions
 in a python environment window using an import statement like those at the top
 of the Quick Start Guide, e.g.:
@@ -117,8 +143,8 @@ the following warnings:
 Otherwise, you should be all set! Try the examples in the Quick Start Guide below to 
 make sure everything is working.
     
-Documentation
--------------------
+## Documentation
+
 For a quick tutorial on how to make a star cluster with popstar, see
 the jupyter notebook at Popstar/docs/Quick_Start_Make_Cluster.ipynb.
 
@@ -133,8 +159,7 @@ Additional documentation:
 * Initial-Final Mass Relation: docs/README_IFMR.txt [under construction]
 
 
-Other Resources
-===============
+## Other Resources
 
 * _Astropy: http://www.astropy.org/
 * _git: http://git-scm.com/
