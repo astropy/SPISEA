@@ -43,7 +43,7 @@ include:
 
 where you replace `<path_to_postar>` with the appropriate directory. 
 
-For C-shell, edit your `.cshrc` to include:
+For C-shell, edit your .cshrc to include:
 
     setenv PYTHONPATH <path_to_popstar>/PopStar
 
@@ -63,9 +63,9 @@ CDBS directory.
 
 The two files to download (but not yet expand) are:
 
-<http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz>  (YY GB)
+[popstar_models.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz)  (YY GB)
 
-<http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz>  (YY GB)
+[postar_cdbs.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs.tar.gz)  (YY GB)
 
 The `popstar_cdbs.tar` file should be expanded in the directory that
 houses `cdbs`.
