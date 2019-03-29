@@ -61,9 +61,9 @@ CDBS directory.
 
 The two files to download (but not yet expand) are:
 
-[popstar_models.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz)  (YY GB)
+[popstar_models.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz)  (2.6 GB)
 
-[postar_cdbs.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs.tar.gz)  (YY GB)
+[postar_cdbs.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs.tar.gz)  (7 GB)
 
 The `popstar_cdbs.tar` file should be expanded in the directory that
 houses `cdbs`.
