@@ -39,17 +39,13 @@ If the installation directory for PopStar (where you cloned the repo),
 is `<path_to_popstar>`, then for BASH, edit your `.bash_profile` to
 include:
 
-```
-export PYTHONPATH=$PYTHONPATH:<path_to_popstar>/PopStar
-```
+    export PYTHONPATH=$PYTHONPATH:<path_to_popstar>/PopStar
 
 where you replace `<path_to_postar>` with the appropriate directory. 
 
 For C-shell, edit your `.cshrc` to include:
 
-```
-setenv PYTHONPATH <path_to_popstar>/PopStar
-```
+    setenv PYTHONPATH <path_to_popstar>/PopStar
 
 where you replace `<path_to_postar>` with the appropriate
 directory. Note, the python path should point to the top-level "PopStar"
@@ -80,11 +76,9 @@ For instance, if your cdbs install is in
 `/g/lu/models/cdbs/` then you should:
 
 
-```
+```console
 cd /g/lu/models/
-
 tar xvf popstar_cdbs.tar
-
 tar xvf popstar_models.tar
 ```
 
