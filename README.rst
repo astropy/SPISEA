@@ -26,57 +26,57 @@ Dependencies
 * scipy
 * numpy
 * matplotlib
+* STScI CDBS data package
 
-Path Setup
+Build
 ----------
-Add all of these to your python path in your .cshrc:
+PopStar only consists of python codes, so you can either run the
+standard `python setup.py install` or you can simply modify your path
+environment variables to point to the git python location.
 
-    set CODE_DIR = /path/to/top/level/python/code
-    setenv PYTHONPATH ${CODE_DIR}/popstar/PopStar
+If the installation directory for PopStar (where you cloned the repo),
+is `<path_to_popstar>`, then for BASH, edit your `.bash_profile` to include:
+```sh
+export PYTHONPATH=$PYTHONPATH:<path_to_popstar>/PopStar
+```
+where you replace `<path_to_postar>` with the appropriate directory. 
+
+For C-shell, edit your `.cshrc` to include:
+
+```sh
+setenv PYTHONPATH <path_to_popstar>/PopStar
+```
+where you replace `<path_to_postar>` with the appropriate directory. 
+
 
 Install Evolution and Atmosphere Models
 ---------------------------------------
 Once you have cloned the popstar repository, you will need to download the
-grid of evolution and atmosphere models. The evolution models can be
-found here:
+grid of evolution and atmosphere models. The evolution models are
+stand-alone and specific to PopStar. The atmosphere models use the
+STScI CDBS conventions and should be stored in your already installed
+CDBS directory.
 
-GIT SITE -- load these up
-/g/lu/models/evolution/
+The two files to download (but not yet expand) are:
+<http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz>
+<http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz>
 
-Ready:
+The `popstar_cdbs.tar` file should be expanded in the directory that
+houses `cdbs`.
+The `popstar_models.tar` file can be expanded anywhere as you will set
+an environment variable to the install location. However, we recommend
+installing it in the same location as your cdbs. 
+For instance, if your cdbs install is in
+`/g/lu/models/cdbs/` then you should:
 
-* pisa\_ekstrom_parsec
-* pisa\_ekstrom_parsec/norot
+```sh
+cd /g/lu/models/
+tar xvf popstar_cdbs.tar
+tar xvf popstar_models.tar
+```
 
-Data files ready but not yet supported in code:
-
-* Ekstrom2012 (rot and norot)
-* ParsecV1.2S
-* Pisa2011
-* geneva
-* merged
-* siess\_meynetMaeder_padova
-* padova
-* pallaStahler1999
-* siess2000
-
-Update:
-
-* STERN2011
-
-The atmosphere models use the CDBS framework (which is supported by
-pysynphot). We have added new grids of atmosphere models (including
-merged sets of atmospheres). You can find the complete CDBS grid you
-can download from here:
-
-GIT SITE -- load these up
-/g/lu/models/cdbs
-
-Ready: 
-
-* phoenix\_v16 - high resolution (reformatted for CDBS)
-* phoenix\_v16_rebin - downgraded to improve synthetic photometry
-performance.
+Next, you will need to set environment variabls to point to these
+model directories. See Setup Path to Models below.
 
 
 Setup Path to Models
@@ -86,16 +86,15 @@ You need to notify python where these models are going to live. This
 is done in two steps.
 
 In your .cshrc or .bashrc, set the PYSYN_CDBS and POPSTAR_MODELS variables:
-
-    setenv PYSYN_CDBS /g/lu/models/cdbs
-    
-    setenv POPSTAR_MODELS /g/lu/models
-
+```sh
+setenv PYSYN_CDBS /g/lu/models/cdbs
+setenv POPSTAR_MODELS /g/lu/models
+```
 or
-
-    export PYSYN_CDBS=/g/lu/models/cdbs
-    
-    export POPSTAR_MODELS=/g/lu/models
+```sh
+export PYSYN_CDBS=/g/lu/models/cdbs
+export POPSTAR_MODELS=/g/lu/models
+```
 
 Quick Start Guide
 -------------------
