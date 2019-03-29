@@ -1,7 +1,9 @@
-============================
-Authors
-Matthew Hosek Jr, Casey Lam
-============================
+Stellar evolution models are defined as classes in
+popstar/evolution.py. These can be called by:
+
+>from popstar import evolution
+>evo = evolution.<model_name>()
+
 The stellar evolution model classes currently supported by PopStar
 are:
 
