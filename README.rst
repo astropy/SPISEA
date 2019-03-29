@@ -56,18 +56,7 @@ use:
 * MIST v1.2 (solar metallicity)
 
 See PopStar/docs/README_EvolutionModels.txt for a description of these models and the
-associated references. [under construction]
-
-Evolution models supported by code but not in popstar_models.tar.gz (yet):
-
-* Ekstrom2012 (rot and norot)
-* ParsecV1.2S
-* Pisa2011
-* geneva
-* siess\_meynetMaeder_padova
-* padova
-* pallaStahler1999
-* siess2000
+associated references, as well as other evolution models supported by the code (but not in popstar_models.tar.gz).
 
 The atmosphere models use the CDBS framework (which is supported by
 pysynphot). We have added new grids of atmosphere models (including
@@ -75,14 +64,18 @@ merged sets of atmospheres). These grids are found in the "cdbs/grid" directory 
 popstar_models.tar.gz. 
 
 Ready: 
-* merged\_atlas\_phoenix 
-* phoenix\_v16 - high resolution (reformatted for CDBS)
-* phoenix\_v16_rebin - downgraded to improve synthetic photometry
-performance.
+
+* merged grid: ATLAS9, PHOENIXv16, BTSettl
+* ATLAS9: Castelli & Kurucz 2004
+* PHOENIXv16: Husser et al. 2013
+* BTSettl: Allard et al.
+* Koester et al. 2010 (white dwarfs)
+* Kurucz 1993
+* NextGen
+* AMESdusty
 
 See PopStar/docs/README_AtmoModels.txt for a description of these models sets and the
-associated references. [under construction]
-
+associated references. 
 
 Setup Path to Models
 --------------------
@@ -124,11 +117,21 @@ the following warnings:
 Otherwise, you should be all set! Try the examples in the Quick Start Guide below to 
 make sure everything is working.
     
-Quick Start Guide
+Documentation
 -------------------
 For a quick tutorial on how to make a star cluster with popstar, see
-the jupyter notebook at Popstar/docs/Quick_Start_Make_Cluster.ipynb
-    
+the jupyter notebook at Popstar/docs/Quick_Start_Make_Cluster.ipynb.
+
+Additional documentation:
+
+* Stellar Evolution Models: docs/README_EvolutionModels.txt
+* Stellar Atmosphere Models: docs/README_AtmoModels.txt
+* Extinction: docs/README_Extinction.txt [under construction]
+* Filters: docs/README_Filters.txt [under construction]
+* Initial Mass Function: docs/README_IMF.txt [under construction]
+* Multiplicity: docs/README_Multiplicity.txt [under construction]
+* Initial-Final Mass Relation: docs/README_IFMR.txt [under construction]
+
 
 Other Resources
 ===============
