@@ -1,8 +1,3 @@
-============================
-Authors
-Matthew Hosek Jr, Casey Lam
-============================
-
 Advanced documentation for evolution models.
 
 ==========================
