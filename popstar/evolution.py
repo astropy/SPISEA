@@ -915,10 +915,17 @@ class MISTv1(StellarEvolution):
         version: either 1.0 or 1.2
             Specify which version of MIST models you want. Version 1.0
             was downloaded from MIST website on 2/2017, while Version 1.2
-            was downloaded on 8/2018
+            was downloaded on 8/2018 (solar metallicity)
+            and 4/2019 (other metallicities)
         """
         # define metallicity parameters for Parsec models
-        self.z_list = [0.015]
+        self.z_list = [0.015 * (10.**-1.00),
+                       0.015 * (10.**-0.75),
+                       0.015 * (10.**-0.50),
+                       0.015 * (10.**-0.25),
+                       0.015,
+                       0.015 * (10.**0.25),
+                       0.015 * (10.**0.50)]
         
         # populate list of isochrone ages (log scale)
         self.age_list = np.arange(5.01, 10.30+0.005, 0.01)
@@ -937,7 +944,13 @@ class MISTv1(StellarEvolution):
 
         # Specifying metallicity
         self.z_solar = 0.015
-        self.z_file_map = {0.015: 'z015/'}
+        self.z_file_map = {0.015 * (10.**-1.00): 'z0015/',
+                           0.015 * (10.**-0.75): 'z0027/',
+                           0.015 * (10.**-0.50): 'z0047/',
+                           0.015 * (10.**-0.84): 'z0084/',
+                           0.015: 'z015/',
+                           0.015 * (10.**0.25): 'z027/',
+                           0.015 * (10.**0.50): 'z047/'}
         
         
     def massTrack(self, mass=0.5, metallicity=0.0):
@@ -960,10 +973,10 @@ class MISTv1(StellarEvolution):
         log_age = math.log10(age)
 
         # check age and metallicity are within bounds
-        if ((log_age < 5.01) or (log_age > 10.30)) :
+        if ((log_age < 5.01) or (log_age > 10.30)):
             logger.error('Requested age is out of bounds.')
             
-        if not z_defined in self.z_list:
+        if not ((z_defined < 0.0015) or (z_defined > 0.015)):
             logger.error('Requested metallicity is out of bounds.')
         
         # Find nearest age in grid to input grid
