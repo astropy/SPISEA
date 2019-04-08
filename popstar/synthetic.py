@@ -525,7 +525,7 @@ class UnresolvedCluster(Cluster):
         return
         
 class Isochrone(object):
-    def __init__(self, logAge, AKs, distance,
+    def __init__(self, logAge, AKs, distance, metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  red_law=default_red_law, mass_sampling=1,
                  wave_range=[5000, 52000], min_mass=None, max_mass=None):
@@ -560,7 +560,8 @@ class Isochrone(object):
 
         # Get solar metallicity models for a population at a specific age.
         # Takes about 0.1 seconds.
-        evol = evo_model.isochrone(age=10**logAge)  # solar metallicity
+        evol = evo_model.isochrone(age=10**logAge,
+                                   metallicity=0.0)  # solar metallicity
 
         # Eliminate cases where log g is less than 0
         idx = np.where(evol['logg'] > 0)
