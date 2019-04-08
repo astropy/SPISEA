@@ -538,6 +538,8 @@ class Isochrone(object):
             The extinction in units if A_Ks (mag).
         distance : float
             The distance in pc.
+        metallicity : float
+            The metallicity in [M/H]
         evModel : model cl
         mass_sampling - Sample the raw isochrone every ## steps. The default
                        is mass_sampling = 10, which takes every 10th point.
