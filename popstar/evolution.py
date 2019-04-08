@@ -919,13 +919,13 @@ class MISTv1(StellarEvolution):
             and 4/2019 (other metallicities)
         """
         # define metallicity parameters for Parsec models
-        self.z_list = [0.015 * (10.**-1.00),
-                       0.015 * (10.**-0.75),
-                       0.015 * (10.**-0.50),
-                       0.015 * (10.**-0.25),
-                       0.015,
-                       0.015 * (10.**0.25),
-                       0.015 * (10.**0.50)]
+        self.z_list = [0.0015,  # [Fe/H] = -1.00
+                       0.0026,  # [Fe/H] = -0.75
+                       0.0046,  # [Fe/H] = -0.50
+                       0.0082,  # [Fe/H] = -0.25
+                       0.015,   # [Fe/H] = 0.00
+                       0.024,   # [Fe/H] = 0.25
+                       0.041]   # [Fe/H] = 0.50
         
         # populate list of isochrone ages (log scale)
         self.age_list = np.arange(5.01, 10.30+0.005, 0.01)
@@ -944,13 +944,13 @@ class MISTv1(StellarEvolution):
 
         # Specifying metallicity
         self.z_solar = 0.015
-        self.z_file_map = {0.015 * (10.**-1.00): 'z0015/',
-                           0.015 * (10.**-0.75): 'z0027/',
-                           0.015 * (10.**-0.50): 'z0047/',
-                           0.015 * (10.**-0.84): 'z0084/',
+        self.z_file_map = {0.0015: 'z0015/',
+                           0.0026: 'z0026/',
+                           0.0046: 'z0046/',
+                           0.0082: 'z0082/',
                            0.015: 'z015/',
-                           0.015 * (10.**0.25): 'z027/',
-                           0.015 * (10.**0.50): 'z047/'}
+                           0.024: 'z024/',
+                           0.041: 'z041/'}
         
         
     def massTrack(self, mass=0.5, metallicity=0.0):
@@ -968,7 +968,7 @@ class MISTv1(StellarEvolution):
         collection.
         """
         # convert metallicity to mass fraction
-        z_defined = self.z_solar*10.**metallicity
+        z_defined = self.z_solar * (10.**metallicity)
 
         log_age = math.log10(age)
 
