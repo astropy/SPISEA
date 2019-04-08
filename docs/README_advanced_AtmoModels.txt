@@ -5,11 +5,16 @@ Phoenixv16 Models
 ========================
 Paper reference: Husser et al. 2013, A&A, 553, A6
 downloaded via ftp from website: http://phoenix.astro.physik.uni-goettingen.de/?page_id=15
-	-solar metallicity, solar [alpha/Fe]
+
+Copy wave file into each metallicity subdirectory. E.g.: `PHOENIX-ACES-AGSS-COND-2011_AtmosFITS_Z-0.0/WAVE_PHOENIX-ACES-AGSS-COND-2011.fits`
 
 ***Code procedure:
 1) popstar/atmospheres.py --> organize_PHOENIXv16_atmospheres
-	-organizes files into subdirectory phoenixm00
+	-organizes files into subdirectory for the corresponding metallicity
+	```py
+	from popstar import atmospheres
+	atmospheres.organize_PHOENIXv16_atmospheres('/u/abhimat/models/atmospheres/PHOENIXv16_Husser+13/PHOENIX-ACES-AGSS-COND-2011_AtmosFITS_Z-1.0/', 'm10')
+	```
 
 2) popstar/atmospheres.py --> make_PHOENIXc16_catalog
 	-construct the cdbs catalog for the atmospheres organized into subdirectory phoenixm00

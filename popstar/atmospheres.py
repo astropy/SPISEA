@@ -4,7 +4,7 @@ import pysynphot
 import os
 import glob
 from astropy.io import fits
-from astropy.table import Table
+from astropy.table import Table, Column
 import pysynphot
 import time
 import pdb
@@ -857,7 +857,7 @@ def rebin_cmfgen(cdbs_path, rot=True):
     return
 
 
-def organize_PHOENIXv16_atmospheres(path_to_dir):
+def organize_PHOENIXv16_atmospheres(path_to_dir, met_str):
     """
     Construct the Phoenix Husser+13 atmopsheres for each model. Combines the
     fluxes from the *HiRES.fits files and the wavelengths of the
@@ -865,8 +865,10 @@ def organize_PHOENIXv16_atmospheres(path_to_dir):
 
     path_to_dir is the path to the directory containing all of the downloaded
     files
+    
+    met_str is the name of the current metallicity
 
-    Creates new fits files for each atmosphere: phoenix_mm00_<temp>.fits,
+    Creates new fits files for each atmosphere: phoenix<metallicity>_<temp>.fits,
     which contains columns for the log g (column header = g#.#). Puts
     atmospheres in new directory phoenixm00
     """
@@ -874,11 +876,12 @@ def organize_PHOENIXv16_atmospheres(path_to_dir):
     start_dir = os.getcwd()
     os.chdir(path_to_dir)
 
-    # If it doesn't already exist, create the phoenixm00 subdirectory
-    if os.path.exists('phoenixm00'):
+    # If it doesn't already exist, create the current metallicity subdirectory
+    sub_dir = '../phoenix{0}'.format(met_str)
+    if os.path.exists(sub_dir):
         pass
     else:
-        os.mkdir('phoenixm00')
+        os.mkdir(sub_dir)
     
     # Extract wavelength array, make column for later
     wavefile = fits.open('WAVE_PHOENIX-ACES-AGSS-COND-2011.fits')
@@ -900,8 +903,7 @@ def organize_PHOENIXv16_atmospheres(path_to_dir):
         t.add_column(wave_col)
         for f in files:
             # Extract the logg out of filename
-            tmp = f.split('-')
-            logg = tmp[1]
+            logg = f[9:13]
             
             # Extract fluxes from file
             spectrum = fits.open(f)
@@ -913,8 +915,8 @@ def organize_PHOENIXv16_atmospheres(path_to_dir):
             t.add_column(col)
             
         # Now, construct final fits file for the given temp
-        outname = 'phoenixm00_{0:05d}.fits'.format(temp)
-        t.write('phoenixm00/' + outname, format = 'fits', overwrite = True) 
+        outname = 'phoenix{0}_{1:05d}.fits'.format(met_str, temp)
+        t.write('{0}/{1}'.format(sub_dir, outname), format = 'fits', overwrite = True) 
         
         # Progress counter for user
         i += 1
