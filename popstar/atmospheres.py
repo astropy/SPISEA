@@ -454,29 +454,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
     3800 <= T < 5000: PHOENIXv16 (Husser+13)
     3200 <= T < 3800: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge
     3200 < T <= 1200: BTSettl_CIFITS2011_2015
-
-    6.0 <= logg <= 9.0: WD Koester 2010 
     """
-    # Handle white dwarfs - assume all H atmospheres from Koester 2010
-    if gravity >= 6:
-        try:
-            if verbose:
-                print('wdKoester atmosphere')
-
-            return get_wdKoester_atmosphere(metallicity=metallicity,
-                                            temperature=temperature,
-                                            gravity=gravity)
-        except pysynphot.exceptions.ParameterOutOfBounds:
-            if verbose:
-                print('BB atmosphere')
-                
-            # Use a blackbody.
-            bbspec = pysynphot.spectrum.BlackBody(temperature)
-            bbspec.convert('flam')
-            bbspec *= (1000 * 3.08e18 / 6.957e10)**2
-            return bbspec
-                
-    
     if temperature <= 3200:
         if verbose:
             print( 'BTSettl_2015 atmosphere')
@@ -528,6 +506,29 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
         #                               temperature=temperature,
         #                               gravity=gravity)    
 
+
+def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False):
+    """
+    Pull white dwarf atmosphere from Koester+10. If desired parameters are 
+    outside of grid, return a blackbody spectrum instead
+    """
+    try:
+        if verbose:
+            print('wdKoester atmosphere')
+
+        return get_wdKoester_atmosphere(metallicity=metallicity,
+                                            temperature=temperature,
+                                            gravity=gravity)
+    except pysynphot.exceptions.ParameterOutOfBounds:
+        if verbose:
+            print('BB atmosphere')
+                
+        # Use a blackbody.
+        bbspec = pysynphot.spectrum.BlackBody(temperature)
+        bbspec.convert('flam')
+        bbspec *= (1000 * 3.08e18 / 6.957e10)**2
+        return bbspec
+    
 #--------------------------------------#
 # Atmosphere formatting functions
 #--------------------------------------#
