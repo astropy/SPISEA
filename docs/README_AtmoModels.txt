@@ -22,7 +22,8 @@ and the the output spectrum is a pysynphot.Icat object (https://pysynphot.readth
 
 The atmosphere model grids currently supported are:
 
--get_merged_atmosphere (default)
+-get_merged_atmosphere (default for stars)
+-get_wd_atmospheres (default for white dwarfs)
 -get_castelli_atmosphere
 -get_phoenixv16_atmosphere
 -get_BTSettl_2015_atmosphere
@@ -65,6 +66,16 @@ model is weighted more heavily. These are calculated in the
 temperature ranges where we switch between model grids, to 
 ensure a smooth transition.
 
+
+========================
+get_wd_atmosphere
+========================
+This function is the default to extract atmospheres for white
+dwarfs. It calls the atmosphere grid from Koester et al. 2010
+(https://ui.adsabs.harvard.edu//#abs/2010MmSAI..81..921K/abstract). If
+the desired WD parameters fall outside the grid, a blackbody spectrum
+at the input temperature is returned.
+
 ========================
 get_castelli_atmosphere
 ========================
@@ -96,7 +107,7 @@ gravity: 2.5 - 5.5 cgs
 =========================
 get_wdKoester_atmosphere
 =========================
-White dwarf atmospheres (only used if IFMR option is selected)
+White dwarf atmospheres
 Reference: Koester et al. 2010
 (https://ui.adsabs.harvard.edu//#abs/2010MmSAI..81..921K/abstract)
 
