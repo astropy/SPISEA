@@ -857,7 +857,7 @@ def rebin_cmfgen(cdbs_path, rot=True):
     return
 
 
-def organize_PHOENIXv16_atmospheres(path_to_dir, met_str):
+def organize_PHOENIXv16_atmospheres(path_to_dir, met_str='m00'):
     """
     Construct the Phoenix Husser+13 atmopsheres for each model. Combines the
     fluxes from the *HiRES.fits files and the wavelengths of the
@@ -926,23 +926,28 @@ def organize_PHOENIXv16_atmospheres(path_to_dir, met_str):
     os.chdir(start_dir)
     return
 
-def make_PHOENIXv16_catalog(path_to_dir):
+def make_PHOENIXv16_catalog(path_to_dir, met_str='m00'):
     """
     Makes catalog.fits file for Husser+13 phoenix models. Assumes that
     organize_PHOENIXv16_atmospheres has been run already, and that the models lie
-    in subdirectory phoenixm00.
+    in subdirectory phoenix[met_str].
 
     path_to_directory is the path to the directory with the reformatted
-    models (i.e. the output from construct_atmospheres, phoenixm00)
+    models (i.e. the output from construct_atmospheres, phoenix[met_str])
     
     Puts catalog.fits file in directory the user starts in
     """
     # Save starting directory for later, move into working directory
     start_dir = os.getcwd()
     os.chdir(path_to_dir)
-
+    
+    # Extract metallicity from metallicity string
+    met = float(met_str[1]) + (float(met_str[2]) * 0.1)
+    if 'm' in met_str:
+        met *= -1.
+    
     # Collect the filenames. Each is a unique temp with many different log g's
-    files = glob.glob('*.fits')
+    files = glob.glob('phoenix*.fits')
 
     # Create the catalog.fits file, row by row
     index_arr = []
@@ -958,7 +963,7 @@ def make_PHOENIXv16_catalog(path_to_dir):
         temp = float(name[1][:-5])
         for j in logg_vals:
             logg = float(j[1:])
-            index = '{0:5.0f},0.0,{1:2.1f}'.format(temp, logg)
+            index = '{0:5.0f},{1:2.1f},{2:2.1f}'.format(temp, met, logg)
             filename = path_to_dir + i + '[' + j + ']'
             # Add row to table
             index_arr.append(index)
@@ -968,7 +973,16 @@ def make_PHOENIXv16_catalog(path_to_dir):
     
     # Return to starting directory, write catalog
     os.chdir(start_dir)
-    catalog.write('catalog.fits', format='fits', overwrite=True)
+    
+    if os.path.exists('catalog.fits'):
+        from astropy.table import vstack
+        
+        prev_catalog = Table.read('catalog.fits', format='fits')
+        joined_catalog = vstack([prev_catalog, catalog])
+        
+        joined_catalog.write('catalog.fits', format='fits', overwrite=True)
+    else:
+        catalog.write('catalog.fits', format='fits', overwrite=True)
     
     return
 
@@ -978,9 +992,9 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
     consists of adjusting the flux units from [erg/s/cm^2/cm] to [erg/s/cm^2/A]
     and adding the appropriate keywords to the fits header.
 
-    path_to_cdbs_dir goes from current working directory to phoenixm00 directory
+    path_to_cdbs_dir goes from current working directory to phoenix[met] directory
     in cdbs/grids/phoenix_v16. Note that these files have already been organized
-    using orgnaize_PHOENIXv16_atmospheres code.
+    using organize_PHOENIXv16_atmospheres code.
 
     Overwrites original files in directory
     """
@@ -989,7 +1003,9 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
     os.chdir(path_to_cdbs_dir)
 
     # Collect the filenames, make necessary changes to each one
-    files = glob.glob('*.fits')
+    files = glob.glob('phoenix*.fits')
+    ## Need to sort filenames; glob doesn't always give them in order
+    files.sort()
 
     # Need to make brand-new fits tables with data we want.
     counter = 0
@@ -1000,13 +1016,15 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
         header_0 = hdu[0].header
         header_1 = hdu[1].header
         sci = hdu[1].data
+        
+        num_cols = len(sci.columns)
 
         # Remake fits table from individual columns, multiplying each flux
         # column by 10^-8 for conversion
         # This gets messy due to changing number of columns
         c0 = fits.Column(name='Wavelength', format='D', array=sci.field(0))
         # This particular column only exists for lower temp models
-        if counter <= 34:
+        if num_cols == 14:
             c1 = fits.Column(name='g0.0', format='E', array=sci.field(1)*10**-8)
             c2 = fits.Column(name='g0.5', format='E', array=sci.field(2)*10**-8)
             c3 = fits.Column(name='g1.0', format='E', array=sci.field(3)*10**-8)
@@ -1020,7 +1038,7 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
             c11 = fits.Column(name='g5.0', format='E', array=sci.field(11)*10**-8)
             c12 = fits.Column(name='g5.5', format='E', array=sci.field(12)*10**-8)
             c13 = fits.Column(name='g6.0', format='E', array=sci.field(13)*10**-8)
-        elif counter <= 37:
+        elif num_cols == 13:
             c2 = fits.Column(name='g0.5', format='E', array=sci.field(1)*10**-8)
             c3 = fits.Column(name='g1.0', format='E', array=sci.field(2)*10**-8)
             c4 = fits.Column(name='g1.5', format='E', array=sci.field(3)*10**-8)
@@ -1033,7 +1051,7 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
             c11 = fits.Column(name='g5.0', format='E', array=sci.field(10)*10**-8)
             c12 = fits.Column(name='g5.5', format='E', array=sci.field(11)*10**-8)
             c13 = fits.Column(name='g6.0', format='E', array=sci.field(12)*10**-8)
-        elif counter <= 54:
+        elif num_cols == 12:
             c3 = fits.Column(name='g1.0', format='E', array=sci.field(1)*10**-8)
             c4 = fits.Column(name='g1.5', format='E', array=sci.field(2)*10**-8)
             c5 = fits.Column(name='g2.0', format='E', array=sci.field(3)*10**-8)
@@ -1045,7 +1063,7 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
             c11 = fits.Column(name='g5.0', format='E', array=sci.field(9)*10**-8)
             c12 = fits.Column(name='g5.5', format='E', array=sci.field(10)*10**-8)
             c13 = fits.Column(name='g6.0', format='E', array=sci.field(11)*10**-8)
-        elif counter <= 59:
+        elif num_cols == 11:
             c4 = fits.Column(name='g1.5', format='E', array=sci.field(1)*10**-8)
             c5 = fits.Column(name='g2.0', format='E', array=sci.field(2)*10**-8)
             c6 = fits.Column(name='g2.5', format='E', array=sci.field(3)*10**-8)
@@ -1056,7 +1074,7 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
             c11 = fits.Column(name='g5.0', format='E', array=sci.field(8)*10**-8)
             c12 = fits.Column(name='g5.5', format='E', array=sci.field(9)*10**-8)
             c13 = fits.Column(name='g6.0', format='E', array=sci.field(10)*10**-8)
-        else:
+        elif num_cols == 10:
             c5 = fits.Column(name='g2.0', format='E', array=sci.field(1)*10**-8)
             c6 = fits.Column(name='g2.5', format='E', array=sci.field(2)*10**-8)
             c7 = fits.Column(name='g3.0', format='E', array=sci.field(3)*10**-8)
@@ -1067,15 +1085,15 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
             c12 = fits.Column(name='g5.5', format='E', array=sci.field(8)*10**-8)
             c13 = fits.Column(name='g6.0', format='E', array=sci.field(9)*10**-8)
                         
-        if counter <= 35:
+        if num_cols == 14:
             cols = fits.ColDefs([c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
-        elif counter <= 37:
+        elif num_cols == 13:
             cols = fits.ColDefs([c0,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
-        elif counter <= 54:
+        elif num_cols == 12:
             cols = fits.ColDefs([c0,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
-        elif counter <= 59:
+        elif num_cols == 11:
             cols = fits.ColDefs([c0,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
-        else:
+        elif num_cols == 10:
             cols = fits.ColDefs([c0,c5,c6,c7,c8,c9,c10,c11,c12,c13])
         tbhdu = fits.BinTableHDU.from_columns(cols)
 
@@ -1101,7 +1119,10 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
 
         hdu.close()
         print( 'Done {0:2.0f} of {1:2.0f}'.format(counter, len(files)))
-
+    
+    # Change back to starting directory
+    os.chdir(start_dir)
+    
     return
 
 def rebin_phoenixV16(cdbs_path):
@@ -1125,7 +1146,6 @@ def rebin_phoenixV16(cdbs_path):
     path = cdbs_path+'/grid/phoenix_v16_rebin/'
     if not os.path.exists(path):
         os.mkdir(path)
-        os.mkdir(path+'phoenixm00')
 
     # Read in the existing catalog.fits file and rebin every spectrum.
     cat = fits.getdata(cdbs_path + '/grid/phoenix_v16/catalog.fits')
@@ -1141,9 +1161,10 @@ def rebin_phoenixV16(cdbs_path):
         metal_arr[ff] = float(vals[1])
         logg_arr[ff] = float(vals[2])
 
+
     metal_uniq = np.unique(metal_arr)
     temp_uniq = np.unique(temp_arr)
-
+    
     for mm in range(len(metal_uniq)):
         metal = metal_uniq[mm] # metallicity
         

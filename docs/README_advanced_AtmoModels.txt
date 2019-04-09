@@ -8,19 +8,36 @@ downloaded via ftp from website: http://phoenix.astro.physik.uni-goettingen.de/?
 
 Copy wave file into each metallicity subdirectory. E.g.: `PHOENIX-ACES-AGSS-COND-2011_AtmosFITS_Z-0.0/WAVE_PHOENIX-ACES-AGSS-COND-2011.fits`
 
-***Code procedure:
+### Code procedure:
 1) popstar/atmospheres.py --> organize_PHOENIXv16_atmospheres
-	-organizes files into subdirectory for the corresponding metallicity
+	- organizes files into subdirectory for the corresponding metallicity
+	
 	```py
 	from popstar import atmospheres
-	atmospheres.organize_PHOENIXv16_atmospheres('/u/abhimat/models/atmospheres/PHOENIXv16_Husser+13/PHOENIX-ACES-AGSS-COND-2011_AtmosFITS_Z-1.0/', 'm10')
+	atmospheres.organize_PHOENIXv16_atmospheres('/u/abhimat/models/atmospheres/PHOENIXv16_Husser+13/PHOENIX-ACES-AGSS-COND-2011_AtmosFITS_Z-1.0/', met_str='m10')
+	```
+	
+	- Copy metallicity subdirectories into cdbs grid directory for subsequent steps. E.g.: copy into '/u/abhimat/models/cdbs/grid/phoenix_v16/'
+
+2) popstar/atmospheres.py --> make_PHOENIXv16_catalog
+	- construct the cdbs catalog for the atmospheres organized into subdirectory for current metallicity
+	- catalog.fits file is created in the current directory in which the script is run (e.g. '/u/abhimat/models/cdbs/grid/phoenix_v16/')
+	
+	```py
+	from popstar import atmospheres
+	
+	atmospheres.make_PHOENIXv16_catalog('phoenixm10/', met_str='m10')
 	```
 
-2) popstar/atmospheres.py --> make_PHOENIXc16_catalog
-	-construct the cdbs catalog for the atmospheres organized into subdirectory phoenixm00
-
 3) popstar/atmospheres.py --> cdbs_PHOENIXv16
-	-puts atmosphere files into cdbs format...important because we have a flux unit conversion here
+	- puts atmosphere files into cdbs format...important because we have a flux unit conversion here
+	- needs to be run for every metallicity subdirectory
+	
+	```py
+	from popstar import atmospheres
+	atmospheres.cdbs_PHOENIXv16('phoenixm10/')
+	```
+	
 
 4) popstar/atmospheres.py --> rebin_phoenixv16
 	-rebin phoenixv16 model atmospheres to same resolution as ck04 atlas, to enhace photometric performance
