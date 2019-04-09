@@ -1138,7 +1138,8 @@ def rebin_phoenixV16(cdbs_path):
     sp_atlas = get_castelli_atmosphere()
 
     # Open a fits table for an existing phoenix model; we will steal the header
-    tmp = cdbs_path+'/grid/phoenix_v16/phoenixm00/phoenixm00_02400.fits'
+    ## (This assumes that at least 'm00' metallicity exists)
+    tmp = '{0}/grid/phoenix_v16/phoenix{1}/phoenix{1}_02400.fits'.format(cdbs_path, 'm00')
     phoenix_hdu = fits.open(tmp)
     header0 = phoenix_hdu[0].header
 
@@ -1146,6 +1147,7 @@ def rebin_phoenixV16(cdbs_path):
     path = cdbs_path+'/grid/phoenix_v16_rebin/'
     if not os.path.exists(path):
         os.mkdir(path)
+    
 
     # Read in the existing catalog.fits file and rebin every spectrum.
     cat = fits.getdata(cdbs_path + '/grid/phoenix_v16/catalog.fits')
@@ -1160,13 +1162,24 @@ def rebin_phoenixV16(cdbs_path):
         temp_arr[ff] = float(vals[0])
         metal_arr[ff] = float(vals[1])
         logg_arr[ff] = float(vals[2])
-
+    
 
     metal_uniq = np.unique(metal_arr)
     temp_uniq = np.unique(temp_arr)
     
     for mm in range(len(metal_uniq)):
         metal = metal_uniq[mm] # metallicity
+        
+        # Construct str for metallicity (for appropriate directory name)
+        met_str = str(int(np.abs(metal))) + str(int((metal % 1.0)*10))
+        if metal > 0:
+            met_str = 'p' + met_str
+        else:
+            met_str = 'm' + met_str
+        
+        # Make directory for current metallicity if it does not exist yet
+        if not os.path.exists(path + 'phoenix' + met_str):
+            os.mkdir(path + 'phoenix' + met_str)
         
         for tt in range(len(temp_uniq)):
             temp = temp_uniq[tt] # temperature
@@ -1210,7 +1223,7 @@ def rebin_phoenixV16(cdbs_path):
             # Write hdu
             finalhdu = fits.HDUList([prihdu, tbhdu])
             # don't have overwrite to protect original files.
-            finalhdu.writeto(path + outfile)   
+            finalhdu.writeto(outfile)
 
             print( 'Finished file ' + outfile + ' with gravities: ', logg_exist)
             

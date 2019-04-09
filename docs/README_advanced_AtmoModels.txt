@@ -40,7 +40,11 @@ Copy wave file into each metallicity subdirectory. E.g.: `PHOENIX-ACES-AGSS-COND
 	
 
 4) popstar/atmospheres.py --> rebin_phoenixv16
-	-rebin phoenixv16 model atmospheres to same resolution as ck04 atlas, to enhace photometric performance
+	- Rebin phoenixv16 model atmospheres to same resolution as ck04 atlas, to enhance photometric performance
+	```py
+	from popstar import atmospheres
+	atmospheres.rebin_phoenixV16('/u/abhimat/models/cdbs/')
+	```
 
 ***File locations:
 -raw models from online downloaded to /g/lu/model/atmospheres/PHEONIXv16_Husser+13
