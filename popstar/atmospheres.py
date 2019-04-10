@@ -385,16 +385,13 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=3000, gravity=4, rebi
 
     return sp
 
-def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7, rebin=True):
+def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
     """
     metallicity = [M/H] (def = 0)
     temperature = Kelvin (def = 5000)
     gravity = log gravity (def = 4.0)
     """
-    if rebin == True:
-        sp = pysynphot.Icat('wdKoester_rebin', temperature, metallicity, gravity)
-    else:
-        sp = pysynphot.Icat('wdKoester', temperature, metallicity, gravity)
+    sp = pysynphot.Icat('wdKoester', temperature, metallicity, gravity)
 
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
@@ -510,7 +507,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
         #                               gravity=gravity)    
 
 
-def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=True, verbose=False):
+def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False):
     """
     Pull white dwarf atmosphere from Koester+10. If desired parameters are 
     outside of grid, return a blackbody spectrum instead
@@ -521,8 +518,7 @@ def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=True, v
 
         return get_wdKoester_atmosphere(metallicity=metallicity,
                                             temperature=temperature,
-                                            gravity=gravity,
-                                            rebin=rebin)
+                                            gravity=gravity)
     
     except pysynphot.exceptions.ParameterOutOfBounds:
         if verbose:
