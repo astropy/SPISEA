@@ -532,7 +532,8 @@ class Isochrone(object):
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1,
-                 wave_range=[5000, 52000], min_mass=None, max_mass=None):
+                 wave_range=[5000, 52000], min_mass=None, max_mass=None,
+                 rebin=True):
         """
         Parameters
         ----------
@@ -556,6 +557,10 @@ class Isochrone(object):
         max_mass: float or None
             If float, defines the maxmimum mass in the isochrone.
             Units: solar masses
+        rebin: boolean
+            If true, rebins the atmospheres so that they are the same
+            resolution as the Castelli+04 atmospheres
+            
         """
 
         t1 = time.time()
@@ -613,9 +618,9 @@ class Isochrone(object):
             # If source is a star, pull from star atmospheres. If it is a WD,
             # pull from WD atmospheres
             if phase == 101:
-                star = wd_atm_func(temperature=T, gravity=gravity, verbose=False)
+                star = wd_atm_func(temperature=T, gravity=gravity, rebin=rebin, verbose=False)
             else:
-                star = atm_func(temperature=T, gravity=gravity)
+                star = atm_func(temperature=T, gravity=gravity, rebin=rebin)
 
             # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
@@ -739,7 +744,7 @@ class IsochronePhot(Isochrone):
                                evo_model=evo_model, atm_func=atm_func,
                                wd_atm_func=wd_atm_func,
                                red_law=red_law, mass_sampling=mass_sampling,
-                               min_mass=min_mass, max_mass=max_mass)
+                               min_mass=min_mass, max_mass=max_mass, rebin=rebin)
             self.verbose = True
             
             # Make photometry
