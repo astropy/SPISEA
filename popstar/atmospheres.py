@@ -898,6 +898,7 @@ def organize_PHOENIXv16_atmospheres(path_to_dir, met_str='m00'):
     i = 0
     for temp in temp_arr:
         files = glob.glob('lte{0:05d}-*-HiRes.fits'.format(temp))
+        files.sort()
         # Start the table with the wavelength column
         t = Table()
         t.add_column(wave_col)
@@ -948,6 +949,7 @@ def make_PHOENIXv16_catalog(path_to_dir, met_str='m00'):
     
     # Collect the filenames. Each is a unique temp with many different log g's
     files = glob.glob('phoenix*.fits')
+    files.sort()
 
     # Create the catalog.fits file, row by row
     index_arr = []
