@@ -385,13 +385,16 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=3000, gravity=4, rebi
 
     return sp
 
-def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
+def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7, rebin=True):
     """
     metallicity = [M/H] (def = 0)
     temperature = Kelvin (def = 5000)
     gravity = log gravity (def = 4.0)
     """
-    sp = pysynphot.Icat('wdKoester', temperature, metallicity, gravity)
+    if rebin == True:
+        sp = pysynphot.Icat('wdKoester_rebin', temperature, metallicity, gravity)
+    else:
+        sp = pysynphot.Icat('wdKoester', temperature, metallicity, gravity)
 
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
@@ -446,7 +449,8 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     return sp
 
 #---------------------------------------------------------------------#
-def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False):
+def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False,
+                              rebin=True):
     """
     **If T >= 20,000 K : CMFGEN** NOT ACTIVE YET, ALL ATLAS FOR NOW
     5500 <= T < 20000: ATLAS (ck04)
@@ -460,7 +464,8 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
             print( 'BTSettl_2015 atmosphere')
         return get_BTSettl_2015_atmosphere(metallicity=metallicity,
                                               temperature=temperature,
-                                              gravity=gravity)
+                                              gravity=gravity,
+                                              rebin=rebin)
 
  
     if (temperature >= 3200) & (temperature < 3800):
@@ -475,7 +480,8 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
             print( 'Phoenixv16 atmosphere')
         return get_phoenixv16_atmosphere(metallicity=metallicity,
                                       temperature=temperature,
-                                      gravity=gravity)
+                                      gravity=gravity,
+                                      rebin=rebin)
 
     if (temperature >= 5000) & (temperature < 5500):
         if verbose:
@@ -483,9 +489,6 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
         return get_atlas_phoenix_atmosphere(metallicity=metallicity,
                                         temperature=temperature,
                                         gravity=gravity)
-        #return get_phoenixv16_atmosphere(metallicity=metallicity,
-        #                              temperature=temperature,
-        #                              gravity=gravity)
     
     if (temperature >= 5500) & (temperature < 20000):
         if verbose:
@@ -507,7 +510,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
         #                               gravity=gravity)    
 
 
-def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False):
+def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=True, verbose=False):
     """
     Pull white dwarf atmosphere from Koester+10. If desired parameters are 
     outside of grid, return a blackbody spectrum instead
@@ -518,7 +521,9 @@ def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False
 
         return get_wdKoester_atmosphere(metallicity=metallicity,
                                             temperature=temperature,
-                                            gravity=gravity)
+                                            gravity=gravity,
+                                            rebin=rebin)
+    
     except pysynphot.exceptions.ParameterOutOfBounds:
         if verbose:
             print('BB atmosphere')
