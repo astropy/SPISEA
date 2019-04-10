@@ -618,7 +618,7 @@ class Isochrone(object):
             # If source is a star, pull from star atmospheres. If it is a WD,
             # pull from WD atmospheres
             if phase == 101:
-                star = wd_atm_func(temperature=T, gravity=gravity, rebin=rebin, verbose=False)
+                star = wd_atm_func(temperature=T, gravity=gravity, verbose=False)
             else:
                 star = atm_func(temperature=T, gravity=gravity, rebin=rebin)
 
