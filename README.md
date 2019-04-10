@@ -140,7 +140,13 @@ the following warnings:
     
     UserWarning: POPSTAR_MODELS is undefined; functionality will be SEVERELY crippled.
     
-Otherwise, you should be all set! Try the examples in the Quick Start Guide below to 
+Otherwise, you should be all set! You may get warnings that say:
+
+    UserWarning: Extinction files not found in /u/mwhosek/models/cdbs/extinction
+    
+    UserWarning: No thermal tables found, no thermal calculations can be performed
+    
+But these can be safely ignored. Try the examples in the Quick Start Guide below to 
 make sure everything is working.
     
 ## Documentation
