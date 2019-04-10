@@ -1006,6 +1006,7 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
 
     # Collect the filenames, make necessary changes to each one
     files = glob.glob('phoenix*.fits')
+    
     ## Need to sort filenames; glob doesn't always give them in order
     files.sort()
 
@@ -1013,92 +1014,28 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
     counter = 0
     for i in files:
         counter += 1
-        # Open file, extract useful info
+        
+        # Read in current FITS table
+        cur_table = Table.read(i, format='fits')
+        
+        cur_table.columns[0].name = 'Wavelength'
+        
+        num_cols = len(cur_table.colnames)
+        
+        # Multiplying each flux column by 10^-8 for conversion        
+        for cur_col_index in range(1, num_cols, 1):
+            cur_col_name = cur_table.colnames[cur_col_index]
+            cur_table[cur_col_name] = cur_table[cur_col_name] * 10.**-8
+        
+        
+        # Construct new FITS file based on old one
         hdu = fits.open(i)
         header_0 = hdu[0].header
         header_1 = hdu[1].header
         sci = hdu[1].data
         
-        num_cols = len(sci.columns)
-
-        # Remake fits table from individual columns, multiplying each flux
-        # column by 10^-8 for conversion
-        # This gets messy due to changing number of columns
-        c0 = fits.Column(name='Wavelength', format='D', array=sci.field(0))
-        # This particular column only exists for lower temp models
-        if num_cols == 14:
-            c1 = fits.Column(name='g0.0', format='E', array=sci.field(1)*10**-8)
-            c2 = fits.Column(name='g0.5', format='E', array=sci.field(2)*10**-8)
-            c3 = fits.Column(name='g1.0', format='E', array=sci.field(3)*10**-8)
-            c4 = fits.Column(name='g1.5', format='E', array=sci.field(4)*10**-8)
-            c5 = fits.Column(name='g2.0', format='E', array=sci.field(5)*10**-8)
-            c6 = fits.Column(name='g2.5', format='E', array=sci.field(6)*10**-8)
-            c7 = fits.Column(name='g3.0', format='E', array=sci.field(7)*10**-8)
-            c8 = fits.Column(name='g3.5', format='E', array=sci.field(8)*10**-8)
-            c9 = fits.Column(name='g4.0', format='E', array=sci.field(9)*10**-8)
-            c10 = fits.Column(name='g4.5', format='E', array=sci.field(10)*10**-8)
-            c11 = fits.Column(name='g5.0', format='E', array=sci.field(11)*10**-8)
-            c12 = fits.Column(name='g5.5', format='E', array=sci.field(12)*10**-8)
-            c13 = fits.Column(name='g6.0', format='E', array=sci.field(13)*10**-8)
-        elif num_cols == 13:
-            c2 = fits.Column(name='g0.5', format='E', array=sci.field(1)*10**-8)
-            c3 = fits.Column(name='g1.0', format='E', array=sci.field(2)*10**-8)
-            c4 = fits.Column(name='g1.5', format='E', array=sci.field(3)*10**-8)
-            c5 = fits.Column(name='g2.0', format='E', array=sci.field(4)*10**-8)
-            c6 = fits.Column(name='g2.5', format='E', array=sci.field(5)*10**-8)
-            c7 = fits.Column(name='g3.0', format='E', array=sci.field(6)*10**-8)
-            c8 = fits.Column(name='g3.5', format='E', array=sci.field(7)*10**-8)
-            c9 = fits.Column(name='g4.0', format='E', array=sci.field(8)*10**-8)
-            c10 = fits.Column(name='g4.5', format='E', array=sci.field(9)*10**-8)
-            c11 = fits.Column(name='g5.0', format='E', array=sci.field(10)*10**-8)
-            c12 = fits.Column(name='g5.5', format='E', array=sci.field(11)*10**-8)
-            c13 = fits.Column(name='g6.0', format='E', array=sci.field(12)*10**-8)
-        elif num_cols == 12:
-            c3 = fits.Column(name='g1.0', format='E', array=sci.field(1)*10**-8)
-            c4 = fits.Column(name='g1.5', format='E', array=sci.field(2)*10**-8)
-            c5 = fits.Column(name='g2.0', format='E', array=sci.field(3)*10**-8)
-            c6 = fits.Column(name='g2.5', format='E', array=sci.field(4)*10**-8)
-            c7 = fits.Column(name='g3.0', format='E', array=sci.field(5)*10**-8)
-            c8 = fits.Column(name='g3.5', format='E', array=sci.field(6)*10**-8)
-            c9 = fits.Column(name='g4.0', format='E', array=sci.field(7)*10**-8)
-            c10 = fits.Column(name='g4.5', format='E', array=sci.field(8)*10**-8)
-            c11 = fits.Column(name='g5.0', format='E', array=sci.field(9)*10**-8)
-            c12 = fits.Column(name='g5.5', format='E', array=sci.field(10)*10**-8)
-            c13 = fits.Column(name='g6.0', format='E', array=sci.field(11)*10**-8)
-        elif num_cols == 11:
-            c4 = fits.Column(name='g1.5', format='E', array=sci.field(1)*10**-8)
-            c5 = fits.Column(name='g2.0', format='E', array=sci.field(2)*10**-8)
-            c6 = fits.Column(name='g2.5', format='E', array=sci.field(3)*10**-8)
-            c7 = fits.Column(name='g3.0', format='E', array=sci.field(4)*10**-8)
-            c8 = fits.Column(name='g3.5', format='E', array=sci.field(5)*10**-8)
-            c9 = fits.Column(name='g4.0', format='E', array=sci.field(6)*10**-8)
-            c10 = fits.Column(name='g4.5', format='E', array=sci.field(7)*10**-8)
-            c11 = fits.Column(name='g5.0', format='E', array=sci.field(8)*10**-8)
-            c12 = fits.Column(name='g5.5', format='E', array=sci.field(9)*10**-8)
-            c13 = fits.Column(name='g6.0', format='E', array=sci.field(10)*10**-8)
-        elif num_cols == 10:
-            c5 = fits.Column(name='g2.0', format='E', array=sci.field(1)*10**-8)
-            c6 = fits.Column(name='g2.5', format='E', array=sci.field(2)*10**-8)
-            c7 = fits.Column(name='g3.0', format='E', array=sci.field(3)*10**-8)
-            c8 = fits.Column(name='g3.5', format='E', array=sci.field(4)*10**-8)
-            c9 = fits.Column(name='g4.0', format='E', array=sci.field(5)*10**-8)
-            c10 = fits.Column(name='g4.5', format='E', array=sci.field(6)*10**-8)
-            c11 = fits.Column(name='g5.0', format='E', array=sci.field(7)*10**-8)
-            c12 = fits.Column(name='g5.5', format='E', array=sci.field(8)*10**-8)
-            c13 = fits.Column(name='g6.0', format='E', array=sci.field(9)*10**-8)
-                        
-        if num_cols == 14:
-            cols = fits.ColDefs([c0,c1,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
-        elif num_cols == 13:
-            cols = fits.ColDefs([c0,c2,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
-        elif num_cols == 12:
-            cols = fits.ColDefs([c0,c3,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
-        elif num_cols == 11:
-            cols = fits.ColDefs([c0,c4,c5,c6,c7,c8,c9,c10,c11,c12,c13])
-        elif num_cols == 10:
-            cols = fits.ColDefs([c0,c5,c6,c7,c8,c9,c10,c11,c12,c13])
-        tbhdu = fits.BinTableHDU.from_columns(cols)
-
+        tbhdu = fits.table_to_hdu(cur_table)
+        
         # Copying over the older headers, adding unit keywords
         prihdu = fits.PrimaryHDU(header=header_0)
         tbhdu.header['TUNIT1'] = 'ANGSTROM'
@@ -1115,10 +1052,11 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
         tbhdu.header['TUNIT12'] = 'FLAM'
         tbhdu.header['TUNIT13'] = 'FLAM'
         tbhdu.header['TUNIT14'] = 'FLAM'
-    
+        
+        # Construct and write out final FITS file
         finalhdu = fits.HDUList([prihdu, tbhdu])
         finalhdu.writeto(i, overwrite=True)
-
+        
         hdu.close()
         print( 'Done {0:2.0f} of {1:2.0f}'.format(counter, len(files)))
     
@@ -1189,10 +1127,18 @@ def rebin_phoenixV16(cdbs_path):
             # Pick out the list of gravities for this T, Z combo            
             idx = np.where((metal_arr == metal) & (temp_arr == temp))[0]
             logg_exist = logg_arr[idx]
-
+            
             # All gravities will go in one file. Here is the output
             # file name.
             outfile = path + files_all[idx[0]].split('[')[0]
+            
+            ## If the rebinned file already exists, continue
+            if os.path.exists(outfile):
+                continue
+            
+            print(metal)
+            print(temp)
+            print(logg_exist)
             
             # Build a columns array. One column for each gravity.
             cols_arr = []
