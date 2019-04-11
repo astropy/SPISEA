@@ -584,7 +584,7 @@ def test_ifmr_multiplicity():
     mass_sampling = 5
 
     # Test all filters
-    filt_list = ['nirc2,K', 'nirc2,H', 'nirc2,J']
+    filt_list = ['nirc2,Kp', 'nirc2,H', 'nirc2,J']
 
     startTime = time.time()
     
@@ -609,12 +609,11 @@ def test_ifmr_multiplicity():
     # Start without multiplicity and IFMR
     ##########
     my_imf1 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
-                                      multiplicity=None, ifmr=ifmr)
-    print('Constructed IMF: %d seconds' % (time.time() - startTime))
+                                      multiplicity=None)
+    print('Constructed IMF: %d seconds' % (time.time() - startTime)) 
     
-    cluster1 = syn.ResolvedCluster(iso, my_imf1, cluster_mass)
+    cluster1 = syn.ResolvedCluster(iso, my_imf1, cluster_mass, ifmr=ifmr_obj)
     clust1 = cluster1.star_systems
-    comps1 = cluster1.companions
     print('Constructed cluster: %d seconds' % (time.time() - startTime))
 
     plt.figure(3)
@@ -631,10 +630,10 @@ def test_ifmr_multiplicity():
     ##########
     multi = multiplicity.MultiplicityUnresolved()
     my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
-                                      multiplicity=multi, ifmr=ifmr)
+                                      multiplicity=multi)
     print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
     
-    cluster2 = syn.ResolvedCluster(iso, my_imf2, cluster_mass)
+    cluster2 = syn.ResolvedCluster(iso, my_imf2, cluster_mass, ifmr=ifmr_obj)
     clust2 = cluster2.star_systems
     comps2 = cluster2.companions
     print('Constructed cluster with multiples: %d seconds' % (time.time() - startTime))
@@ -653,13 +652,11 @@ def test_ifmr_multiplicity():
     assert len(np.where(clust2['phase'] == 103)) > 0
 
     # Now check that we have companions that are WDs, NSs, and BHs
-    assert len(np.where(comps1['phase'] == 101)) > 0   # WD
-    assert len(np.where(comps2['phase'] == 101)) > 0
-    assert len(np.where(comps1['phase'] == 102)) > 0   # NS
-    assert len(np.where(comps2['phase'] == 102)) > 0
-    assert len(np.where(comps1['phase'] == 103)) > 0   # BH
-    assert len(np.where(comps2['phase'] == 103)) > 0
+    # for the cluster where multiplicity != none
+    assert len(np.where(comps2['phase'] == 101)[0]) > 0
+    assert len(np.where(comps2['phase'] == 102)[0]) > 0
+    assert len(np.where(comps2['phase'] == 103)[0]) > 0
 
-    
-    
+    pdb.set_trace()
+    return
     
