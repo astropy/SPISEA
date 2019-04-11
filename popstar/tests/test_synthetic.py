@@ -584,7 +584,7 @@ def test_ifmr_multiplicity():
     mass_sampling = 5
 
     # Test all filters
-    filt_list = ['nirc2,K', 'nirc2,H', 'nirc2,J']
+    filt_list = ['nirc2,Kp', 'nirc2,H', 'nirc2,J']
 
     startTime = time.time()
     
@@ -610,7 +610,7 @@ def test_ifmr_multiplicity():
     ##########
     my_imf1 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=None)
-    print('Constructed IMF: %d seconds' % (time.time() - startTime))
+    print('Constructed IMF: %d seconds' % (time.time() - startTime)) 
     
     cluster1 = syn.ResolvedCluster(iso, my_imf1, cluster_mass, ifmr=ifmr_obj)
     clust1 = cluster1.star_systems
@@ -650,7 +650,4 @@ def test_ifmr_multiplicity():
 
     return
 
-
-    
-    
     

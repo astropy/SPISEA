@@ -273,26 +273,26 @@ class ResolvedCluster(Cluster):
                     f2 = 10**(-companions[filt][cdx] / 2.5)
                     star_systems[filt][idx] = -2.5 * np.log10(f1 + f2)
 
-                #####
-                # Make Remnants with flux = 0 in all bands.
-                ##### 
-                if self.ifmr != None:
-                    # Identify compact objects as those with Teff = 0 or with phase > 100.
-                    highest_mass_iso = self.iso.points['mass'].max()
-                    cdx_rem = np.where((companions['Teff'][cdx] == 0) &
-                                       (companions['mass'][cdx] > highest_mass_iso))[0]
+        #####
+        # Make Remnants with flux = 0 in all bands.
+        ##### 
+        if self.ifmr != None:
+            # Identify compact objects as those with Teff = 0 or with masses above the max iso mass
+            highest_mass_iso = self.iso.points['mass'].max()
+            cdx_rem = np.where((companions['Teff'] == 0) &
+                                (companions['mass'] > highest_mass_iso))[0]
             
-                    # Calculate remnant mass and ID for compact objects; update remnant_id and
-                    # remnant_mass arrays accordingly
-                    r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(companions['mass'][cdx][cdx_rem])
+            # Calculate remnant mass and ID for compact objects; update remnant_id and
+            # remnant_mass arrays accordingly
+            r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(companions['mass'][cdx_rem])
 
-                    # Drop remnants where it is not relevant (e.g. not a compact object or
-                    # outside mass range IFMR is defined for)
-                    good = np.where(r_id_tmp > 0)
-                    cdx_rem_good = cdx_rem[good]
+            # Drop remnants where it is not relevant (e.g. not a compact object or
+            # outside mass range IFMR is defined for)
+            good = np.where(r_id_tmp > 0)
+            cdx_rem_good = cdx_rem[good]
 
-                    companions['mass_current'][cdx][cdx_rem_good] = r_mass_tmp[good]
-                    companions['phase'][cdx][cdx_rem_good] = r_id_tmp[good]
+            companions['mass_current'][cdx_rem_good] = r_mass_tmp[good]
+            companions['phase'][cdx_rem_good] = r_id_tmp[good]
                 
 
         # Notify if we have a lot of bad ones.
