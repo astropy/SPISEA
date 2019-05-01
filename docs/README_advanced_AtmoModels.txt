@@ -45,6 +45,7 @@ Copy wave file into each metallicity subdirectory. E.g.: `PHOENIX-ACES-AGSS-COND
 	from popstar import atmospheres
 	atmospheres.rebin_phoenixV16('/u/abhimat/models/cdbs/')
 	```
+	- Run catalog function again on `phoenix_v16_rebin` directory to regenerate `catalog.fits` on the rebinned directories for all metallicities
 
 ***File locations:
 -raw models from online downloaded to /g/lu/model/atmospheres/PHEONIXv16_Husser+13
