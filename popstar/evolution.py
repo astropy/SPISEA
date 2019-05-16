@@ -992,7 +992,8 @@ class MISTv1(StellarEvolution):
         if ((log_age < 5.01) or (log_age > 10.30)):
             logger.error('Requested age is out of bounds.')
             
-        if not ((z_defined < 0.0015) or (z_defined > 0.015)):
+        if not ((z_defined < (self.z_solar * (10. ** -4.0))) or
+                (z_defined > (self.z_solar * (10. ** 0.5)))):
             logger.error('Requested metallicity is out of bounds.')
         
         # Find nearest age in grid to input grid
@@ -1004,6 +1005,8 @@ class MISTv1(StellarEvolution):
         
         # find closest metallicity value
         z_idx = searchsorted(self.z_list, z_defined, side='left')
+        if z_idx == len(self.z_list):   # in case just over last index
+            z_idx = z_idx - 1
         z_dir = self.z_file_map[self.z_list[z_idx]]
         
         # generate isochrone file string

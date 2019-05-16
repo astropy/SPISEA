@@ -563,7 +563,7 @@ class Isochrone(object):
         # Get solar metallicity models for a population at a specific age.
         # Takes about 0.1 seconds.
         evol = evo_model.isochrone(age=10**logAge,
-                                   metallicity=0.0)  # solar metallicity
+                                   metallicity=metallicity)
 
         # Eliminate cases where log g is less than 0
         idx = np.where(evol['logg'] > 0)
@@ -618,7 +618,7 @@ class Isochrone(object):
 
             # Get the atmosphere model now. Wavelength is in Angstroms
             # This is the time-intensive call... everything else is negligable.
-            star = atm_func(temperature=T, gravity=gravity)
+            star = atm_func(metallicity=metallicity, temperature=T, gravity=gravity)
 
             # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
@@ -699,6 +699,7 @@ class Isochrone(object):
 
 class IsochronePhot(Isochrone):
     def __init__(self, logAge, AKs, distance,
+                 metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False, 
@@ -738,6 +739,7 @@ class IsochronePhot(Isochrone):
 
         if (not os.path.exists(self.save_file)) | (recomp==True):
             Isochrone.__init__(self, logAge, AKs, distance,
+                               metallicity=metallicity,
                                evo_model=evo_model, atm_func=atm_func,
                                red_law=red_law, mass_sampling=mass_sampling,
                                min_mass=min_mass, max_mass=max_mass)
