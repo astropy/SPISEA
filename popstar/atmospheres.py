@@ -11,6 +11,79 @@ import pdb
 
 log = logging.getLogger('atmospheres')
 
+def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4):
+    """
+    Given atmosphere model, get temperature and gravity bounds
+    """
+    # Open catalog fits file and break out row indices
+    catalog = Table.read('{0}/grid/{1}/catalog.fits'.format(os.environ['PYSYN_CDBS'], model_dir))
+    
+    teff_arr = []
+    z_arr = []
+    logg_arr = []
+    for cur_row_index in range(len(catalog)):
+        index = catalog['INDEX'][cur_row_index]
+        tmp = index.split(',')
+        teff_arr.append(float(tmp[0]))
+        z_arr.append(float(tmp[1]))
+        logg_arr.append(float(tmp[2]))
+    teff_arr = np.array(teff_arr)
+    z_arr = np.array(z_arr)
+    logg_arr = np.array(logg_arr)
+    
+    # Filter by metallicity
+    z_filt = np.where(z_arr == metallicity)
+    teff_arr = teff_arr[z_filt]
+    logg_arr = logg_arr[z_filt]
+    
+    # # Now find the closest atmosphere in parameter space to
+    # # the one we want. We'll find the match with the lowest
+    # # fractional difference
+    # teff_diff = (teff_arr - temperature) / temperature
+    # logg_diff = (logg_arr - gravity) / gravity
+    #
+    # diff_tot = abs(teff_diff) + abs(logg_diff)
+    # idx_f = np.argmin(diff_tot)
+    #
+    # temperature_new = teff_arr[idx_f]
+    # gravity_new = logg_arr[idx_f]
+    
+    # First check if temperature within bounds
+    temperature_new = temperature
+    if temperature > np.max(teff_arr):
+        temperature_new = np.max(teff_arr)
+    if temperature < np.min(teff_arr):
+        temperature_new = np.min(teff_arr)
+    
+    # If temperature within bounds, then check if metallicity within bounds
+    teff_diff = np.abs(teff_arr - temperature)
+    sorted_min_diffs = np.unique(teff_diff)
+    
+    ## Find two closest temperatures
+    teff_close_1 = teff_arr[np.where(teff_diff == sorted_min_diffs[0])[0][0]]
+    teff_close_2 = teff_arr[np.where(teff_diff == sorted_min_diffs[1])[0][0]]
+    
+    logg_arr_1 = logg_arr[np.where(teff_arr == teff_close_1)]
+    logg_arr_2 = logg_arr[np.where(teff_arr == teff_close_2)]
+    
+    ## Switch to most conservative bound of logg out of two closest temps
+    gravity_new = gravity
+    if gravity > np.min([np.max(logg_arr_1), np.max(logg_arr_2)]):
+        gravity_new = np.min([np.max(logg_arr_1), np.max(logg_arr_2)])
+    if gravity < np.max([np.min(logg_arr_1), np.min(logg_arr_2)]):
+        gravity_new = np.max([np.min(logg_arr_1), np.min(logg_arr_2)])
+    
+    # Print out changes, if any
+    if temperature_new != temperature:
+        teff_msg = 'Changing to T={0:6.0f} for T={1:6.0f} logg={2:4.2f}'
+        print( teff_msg.format(temperature_new, temperature, gravity))
+    
+    if gravity_new != gravity:
+        logg_msg = 'Changing to logg={0:4.2f} for T={1:6.0f} logg={2:4.2f}'
+        print( logg_msg.format(gravity_new, temperature, gravity))
+    
+    return (temperature_new, gravity_new)
+
 def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4):
     """
     metallicity in [Fe/H] (def = +0.0): 
@@ -328,15 +401,23 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
     If rebin = True, pull from spectra that have been rebinned to ck04model resolution;
     this is important for spectrophotometry, otherwise it takes forever
     """
-    if (gravity < 0.5):
-        logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
-        print( logg_msg.format(0.5, temperature, gravity))
-        gravity = 0.5
-        
+    atm_model_name = 'phoenix_v16'
     if rebin == True:
-        sp = pysynphot.Icat('phoenix_v16_rebin', temperature, metallicity, gravity)
-    else:
-        sp = pysynphot.Icat('phoenix_v16', temperature, metallicity, gravity)
+        atm_model_name = 'phoenix_v16_rebin'
+    
+    # Check atmosphere catalog bounds
+    (temperature, gravity) = get_atmosphere_bounds(atm_model_name,
+                                                   metallicity=metallicity,
+                                                   temperature=temperature,
+                                                   gravity=gravity)
+    
+    #
+    # if (gravity < 0.5):
+    #     logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
+    #     print( logg_msg.format(0.5, temperature, gravity))
+    #     gravity = 0.5
+    
+    sp = pysynphot.Icat(atm_model_name, temperature, metallicity, gravity)
     
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
@@ -1135,10 +1216,6 @@ def rebin_phoenixV16(cdbs_path):
             ## If the rebinned file already exists, continue
             if os.path.exists(outfile):
                 continue
-            
-            print(metal)
-            print(temp)
-            print(logg_exist)
             
             # Build a columns array. One column for each gravity.
             cols_arr = []
