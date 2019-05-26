@@ -31,7 +31,6 @@ from scipy.spatial import cKDTree as KDTree
 default_evo_model = evolution.MergedBaraffePisaEkstromParsec()
 default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
-default_wd_atm_func = atm.get_wd_atmosphere
 
 def Vega():
     # Use Vega as our zeropoint... assume V=0.03 mag and all colors = 0.0
@@ -194,11 +193,10 @@ class ResolvedCluster(Cluster):
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
-            good = np.where(r_id_tmp > 0)
-            idx_rem_good = idx_rem[good]
+            idx_rem_good = idx_rem[r_id_tmp > 0]
 
-            star_systems['mass_current'][idx_rem_good] = r_mass_tmp[good]
-            star_systems['phase'][idx_rem_good] = r_id_tmp[good]
+            star_systems['mass_current'][idx_rem_good] = r_mass_tmp
+            star_systems['phase'][idx_rem_good] = r_id_tmp
 
         return star_systems
         
@@ -273,26 +271,25 @@ class ResolvedCluster(Cluster):
                     f2 = 10**(-companions[filt][cdx] / 2.5)
                     star_systems[filt][idx] = -2.5 * np.log10(f1 + f2)
 
-        #####
-        # Make Remnants with flux = 0 in all bands.
-        ##### 
-        if self.ifmr != None:
-            # Identify compact objects as those with Teff = 0 or with masses above the max iso mass
-            highest_mass_iso = self.iso.points['mass'].max()
-            cdx_rem = np.where((companions['Teff'] == 0) &
-                                (companions['mass'] > highest_mass_iso))[0]
+                #####
+                # Make Remnants with flux = 0 in all bands.
+                ##### 
+                if self.ifmr != None:
+                    # Identify compact objects as those with Teff = 0 or with phase > 100.
+                    highest_mass_iso = self.iso.points['mass'].max()
+                    cdx_rem = np.where((companions['Teff'][cdx] == 0) &
+                                       (companions['mass'][cdx] > highest_mass_iso))[0]
             
-            # Calculate remnant mass and ID for compact objects; update remnant_id and
-            # remnant_mass arrays accordingly
-            r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(companions['mass'][cdx_rem])
+                    # Calculate remnant mass and ID for compact objects; update remnant_id and
+                    # remnant_mass arrays accordingly
+                    r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(companions['mass'][cdx][cdx_rem])
 
-            # Drop remnants where it is not relevant (e.g. not a compact object or
-            # outside mass range IFMR is defined for)
-            good = np.where(r_id_tmp > 0)
-            cdx_rem_good = cdx_rem[good]
+                    # Drop remnants where it is not relevant (e.g. not a compact object or
+                    # outside mass range IFMR is defined for)
+                    cdx_rem_good = cdx_rem[r_id_tmp > 0]
 
-            companions['mass_current'][cdx_rem_good] = r_mass_tmp[good]
-            companions['phase'][cdx_rem_good] = r_id_tmp[good]
+                    companions['mass_current'][cdx][cdx_rem_good] = r_mass_tmp
+                    companions['phase'][cdx][cdx_rem_good] = r_id_tmp
                 
 
         # Notify if we have a lot of bad ones.
@@ -530,10 +527,8 @@ class UnresolvedCluster(Cluster):
 class Isochrone(object):
     def __init__(self, logAge, AKs, distance,
                  evo_model=default_evo_model, atm_func=default_atm_func,
-                 wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1,
-                 wave_range=[5000, 52000], min_mass=None, max_mass=None,
-                 rebin=True):
+                 wave_range=[5000, 52000], min_mass=None, max_mass=None):
         """
         Parameters
         ----------
@@ -557,10 +552,6 @@ class Isochrone(object):
         max_mass: float or None
             If float, defines the maxmimum mass in the isochrone.
             Units: solar masses
-        rebin: boolean
-            If true, rebins the atmospheres so that they are the same
-            resolution as the Castelli+04 atmospheres
-            
         """
 
         t1 = time.time()
@@ -587,6 +578,17 @@ class Isochrone(object):
         # N = mass sampling factor.
         evol = evol[::mass_sampling]
 
+        # Determine which stars are WR stars.
+        keys = evol.keys()
+        if 'logT_WR' in keys:
+            evol['isWR'] = evol['logT'] != evol['logT_WR']
+            isWR_all = evol['isWR']
+        elif 'phase' in keys:
+            evol['isWR'] = evol['phase'] == 9
+            isWR_all = evol['isWR']
+        else:
+            isWR_all = ['None'] * len(evol)
+
         # Give luminosity, temperature, mass, radius units (astropy units).
         L_all = 10**evol['logL'] * c.L_sun # luminsoity in W
         T_all = 10**evol['logT'] * units.K
@@ -595,7 +597,6 @@ class Isochrone(object):
         logg_all = evol['logg'] # in cgs
         mass_curr_all = evol['mass_current'] * units.Msun
         phase_all = evol['phase']
-        isWR_all = evol['isWR']
 
         # Define the table that contains the "average" properties for each star.
         tab = Table([L_all, T_all, R_all, mass_all, logg_all, isWR_all, mass_curr_all, phase_all],
@@ -611,16 +612,10 @@ class Isochrone(object):
             L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
             T = float( T_all[ii] / units.K)               # in Kelvin
             R = float( R_all[ii].to('pc') / units.pc)              # in pc
-            phase = phase_all[ii]
 
             # Get the atmosphere model now. Wavelength is in Angstroms
             # This is the time-intensive call... everything else is negligable.
-            # If source is a star, pull from star atmospheres. If it is a WD,
-            # pull from WD atmospheres
-            if phase == 101:
-                star = wd_atm_func(temperature=T, gravity=gravity, verbose=False)
-            else:
-                star = atm_func(temperature=T, gravity=gravity, rebin=rebin)
+            star = atm_func(temperature=T, gravity=gravity)
 
             # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
@@ -702,7 +697,6 @@ class Isochrone(object):
 class IsochronePhot(Isochrone):
     def __init__(self, logAge, AKs, distance,
                  evo_model=default_evo_model, atm_func=default_atm_func,
-                 wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False, 
                  filters={'wfc3,ir,f127m', 'wfc3,ir,f139m',
@@ -742,9 +736,8 @@ class IsochronePhot(Isochrone):
         if (not os.path.exists(self.save_file)) | (recomp==True):
             Isochrone.__init__(self, logAge, AKs, distance,
                                evo_model=evo_model, atm_func=atm_func,
-                               wd_atm_func=wd_atm_func,
                                red_law=red_law, mass_sampling=mass_sampling,
-                               min_mass=min_mass, max_mass=max_mass, rebin=rebin)
+                               min_mass=min_mass, max_mass=max_mass)
             self.verbose = True
             
             # Make photometry

@@ -6,7 +6,7 @@ import os
 import glob
 import pdb
 import warnings
-from astropy.table import Table, vstack, Column
+from astropy.table import Table, vstack
 from scipy import interpolate
 import pylab as py
 from popstar.utils import objects
@@ -999,19 +999,7 @@ class MISTv1(StellarEvolution):
             iso.rename_column('col14', 'logT')
             iso.rename_column('col17', 'logg')
             iso.rename_column('col79', 'phase')
-
-        # For MIST isochrones, anything with phase = 6 is a WD.
-        # Following our IFMR convention, change the phase designation
-        # to 101
-        isWD = np.where(iso['phase'] == 6)
-        iso['phase'][isWD] = 101
-
-        # Define "isWR" column based on phase info
-        isWR = Column([False] * len(iso), name='isWR')
-        idx_WR = np.where(iso['phase'] == 9)
-        isWR[idx_WR] = True
-        iso.add_column(isWR)
-
+            
         iso.meta['log_age'] = log_age
         iso.meta['metallicity'] = metallicity
 
@@ -1151,12 +1139,6 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         iso.rename_column('col7', 'phase')
         iso.rename_column('col8', 'model_ref')
 
-        # Define "isWR" column based on phase info
-        isWR = Column([False] * len(iso), name='isWR')
-        idx_WR = np.where(iso['logT'] != iso['logT_WR'])
-        isWR[idx_WR] = True
-        iso.add_column(isWR)
-        
         iso.meta['log_age'] = log_age
         iso.meta['metallicity'] = metallicity
         

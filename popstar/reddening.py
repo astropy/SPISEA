@@ -777,7 +777,7 @@ class RedLawDeMarchi16(pysynphot.reddening.CustomRedLaw):
 
         return A_at_wave
     
-class RedLawFitzpatrick09(pysynphot.reddening.CustomRedLaw):
+class RedLawFitzpactrick09(pysynphot.reddening.CustomRedLaw):
     """
     An object that represents the reddening vs. wavelength for the 
     Fitzpactick+09 reddening law.The returned object is 
@@ -1124,8 +1124,7 @@ class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
 class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
     """
     Power law extinction law, i.e. A_lambda ~ lambda^(-alpha). The
-    returned object is a pysynphot CustomRedLaw. NOTE THAT ALPHA INPUT
-    IS POSITIVE FOR A NEGATIVE OVERALL EXPONENT
+    returned object is a pysynphot CustomRedLaw. 
 
     The wavelength range is 0.5 - 5.0 microns, by default. But user can change
     this with wave_min and wave_max parameters (in microns!)
