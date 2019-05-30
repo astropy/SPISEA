@@ -83,7 +83,7 @@ class IFMR(object):
         output_array = np.zeros((2, len(mass_array)))
 
         #Random array to get probabilities for what type of object will form
-        random_array = np.random.randint(1, 101, size = len(mass_array))
+        random_array = np.random.randint(1, 1001, size = len(mass_array))
 
         codes = {'WD': 101, 'NS': 102, 'BH': 103}
         
@@ -102,27 +102,27 @@ class IFMR(object):
         output_array[0][id_array2] = self.NS_mass(mass_array[id_array2])
         output_array[1][id_array2] = codes['NS']
 
-        id_array3_BH = np.where((mass_array >= 15) & (mass_array < 17.8) & (random_array > 68))
+        id_array3_BH = np.where((mass_array >= 15) & (mass_array < 17.8) & (random_array > 679))
         output_array[0][id_array3_BH] = self.BH_mass_low(mass_array[id_array3_BH], 0.9)
         output_array[1][id_array3_BH] = codes['BH']
 
-        id_array3_NS = np.where((mass_array >= 15) & (mass_array < 17.8) & (random_array <= 68))
+        id_array3_NS = np.where((mass_array >= 15) & (mass_array < 17.8) & (random_array <= 679))
         output_array[0][id_array3_NS] = self.NS_mass(mass_array[id_array3_NS])
         output_array[1][id_array3_NS] = codes['NS']
 
-        id_array4_BH = np.where((mass_array >= 17.8) & (mass_array < 18.5) & (random_array > 83))
+        id_array4_BH = np.where((mass_array >= 17.8) & (mass_array < 18.5) & (random_array > 833))
         output_array[0][id_array4_BH]= self.BH_mass_low(mass_array[id_array4_BH], 0.9)
         output_array[1][id_array4_BH] = codes['BH']
         
-        id_array4_NS = np.where((mass_array >= 17.8) & (mass_array < 18.5) & (random_array <= 83))
+        id_array4_NS = np.where((mass_array >= 17.8) & (mass_array < 18.5) & (random_array <= 833))
         output_array[0][id_array4_NS] = self.NS_mass(mass_array[id_array4_NS])
         output_array[1][id_array4_NS] = codes['NS']
 
-        id_array5_BH = np.where((mass_array >= 18.5) & (mass_array < 21.7) & (random_array > 50))
+        id_array5_BH = np.where((mass_array >= 18.5) & (mass_array < 21.7) & (random_array > 500))
         output_array[0][id_array5_BH] = self.BH_mass_low(mass_array[id_array5_BH], 0.9)
         output_array[1][id_array5_BH] = codes['BH']
         
-        id_array5_NS = np.where((mass_array >= 18.5) & (mass_array < 21.7) & (random_array <= 50))
+        id_array5_NS = np.where((mass_array >= 18.5) & (mass_array < 21.7) & (random_array <= 500))
         output_array[0][id_array5_NS] = self.NS_mass(mass_array[id_array5_NS])
         output_array[1][id_array5_NS] = codes['NS']
 
@@ -130,11 +130,11 @@ class IFMR(object):
         output_array[0][id_array6] = self.BH_mass_low(mass_array[id_array6], 0.9)
         output_array[1][id_array6]= codes['BH']
 
-        id_array7_BH = np.where((mass_array >= 25.2) & (mass_array < 27.5) & (random_array > 65))
+        id_array7_BH = np.where((mass_array >= 25.2) & (mass_array < 27.5) & (random_array > 652))
         output_array[0][id_array7_BH] = self.BH_mass_low(mass_array[id_array7_BH], 0.9)
         output_array[1][id_array7_BH] = codes['BH']
         
-        id_array7_NS = np.where((mass_array >= 25.2) & (mass_array < 27.5) & (random_array <= 65))
+        id_array7_NS = np.where((mass_array >= 25.2) & (mass_array < 27.5) & (random_array <= 652))
         output_array[0][id_array7_NS] = self.NS_mass(mass_array[id_array7_NS])
         output_array[1][id_array7_NS] = codes['NS']
 
@@ -146,11 +146,11 @@ class IFMR(object):
         output_array[0][id_array9] = self.BH_mass_high(mass_array[id_array9])
         output_array[1][id_array9] = codes['BH']
 
-        id_array10_BH = np.where((mass_array >= 60) & (mass_array < 120) & (random_array > 40))
+        id_array10_BH = np.where((mass_array >= 60) & (mass_array < 120) & (random_array > 400))
         output_array[0][id_array10_BH] = self.BH_mass_high(mass_array[id_array10_BH])
         output_array[1][id_array10_BH] = codes['BH']
         
-        id_array10_NS = np.where((mass_array >= 60) & (mass_array < 120) & (random_array <= 40))
+        id_array10_NS = np.where((mass_array >= 60) & (mass_array < 120) & (random_array <= 400))
         output_array[0][id_array10_NS] = self.NS_mass(mass_array[id_array10_NS])
         output_array[1][id_array10_NS] = codes['NS']
 
