@@ -1,4 +1,5 @@
 ##################################################
+# J. Lu
 #
 # Original code was taken from libimf package written by Jan Pflamm-Altenburg
 # and has been modified only marginally. The libimf code was licensed under
