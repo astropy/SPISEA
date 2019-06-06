@@ -577,10 +577,10 @@ def test_ifmr_multiplicity():
     from popstar.imf import multiplicity
 
     # Define cluster parameters
-    logAge = 8.0
+    logAge = 9.7
     AKs = 0.0
     distance = 1000
-    cluster_mass = 1e5
+    cluster_mass = 1e6
     mass_sampling = 5
 
     # Test all filters
@@ -588,7 +588,7 @@ def test_ifmr_multiplicity():
 
     startTime = time.time()
     
-    evo = evolution.MergedBaraffePisaEkstromParsec()
+    evo = evolution.MISTv1()
     atm_func = atm.get_merged_atmosphere
     ifmr_obj = ifmr.IFMR()
 
@@ -630,7 +630,6 @@ def test_ifmr_multiplicity():
     comps2 = cluster2.companions
     print('Constructed cluster with multiples: %d seconds' % (time.time() - startTime))
 
-
     ##########
     # Tests
     ##########
@@ -647,6 +646,12 @@ def test_ifmr_multiplicity():
     assert len(np.where(comps2['phase'] == 101)) > 0
     assert len(np.where(comps2['phase'] == 102)) > 0
     assert len(np.where(comps2['phase'] == 103)) > 0
+
+    # Make sure no funky phase designations (due to interpolation effects)
+    # slipped through
+    idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 101) & (clust1['phase'] != 9) )
+    idx2 = np.where( (comps2['phase'] > 5) & (comps2['phase'] < 101) & (comps2['phase'] != 9) )
+    assert len(idx[0]) == 0
 
     return
 
