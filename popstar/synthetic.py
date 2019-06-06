@@ -183,6 +183,20 @@ class ResolvedCluster(Cluster):
         star_systems['mass_current'] = self.iso_interps['mass_current'](star_systems['mass'])
         star_systems['phase'] = np.round(self.iso_interps['phase'](star_systems['mass']))
 
+        # For a very small fraction of stars, the star phase falls on integers in-between
+        # the ones we have definition for, as a result of the interpolation. For these
+        # stars, round phase down to nearest defined phase (e.g., if phase is 71,
+        # then round it down to 5, rather than up to 101).
+        # Note: this only becomes relevant when the cluster is > 10**6 M-sun, this
+        # effect is so small
+        bad = np.where( (star_systems['phase'] > 5) & (star_systems['phase'] < 101) & (star_systems['phase'] != 9))
+        # Print warning, if desired
+        verbose=False
+        if verbose:
+            for ii in range(len(bad[0])):
+                print('WARNING: changing phase {0} to 5'.format(star_systems['phase'][bad[0][ii]]))
+        star_systems['phase'][bad] = 5
+        
         for filt in self.filt_names:
             star_systems[filt] = self.iso_interps[filt](star_systems['mass'])
 
@@ -274,6 +288,18 @@ class ResolvedCluster(Cluster):
                 companions['isWR'][cdx] = np.round(self.iso_interps['isWR'](comp_mass))
                 companions['mass_current'] = self.iso_interps['mass_current'](companions['mass'])
                 companions['phase'] = np.round(self.iso_interps['phase'](companions['mass']))
+
+                # For a very small fraction of stars, the star phase falls on integers in-between
+                # the ones we have definition for, as a result of the interpolation. For these
+                # stars, round phase down to nearest defined phase (e.g., if phase is 71,
+                # then round it down to 5, rather than up to 101).
+                bad = np.where( (companions['phase'] > 5) & (companions['phase'] < 101) & (companions['phase'] != 9))
+                # Print warning, if desired
+                verbose=False
+                if verbose:
+                    for ii in range(len(bad[0])):
+                        print('WARNING: changing phase {0} to 5'.format(companions['phase'][bad[0][ii]]))
+                companions['phase'][bad] = 5
 
                 for filt in self.filt_names:
                     # Magnitude of companion
