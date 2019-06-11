@@ -690,7 +690,8 @@ class Isochrone(object):
         tab.meta['LOGAGE'] = logAge
         tab.meta['AKS'] = AKs
         tab.meta['DISTANCE'] = distance
-        tab.meta['METALLICITY'] = metallicity
+        tab.meta['METAL_IN'] = evol.meta['metallicity_in']
+        tab.meta['METAL_ACT'] = evol.meta['metallicity_act']
         tab.meta['WAVEMIN'] = wave_range[0]
         tab.meta['WAVEMAX'] = wave_range[1]
 
@@ -698,7 +699,6 @@ class Isochrone(object):
 
         t2 = time.time()
         print( 'Isochrone generation took {0:f} s.'.format(t2-t1))
-        
         return
 
     def trim(self, keep_indices):
