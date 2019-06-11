@@ -664,9 +664,11 @@ class Isochrone(object):
             # If source is a star, pull from star atmospheres. If it is a WD,
             # pull from WD atmospheres
             if phase == 101:
-                star = wd_atm_func(temperature=T, gravity=gravity, verbose=False)
+                star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                                       verbose=False)
             else:
-                star = atm_func(temperature=T, gravity=gravity, rebin=rebin)
+                star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                                    rebin=rebin)
 
             # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
@@ -688,6 +690,7 @@ class Isochrone(object):
         tab.meta['LOGAGE'] = logAge
         tab.meta['AKS'] = AKs
         tab.meta['DISTANCE'] = distance
+        tab.meta['METALLICITY'] = metallicity
         tab.meta['WAVEMIN'] = wave_range[0]
         tab.meta['WAVEMAX'] = wave_range[1]
 
