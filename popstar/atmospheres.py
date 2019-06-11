@@ -30,9 +30,12 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     teff_arr = np.array(teff_arr)
     z_arr = np.array(z_arr)
     logg_arr = np.array(logg_arr)
+
+    # Filter by metallicity. Will chose the closest metallicity to desired input
+    metal_list = np.unique(np.array(z_arr))
+    metal_idx = np.where( (abs(metal_list - metallicity)) == min(abs(metal_list - metallicity)))
     
-    # Filter by metallicity
-    z_filt = np.where(z_arr == metallicity)
+    z_filt = np.where(z_arr == metal_list[metal_idx])
     teff_arr = teff_arr[z_filt]
     logg_arr = logg_arr[z_filt]
     
@@ -404,7 +407,7 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
     atm_model_name = 'phoenix_v16'
     if rebin == True:
         atm_model_name = 'phoenix_v16_rebin'
-    
+     
     # Check atmosphere catalog bounds
     (temperature, gravity) = get_atmosphere_bounds(atm_model_name,
                                                    metallicity=metallicity,
@@ -585,7 +588,9 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
         #print('CMFGEN')
         #return get_cmfgenRot_atmosphere_closest(metallicity=metallicity,
         #                               temperature=temperature,
-        #                               gravity=gravity)    
+        #                               gravity=gravity)
+
+    
 
 
 def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False):
