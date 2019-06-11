@@ -187,7 +187,8 @@ class Ekstrom12(StellarEvolution):
         iso.add_column( Column(np.ones(len(iso)), name = 'phase'))
 
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
 
         return iso
 
@@ -392,7 +393,8 @@ class Parsec(StellarEvolution):
         iso['logT_WR'] = iso['logT']
 
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
 
         return iso
         
@@ -526,7 +528,8 @@ class Pisa(StellarEvolution):
         iso.add_column( Column(iso['mass'], name = 'current_mass'))
         
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
 
         return iso
 
@@ -1049,7 +1052,8 @@ class MISTv1(StellarEvolution):
         iso.add_column(isWR)
 
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
 
         return iso
         
@@ -1195,7 +1199,8 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         iso.add_column(isWR)
         
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
         
         return iso
 
@@ -1271,7 +1276,8 @@ class MergedPisaEkstromParsec(StellarEvolution):
         iso.rename_column('col6', 'model_ref')
 
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
         
         return iso
 
@@ -1360,7 +1366,8 @@ class MergedSiessGenevaPadova(StellarEvolution):
         iso.rename_column('col6', 'model_ref')
 
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
         
         return iso
 
