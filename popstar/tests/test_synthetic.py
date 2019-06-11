@@ -566,3 +566,93 @@ def test_phot_consistency(filt='all'):
     os.remove('iso_6.70_0.00_01000.fits')
     return
 
+
+def test_ifmr_multiplicity():
+    from popstar import synthetic as syn
+    from popstar import atmospheres as atm
+    from popstar import evolution
+    from popstar import reddening
+    from popstar import ifmr
+    from popstar.imf import imf
+    from popstar.imf import multiplicity
+
+    # Define cluster parameters
+    logAge = 9.7
+    AKs = 0.0
+    distance = 1000
+    cluster_mass = 1e6
+    mass_sampling = 5
+
+    # Test all filters
+    filt_list = ['nirc2,Kp', 'nirc2,H', 'nirc2,J']
+
+    startTime = time.time()
+    
+    evo = evolution.MISTv1()
+    atm_func = atm.get_merged_atmosphere
+    ifmr_obj = ifmr.IFMR()
+
+    red_law = reddening.RedLawNishiyama09()
+    
+    iso = syn.IsochronePhot(logAge, AKs, distance,
+                            evo_model=evo, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                            mass_sampling=mass_sampling)
+
+    print('Constructed isochrone: %d seconds' % (time.time() - startTime))
+
+    # Now to create the cluster.
+    imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
+    imf_powers = np.array([-1.3, -2.3, -2.3])
+
+    ##########
+    # Start without multiplicity and IFMR
+    ##########
+    my_imf1 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
+                                      multiplicity=None)
+    print('Constructed IMF: %d seconds' % (time.time() - startTime)) 
+    
+    cluster1 = syn.ResolvedCluster(iso, my_imf1, cluster_mass, ifmr=ifmr_obj)
+    clust1 = cluster1.star_systems
+    print('Constructed cluster: %d seconds' % (time.time() - startTime))
+
+   
+    ##########
+    # Test with multiplicity and IFMR
+    ##########
+    multi = multiplicity.MultiplicityUnresolved()
+    my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
+                                      multiplicity=multi)
+    print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
+    
+    cluster2 = syn.ResolvedCluster(iso, my_imf2, cluster_mass, ifmr=ifmr_obj)
+    clust2 = cluster2.star_systems
+    comps2 = cluster2.companions
+    print('Constructed cluster with multiples: %d seconds' % (time.time() - startTime))
+
+    ##########
+    # Tests
+    ##########
+
+    # Check that we have black holes, neutron stars, and white dwarfs in both.
+    assert len(np.where(clust1['phase'] == 101)) > 0   # WD
+    assert len(np.where(clust2['phase'] == 101)) > 0
+    assert len(np.where(clust1['phase'] == 102)) > 0   # NS
+    assert len(np.where(clust2['phase'] == 102)) > 0
+    assert len(np.where(clust1['phase'] == 103)) > 0   # BH
+    assert len(np.where(clust2['phase'] == 103)) > 0
+
+    # Now check that we have companions that are WDs, NSs, and BHs
+    assert len(np.where(comps2['phase'] == 101)) > 0
+    assert len(np.where(comps2['phase'] == 102)) > 0
+    assert len(np.where(comps2['phase'] == 103)) > 0
+
+    # Make sure no funky phase designations (due to interpolation effects)
+    # slipped through
+    idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 101) & (clust1['phase'] != 9) )
+    idx2 = np.where( (comps2['phase'] > 5) & (comps2['phase'] < 101) & (comps2['phase'] != 9) )
+    assert len(idx[0]) == 0
+
+    return
+
+    

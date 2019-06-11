@@ -31,6 +31,7 @@ from scipy.spatial import cKDTree as KDTree
 default_evo_model = evolution.MergedBaraffePisaEkstromParsec()
 default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
+default_wd_atm_func = atm.get_wd_atmosphere
 
 def Vega():
     # Use Vega as our zeropoint... assume V=0.03 mag and all colors = 0.0
@@ -50,39 +51,50 @@ def Vega():
 vega = Vega()
 
 class Cluster(object):
-    def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=False):
+    def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=False,
+                     set_random_seed=False):
         """
         Code to model a cluster with user-specified logAge, AKs, and distance.
         Must also specify directory containing the isochrone (made using popstar
         synthetic code).
 
         Can also specify IMF slope, mass limits, cluster mass, and parameters for
-        multiple stars
+        multiple stars.
+
+        If set_random_seed = True, then random seed is set for all random processes.
+        This is for debugging purposes
         """
         self.verbose = verbose
         self.iso = iso
         self.imf = imf
         self.ifmr = ifmr
         self.cluster_mass = cluster_mass
-
+        self.set_random_seed = set_random_seed
+        
         return
-
     
 class ResolvedCluster(Cluster):
-    def __init__(self, iso, imf, cluster_mass, ifmr=None, save_dir='./', verbose=True):
-        Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose)
+    def __init__(self, iso, imf, cluster_mass, ifmr=None, save_dir='./', verbose=True,
+                     set_random_seed=False):
+        Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
+                             set_random_seed=set_random_seed)
 
         # if os.path.exists(save_sys_file):
         #     self.star_systems = Table.read(save_sys_file)
 
         #     if self.imf.make_multiples:
         #         self.companions = Table.read(save_comp_file)
-        
+
+        # Provide a user warning is random seed is set
+        if set_random_seed:
+            print('WARNING: random seed set to 42')
+
         t1 = time.time()
         ##### 
         # Sample the IMF to build up our cluster mass.
         #####
-        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
+        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass,
+                                                                    set_random_seed=set_random_seed)
 
         # Figure out the filters we will make.
         self.filt_names = self.set_filter_names()
@@ -171,6 +183,20 @@ class ResolvedCluster(Cluster):
         star_systems['mass_current'] = self.iso_interps['mass_current'](star_systems['mass'])
         star_systems['phase'] = np.round(self.iso_interps['phase'](star_systems['mass']))
 
+        # For a very small fraction of stars, the star phase falls on integers in-between
+        # the ones we have definition for, as a result of the interpolation. For these
+        # stars, round phase down to nearest defined phase (e.g., if phase is 71,
+        # then round it down to 5, rather than up to 101).
+        # Note: this only becomes relevant when the cluster is > 10**6 M-sun, this
+        # effect is so small
+        bad = np.where( (star_systems['phase'] > 5) & (star_systems['phase'] < 101) & (star_systems['phase'] != 9))
+        # Print warning, if desired
+        verbose=False
+        if verbose:
+            for ii in range(len(bad[0])):
+                print('WARNING: changing phase {0} to 5'.format(star_systems['phase'][bad[0][ii]]))
+        star_systems['phase'][bad] = 5
+        
         for filt in self.filt_names:
             star_systems[filt] = self.iso_interps[filt](star_systems['mass'])
 
@@ -193,10 +219,11 @@ class ResolvedCluster(Cluster):
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
-            idx_rem_good = idx_rem[r_id_tmp > 0]
+            good = np.where(r_id_tmp > 0)
+            idx_rem_good = idx_rem[good]
 
-            star_systems['mass_current'][idx_rem_good] = r_mass_tmp
-            star_systems['phase'][idx_rem_good] = r_id_tmp
+            star_systems['mass_current'][idx_rem_good] = r_mass_tmp[good]
+            star_systems['phase'][idx_rem_good] = r_id_tmp[good]
 
         return star_systems
         
@@ -262,6 +289,18 @@ class ResolvedCluster(Cluster):
                 companions['mass_current'] = self.iso_interps['mass_current'](companions['mass'])
                 companions['phase'] = np.round(self.iso_interps['phase'](companions['mass']))
 
+                # For a very small fraction of stars, the star phase falls on integers in-between
+                # the ones we have definition for, as a result of the interpolation. For these
+                # stars, round phase down to nearest defined phase (e.g., if phase is 71,
+                # then round it down to 5, rather than up to 101).
+                bad = np.where( (companions['phase'] > 5) & (companions['phase'] < 101) & (companions['phase'] != 9))
+                # Print warning, if desired
+                verbose=False
+                if verbose:
+                    for ii in range(len(bad[0])):
+                        print('WARNING: changing phase {0} to 5'.format(companions['phase'][bad[0][ii]]))
+                companions['phase'][bad] = 5
+
                 for filt in self.filt_names:
                     # Magnitude of companion
                     companions[filt][cdx] = self.iso_interps[filt](comp_mass)
@@ -271,25 +310,26 @@ class ResolvedCluster(Cluster):
                     f2 = 10**(-companions[filt][cdx] / 2.5)
                     star_systems[filt][idx] = -2.5 * np.log10(f1 + f2)
 
-                #####
-                # Make Remnants with flux = 0 in all bands.
-                ##### 
-                if self.ifmr != None:
-                    # Identify compact objects as those with Teff = 0 or with phase > 100.
-                    highest_mass_iso = self.iso.points['mass'].max()
-                    cdx_rem = np.where((companions['Teff'][cdx] == 0) &
-                                       (companions['mass'][cdx] > highest_mass_iso))[0]
+        #####
+        # Make Remnants with flux = 0 in all bands.
+        ##### 
+        if self.ifmr != None:
+            # Identify compact objects as those with Teff = 0 or with masses above the max iso mass
+            highest_mass_iso = self.iso.points['mass'].max()
+            cdx_rem = np.where((companions['Teff'] == 0) &
+                                (companions['mass'] > highest_mass_iso))[0]
             
-                    # Calculate remnant mass and ID for compact objects; update remnant_id and
-                    # remnant_mass arrays accordingly
-                    r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(companions['mass'][cdx][cdx_rem])
+            # Calculate remnant mass and ID for compact objects; update remnant_id and
+            # remnant_mass arrays accordingly
+            r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(companions['mass'][cdx_rem])
 
-                    # Drop remnants where it is not relevant (e.g. not a compact object or
-                    # outside mass range IFMR is defined for)
-                    cdx_rem_good = cdx_rem[r_id_tmp > 0]
+            # Drop remnants where it is not relevant (e.g. not a compact object or
+            # outside mass range IFMR is defined for)
+            good = np.where(r_id_tmp > 0)
+            cdx_rem_good = cdx_rem[good]
 
-                    companions['mass_current'][cdx][cdx_rem_good] = r_mass_tmp
-                    companions['phase'][cdx][cdx_rem_good] = r_id_tmp
+            companions['mass_current'][cdx_rem_good] = r_mass_tmp[good]
+            companions['phase'][cdx_rem_good] = r_id_tmp[good]
                 
 
         # Notify if we have a lot of bad ones.
@@ -338,9 +378,14 @@ class ResolvedCluster(Cluster):
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 ifmr=None, red_law=default_red_law, verbose=False):
+                 ifmr=None, red_law=default_red_law, verbose=False, set_random_seed=False):
 
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose)
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
+                                     set_random_seed=set_random_seed)
+
+        # Set random seed, if desired
+        if set_random_seed:
+            np.random.seed(seed=42)
 
         # For a given delta_AKs (Gaussian sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
@@ -362,6 +407,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         # differential de-reddening. The distribution is normal with a width of
         # Aks +/- deltaAKs in each filter
         rand_red = np.random.randn(len(self.star_systems))
+
         for filt in self.filt_names:
             self.star_systems[filt] += rand_red * delta_red_filt[filt]
 
@@ -527,8 +573,10 @@ class UnresolvedCluster(Cluster):
 class Isochrone(object):
     def __init__(self, logAge, AKs, distance, metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
+                 wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1,
-                 wave_range=[5000, 52000], min_mass=None, max_mass=None):
+                 wave_range=[5000, 52000], min_mass=None, max_mass=None,
+                 rebin=True):
         """
         Parameters
         ----------
@@ -554,6 +602,10 @@ class Isochrone(object):
         max_mass: float or None
             If float, defines the maxmimum mass in the isochrone.
             Units: solar masses
+        rebin: boolean
+            If true, rebins the atmospheres so that they are the same
+            resolution as the Castelli+04 atmospheres
+            
         """
 
         t1 = time.time()
@@ -581,17 +633,6 @@ class Isochrone(object):
         # N = mass sampling factor.
         evol = evol[::mass_sampling]
 
-        # Determine which stars are WR stars.
-        keys = evol.keys()
-        if 'logT_WR' in keys:
-            evol['isWR'] = evol['logT'] != evol['logT_WR']
-            isWR_all = evol['isWR']
-        elif 'phase' in keys:
-            evol['isWR'] = evol['phase'] == 9
-            isWR_all = evol['isWR']
-        else:
-            isWR_all = ['None'] * len(evol)
-
         # Give luminosity, temperature, mass, radius units (astropy units).
         L_all = 10**evol['logL'] * c.L_sun # luminsoity in W
         T_all = 10**evol['logT'] * units.K
@@ -600,6 +641,7 @@ class Isochrone(object):
         logg_all = evol['logg'] # in cgs
         mass_curr_all = evol['mass_current'] * units.Msun
         phase_all = evol['phase']
+        isWR_all = evol['isWR']
 
         # Define the table that contains the "average" properties for each star.
         tab = Table([L_all, T_all, R_all, mass_all, logg_all, isWR_all, mass_curr_all, phase_all],
@@ -615,10 +657,16 @@ class Isochrone(object):
             L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
             T = float( T_all[ii] / units.K)               # in Kelvin
             R = float( R_all[ii].to('pc') / units.pc)              # in pc
+            phase = phase_all[ii]
 
             # Get the atmosphere model now. Wavelength is in Angstroms
             # This is the time-intensive call... everything else is negligable.
-            star = atm_func(metallicity=metallicity, temperature=T, gravity=gravity)
+            # If source is a star, pull from star atmospheres. If it is a WD,
+            # pull from WD atmospheres
+            if phase == 101:
+                star = wd_atm_func(temperature=T, gravity=gravity, verbose=False)
+            else:
+                star = atm_func(temperature=T, gravity=gravity, rebin=rebin)
 
             # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
@@ -701,6 +749,7 @@ class IsochronePhot(Isochrone):
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
+                 wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False, 
                  filters={'wfc3,ir,f127m', 'wfc3,ir,f139m',
@@ -741,8 +790,9 @@ class IsochronePhot(Isochrone):
             Isochrone.__init__(self, logAge, AKs, distance,
                                metallicity=metallicity,
                                evo_model=evo_model, atm_func=atm_func,
+                               wd_atm_func=wd_atm_func,
                                red_law=red_law, mass_sampling=mass_sampling,
-                               min_mass=min_mass, max_mass=max_mass)
+                               min_mass=min_mass, max_mass=max_mass, rebin=rebin)
             self.verbose = True
             
             # Make photometry
