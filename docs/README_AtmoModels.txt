@@ -97,7 +97,7 @@ gravity: 0.0 - 6.0 cgs, steps of 0.5
 =========================
 get_BTSettl_2015_atmosphere
 =========================
-Reference: Allard+
+Reference: Allard+12, Baraffe+15
 Downloaded from https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/FITS/ on 9/28/16
 
 Teff: 1200 - 7000 K
