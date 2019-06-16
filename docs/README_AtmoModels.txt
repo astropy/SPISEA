@@ -99,10 +99,10 @@ get_BTSettl_2015_atmosphere
 =========================
 Reference: Allard+
 Downloaded from https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/FITS/ on 9/28/16
--solar metallicity, no alpha enhancement
 
 Teff: 1200 - 7000 K
 gravity: 2.5 - 5.5 cgs
+metallicity: solar
 
 =========================
 get_wdKoester_atmosphere
@@ -116,7 +116,11 @@ Reference: Koester et al. 2010
 get_kurucz_atmosphere
 ========================
 The pysynphot Kurucz atlas (Kurucz 1993,
-http://ssb.stsci.edu/cdbs/grid/k93models/AA_README)
+http://www.stsci.edu/hst/observatory/crds/k93models.html)
+
+Teff: 3000 - 50000 K
+gravity: 0 - 5 cgs
+metallicity: -5.0 - 1.0
 
 ========================
 get_phoenix_atmosphere
