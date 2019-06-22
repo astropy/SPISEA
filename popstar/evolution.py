@@ -958,7 +958,7 @@ class MISTv1(StellarEvolution):
         self.model_dir = models_dir+'MISTv1/' + version_dir
 
         # Specifying metallicity
-        self.z_solar = 0.015
+        self.z_solar = 0.0142
         self.z_file_map = {0.0000015: 'z0000015/',
                            0.0000047: 'z0000047/',
                            0.000015: 'z000015/',
