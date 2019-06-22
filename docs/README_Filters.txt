@@ -86,7 +86,7 @@ Example: 'nirc1,H'
 ==========================
 Keck NIRC2
 ==========================
-NIRC2 filters on the Keck Telescope (https://www2.keck.hawaii.edu/inst/nirc2/)
+NIRC2 filters on the Keck Telescope (https://www2.keck.hawaii.edu/inst/nirc2/filters.html)
 Filters: J, H, Hcont, K, Kp, Ks, Kcont, Lp, Ms, Brgamma, FeII
 
 Example: 'nirc2,Ks'
