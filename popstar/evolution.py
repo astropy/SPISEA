@@ -62,16 +62,6 @@ class Geneva(StellarEvolution):
 
         self.z_solar = 0.02
         self.z_file_map = {0.01: 'z01/', 0.02: 'z02/', 0.03: 'z03/'}
-        
-        
-        
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Geneva collection.
-        
-        """
-        return
-        
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -102,8 +92,6 @@ class Geneva(StellarEvolution):
         # return isochrone data
         return genfromtxt(full_iso_file, comments='#')
 
-    def format_isochrones(input_iso_dir, output_iso_dir):
-        return
 
 #---------------------------------------#
 # Now for the Ekstrom+12 Geneva models
@@ -129,14 +117,6 @@ class Ekstrom12(StellarEvolution):
 
         # Specify rotation or not
         self.rot = rot
-        
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Ekstrom+12 Geneva collection.
-        
-        """
-        return
-        
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -345,15 +325,6 @@ class Parsec(StellarEvolution):
         self.z_file_map = {0.005: 'z005/', 0.015: 'z015/', 0.04: 'z04/'}
         
         
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Parsec version 1.2s
-        collection.
-        
-        """
-        return
-        
-    
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the Parsec version 1.2s
@@ -481,15 +452,6 @@ class Pisa(StellarEvolution):
         # Specifying metallicity
         self.z_solar = 0.015
         self.z_file_map = {0.015: 'z015/'}
-        
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Pisa (Tognelli+11)
-        collection.
-        
-        """
-        return
-        
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -642,14 +604,6 @@ class Baraffe15(StellarEvolution):
         # Specifying metallicity
         self.z_solar = 0.015
         self.z_file_map = {0.015: 'z015/'}
-        
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Baraffe15
-        collection.
-        
-        """
-        return
         
     
     def isochrone(self, age=5.e7, metallicity=0.0):
@@ -983,15 +937,6 @@ class MISTv1(StellarEvolution):
                            0.041: 'z041/'}
         
         
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Parsec version 1.2s
-        collection.
-        
-        """
-        return
-        
-    
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the MISTv1
@@ -1152,13 +1097,6 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         else:
             self.z_file_map = {0.015: 'z015_norot/'}
         
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Geneva collection.
-        
-        """
-        return
-        
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -1237,13 +1175,6 @@ class MergedPisaEkstromParsec(StellarEvolution):
             self.z_file_map = {0.015: 'z015_rot/'}
         else:
             self.z_file_map = {0.015: 'z015_norot/'}
-        
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Geneva collection.
-        
-        """
-        return
         
     
     def isochrone(self, age=1.e8, metallicity=0.0):
@@ -1327,13 +1258,6 @@ class MergedSiessGenevaPadova(StellarEvolution):
         
         # Metallicity map
         self.z_file_map = {0.02: 'z02/'}
-        
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Geneva collection.
-        
-        """
-        return
         
     
     def isochrone(self, age=1.e8, metallicity=0.0):
