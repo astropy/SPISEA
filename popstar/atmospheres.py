@@ -520,8 +520,7 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False,
                               rebin=True):
     """
-    **If T >= 20,000 K : CMFGEN** NOT ACTIVE YET, ALL ATLAS FOR NOW
-    5500 <= T < 20000: ATLAS (ck04)
+    5500 <= T: ATLAS (ck04)
     5000 <= T < 5500: ATLAS/PHOENIX merge
     3800 <= T < 5000: PHOENIXv16 (Husser+13)
     3200 <= T < 3800: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge
@@ -1263,7 +1262,7 @@ def rebin_spec(wave, specin, wavnew):
  
     return obs.binflux
 
-def organize_BTSettl_atmospheres(path_to_dir):
+def organize_BTSettl_2015_atmospheres(path_to_dir):
     """
     Construct cdbs-ready BTSettl_CIFITS_2011_2015 atmospheres for each model.
     Will convert wavelength units to angstroms and flux units to [erg/s/cm^2/A]
@@ -1279,10 +1278,8 @@ def organize_BTSettl_atmospheres(path_to_dir):
     os.chdir(path_to_dir)
 
     # If it doesn't already exist, create the BTSettl subdirectory
-    if os.path.exists('BTSettl'):
-        pass
-    else:
-        os.mkdir('BTSettl')
+    if not os.path.exists('BTSettl_2015'):
+        os.mkdir('BTSettl_2015')
 
     # Process each atmosphere file independently
     print( 'Creating cdbs-ready files')
@@ -1325,7 +1322,7 @@ def organize_BTSettl_atmospheres(path_to_dir):
     os.chdir(start_dir)
     return
 
-def make_BTSettl_catalog(path_to_dir):
+def make_BTSettl_2015_catalog(path_to_dir):
     """
     Create cdbs catalog.fits of BTSettl_CIFITS2011_2015 grid.
     THIS IS STEP 2, after organize_CMFGEN_atmospheres has
@@ -1365,7 +1362,7 @@ def make_BTSettl_catalog(path_to_dir):
     
     return
 
-def rebin_BTSettl(cdbs_path='/g/lu/models/cdbs/'):
+def rebin_BTSettl_2015(cdbs_path='/g/lu/models/cdbs/'):
     """
     Rebin BTSettle_CIFITS2011_2015 models to atlas ck04 resolution; this makes
     spectrophotometry MUCH faster
@@ -1448,6 +1445,41 @@ def make_wavelength_unique(files):
             finalhdu = fits.HDUList([prihdu, tbhdu])
             finalhdu.writeto(i, overwrite=True)
 
+    return
+
+def organize_BTSettl_atmospheres():
+    """
+    Construct cdbs-ready atmospheres for the BTSettl grid (CIFITS2011).
+    The code expects tp be run in cdbs/grid/BTSettl, and expects that the
+    individual model files have been downloaded from online 
+    (https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011/SPECTRA/)
+    and processed into python-readable ascii files. 
+    """
+    orig_dir = os.getcwd()
+    dirs = ['btm25', 'btm20', 'btm15', 'btm10', 'btm05', 'btp00', 'btp05']
+    
+
+    # Go through each directory, turning each spectrum into a cdbs-ready file.
+    # Will convert flux into Ergs/sec/cm**2/A (FLAM) units and save as a fits file,
+    # for faster access later
+    for ii in dirs:
+        os.chdir(ii)
+
+        files = glob.glob('*.txt')
+        for jj in files:
+            t = Table.read(jj, format='ascii')
+
+            
+
+            pdb.set_trace()
+
+        # Go back to original directory, move to next metallicity
+        os.chdir(orig_dir)
+            
+    
+
+
+    pdb.set_trace()
     return
             
 def organize_WDKoester_atmospheres(path_to_dir):
