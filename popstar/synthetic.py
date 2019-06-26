@@ -781,15 +781,32 @@ class IsochronePhot(Isochrone):
         -------
                  
         """
-        
         # Make and input/output file name for the stored isochrone photometry.
-        save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
-        self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5))
+        # For solar metallicity case, allow for legacy isochrones (which didn't have
+        # metallicity tag since they were all solar metallicity) to be read
+        # properly
+        if metallicity == 0.0:
+            save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_p00.fits'
+            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5))
 
+            save_file_legacy = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
+            self.save_file_legacy = save_file_legacy.format(iso_dir, logAge, AKs, str(distance).zfill(5))
+        else:
+            # Set metallicity flag
+            if metallicity < 0:
+                metal_pre = 'm'
+            else:
+                metal_pre = 'p'
+            metal_flag = int(abs(metallicity)*10)
+            
+            save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_{4}{5:2s}.fits'
+            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
+            self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
+            
         # Expected filters
         self.filters = filters
 
-        if (not os.path.exists(self.save_file)) | (recomp==True):
+        if ((not os.path.exists(self.save_file)) & (not os.path.exists(self.save_file_legacy))) | (recomp==True):
             Isochrone.__init__(self, logAge, AKs, distance,
                                metallicity=metallicity,
                                evo_model=evo_model, atm_func=atm_func,
@@ -801,7 +818,10 @@ class IsochronePhot(Isochrone):
             # Make photometry
             self.make_photometry(rebin=rebin, vega=vega)
         else:
-            self.points = Table.read(self.save_file)
+            try:
+                self.points = Table.read(self.save_file)
+            except:
+                self.points = Table.read(self.save_file_legacy)
             # Add some error checking.
 
         return
