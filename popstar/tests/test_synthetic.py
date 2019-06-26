@@ -655,4 +655,46 @@ def test_ifmr_multiplicity():
 
     return
 
+def test_metallicity():
+    """
+    Test isochrone generation at different metallicities
+    """
+    # Define isochrone parameters
+    logAge = np.log10(5*10**6.) 
+    AKs = 0.8 
+    dist = 4000 
+    evo_model = evolution.MISTv1()
+    atm_func = atmospheres.get_phoenixv16_atmosphere
+    red_law = reddening.RedLawHosek18b()
+    filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m']
+
+    # Start with a solar metallicity isochrone    
+    metallicity= 0.0
+
+    # Make Isochrone object, with high mass_sampling to decrease compute time
+    my_iso = synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
+                            evo_model=evo_model, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                            mass_sampling=10)
+
+    # Test isochrone properties
+    assert my_iso.points.meta['METAL_IN'] == 0.0
+    assert os.path.exists('iso_6.70_0.80_04000_p00.fits')
+
+    # Now for non-solar metallicity
+    metallicity= -1.5
+
+    # Make Isochrone object, with high mass_sampling to decrease compute time
+    my_iso = synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
+                            evo_model=evo_model, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                            mass_sampling=10)
+
+    metal_act = np.log10(0.00047 / 0.0142) # For Mist isochrones
+
+    # Test isochrone properties
+    assert my_iso.points.meta['METAL_IN'] == -1.5
+    assert my_iso.points.meta['METAL_ACT'] == metal_act
+    assert os.path.exists('iso_6.70_0.80_04000_m15.fits')
     
+    return
