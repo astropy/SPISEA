@@ -104,7 +104,16 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4):
 
     log gravity (def = 0.0) in the range of 0.0 - 5.0 in 0.5 increments
     """
-    sp = pysynphot.Icat('k93models', temperature, metallicity, gravity)
+    try:
+        sp = pysynphot.Icat('k93models', temperature, metallicity, gravity)
+    except:
+        # Check atmosphere catalog bounds
+        (temperature, gravity) = get_atmosphere_bounds('k93models',
+                                                   metallicity=metallicity,
+                                                   temperature=temperature,
+                                                   gravity=gravity)
+    
+        sp = pysynphot.Icat('k93models', temperature, metallicity, gravity)
 
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
@@ -130,58 +139,17 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
 
     log gravity (def = 4.0) in the range of 2.0 - 5.0 in 0.5 increments
     """
-    # Round given temp, gravity to closest model that exists
-    # No models below 3000 K
-    if temperature < 3000:
-        print( 'No ck04 model below 3000 K')
-
-    # Catch the edge cases for the hotest stars where the newest 
-    # evolution models have logg < 4.0 but the atmosphere models
-    # aren't available. HACK! FIX!
-    logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
-    if (temperature > 50000):
-        print( 'Changing temp from {0:5.0f} to 50000'.format(temperature))
-        temperature = 50000
-    if (temperature > 49000) and (gravity < 5.0):
-        print( logg_msg.format(5.0, temperature, gravity))
-        gravity = 5.0
-    if (temperature > 39000) and (gravity < 4.5):
-        print( logg_msg.format(4.5, temperature, gravity))
-        gravity = 4.5
-    if (temperature > 31000) and (gravity < 4.0):
-        print( logg_msg.format(4.0, temperature, gravity))
-        gravity = 4.0
-    if (temperature > 26000) and (gravity < 3.5):
-        print( logg_msg.format(3.5, temperature, gravity))
-        gravity = 3.5
-    if (temperature > 19000) and (gravity < 3.0):
-        print( logg_msg.format(3.0, temperature, gravity))
-        gravity = 3.0
-    if (temperature > 11750) and (gravity < 2.5):
-        print( logg_msg.format(2.5, temperature, gravity))
-        gravity = 2.5
-    if (temperature > 9000) and (gravity < 2.0):
-        print( logg_msg.format(2.0, temperature, gravity))
-        gravity = 2.0
-    if (temperature > 8250) and (gravity < 1.5):
-        print( logg_msg.format(1.5, temperature, gravity))
-        gravity = 1.5
-    if (temperature > 7500) and (gravity < 1.0):
-        print( logg_msg.format(1.0, temperature, gravity))
-        gravity = 1.0
-
-    # Also edge case where gravity > 5.0, set to gravity = 5.0. This
-    # is true at all temperatures. HACK!
-    if gravity > 5.0:
-        print( logg_msg.format(5.0, temperature, gravity))
-        gravity = 5.0
-    if (gravity < 0.5):
-        print( logg_msg.format(0.5, temperature, gravity))
-        gravity = 0.5
+    try:
+        sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
+    except:
+        # Check atmosphere catalog bounds
+        (temperature, gravity) = get_atmosphere_bounds('ck04models',
+                                                   metallicity=metallicity,
+                                                   temperature=temperature,
+                                                   gravity=gravity)
+    
+        sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
         
-        
-    sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
-
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
@@ -198,7 +166,16 @@ def get_nextgen_atmosphere(metallicity=0, temperature=5000, gravity=4):
     temperature = Kelvin (def = 5000)
     gravity = log gravity (def = 4.0)
     """
-    sp = pysynphot.Icat('nextgen', temperature, metallicity, gravity)
+    try:
+        sp = pysynphot.Icat('nextgen', temperature, metallicity, gravity)
+    except:
+        # Check atmosphere catalog bounds
+        (temperature, gravity) = get_atmosphere_bounds('nextgen',
+                                                   metallicity=metallicity,
+                                                   temperature=temperature,
+                                                   gravity=gravity)
+    
+        sp = pysynphot.Icat('nextgen', temperature, metallicity, gravity)
 
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
@@ -234,7 +211,16 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4):
     temperature = Kelvin (def = 5000)
     gravity = log gravity (def = 4.0)
     """
-    sp = pysynphot.Icat('phoenix', temperature, metallicity, gravity)
+    try:
+        sp = pysynphot.Icat('phoenix', temperature, metallicity, gravity)
+    except:
+        # Check atmosphere catalog bounds
+        (temperature, gravity) = get_atmosphere_bounds('phoenix',
+                                                   metallicity=metallicity,
+                                                   temperature=temperature,
+                                                   gravity=gravity)
+    
+        sp = pysynphot.Icat('phoenix', temperature, metallicity, gravity)
 
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
@@ -407,20 +393,19 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
     atm_model_name = 'phoenix_v16'
     if rebin == True:
         atm_model_name = 'phoenix_v16_rebin'
-     
-    # Check atmosphere catalog bounds
-    (temperature, gravity) = get_atmosphere_bounds(atm_model_name,
+
+
+    # Extract atmosphere. If that fails, then check bounds and try again
+    try:
+        sp = pysynphot.Icat(atm_model_name, temperature, metallicity, gravity)
+    except:
+        # Check atmosphere catalog bounds
+        (temperature, gravity) = get_atmosphere_bounds(atm_model_name,
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
     
-    #
-    # if (gravity < 0.5):
-    #     logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
-    #     print( logg_msg.format(0.5, temperature, gravity))
-    #     gravity = 0.5
-    
-    sp = pysynphot.Icat(atm_model_name, temperature, metallicity, gravity)
+        sp = pysynphot.Icat(atm_model_name, temperature, metallicity, gravity)
     
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
@@ -444,20 +429,22 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=3000, gravity=4, rebi
     If rebin = True, pull from spectra that have been rebinned to ck04model resolution;
     this is important for spectrophotometry, otherwise it takes forever
     """
-    if (gravity < 2.5):
-        logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
-        print( logg_msg.format(2.5, temperature, gravity))
-        gravity = 2.5
-
-    if (gravity > 5.0):
-        logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
-        print( logg_msg.format(5.0, temperature, gravity))
-        gravity = 5.0
-        
     if rebin == True:
-        sp = pysynphot.Icat('BTSettl_2015_rebin', temperature, metallicity, gravity)
+        atm_name = 'BTSettl_2015_rebin'
     else:
-        sp = pysynphot.Icat('BTSettl_2015', temperature, metallicity, gravity)
+        atm_name = 'BTSettl_2015'
+
+    try:
+        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+    except:
+        # Check atmosphere catalog bounds
+        (temperature, gravity) = get_atmosphere_bounds(atm_name,
+                                                   metallicity=metallicity,
+                                                   temperature=temperature,
+                                                   gravity=gravity)
+    
+        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+        
     
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
