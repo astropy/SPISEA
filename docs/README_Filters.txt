@@ -15,6 +15,7 @@ NACO
 PanStarrs 1
 UKIRT
 VISTA
+GAIA
 
 These filter functions are stored in the PopStar/filt_func directory. 
 
@@ -94,8 +95,8 @@ Example: 'nirc2,Ks'
 ==========================
 NACO
 ==========================
-ESO NACO filters (https://www.eso.org/sci/facilities/paranal/instruments/naco.html)
-Filters: H, K
+ESO NACO filters (https://www.eso.org/sci/facilities/paranal/instruments/naco/inst/filters.html)
+Filters: J, H, K
 
 Example: 'naco,H'
 
@@ -122,3 +123,19 @@ VISTA Telescope (http://casu.ast.cam.ac.uk/surveys-projects/vista/technical/filt
 Filters: Z, Y, J, H, K
 
 Example: "vista,Y"
+
+==========================
+GAIA
+==========================
+The GAIA Space Telescope filters
+(https://www.cosmos.esa.int/web/gaia/iow_20180316).
+Note that three sets are available: the pre-launch passbands used in DR1
+(Jordi+10), the passbands used for the DR2 published photometry, and
+the *revised* DR2 passbands based on the DR2 data (October 2017). The
+user specifies which one they want by 'dr1', 'dr2', or 'dr2_rev', respectively.
+
+To calculate synthetic fluxes, the dr2_rev passbands are advised.
+
+Filters: G, Gbp, Grp
+
+Example: 'gaia,dr2_rev,G'

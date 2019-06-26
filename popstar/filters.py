@@ -331,3 +331,52 @@ def get_keck_osiris_filt(name):
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='keck_osiris_{0}'.format(name))
 
     return spectrum
+
+def get_gaia_filt(version, name):
+    """
+    Define Gaia filters as pysynphot object
+
+    version: specify dr1, dr2, or dr2_rev
+    name: filter name
+    """
+    # Set the filter directory
+    if version == 'dr1':
+        path = '{0}/gaia/dr1/'.format(filters_dir)
+    elif version == 'dr2':
+        path = '{0}/gaia/dr2/'.format(filters_dir)
+    elif version == 'dr2_rev':
+        path = '{0}/gaia/dr2_rev/'.format(filters_dir)
+    else:
+        raise ValueError('GAIA filter version {0} not understood. Please use dr1, dr2, or dr2_rev'.format(version))
+        
+    # Get the filter info
+    try:
+        t = Table.read('{0}/Gaia_passbands.txt'.format(path), format='ascii')
+        if version == 'dr1':
+            t.rename_column('BP', 'Gbp')
+            t.rename_column('RP', 'Grp')
+        else:
+            t.rename_column('col1', 'LAMBDA')
+            t.rename_column('col2', 'G')
+            t.rename_column('col4', 'Gbp')
+            t.rename_column('col6', 'Grp')
+
+        cols = np.array(t.keys())
+        idx = np.where(cols == name)[0][0]
+
+        trans = t[cols[idx]]
+
+        # Change 99 values where filters are undefined into 0, to ensure that
+        # it doesn't mess up our flux values
+        bad = np.where(trans > 90)
+        trans[bad] = 0
+    except:
+        raise ValueError('Could not find Gaia filter {0}'.format(name))   
+
+    # Convert wavelengths to angstroms (from nm)
+    wave = t['LAMBDA'] * 10
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom',
+                                           name='gaia_{0}_{1}'.format(version, name))
+
+    return spectrum
