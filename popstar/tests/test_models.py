@@ -75,3 +75,48 @@ def test_atmosphere_models():
         print('Done {0}'.format(atm))
 
     return
+
+def test_filters():
+    """
+    Test to make sure all of the filters work as expected
+    """
+    from popstar import synthetic
+
+    # Define vega spectrum
+    vega = synthetic.Vega()
+    
+    # Filter list to test
+    filt_list = ['wfc3,ir,f127m','acs,wfc1,f814w',
+                     '2mass,J', '2mass,H','2mass,Ks',
+                     'ctio_osiris,K', 'ctio_osiris,H',
+                     'ubv,U', 'ubv,B', 'ubv,V', 'ubv,R',
+                     'ubv,I', 'jg,J', 'jg,H', 'jg,K',
+                     'decam,y', 'decam,i', 'decam,z',
+                     'decam,u', 'decam,g', 'decam,r',
+                     'gaia,dr2_rev,G', 'gaia,dr2_rev,Gbp', 'gaia,dr2_rev,Grp',
+                     'jwst,F070W', 'jwst,F090W', 'jwst,F115W', 'jwst,F140M',
+                     'jwst,F150W', 'jwst,F150W2', 'jwst,F162M', 'jwst,F164N',
+                     'jwst,F182M', 'jwst,F187N', 'jwst,F200W', 'jwst,F212N',
+                     'jwst,F210M','jwst,F250M', 'jwst,F277W', 'jwst,F300M',
+                     'jwst,F322W2', 'jwst,F323N', 'jwst,F335M', 'jwst,F356W',
+                     'jwst,F360M', 'jwst,F405N', 'jwst,F410M', 'jwst,F430M',
+                     'jwst,F444W', 'jwst,F460M', 'jwst,F466N', 'jwst,F470N',
+                     'jwst,F480M', 'naco,J', 'naco,H', 'naco,Ks',
+                     'nirc1,K', 'nirc1,H', 'nirc2,J', 'nirc2,H',
+                     'nirc2,Kp', 'nirc2,K', 'nirc2,Lp', 'nirc2,Hcont',
+                     'nirc2,FeII', 'nirc2,Brgamma', 'ps1,z',
+                     'ps1,g', 'ps1,r','ps1,i', 'ps1,y',
+                     'ukirt,J', 'ukirt,H', 'ukirt,K',
+                     'vista,Y', 'vista,Z', 'vista,J',
+                     'vista,H',  'vista,Ks']
+
+    # Loop through filters to test that they work
+    for ii in filt_list:
+        try:
+            filt = synthetic.get_filter_info(ii, rebin=True, vega=vega)
+        except:
+            print('TEST FAILED for {0}'.format(ii))
+
+    print('Filters done')
+
+    return
