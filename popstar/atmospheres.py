@@ -417,7 +417,7 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
 
     return sp
 
-def get_BTSettl_2015_atmosphere(metallicity=0, temperature=3000, gravity=4, rebin=True):
+def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebin=False):
     """
     metallicity = [M/H] (def = 0)
     temperature = Kelvin (def = 3000)
@@ -433,6 +433,42 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=3000, gravity=4, rebi
         atm_name = 'BTSettl_2015_rebin'
     else:
         atm_name = 'BTSettl_2015'
+
+    try:
+        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+    except:
+        # Check atmosphere catalog bounds
+        (temperature, gravity) = get_atmosphere_bounds(atm_name,
+                                                   metallicity=metallicity,
+                                                   temperature=temperature,
+                                                   gravity=gravity)
+    
+        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+        
+    
+    # Do some error checking
+    idx = np.where(sp.flux != 0)[0]
+    if len(idx) == 0:
+        print( 'Could not find BTSettl_2015 atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
+
+    return sp
+
+def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=False):
+    """
+    metallicity = [M/H] (def = 0)
+    temperature = Kelvin (def = 3000)
+    gravity = log gravity (def = 4.0)
+
+    If rebin = True, pull from spectra that have been rebinned to ck04model resolution;
+    this is important for spectrophotometry, otherwise it takes forever
+    """
+    if rebin == True:
+        atm_name = 'BTSettl_rebin'
+    else:
+        atm_name = 'BTSettl'
 
     try:
         sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
@@ -524,15 +560,23 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
     5000 <= T < 5500: ATLAS/PHOENIX merge
     3800 <= T < 5000: PHOENIXv16 (Husser+13)
     3200 <= T < 3800: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge
-    3200 < T <= 1200: BTSettl_CIFITS2011_2015
+    3200 < T <= 1200: BTSettl_CIFITS2011_2015 is solar, BTSettl_CIRITS2011 for non-solar
     """
     if temperature <= 3200:
-        if verbose:
-            print( 'BTSettl_2015 atmosphere')
-        return get_BTSettl_2015_atmosphere(metallicity=metallicity,
-                                              temperature=temperature,
-                                              gravity=gravity,
-                                              rebin=rebin)
+        if metallicity == 0:
+            if verbose:
+                print( 'BTSettl_2015 atmosphere')
+            return get_BTSettl_2015_atmosphere(metallicity=metallicity,
+                                                temperature=temperature,
+                                                gravity=gravity,
+                                                rebin=rebin)
+        else:
+            if verbose:
+                print( 'BTSettl atmosphere')
+            return get_BTSettl_atmosphere(metallicity=metallicity,
+                                                temperature=temperature,
+                                                gravity=gravity,
+                                                rebin=rebin)            
 
  
     if (temperature >= 3200) & (temperature < 3800):
@@ -1416,7 +1460,7 @@ def rebin_BTSettl_2015(cdbs_path='/g/lu/models/cdbs/'):
 
     return
 
-def make_wavelength_unique(files):
+def make_wavelength_unique(files, dirname):
     """
     Helper function to go through each BTSettl spectrum and ensure that
     each wavelength point is unique. This is required for rebinning to work.
@@ -1426,12 +1470,10 @@ def make_wavelength_unique(files):
     """
     # Loop through each file, find fix repeated wavelength entries if necessary
     for i in files:
-        t = Table.read(i, format='fits')
-        wave = t['Wavelength']
-        flux = t['Flux']
+        t = Table.read('{0}/{1}'.format(dirname,i), format='fits')
         test = np.unique(t['Wavelength'], return_index=True)
 
-        if len(wave) != len(test[0]):
+        if len(t) != len(test[0]):
             t = t[test[1]]
             
             c0 = fits.Column(name='Wavelength', format='D', array=t['Wavelength'])
@@ -1443,7 +1485,27 @@ def make_wavelength_unique(files):
             tbhdu.header['TUNIT1'] = 'ANGSTROM'
             tbhdu.header['TUNIT2'] = 'FLAM'
             finalhdu = fits.HDUList([prihdu, tbhdu])
-            finalhdu.writeto(i, overwrite=True)
+            finalhdu.writeto('{0}/{1}'.format(dirname,i), overwrite=True)
+
+        # Also make sure wavelength is monotonic. If it is not, then it is
+        # a sign that the wavelengths are out of order
+        diff = np.diff(t['Wavelength'])
+        bad = np.where(diff < 0)
+        if len(bad[0]) > 0:
+            t.sort('Wavelength')
+
+            c0 = fits.Column(name='Wavelength', format='D', array=t['Wavelength'])
+            c1 = fits.Column(name='Flux', format='E', array=t['Flux'])
+            cols = fits.ColDefs([c0, c1])
+
+            tbhdu = fits.BinTableHDU.from_columns(cols)
+            prihdu = fits.PrimaryHDU()
+            tbhdu.header['TUNIT1'] = 'ANGSTROM'
+            tbhdu.header['TUNIT2'] = 'FLAM'
+            finalhdu = fits.HDUList([prihdu, tbhdu])
+            finalhdu.writeto('{0}/{1}'.format(dirname,i), overwrite=True)
+
+        print('Done {0}'.format(i))
 
     return
 
@@ -1457,31 +1519,195 @@ def organize_BTSettl_atmospheres():
     """
     orig_dir = os.getcwd()
     dirs = ['btm25', 'btm20', 'btm15', 'btm10', 'btm05', 'btp00', 'btp05']
+    #dirs = ['btm10', 'btm05', 'btp00', 'btp05']
     
 
     # Go through each directory, turning each spectrum into a cdbs-ready file.
     # Will convert flux into Ergs/sec/cm**2/A (FLAM) units and save as a fits file,
     # for faster access later
     for ii in dirs:
+        print('Starting {0}'.format(ii))
         os.chdir(ii)
 
         files = glob.glob('*.txt')
+        count=0
         for jj in files:
             t = Table.read(jj, format='ascii')
+            # First, trim the wavelengths to a more reasonable wavelength range
+            good = np.where( (t['col1'] > 1000) & (t['col1']  < 70000) )
+            t = t[good]
 
+            # Convert flux units to Flam (Ergs/sec/cm**2/A)
+            flux_new = 10**(t['col2'] - 8.0)
+
+            # Save the file as a fits file
+            c0 = fits.Column(name='Wavelength', format='D', array=t['col1'])
+            c1 = fits.Column(name='Flux', format='E', array=flux_new)
+
+            cols = fits.ColDefs([c0, c1])
+            tbhdu = fits.BinTableHDU.from_columns(cols)
+
+            # Add unit keywords
+            prihdu = fits.PrimaryHDU()
+            tbhdu.header['TUNIT1'] = 'ANGSTROM'
+            tbhdu.header['TUNIT2'] = 'FLAM'
+            hdu_new = fits.HDUList([prihdu, tbhdu])
+        
+            # Write new fits table in cdbs directory
+            hdu_new.writeto('{0}.fits'.format(jj[:-4]), overwrite=True)
+            hdu_new.close()
+            count += 1
+            print('Done {0} of {1}'.format(count, len(files)))
             
-
-            pdb.set_trace()
-
-        # Go back to original directory, move to next metallicity
+        # Now, clean up all the files made when unzipping the spectra
+        cmd1 = 'rm *.bz2'
+        cmd2 = 'rm *.tmp'
+        #cmd3 = 'rm *.txt'
+        os.system(cmd1)
+        os.system(cmd2)
+        #os.system(cmd3)
+        print('==============================')
+        print('Done {0}'.format(ii))
+        print('==============================')
+        
+        # Go back to original directory, move to next metallicity directory
         os.chdir(orig_dir)
-            
-    
 
-
-    pdb.set_trace()
     return
+
+def make_BTSettl_catalog():
+    """
+    Create cdbs catalog.fits of BTSettl grid.
+    THIS IS STEP 2, after organize_BTSettl_atmospheres has
+    been run.
+
+    Code expects to be run in cdbs/grid/BTSettl
+    Will create catalog.fits file in atmosphere directory with
+    description of each model
+    """
+    # Record current working directory for later
+    start_dir = os.getcwd()
+    dirs = ['btm25', 'btm20', 'btm15', 'btm10', 'btm05', 'btp00', 'btp05']
+    #dirs = ['btp05']
+
+    # Construct the catalog.fits file input. The input consists of
+    # and index string that specifies the stellar paramters, and a
+    # name string that points to the file
+    # Loop over all the metallicity directories to construct these inputs
+    index_str = []
+    name_str = []
+    for ii in dirs:
+        os.chdir(ii)
+        files = glob.glob('*.fits')
+
+        # Construct the metallicity val
+        if 'm' in ii:
+            metal_flag = -1 * float(ii[3:])*0.1
+        else:
+            metal_flag = float(ii[3:])*0.1
             
+        # Now collect the info from the files
+        for jj in files:
+            tmp = jj.split('-')
+
+            if metal_flag >= 0:
+                temp = float(tmp[0].split('+')[0][3:]) * 100.0 # In kelvin
+                try:
+                    logg = float(tmp[1])
+                except:
+                    logg = float(tmp[1].split('+')[0])
+            else:
+                temp = float(tmp[0][3:]) * 100.0 # In kelvin
+                logg = float(tmp[1])
+            
+            index_str.append('{0},{1},{2:3.2f}'.format(int(temp), metal_flag, logg))
+            name_str.append('{0}/{1}[Flux]'.format(ii, jj))
+
+        # Go back to original directory to move to next metallicity
+        print('Done {0}'.format(ii))
+        os.chdir(start_dir)
+
+    # Make catalog
+    catalog = Table([index_str, name_str], names = ('INDEX', 'FILENAME'))
+
+    # Create catalog.fits file in directory with the models
+    catalog.write('catalog.fits', format = 'fits', overwrite=True)
+    
+    # Move back to original directory, create the catalog.fits file
+    os.chdir(start_dir)
+    
+    return
+
+def rebin_BTSettl(make_unique=False):
+    """
+    Rebin BTSettle models to atlas ck04 resolution; this makes
+    spectrophotometry MUCH faster
+
+    makes new directory: BTSettl_rebin
+
+    Code expects to be run in cdbs/grid directory
+    """
+    # Get an atlas ck04 model, we will use this to set wavelength grid
+    sp_atlas = get_castelli_atmosphere()
+
+    # Create cdbs/grid directory for rebinned models
+    path = 'BTSettl_rebin/'
+    if not os.path.exists(path):
+        os.mkdir(path)
+
+    # Read in the existing catalog.fits file and rebin every spectrum.
+    cat = fits.getdata('BTSettl/catalog.fits')
+    files_all = [cat[ii][1].split('[')[0] for ii in range(len(cat))]
+
+    #==============================#
+    #tmp = []
+    #for ii in files_all:
+    #    if ii.startswith('btp00'):
+    #        tmp.append(ii)
+    #files_all = tmp
+    #=============================#
+    
+    print( 'Rebinning BTSettl spectra')
+    if make_unique:
+        print('Making unique')
+        make_wavelength_unique(files_all, 'BTSettl')
+        print('Done')
+
+    for ff in range(len(files_all)):
+        vals = cat[ff][0].split(',')
+        temp = float(vals[0])
+        metal = float(vals[1])
+        logg = float(vals[2])
+
+        # Fetch the BTSettl spectrum, rebin flux
+        try:
+            sp = pysynphot.Icat('BTSettl', temp, metal, logg)
+            flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
+
+            # Make new output
+            c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
+            c1 = fits.Column(name='Flux', format='E', array=flux_rebin) 
+        
+            cols = fits.ColDefs([c0, c1])
+            tbhdu = fits.BinTableHDU.from_columns(cols)
+            prihdu = fits.PrimaryHDU()
+            tbhdu.header['TUNIT1'] = 'ANGSTROM'
+            tbhdu.header['TUNIT2'] = 'FLAM'
+            
+            outfile = path + files_all[ff].split('[')[0]
+            finalhdu = fits.HDUList([prihdu, tbhdu])
+            finalhdu.writeto(outfile, overwrite=True)
+        except:
+            pdb.set_trace()
+            orig_file = '{0}/{1}'.format('BTSettl/', files_all[ff].split('[')[0])
+            outfile = path + files_all[ff].split('[')[0]
+            cmd = 'cp {0} {1}'.format(orig_file, outfile)
+            os.system(cmd)
+            
+        print('Done {0} of {1}'.format(ff, len(files_all)))
+        
+    return
+
 def organize_WDKoester_atmospheres(path_to_dir):
     """
     Construct cdbs-ready wdKoester WD atmospheres for each model. (from Koester 2010)
