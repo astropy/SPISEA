@@ -72,11 +72,11 @@ class Geneva(StellarEvolution):
         
         # check age and metallicity are within bounds
         if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
-            logger.error('Requested age is out of bounds.')
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if ((z_defined < np.min(self.z_list)) or
                 (z_defined > np.max(self.z_list))):
-            logger.error('Requested metallicity is out of bounds.')
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # convert age (in yrs) to log scale and find nearest value in grid
         age_idx = searchsorted(self.age_list, math.log10(age), side='right')
@@ -129,11 +129,11 @@ class Ekstrom12(StellarEvolution):
         
         # check age and metallicity are within bounds
         if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
-            logger.error('Requested age is out of bounds.')
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if ((z_defined < np.min(self.z_list)) or
                 (z_defined > np.max(self.z_list))):
-            logger.error('Requested metallicity is out of bounds.')
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # Find nearest age in grid to input grid
         if log_age != self.age_list[0]:
@@ -337,11 +337,11 @@ class Parsec(StellarEvolution):
         
         # check age and metallicity are within bounds
         if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
-            logger.error('Requested age is out of bounds.')
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if ((z_defined < np.min(self.z_list)) or
                 (z_defined > np.max(self.z_list))):
-            logger.error('Requested metallicity is out of bounds.')
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # Find nearest age in grid to input grid
         if log_age != self.age_list[0]:
@@ -465,11 +465,11 @@ class Pisa(StellarEvolution):
         
         # check age and metallicity are within bounds
         if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
-            logger.error('Requested age is out of bounds.')
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if ((z_defined < np.min(self.z_list)) or
                 (z_defined > np.max(self.z_list))):
-            logger.error('Requested metallicity is out of bounds.')
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # Find nearest age in grid to input grid
         if log_age != self.age_list[0]:
@@ -618,11 +618,11 @@ class Baraffe15(StellarEvolution):
         
         # check age and metallicity are within bounds
         if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
-            logger.error('Requested age is out of bounds.')
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if ((z_defined < np.min(self.z_list)) or
                 (z_defined > np.max(self.z_list))):
-            logger.error('Requested metallicity is out of bounds.')
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # Find nearest age in grid to input grid
         if log_age != self.age_list[0]:
@@ -949,11 +949,11 @@ class MISTv1(StellarEvolution):
 
         # check age and metallicity are within bounds
         if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
-            logger.error('Requested age is out of bounds.')
+            llogger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if ((z_defined < np.min(self.z_list)) or
                 (z_defined > np.max(self.z_list))):
-            logger.error('Requested metallicity is out of bounds.')
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
 
         # Find nearest age in grid to input grid
         if log_age != self.age_list[0]:
@@ -1109,11 +1109,11 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         
         # check age and metallicity are within bounds
         if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
-            logger.error('Requested age is out of bounds.')
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if ((z_defined < np.min(self.z_list)) or
                 (z_defined > np.max(self.z_list))):
-            logger.error('Requested metallicity is out of bounds.')
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # convert age (in yrs) to log scale and find nearest value in grid
         age_idx = searchsorted(self.age_list, log_age, side='right')
@@ -1188,10 +1188,10 @@ class MergedPisaEkstromParsec(StellarEvolution):
         
         # check age and metallicity are within bounds
         if (log_age < self.age_list[0]) or (log_age > self.age_list[-1]):
-            logger.error('Requested age is out of bounds.')
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if not z_defined in self.z_list:
-            logger.error('Requested metallicity is out of bounds.')
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # convert age (in yrs) to log scale and find nearest value in grid
         age_idx = searchsorted(self.age_list, log_age, side='right')
@@ -1271,10 +1271,10 @@ class MergedSiessGenevaPadova(StellarEvolution):
         
         # check age and metallicity are within bounds
         if (log_age < self.age_list[0]) or (log_age > self.age_list[-1]):
-            logger.error('Requested age is out of bounds.')
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if not z_defined in self.z_list:
-            logger.error('Requested metallicity is out of bounds.')
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # convert age (in yrs) to log scale and find nearest value in grid
         age_idx = searchsorted(self.age_list, log_age, side='right')
