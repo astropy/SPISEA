@@ -456,7 +456,7 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
 
     return sp
 
-def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=False):
+def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=True):
     """
     metallicity = [M/H] (def = 0)
     temperature = Kelvin (def = 3000)
@@ -553,7 +553,7 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     return sp
 
 #---------------------------------------------------------------------#
-def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False,
+def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose=False,
                               rebin=True):
     """
     5500 <= T: ATLAS (ck04)
@@ -581,7 +581,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=F
  
     if (temperature >= 3200) & (temperature < 3800):
         if verbose:
-            print( 'BTSettl_2015/Phoenixv16 merged atmosphere')
+            print( 'BTSettl/Phoenixv16 merged atmosphere')
         return get_BTSettl_phoenix_atmosphere(metallicity=metallicity,
                                               temperature=temperature,
                                               gravity=gravity)
