@@ -40,7 +40,7 @@ def Vega():
                                      gravity=3.95,
                                      metallicity=-0.5)
 
-    vega = spectrum.trimSpectrum(vega, 3000, 52000)
+    vega = spectrum.trimSpectrum(vega, 2500, 52000)
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
     # and is used to convert to flux observed at Earth.
@@ -429,7 +429,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
     
 class UnresolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass,
-                 wave_range=[5000, 52000], verbose=False):
+                 wave_range=[3000, 52000], verbose=False):
         """
         iso : Isochrone
         """
@@ -493,6 +493,7 @@ class UnresolvedCluster(Cluster):
         print( 'Spec summing took {0:f}s'.format(t3-t2))
 
         self.spec_trim = np.sum(spec_list_trim_np,1)
+        self.wave_trim = self.spec_list_trim[0].wave
         
         t4 = time.time()
         print( 'Spec trimming took {0:f}s'.format(t4-t3))
@@ -507,7 +508,7 @@ class Isochrone(object):
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1,
-                 wave_range=[5000, 52000], min_mass=None, max_mass=None,
+                 wave_range=[3000, 52000], min_mass=None, max_mass=None,
                  rebin=True):
         """
         Parameters
@@ -692,7 +693,7 @@ class IsochronePhot(Isochrone):
                           'wfc3,ir,f125w', 'wfc3,ir,f160w',
                           'nirc2,J', 'nirc2,H', 'nirc2,Kp',
                           'ubv,U', 'ubv,B', 'ubv,V',
-                          'ubv,R', 'ubv,I',}):
+                          'ubv,R', 'ubv,I'}):
 
         """
         Make an isochrone with photometry in various filters.
