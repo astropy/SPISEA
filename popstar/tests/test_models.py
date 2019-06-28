@@ -9,7 +9,7 @@ def test_evolution_models():
 
     # Age ranges to test
     age_young_arr = [6.7, 7.9]
-    age_all_arr = [6.7, 8.0, 9.75]
+    age_all_arr = [6.7, 8.0, 9.7]
 
     # Metallicity ranges to test (if applicable)
     metal_range = [-2.5, 0, 0.4]
@@ -40,6 +40,7 @@ def test_evolution_models():
                     test = evo.isochrone(age=10**kk, metallicity=jj)
                 except:
                     print('TEST FAILED: {0}, age = {1}, metal = {2}'.format(evo, kk, jj))
+                    pdb.set_trace()
         print('Done {0}'.format(evo))
         
     return
@@ -52,27 +53,37 @@ def test_atmosphere_models():
 
     # Array of atmospheres
     atm_arr = [atm.get_merged_atmosphere, atm.get_castelli_atmosphere, atm.get_phoenixv16_atmosphere, atm.get_BTSettl_2015_atmosphere,
-                   atm.get_kurucz_atmosphere, atm.get_phoenix_atmosphere]
+                   atm.get_BTSettl_atmosphere, atm.get_kurucz_atmosphere, atm.get_phoenix_atmosphere]
 
     # Array of metallicities
     metals_range = [-2.0, 0, 0.15]
     metals_solar = [0]
-    metals_arr = [metals_solar, metals_range, metals_range, metals_solar, metals_range, metals_range]
+    metals_arr = [metals_solar, metals_range, metals_range, metals_solar, metals_range, metals_range, metals_range]
 
     assert len(atm_arr) == len(metals_arr)
 
     # Loop through models, testing if them work
     for ii in range(len(atm_arr)):
-        atm = atm_arr[ii]
+        atm_func = atm_arr[ii]
 
         # Loop through metallicities
         for jj in metals_arr[ii]:
             try:
-                test = atm(metallicity=jj)
+                test = atm_func(metallicity=jj)
             except:
-                print('TEST FAILED: {0}, metal = {1}'.format(atm, jj))
+                print('TEST FAILED: {0}, metal = {1}'.format(atm_func, jj))
                 
-        print('Done {0}'.format(atm))
+        print('Done {0}'.format(atm_func))
+        
+    # One last test: get_merged_atmospheres at different temps
+    temp_range = [2000, 4000, 6000, 12000]
+    atm = atm.get_merged_atmosphere
+    for ii in metal_range:
+        for jj in temp_range:
+            try:
+                test = atm_func(metallicity=ii, temperature=jj)
+            except:
+                print('TEST FAILED: {0}, metal = {1}, temp = {2}'.format(atm_func, ii))            
 
     return
 
