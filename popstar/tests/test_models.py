@@ -72,18 +72,22 @@ def test_atmosphere_models():
                 test = atm_func(metallicity=jj)
             except:
                 print('TEST FAILED: {0}, metal = {1}'.format(atm_func, jj))
+                pdb.set_trace()
                 
         print('Done {0}'.format(atm_func))
         
     # One last test: get_merged_atmospheres at different temps
-    temp_range = [2000, 4000, 6000, 12000]
-    atm = atm.get_merged_atmosphere
-    for ii in metal_range:
+    temp_range = [2000, 3500, 4000, 5250, 6000, 12000]
+    atm_func = atm.get_merged_atmosphere
+    for ii in metals_range:
         for jj in temp_range:
             try:
-                test = atm_func(metallicity=ii, temperature=jj)
+                test = atm_func(metallicity=ii, temperature=jj, verbose=True)
             except:
-                print('TEST FAILED: {0}, metal = {1}, temp = {2}'.format(atm_func, ii))            
+                print('TEST FAILED: {0}, metal = {1}, temp = {2}'.format(atm_func, ii, jj))
+                pdb.set_trace()
+
+    print('get_merged_atmosphere: all temps/metallicities passed')
 
     return
 
