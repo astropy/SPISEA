@@ -116,14 +116,41 @@ get_BTSettl_atmosphere
 Reference: Allard+12
 CIFITS2011 grid, downloaded from https://phoenix.ens-lyon.fr/Grids/BT-Settl/
 
-Teff: range depends on metallicity; typically 1000 - 7000 K, though
-[M/H] = 0 grid goes from 400 - 3300 K
-gravity: 2.5 - 5.5 cgs, though also can vary with metallicity
 [M/H] = -2.5, -2.0, -1.5, -1.0, -0.5, 0, 0.5
+
+Teff and gravity ranges depend on metallicity:
+
+[M/H] = -2.5
+Teff: 2600 - 4600 K
+gravity: 4.5 - 5.5
+
+[M/H] = -2.0
+Teff: 2600 - 7000
+gravity: 4.5 - 5.5
+
+[M/H] = -1.5
+Teff: 2600 - 7000
+gravity: 4.5 - 5.5
+
+[M/H] = -1.0
+Teff: 2600 - 7000
+gravity: Teff < 3200 --> 4.5 - 5.5; Teff > 3200 --> 2.5 - 5.5 
+
+[M/H] = -0.5
+Teff: 1000 -7000
+gravity: Teff < 3000 --> 4.5 - 5.5; Teff > 3000 --> 3.0 - 6.0
+
+[M/H] = 0
+Teff: 750 - 7000
+gravity: Teff < 2500 --> 3.5 - 5.5; Teff > 2500 --> 0 - 5.5
+
+[M/H] = 0.5
+Teff: 1000 - 5000
+gravity: 3.5 - 5.0
 
 Note on alpha enhancement:
 For [M/H]= -0.0, +0.5 no anhancement
-      [M/H]= -0.5, [alpha/H]=+0.2
+      [M/H]= -0.5 with [alpha/H]=+0.2
       [M/H]= -1.0, -1.5, -2.0, -2.5 with [alpha/H]=+0.4
 
 =========================
