@@ -40,14 +40,23 @@ get_merged_atmosphere
 ========================
 The get_merged_atmosphere function extracts a stellar atmosphere 
 from a suite of different model grids, depending  on the input
-temperature (all values in K):
+temperature, (all values in K):
 
 T > 20,000: ATLAS 
 5500 <= T < 20,000: ATLAS
 5000 <= T < 5500: ATLAS/PHOENIXv16 merge
-3800 <= T < 5000: PHOENIXv16 
-3200 <= T < 3800: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge
-3200 < T <= 1200: BTSettl_CIFITS2011_2015 
+3800 <= T < 5000: PHOENIXv16
+
+For T < 3800, there is an additional gravity and metallicity
+dependence.
+
+If T < 3800 and [M/H] = 0: 
+    T < 3800, logg < 2.5: PHOENIX v16
+    3200 <= T < 3800, logg > 2.5: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge
+    3200 < T <= 1200, logg > 2.5: BTSettl_CIFITS2011_2015
+
+Otherwise, if T < 3800 and [M/H] != 0:
+    T < 3800: PHOENIX v16
 
 References:
 ATLAS: ATLAS9 models, Castelli & Kurucz 2004 (https://arxiv.org/abs/astro-ph/0405087)
@@ -66,7 +75,6 @@ is weighted more heavily, while at the other boundary the other
 model is weighted more heavily. These are calculated in the 
 temperature ranges where we switch between model grids, to 
 ensure a smooth transition.
-
 
 ========================
 get_wd_atmosphere
