@@ -572,33 +572,52 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
     5500 <= T: ATLAS (ck04)
     5000 <= T < 5500: ATLAS/PHOENIX merge
     3800 <= T < 5000: PHOENIXv16 (Husser+13)
-    3200 <= T < 3800: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge
-    3200 < T <= 1200: BTSettl_CIFITS2011_2015 is solar, BTSettl_CIRITS2011 for non-solar
+    If [M/H] != 0:
+        T < 3800: PHOENIXV6 (Husser+13)
+    else:
+        T < 3800, logg < 2.5: PHOENIXv16 (Husser+13)
+        3200 <= T < 3800, logg > 2.5: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge
+        3200 < T <= 1200, logg > 2.5: BTSettl_CIFITS2011_2015 is solar
     """
-    if temperature <= 3200:
-        if metallicity == 0:
+    # For T < 3800, atmosphere depends on metallicity + gravity.
+    # If solar metallicity, use BTSettl 2015 grid. Only solar metallicity is
+    # currently available here, so if non-solar metallicity, just stick with
+    # the Phoenix grid
+    if (temperature <= 3800) & (metallicity == 0):
+        # High gravity are in BTSettl regime
+        if (temperature <= 3200) & (gravity > 2.5):
             if verbose:
                 print( 'BTSettl_2015 atmosphere')
             return get_BTSettl_2015_atmosphere(metallicity=metallicity,
                                                 temperature=temperature,
                                                 gravity=gravity,
                                                 rebin=rebin)
-        else:
-            if verbose:
-                print( 'BTSettl atmosphere')
-            return get_BTSettl_atmosphere(metallicity=metallicity,
-                                                temperature=temperature,
-                                                gravity=gravity,
-                                                rebin=rebin)            
-
  
-    if (temperature >= 3200) & (temperature < 3800):
+        if (temperature >= 3200) & (temperature < 3800) & (gravity > 2.5):
+            if verbose:
+                print( 'BTSettl/Phoenixv16 merged atmosphere')
+            return get_BTSettl_phoenix_atmosphere(metallicity=metallicity,
+                                                temperature=temperature,
+                                                gravity=gravity)
+
+        # Low gravity is PHOENIX regime
+        if gravity <= 2.5:
+            if verbose:
+                print( 'Phoenixv16 atmosphere')
+            return get_phoenixv16_atmosphere(metallicity=metallicity,
+                                            temperature=temperature,
+                                            gravity=gravity,
+                                            rebin=rebin)
+        
+    if (temperature <= 3800) & (metallicity != 0):
         if verbose:
-            print( 'BTSettl/Phoenixv16 merged atmosphere')
-        return get_BTSettl_phoenix_atmosphere(metallicity=metallicity,
-                                              temperature=temperature,
-                                              gravity=gravity)
-    
+            print( 'Phoenixv16 atmosphere')
+        return get_phoenixv16_atmosphere(metallicity=metallicity,
+                                        temperature=temperature,
+                                        gravity=gravity,
+                                        rebin=rebin)
+
+    # For T > 3800, no metallicity or gravity dependence
     if (temperature >= 3800) & (temperature < 5000):
         if verbose:
             print( 'Phoenixv16 atmosphere')
