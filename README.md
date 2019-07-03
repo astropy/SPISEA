@@ -146,7 +146,7 @@ Otherwise, you should be all set! You may get warnings that say:
     UserWarning: No thermal tables found, no thermal calculations can be performed
     
 But these can be safely ignored. Try the examples in the Quick Start Guide below to 
-make sure everything is working.
+make sure everything is working. To confirm that all of the PopStar models are correctly set up, run the "test_evolution_models" and "test_atmosphere_models" functions in popstar/test/test_models.py.
     
 ## Documentation
 
