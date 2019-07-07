@@ -70,7 +70,7 @@ popstar_cdbs_highres.tar.gz (XXX; OPTIONAL)
 Of the atmosphere files (`popstar_cdbs.tar` and `popstar_cdbs_highres.tar`), only `popstar_cdbs.tar` is strictly 
 necessary for PopStar to run. `popstar_cdbs_highres.tar` contains high-resolution versions of the atmospheres in 
 `popstar_cdbs.tar`. PopStar uses the low-resolution atmospheres for synthetic photometry
-by default, as this is much faster and sufficient in most applications. 
+by default, as this is much faster and is sufficient in most applications. 
 The `popstar_cdbs.tar` (and `popstar_cdbs_highres.tar`, if desired) file should be expanded in 
 the directory that houses `cdbs`.
 
@@ -100,7 +100,7 @@ The list of supported evolution models includes
 * Koester et al. 2010 (white dwarfs)
 * Kurucz 1993
   
-See PopStar/docs/README_AtmoModels.txt for a description of these
+See `PopStar/docs/README_AtmoModels.txt` for a description of these
 models sets and the associated references. 
 
 
@@ -125,7 +125,7 @@ export POPSTAR_MODELS=/<path_to_models_directory>
 
 Where the models directory contains the PopStar `evolution/` and CDBS
 `cdbs/grid` directories with PopStar atmospheres in it. Your CDBS should
-have 3 sub-directories: cdbs/grid, cdbs/comp, and cdbs/mtab. The comp and 
+have 3 sub-directories: `cdbs/grid`, `cdbs/comp`, and `cdbs/mtab`. The comp and 
 mtab directories come from the CDBS install. 
 
 ## Testing PopStar Setup
@@ -136,9 +136,9 @@ of the Quick Start Guide, e.g.:
     
     from popstar import synthetic
     
-If the PYTHONPATH is broken, then python won't know where to find the popstar codes and
-you will get an error reporting "No module named popstar". If the POPSTAR_MODELS or 
-PYSYN_CDBS paths are broken, then popstar won't know here to go to get the 
+If the `PYTHONPATH` is broken, then python won't know where to find the popstar codes and
+you will get an error reporting "No module named popstar". If the `POPSTAR_MODELS` or 
+`PYSYN_CDBS` paths are broken, then popstar won't know here to go to get the 
 stellar models. In this case, upon import you will get either or both of 
 the following warnings:
 
@@ -153,7 +153,7 @@ Otherwise, you should be all set! You may get warnings that say:
     UserWarning: No thermal tables found, no thermal calculations can be performed
     
 But these can be safely ignored. Try the examples in the Quick Start Guide below to 
-make sure everything is working. To test the range of evolution, atmosphere, and photometric
+make sure everything is working. To test the range of evolution models, atmosphere models, and photometric
 filters available in PopStar, run the test functions in `popstar/tests/test_models.py`. 
     
 ## Documentation
