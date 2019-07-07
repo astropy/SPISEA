@@ -24,7 +24,7 @@ We encourage contributions to PopStar, particular those that add support for sta
 * scipy
 * numpy
 * matplotlib
-* STScI CDBS data package (see [here](http://www.stsci.edu/hst/observatory/crds/throughput.html); you need cdbs/comp and cdbs/mtab sub directories (synphot1.tar.gz) as well as phoenix model atmospheres (synphot5.tar.gz) located in the cdbs/grid subdirectory.)
+* STScI CDBS data package (see [here](http://www.stsci.edu/hst/observatory/crds/throughput.html); you need cdbs/comp and cdbs/mtab sub directories (synphot1.tar.gz; 63 MB unzipped) as well as phoenix model atmospheres (synphot5.tar.gz; 791 MB unzipped) located in the cdbs/grid subdirectory.)
 
 ### Build
 
@@ -61,12 +61,19 @@ CDBS directory.
 
 The two files to download (but not yet expand) are:
 
-[popstar_models.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz)  (2.6 GB)
+[popstar_models.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz)  (3.4 GB; 18 GB unzipped)
 
-[postar_cdbs.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs.tar.gz)  (7 GB)
+[postar_cdbs.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs.tar.gz)  (108 MB; 248 MB unzipped)
 
-The `popstar_cdbs.tar` file should be expanded in the directory that
-houses `cdbs`.
+popstar_cdbs_highres.tar.gz (XXX; OPTIONAL)
+
+Of the atmosphere files (`popstar_cdbs.tar` and `popstar_cdbs_highres.tar`), only `popstar_cdbs.tar` is strictly 
+necessary for PopStar to run. `popstar_cdbs_highres.tar` contains high-resolution versions of the atmospheres in 
+`popstar_cdbs.tar`. PopStar uses the low-resolution atmospheres for synthetic photometry
+by default, as this is much faster and sufficient in most applications. 
+The `popstar_cdbs.tar` (and `popstar_cdbs_highres.tar`, if desired) file should be expanded in 
+the directory that houses `cdbs`.
+
 The `popstar_models.tar` file can be expanded anywhere as you will set
 an environment variable to the install location. However, we recommend
 installing it in the same location as your cdbs. 
@@ -146,7 +153,8 @@ Otherwise, you should be all set! You may get warnings that say:
     UserWarning: No thermal tables found, no thermal calculations can be performed
     
 But these can be safely ignored. Try the examples in the Quick Start Guide below to 
-make sure everything is working.
+make sure everything is working. To test the range of evolution, atmosphere, and photometric
+filters available in PopStar, run the test functions in `popstar/tests/test_models.py`. 
     
 ## Documentation
 
