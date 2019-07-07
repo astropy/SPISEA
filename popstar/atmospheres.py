@@ -417,7 +417,7 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
 
     return sp
 
-def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebin=False):
+def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebin=True):
     """
     metallicity = [M/H] (def = 0)
     temperature = Kelvin (def = 3000)
