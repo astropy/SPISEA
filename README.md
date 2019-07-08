@@ -65,7 +65,7 @@ The two files to download (but not yet expand) are:
 
 [postar_cdbs.tar.gz](http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs.tar.gz)  (108 MB; 248 MB unzipped)
 
-popstar_cdbs_highres.tar.gz (XXX; OPTIONAL)
+popstar_cdbs_highres.tar.gz (50 GB; 74 GB unzipped; OPTIONAL)
 
 Of the atmosphere files (`popstar_cdbs.tar` and `popstar_cdbs_highres.tar`), only `popstar_cdbs.tar` is strictly 
 necessary for PopStar to run. `popstar_cdbs_highres.tar` contains high-resolution versions of the atmospheres in 
