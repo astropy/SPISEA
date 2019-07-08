@@ -1003,12 +1003,12 @@ class MISTv1(StellarEvolution):
         # For MIST isochrones, anything with phase = 6 is a WD.
         # Following our IFMR convention, change the phase designation
         # to 101
-        isWD = np.where(iso['phase'] == 6)
+        isWD = np.where(iso['phase'] == 6)[0]
         iso['phase'][isWD] = 101
 
         # Define "isWR" column based on phase info
         isWR = Column([False] * len(iso), name='isWR')
-        idx_WR = np.where(iso['phase'] == 9)
+        idx_WR = np.where(iso['phase'] == 9)[0]
         isWR[idx_WR] = True
         iso.add_column(isWR)
 
