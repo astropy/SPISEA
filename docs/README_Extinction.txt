@@ -15,10 +15,10 @@ Available extinction laws:
 -RedLawDeMarchi16
 -RedLawFitzpatrick09
 -RedLawFritz11
--RedLawHosek18
+-RedLawHosek18 (deprecated)
 -RedLawHosek18b
 -RedLawNishiyama09 (default)
--RedLawNoguerasLara
+-RedLawNoguerasLara18
 -RedLawRomanZuniga07
 -RedLawRiekeLebofsky
 -RedLawSchlafly16
@@ -89,7 +89,7 @@ Defines Hosek et al. 2018 law for the Arches cluster and Wd1 (https://ui.adsabs.
 
 Wave range: 0.7 - 3.54 microns
 
-NOTE: this law has been updated (Hosek et al. 2019, Appendix B, https://ui.adsabs.harvard.edu//#abs/2019ApJ...870...44H/abstract), so should use the updated one instead (RedLawHosek18b, see below)
+NOTE: this law is outdated and so RedLawHosek18b (Hosek et al. 2019, Appendix B, https://ui.adsabs.harvard.edu//#abs/2019ApJ...870...44H/abstract) should be used instead
 
 ============================
 RedLawHosek18b

@@ -51,39 +51,50 @@ def Vega():
 vega = Vega()
 
 class Cluster(object):
-    def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=False):
+    def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=False,
+                     set_random_seed=False):
         """
         Code to model a cluster with user-specified logAge, AKs, and distance.
         Must also specify directory containing the isochrone (made using popstar
         synthetic code).
 
         Can also specify IMF slope, mass limits, cluster mass, and parameters for
-        multiple stars
+        multiple stars.
+
+        If set_random_seed = True, then random seed is set for all random processes.
+        This is for debugging purposes
         """
         self.verbose = verbose
         self.iso = iso
         self.imf = imf
         self.ifmr = ifmr
         self.cluster_mass = cluster_mass
-
+        self.set_random_seed = set_random_seed
+        
         return
-
     
 class ResolvedCluster(Cluster):
-    def __init__(self, iso, imf, cluster_mass, ifmr=None, save_dir='./', verbose=True):
-        Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose)
+    def __init__(self, iso, imf, cluster_mass, ifmr=None, save_dir='./', verbose=True,
+                     set_random_seed=False):
+        Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
+                             set_random_seed=set_random_seed)
 
         # if os.path.exists(save_sys_file):
         #     self.star_systems = Table.read(save_sys_file)
 
         #     if self.imf.make_multiples:
         #         self.companions = Table.read(save_comp_file)
-        
+
+        # Provide a user warning is random seed is set
+        if set_random_seed:
+            print('WARNING: random seed set to 42')
+
         t1 = time.time()
         ##### 
         # Sample the IMF to build up our cluster mass.
         #####
-        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
+        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass,
+                                                                    set_random_seed=set_random_seed)
 
         # Figure out the filters we will make.
         self.filt_names = self.set_filter_names()
@@ -172,6 +183,20 @@ class ResolvedCluster(Cluster):
         star_systems['mass_current'] = self.iso_interps['mass_current'](star_systems['mass'])
         star_systems['phase'] = np.round(self.iso_interps['phase'](star_systems['mass']))
 
+        # For a very small fraction of stars, the star phase falls on integers in-between
+        # the ones we have definition for, as a result of the interpolation. For these
+        # stars, round phase down to nearest defined phase (e.g., if phase is 71,
+        # then round it down to 5, rather than up to 101).
+        # Note: this only becomes relevant when the cluster is > 10**6 M-sun, this
+        # effect is so small
+        bad = np.where( (star_systems['phase'] > 5) & (star_systems['phase'] < 101) & (star_systems['phase'] != 9))
+        # Print warning, if desired
+        verbose=False
+        if verbose:
+            for ii in range(len(bad[0])):
+                print('WARNING: changing phase {0} to 5'.format(star_systems['phase'][bad[0][ii]]))
+        star_systems['phase'][bad] = 5
+        
         for filt in self.filt_names:
             star_systems[filt] = self.iso_interps[filt](star_systems['mass'])
 
@@ -264,6 +289,18 @@ class ResolvedCluster(Cluster):
                 companions['mass_current'] = self.iso_interps['mass_current'](companions['mass'])
                 companions['phase'] = np.round(self.iso_interps['phase'](companions['mass']))
 
+                # For a very small fraction of stars, the star phase falls on integers in-between
+                # the ones we have definition for, as a result of the interpolation. For these
+                # stars, round phase down to nearest defined phase (e.g., if phase is 71,
+                # then round it down to 5, rather than up to 101).
+                bad = np.where( (companions['phase'] > 5) & (companions['phase'] < 101) & (companions['phase'] != 9))
+                # Print warning, if desired
+                verbose=False
+                if verbose:
+                    for ii in range(len(bad[0])):
+                        print('WARNING: changing phase {0} to 5'.format(companions['phase'][bad[0][ii]]))
+                companions['phase'][bad] = 5
+
                 for filt in self.filt_names:
                     # Magnitude of companion
                     companions[filt][cdx] = self.iso_interps[filt](comp_mass)
@@ -341,9 +378,14 @@ class ResolvedCluster(Cluster):
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 ifmr=None, red_law=default_red_law, verbose=False):
+                 ifmr=None, red_law=default_red_law, verbose=False, set_random_seed=False):
 
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose)
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
+                                     set_random_seed=set_random_seed)
+
+        # Set random seed, if desired
+        if set_random_seed:
+            np.random.seed(seed=42)
 
         # For a given delta_AKs (Gaussian sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
@@ -365,6 +407,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         # differential de-reddening. The distribution is normal with a width of
         # Aks +/- deltaAKs in each filter
         rand_red = np.random.randn(len(self.star_systems))
+
         for filt in self.filt_names:
             self.star_systems[filt] += rand_red * delta_red_filt[filt]
 

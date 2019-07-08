@@ -24,7 +24,7 @@ We encourage contributions to PopStar, particular those that add support for sta
 * scipy
 * numpy
 * matplotlib
-* STScI CDBS data package
+* STScI CDBS data package (see [here](http://www.stsci.edu/hst/observatory/crds/throughput.html); you need cdbs/comp and cdbs/mtab sub directories (synphot1.tar.gz) as well as phoenix model atmospheres (synphot5.tar.gz) located in the cdbs/grid subdirectory.)
 
 ### Build
 
@@ -92,8 +92,6 @@ The list of supported evolution models includes
 * BTSettl: Allard et al.
 * Koester et al. 2010 (white dwarfs)
 * Kurucz 1993
-* NextGen
-* AMESdusty
   
 See PopStar/docs/README_AtmoModels.txt for a description of these
 models sets and the associated references. 
@@ -119,8 +117,9 @@ export POPSTAR_MODELS=/<path_to_models_directory>
 ```
 
 Where the models directory contains the PopStar `evolution/` and CDBS
-`cdbs/grid` directories with PopStar atmospheres in it.
-
+`cdbs/grid` directories with PopStar atmospheres in it. Your CDBS should
+have 3 sub-directories: cdbs/grid, cdbs/comp, and cdbs/mtab. The comp and 
+mtab directories come from the CDBS install. 
 
 ## Testing PopStar Setup
 
@@ -147,7 +146,7 @@ Otherwise, you should be all set! You may get warnings that say:
     UserWarning: No thermal tables found, no thermal calculations can be performed
     
 But these can be safely ignored. Try the examples in the Quick Start Guide below to 
-make sure everything is working.
+make sure everything is working. To confirm that all of the PopStar models are correctly set up, run the "test_evolution_models" and "test_atmosphere_models" functions in popstar/test/test_models.py.
     
 ## Documentation
 
@@ -158,8 +157,8 @@ Additional documentation:
 
 * Stellar Evolution Models: docs/README_EvolutionModels.txt
 * Stellar Atmosphere Models: docs/README_AtmoModels.txt
-* Extinction: docs/README_Extinction.txt [under construction]
-* Filters: docs/README_Filters.txt [under construction]
+* Extinction: docs/README_Extinction.txt 
+* Filters: docs/README_Filters.txt 
 * Initial Mass Function: docs/README_IMF.txt [under construction]
 * Multiplicity: docs/README_Multiplicity.txt [under construction]
 * Initial-Final Mass Relation: docs/README_IFMR.txt [under construction]
