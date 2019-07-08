@@ -53,12 +53,12 @@ def test_atmosphere_models():
 
     # Array of atmospheres
     atm_arr = [atm.get_merged_atmosphere, atm.get_castelli_atmosphere, atm.get_phoenixv16_atmosphere, atm.get_BTSettl_2015_atmosphere,
-                   atm.get_BTSettl_atmosphere, atm.get_kurucz_atmosphere, atm.get_phoenix_atmosphere]
+                   atm.get_BTSettl_atmosphere, atm.get_kurucz_atmosphere, atm.get_phoenix_atmosphere, atm.get_wdKoester_atmosphere]
 
     # Array of metallicities
     metals_range = [-2.0, 0, 0.15]
     metals_solar = [0]
-    metals_arr = [metals_solar, metals_range, metals_range, metals_solar, metals_range, metals_range, metals_range]
+    metals_arr = [metals_solar, metals_range, metals_range, metals_solar, metals_range, metals_range, metals_range, metals_solar]
 
     assert len(atm_arr) == len(metals_arr)
 
