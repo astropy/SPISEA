@@ -40,7 +40,7 @@ def Vega():
                                      gravity=3.95,
                                      metallicity=-0.5)
 
-    vega = spectrum.trimSpectrum(vega, 3000, 52000)
+    vega = spectrum.trimSpectrum(vega, 2500, 52000)
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
     # and is used to convert to flux observed at Earth.
@@ -426,78 +426,10 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         #t2 = time.time()
         #print 'Diff redden: {0}'.format(t2 - t1)
         return
-
-class ResolvedClusterDiffRedden2(ResolvedCluster):
-    """
-    Same as the other differentially reddened cluster, but allowing
-    for asymmetric dAKs distribution
-    """
-    def __init__(self, iso, imf, cluster_mass, deltaAKs_blue, deltaAKs_red,
-                 ifmr=None, red_law=default_red_law, filters=None, verbose=False):
-
-        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, filters=filters, verbose=verbose)
-
-        # For a given delta_AKs (sigma of reddening distribution at Ks),
-        # figure out the equivalent delta_filt values for all other filters.
-        delta_red_blue_filt = {}
-        delta_red_red_filt = {}
-        AKs = iso.points.meta['AKS']
-        red_vega_blue = vega * red_law.reddening(AKs - deltaAKs_blue).resample(vega.wave)
-        red_vega = vega * red_law.reddening(AKs).resample(vega.wave)
-        red_vega_red = vega * red_law.reddening(AKs + deltaAKs_red).resample(vega.wave)
-
-        for filt in self.filt_names:
-            #=======BUG HERE=====#
-            # This is only because I changed column header conventions in popstar after
-            # generating the IMF grid. I will need to fix this for new isochrones
-            #if filt == 'mag_127m':
-            #    filt_info = get_filter_info(iso.filters['hst_F127M'])
-            #elif filt == 'mag_153m':
-            #    filt_info = get_filter_info(iso.filters['hst_F153M'])
-            #elif filt == 'mag_139m':
-            #    filt_info = get_filter_info(iso.filters['hst_F139M'])
-            #====================#
-            filt_info = get_filter_info(iso.filters[filt.replace('mag_', '')])
-            
-            mag_blue = mag_in_filter(red_vega_blue, filt_info)
-            mag = mag_in_filter(red_vega, filt_info)
-            mag_red = mag_in_filter(red_vega_red, filt_info)
-            delta_red_blue_filt[filt] = mag - mag_blue
-            delta_red_red_filt[filt] = mag_red - mag
-
-        #----Perturb all of star systems' photometry by a random amount----#
-        rand_red = np.random.randn(len(self.star_systems))
-        # Identify positive and negative rand_red values. This
-        # will determine if the star gets a blue or red side
-        # dAks, respectively.
-        blue = np.where(rand_red >= 0)
-        red = np.where(rand_red < 0)
-        # For each star, generate a random number from 0-1. This will
-        # be used to set the dAKs value through the inverse CDF
-        samp = np.random.random_sample(len(self.star_systems))
-        for filt in self.filt_names:
-            blue_dist = scipy.stats.halfnorm(loc=0, scale=delta_red_blue_filt[filt])
-            red_dist = scipy.stats.halfnorm(loc=0, scale=delta_red_red_filt[filt])
-
-            blue_ppf = blue_dist.ppf(samp[blue])
-            red_ppf = red_dist.ppf(samp[red])
-
-            # Add appropriate dAKs value to star mag
-            self.star_systems[filt][blue] -= blue_ppf
-            self.star_systems[filt][red] += red_ppf
-            
-        # Perturb the companions by the same amount.
-        #if self.imf.make_multiples:
-        #    rand_red_comp = np.repeat(rand_red, self.star_systems['N_companions'])
-        #    assert len(rand_red_comp) == len(self.companions)
-        #    for filt in self.filt_names:
-        #        self.companions[filt] += rand_red_comp * delta_red_filt[filt]
-            
-        return
-
+    
 class UnresolvedCluster(Cluster):
     def __init__(self, iso, imf, cluster_mass,
-                 wave_range=[5000, 52000], verbose=False):
+                 wave_range=[3000, 52000], verbose=False):
         """
         iso : Isochrone
         """
@@ -561,6 +493,7 @@ class UnresolvedCluster(Cluster):
         print( 'Spec summing took {0:f}s'.format(t3-t2))
 
         self.spec_trim = np.sum(spec_list_trim_np,1)
+        self.wave_trim = self.spec_list_trim[0].wave
         
         t4 = time.time()
         print( 'Spec trimming took {0:f}s'.format(t4-t3))
@@ -571,11 +504,11 @@ class UnresolvedCluster(Cluster):
         return
         
 class Isochrone(object):
-    def __init__(self, logAge, AKs, distance,
+    def __init__(self, logAge, AKs, distance, metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1,
-                 wave_range=[5000, 52000], min_mass=None, max_mass=None,
+                 wave_range=[3000, 52000], min_mass=None, max_mass=None,
                  rebin=True):
         """
         Parameters
@@ -586,6 +519,8 @@ class Isochrone(object):
             The extinction in units if A_Ks (mag).
         distance : float
             The distance in pc.
+        metallicity : float
+            The metallicity in [M/H]
         evModel : model cl
         mass_sampling - Sample the raw isochrone every ## steps. The default
                        is mass_sampling = 10, which takes every 10th point.
@@ -612,7 +547,8 @@ class Isochrone(object):
 
         # Get solar metallicity models for a population at a specific age.
         # Takes about 0.1 seconds.
-        evol = evo_model.isochrone(age=10**logAge)  # solar metallicity
+        evol = evo_model.isochrone(age=10**logAge,
+                                   metallicity=metallicity)
 
         # Eliminate cases where log g is less than 0
         idx = np.where(evol['logg'] > 0)
@@ -661,9 +597,11 @@ class Isochrone(object):
             # If source is a star, pull from star atmospheres. If it is a WD,
             # pull from WD atmospheres
             if phase == 101:
-                star = wd_atm_func(temperature=T, gravity=gravity, verbose=False)
+                star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                                       verbose=False)
             else:
-                star = atm_func(temperature=T, gravity=gravity, rebin=rebin)
+                star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                                    rebin=rebin)
 
             # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
@@ -685,6 +623,8 @@ class Isochrone(object):
         tab.meta['LOGAGE'] = logAge
         tab.meta['AKS'] = AKs
         tab.meta['DISTANCE'] = distance
+        tab.meta['METAL_IN'] = evol.meta['metallicity_in']
+        tab.meta['METAL_ACT'] = evol.meta['metallicity_act']
         tab.meta['WAVEMIN'] = wave_range[0]
         tab.meta['WAVEMAX'] = wave_range[1]
 
@@ -692,7 +632,6 @@ class Isochrone(object):
 
         t2 = time.time()
         print( 'Isochrone generation took {0:f} s.'.format(t2-t1))
-        
         return
 
     def trim(self, keep_indices):
@@ -744,6 +683,7 @@ class Isochrone(object):
 
 class IsochronePhot(Isochrone):
     def __init__(self, logAge, AKs, distance,
+                 metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
@@ -753,7 +693,7 @@ class IsochronePhot(Isochrone):
                           'wfc3,ir,f125w', 'wfc3,ir,f160w',
                           'nirc2,J', 'nirc2,H', 'nirc2,Kp',
                           'ubv,U', 'ubv,B', 'ubv,V',
-                          'ubv,R', 'ubv,I',}):
+                          'ubv,R', 'ubv,I'}):
 
         """
         Make an isochrone with photometry in various filters.
@@ -774,16 +714,34 @@ class IsochronePhot(Isochrone):
         -------
                  
         """
-        
         # Make and input/output file name for the stored isochrone photometry.
-        save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
-        self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5))
+        # For solar metallicity case, allow for legacy isochrones (which didn't have
+        # metallicity tag since they were all solar metallicity) to be read
+        # properly
+        if metallicity == 0.0:
+            save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_p00.fits'
+            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5))
 
+            save_file_legacy = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
+            self.save_file_legacy = save_file_legacy.format(iso_dir, logAge, AKs, str(distance).zfill(5))
+        else:
+            # Set metallicity flag
+            if metallicity < 0:
+                metal_pre = 'm'
+            else:
+                metal_pre = 'p'
+            metal_flag = int(abs(metallicity)*10)
+            
+            save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_{4}{5:2s}.fits'
+            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
+            self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
+            
         # Expected filters
         self.filters = filters
 
-        if (not os.path.exists(self.save_file)) | (recomp==True):
+        if ((not os.path.exists(self.save_file)) & (not os.path.exists(self.save_file_legacy))) | (recomp==True):
             Isochrone.__init__(self, logAge, AKs, distance,
+                               metallicity=metallicity,
                                evo_model=evo_model, atm_func=atm_func,
                                wd_atm_func=wd_atm_func,
                                red_law=red_law, mass_sampling=mass_sampling,
@@ -793,7 +751,10 @@ class IsochronePhot(Isochrone):
             # Make photometry
             self.make_photometry(rebin=rebin, vega=vega)
         else:
-            self.points = Table.read(self.save_file)
+            try:
+                self.points = Table.read(self.save_file)
+            except:
+                self.points = Table.read(self.save_file_legacy)
             # Add some error checking.
 
         return
@@ -910,6 +871,7 @@ class IsochronePhot(Isochrone):
 #===================================================#
 # Iso table: same as IsochronePhot object, but doesn't do reddening application
 # or photometry automatically. These are separate functions on the object.
+# NOTE: THIS CLASS IS DEPRECATED, DO NOT USE!
 #===================================================#
 class iso_table(object):
     def __init__(self, logAge, distance, evo_model=default_evo_model,
@@ -1201,6 +1163,10 @@ def get_filter_info(name, vega=vega, rebin=True):
         
     elif name.startswith('keck_osiris'):
         filt = filters.get_keck_osiris_filt(filterName)
+
+    elif name.startswith('gaia'):
+        version = tmp[1]
+        filt = filters.get_gaia_filt(version, filterName)
         
     else:
         filt = ObsBandpass(name)
@@ -1310,8 +1276,9 @@ def get_obs_str(col):
 
 def rebin_spec(wave, specin, wavnew):
     """
-    Helper function to rebin spectra, from Jessica's post
-    on Astrobetter
+    Helper function to rebin spectra, from Jessica Lu's post
+    on Astrobetter:
+    https://www.astrobetter.com/blog/2013/08/12/python-tip-re-sampling-spectra-with-pysynphot/
     """
     spec = spectrum.ArraySourceSpectrum(wave=wave, flux=specin)
     f = np.ones(len(wave))

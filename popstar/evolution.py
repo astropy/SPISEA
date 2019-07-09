@@ -62,16 +62,6 @@ class Geneva(StellarEvolution):
 
         self.z_solar = 0.02
         self.z_file_map = {0.01: 'z01/', 0.02: 'z02/', 0.03: 'z03/'}
-        
-        
-        
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Geneva collection.
-        
-        """
-        return
-        
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -81,11 +71,12 @@ class Geneva(StellarEvolution):
         z_defined = self.z_solar*10.**metallicity
         
         # check age and metallicity are within bounds
-        if (math.log10(age) < 5.5) or (math.log10(age) > 9.78):
-            logger.error('Requested age is out of bounds.')
+        if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
-        if (z_defined < 0.01) or (z_defined > 0.03):
-            logger.error('Requested metallicity is out of bounds.')
+        if ((z_defined < np.min(self.z_list)) or
+                (z_defined > np.max(self.z_list))):
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # convert age (in yrs) to log scale and find nearest value in grid
         age_idx = searchsorted(self.age_list, math.log10(age), side='right')
@@ -101,8 +92,6 @@ class Geneva(StellarEvolution):
         # return isochrone data
         return genfromtxt(full_iso_file, comments='#')
 
-    def format_isochrones(input_iso_dir, output_iso_dir):
-        return
 
 #---------------------------------------#
 # Now for the Ekstrom+12 Geneva models
@@ -128,14 +117,6 @@ class Ekstrom12(StellarEvolution):
 
         # Specify rotation or not
         self.rot = rot
-        
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Ekstrom+12 Geneva collection.
-        
-        """
-        return
-        
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -147,18 +128,19 @@ class Ekstrom12(StellarEvolution):
         log_age = math.log10(age)
         
         # check age and metallicity are within bounds
-        if ((log_age < min(self.age_list)) or (log_age > max(self.age_list))):
-            logger.error('Requested age is out of bounds.')
+        if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
-        if not z_defined in self.z_list:
-            logger.error('Requested metallicity is out of bounds.')
+        if ((z_defined < np.min(self.z_list)) or
+                (z_defined > np.max(self.z_list))):
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # Find nearest age in grid to input grid
         if log_age != self.age_list[0]:
             age_idx = searchsorted(self.age_list, log_age, side='right')
         else:
             age_idx = searchsorted(self.age_list, log_age, side='left')
-        iso_file = 'iso_' + str(self.age_list[age_idx]) + '.fits'
+        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
         z_idx = searchsorted(self.z_list, z_defined, side='left')
@@ -170,7 +152,7 @@ class Ekstrom12(StellarEvolution):
         else:
             full_iso_file = self.model_dir + 'iso/' + z_dir + 'norot/' + iso_file
         
-        # return isochrone data
+        # Return isochrone data
         iso = Table.read(full_iso_file, format='fits')
         iso.rename_column('col4', 'Z')
         iso.rename_column('col1', 'logAge')
@@ -181,11 +163,18 @@ class Ekstrom12(StellarEvolution):
         iso.rename_column('col22', 'logg')
         iso.rename_column('col9', 'logT_WR')
 
+        # Add isWR column
+        isWR = Column([False] * len(iso), name='isWR')
+        idx_WR = np.where(iso['logT'] != iso['logT_WR'])
+        isWR[idx_WR] = True
+        iso.add_column(isWR)
+
         # Add a phase column... everything is just a star.
         iso.add_column( Column(np.ones(len(iso)), name = 'phase'))
 
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
 
         return iso
 
@@ -336,15 +325,6 @@ class Parsec(StellarEvolution):
         self.z_file_map = {0.005: 'z005/', 0.015: 'z015/', 0.04: 'z04/'}
         
         
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Parsec version 1.2s
-        collection.
-        
-        """
-        return
-        
-    
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the Parsec version 1.2s
@@ -356,11 +336,12 @@ class Parsec(StellarEvolution):
         log_age = math.log10(age)
         
         # check age and metallicity are within bounds
-        if ((log_age < 6.6) or (log_age > 12.12)) & (log_age != 6.4):
-            logger.error('Requested age is out of bounds.')
+        if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
-        if not z_defined in self.z_list:
-            logger.error('Requested metallicity is out of bounds.')
+        if ((z_defined < np.min(self.z_list)) or
+                (z_defined > np.max(self.z_list))):
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # Find nearest age in grid to input grid
         if log_age != self.age_list[0]:
@@ -388,8 +369,13 @@ class Parsec(StellarEvolution):
         iso.rename_column('col15', 'phase')
         iso['logT_WR'] = iso['logT']
 
+        # Parsec doesn't identify WR stars, so identify all as "False"
+        isWR = Column([False] * len(iso), name='isWR')
+        iso.add_column(isWR)
+        
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
 
         return iso
         
@@ -466,17 +452,6 @@ class Pisa(StellarEvolution):
         # Specifying metallicity
         self.z_solar = 0.015
         self.z_file_map = {0.015: 'z015/'}
-        
-        
-        
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Pisa (Tognelli+11)
-        collection.
-        
-        """
-        return
-        
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -489,11 +464,12 @@ class Pisa(StellarEvolution):
         log_age = math.log10(age)
         
         # check age and metallicity are within bounds
-        if ((log_age < 6.0) or (log_age > 8.01)) :
-            logger.error('Requested age is out of bounds.')
+        if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
-        if not z_defined in self.z_list:
-            logger.error('Requested metallicity is out of bounds.')
+        if ((z_defined < np.min(self.z_list)) or
+                (z_defined > np.max(self.z_list))):
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # Find nearest age in grid to input grid
         if log_age != self.age_list[0]:
@@ -517,12 +493,17 @@ class Pisa(StellarEvolution):
         iso.rename_column('col4', 'logg')
         iso['logT_WR'] = iso['logT']
 
+        # Pisa models are too low for WR phase, add WR column with all False
+        isWR = Column([False] * len(iso), name='isWR')
+        iso.add_column(isWR)
+
         # Add columns for current mass and phase. 
-        iso.add_column( Column(np.ones(len(iso)), name = 'phase'))
-        iso.add_column( Column(iso['mass'], name = 'current_mass'))
-        
+        iso.add_column( Column(np.zeros(len(iso)), name = 'phase'))
+        iso.add_column( Column(iso['mass'], name = 'mass_current'))
+
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
 
         return iso
 
@@ -611,66 +592,72 @@ class Baraffe15(StellarEvolution):
         Define intrinsic properties for the Baraffe+15 stellar
         models.
         """
-        # populate list of model masses (in solar masses)
-        #mass_list = [(0.1 + i*0.005) for i in range(181)]
-        
-        # define metallicity parameters for Geneva models
-        #z_list = [0.01, 0.02, 0.03]
+        # define metallicity parameters for Baraffe models
+        self.z_list = [0.015]
         
         # populate list of isochrone ages (log scale)
-        #age_list = [round(5.5 + 0.01*i, 2) for i in range(190)]
-        #age_list += [round(7.4 + 0.05*i, 2) for i in range(12)]
-        #age_list += [round(math.log10(1.e8*x), 2) for x in range(1, 10)]
-        #age_list += [round(math.log10(1.e9*x), 2) for x in range(1, 10)]
-        #age_list = age_list
+        self.age_list = np.arange(6.0, 8.0+0.005, 0.01)
         
-        # specify location of model files
-        #model_dir = '../models/geneva_merged/'
+        # Specify location of model files
+        self.model_dir = models_dir+'Baraffe15/'
 
-        #super().__init__(model_dir, age_list, mass_list, z_list)
-
-        #self.z_solar = 0.02
-        #self.z_file_map = {0.01: 'z01/', 0.02: 'z02/', 0.03: 'z03/'}
-        
-        
-        
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Pisa (Tognelli+11)
-        collection.
-        
-        """
-        return
+        # Specifying metallicity
+        self.z_solar = 0.015
+        self.z_file_map = {0.015: 'z015/'}
         
     
-    def isochrone(self, age=1.e8, metallicity=0.0):
+    def isochrone(self, age=5.e7, metallicity=0.0):
         r"""
         Extract an individual isochrone from the Baraffe+15
         collection.
         """
-        # convert metallicity to mass fraction
-        #z_defined = self.z_solar*10.**metallicity
+       # convert metallicity to mass fraction
+        z_defined = self.z_solar*10.**metallicity
+
+        log_age = math.log10(age)
         
         # check age and metallicity are within bounds
-        #if (math.log10(age) < 5.5) or (math.log10(age) > 9.78):
-        #    logger.error('Requested age is out of bounds.')
+        if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
-        #if (z_defined < 0.01) or (z_defined > 0.03):
-        #    logger.error('Requested metallicity is out of bounds.')
+        if ((z_defined < np.min(self.z_list)) or
+                (z_defined > np.max(self.z_list))):
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
-        # convert age (in yrs) to log scale and find nearest value in grid
-        #age_idx = searchsorted(self.age_list, math.log10(age), side='right')
-        #iso_file = 'iso_' + str(self.age_list[age_idx]) + '.fits'
+        # Find nearest age in grid to input grid
+        if log_age != self.age_list[0]:
+            age_idx = searchsorted(self.age_list, log_age, side='right')
+        else:
+            age_idx = searchsorted(self.age_list, log_age, side='left')
+        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        #z_idx = searchsorted(self.z_list, z_defined, side='left')
-        #z_dir = self.z_file_map[self.z_list[z_idx]]
+        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        z_dir = self.z_file_map[self.z_list[z_idx]]
         
         # generate isochrone file string
-        #full_iso_file = self.model_dir + 'iso/' + z_dir + iso_file
+        full_iso_file = self.model_dir + 'iso/' + z_dir + iso_file
         
-        # return isochrone data
-        return genfromtxt(full_iso_file, comments='#')
+        # Read isochrone, get in proper format
+        iso = Table.read(full_iso_file, format='fits')
+        iso.rename_column('Mass', 'mass')
+        iso.rename_column('logG', 'logg')
+        iso['logT'] = np.log10(iso['Teff'])
+        
+        # Pisa models are too low for WR phase, add WR column with all False
+        iso['logT_WR'] = iso['logT']
+        isWR = Column([False] * len(iso), name='isWR')
+        iso.add_column(isWR)
+
+        # Add columns for current mass and phase. 
+        iso.add_column( Column(np.zeros(len(iso)), name = 'phase'))
+        iso.add_column( Column(iso['mass'], name = 'mass_current'))
+
+        iso.meta['log_age'] = log_age
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
+
+        return iso
 
     def tracks_to_isochrones(self, tracksFile):
         r"""
@@ -710,26 +697,7 @@ class Baraffe15(StellarEvolution):
             good_logG = np.where( np.diff(tmp['col5']) != 0 )
             good_logL = np.where( np.diff(tmp['col4']) != 0 )
 
-            # Interpolate Teff, logL, and logG
-
-            #----Using Spline interpolator: FAILS-----#
-            #tck_Teff = interpolate.splrep(tmp['col2'][good_Teff],
-            #                              tmp['col3'][good_Teff], s=0.01)
-            #tck_logL = interpolate.splrep(tmp['col2'][good_logL],
-            #                              tmp['col4'][good_logL], s=0.01)
-            #tck_logG = interpolate.splrep(tmp['col2'][good_logG],
-            #                              tmp['col5'][good_logG], s=0.01)
-            
-            #tck_Teff = interpolate.splrep(tmp['col2'], tmp['col3'], s=0.01)
-            #tck_logL = interpolate.splrep(tmp['col2'], tmp['col4'], s=0.01)
-            #tck_logG = interpolate.splrep(tmp['col2'], tmp['col5'], s=0.01)
-
-            #Teff = interpolate.splev(age_arr, tck_Teff)
-            #logL = interpolate.splev(age_arr, tck_logL)
-            #logG = interpolate.splev(age_arr, tck_logG)
-            #-------------------------------------------#
-
-            #--Using linear interpolator: this works!--#
+            # Interpolate Teff, logL, and logG using linear interpolator
             tck_Teff = interpolate.interp1d(tmp['col2'], tmp['col3'])
             tck_logL = interpolate.interp1d(tmp['col2'], tmp['col4'])
             tck_logG = interpolate.interp1d(tmp['col2'], tmp['col5'])            
@@ -915,10 +883,25 @@ class MISTv1(StellarEvolution):
         version: either 1.0 or 1.2
             Specify which version of MIST models you want. Version 1.0
             was downloaded from MIST website on 2/2017, while Version 1.2
-            was downloaded on 8/2018
+            was downloaded on 8/2018 (solar metallicity)
+            and 4/2019 (other metallicities)
         """
         # define metallicity parameters for Parsec models
-        self.z_list = [0.015]
+        self.z_list = [0.0000015,   # [Fe/H] = -4.00
+                       0.0000047,   # [Fe/H] = -3.50
+                       0.000015,    # [Fe/H] = -3.00
+                       0.000047,    # [Fe/H] = -2.50
+                       0.00015, # [Fe/H] = -2.00
+                       0.00026, # [Fe/H] = -1.75
+                       0.00047, # [Fe/H] = -1.50
+                       0.00084, # [Fe/H] = -1.25
+                       0.0015,  # [Fe/H] = -1.00
+                       0.0026,  # [Fe/H] = -0.75
+                       0.0046,  # [Fe/H] = -0.50
+                       0.0082,  # [Fe/H] = -0.25
+                       0.015,   # [Fe/H] = 0.00
+                       0.024,   # [Fe/H] = 0.25
+                       0.041]   # [Fe/H] = 0.50
         
         # populate list of isochrone ages (log scale)
         self.age_list = np.arange(5.01, 10.30+0.005, 0.01)
@@ -936,36 +919,42 @@ class MISTv1(StellarEvolution):
         self.model_dir = models_dir+'MISTv1/' + version_dir
 
         # Specifying metallicity
-        self.z_solar = 0.015
-        self.z_file_map = {0.015: 'z015/'}
+        self.z_solar = 0.0142
+        self.z_file_map = {0.0000015: 'z0000015/',
+                           0.0000047: 'z0000047/',
+                           0.000015: 'z000015/',
+                           0.000047: 'z000047/',
+                           0.00015: 'z00015/',
+                           0.00026: 'z00026/',
+                           0.00047: 'z00047/',
+                           0.00084: 'z00084/',
+                           0.0015: 'z0015/',
+                           0.0026: 'z0026/',
+                           0.0046: 'z0046/',
+                           0.0082: 'z0082/',
+                           0.015: 'z015/',
+                           0.024: 'z024/',
+                           0.041: 'z041/'}
         
         
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Parsec version 1.2s
-        collection.
-        
-        """
-        return
-        
-    
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the MISTv1
         collection.
         """
         # convert metallicity to mass fraction
-        z_defined = self.z_solar*10.**metallicity
+        z_defined = self.z_solar * (10.**metallicity)
 
         log_age = math.log10(age)
 
         # check age and metallicity are within bounds
-        if ((log_age < 5.01) or (log_age > 10.30)) :
-            logger.error('Requested age is out of bounds.')
+        if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
+            llogger.error('Requested age {0} is out of bounds.'.format(log_age))
             
-        if not z_defined in self.z_list:
-            logger.error('Requested metallicity is out of bounds.')
-        
+        if ((z_defined < np.min(self.z_list)) or
+                (z_defined > np.max(self.z_list))):
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
+
         # Find nearest age in grid to input grid
         if log_age != self.age_list[0]:
             age_idx = searchsorted(self.age_list, log_age, side='right')
@@ -975,6 +964,8 @@ class MISTv1(StellarEvolution):
         
         # find closest metallicity value
         z_idx = searchsorted(self.z_list, z_defined, side='left')
+        if z_idx == len(self.z_list):   # in case just over last index
+            z_idx = z_idx - 1
         z_dir = self.z_file_map[self.z_list[z_idx]]
         
         # generate isochrone file string
@@ -1013,7 +1004,8 @@ class MISTv1(StellarEvolution):
         iso.add_column(isWR)
 
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
 
         return iso
         
@@ -1105,13 +1097,6 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         else:
             self.z_file_map = {0.015: 'z015_norot/'}
         
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Geneva collection.
-        
-        """
-        return
-        
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -1123,11 +1108,12 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         log_age = math.log10(age)
         
         # check age and metallicity are within bounds
-        if (log_age < self.age_list[0]) or (log_age > self.age_list[-1]):
-            logger.error('Requested age is out of bounds.')
+        if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
-        if not z_defined in self.z_list:
-            logger.error('Requested metallicity is out of bounds.')
+        if ((z_defined < np.min(self.z_list)) or
+                (z_defined > np.max(self.z_list))):
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # convert age (in yrs) to log scale and find nearest value in grid
         age_idx = searchsorted(self.age_list, log_age, side='right')
@@ -1158,7 +1144,8 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         iso.add_column(isWR)
         
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
         
         return iso
 
@@ -1189,13 +1176,6 @@ class MergedPisaEkstromParsec(StellarEvolution):
         else:
             self.z_file_map = {0.015: 'z015_norot/'}
         
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Geneva collection.
-        
-        """
-        return
-        
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -1208,10 +1188,10 @@ class MergedPisaEkstromParsec(StellarEvolution):
         
         # check age and metallicity are within bounds
         if (log_age < self.age_list[0]) or (log_age > self.age_list[-1]):
-            logger.error('Requested age is out of bounds.')
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if not z_defined in self.z_list:
-            logger.error('Requested metallicity is out of bounds.')
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # convert age (in yrs) to log scale and find nearest value in grid
         age_idx = searchsorted(self.age_list, log_age, side='right')
@@ -1234,7 +1214,8 @@ class MergedPisaEkstromParsec(StellarEvolution):
         iso.rename_column('col6', 'model_ref')
 
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
         
         return iso
 
@@ -1278,13 +1259,6 @@ class MergedSiessGenevaPadova(StellarEvolution):
         # Metallicity map
         self.z_file_map = {0.02: 'z02/'}
         
-    def massTrack(self, mass=0.5, metallicity=0.0):
-        r"""
-        Extract an individual mass track from the Geneva collection.
-        
-        """
-        return
-        
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -1297,10 +1271,10 @@ class MergedSiessGenevaPadova(StellarEvolution):
         
         # check age and metallicity are within bounds
         if (log_age < self.age_list[0]) or (log_age > self.age_list[-1]):
-            logger.error('Requested age is out of bounds.')
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if not z_defined in self.z_list:
-            logger.error('Requested metallicity is out of bounds.')
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # convert age (in yrs) to log scale and find nearest value in grid
         age_idx = searchsorted(self.age_list, log_age, side='right')
@@ -1323,7 +1297,8 @@ class MergedSiessGenevaPadova(StellarEvolution):
         iso.rename_column('col6', 'model_ref')
 
         iso.meta['log_age'] = log_age
-        iso.meta['metallicity'] = metallicity
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
         
         return iso
 
