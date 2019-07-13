@@ -368,7 +368,6 @@ class ResolvedCluster(Cluster):
         removed. If self.ifmr != None, then we will save the high mass systems 
         since they will be pluggedd into an ifmr later.
         """
-        
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
