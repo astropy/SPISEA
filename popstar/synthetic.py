@@ -225,6 +225,10 @@ class ResolvedCluster(Cluster):
             star_systems['mass_current'][idx_rem_good] = r_mass_tmp[good]
             star_systems['phase'][idx_rem_good] = r_id_tmp[good]
 
+            # Give remnants a magnitude of nan, so they can be filtered out later when calculating flux.
+            for filt in self.filt_names:
+                star_systems[filt][idx_rem_good] = np.full(len(idx_rem_good), np.nan)
+               
         return star_systems
         
     def _make_companions_table(self, star_systems, compMass):
@@ -305,9 +309,17 @@ class ResolvedCluster(Cluster):
                     # Magnitude of companion
                     companions[filt][cdx] = self.iso_interps[filt](comp_mass)
 
+                    mag_s = star_systems[filt][idx]
+                    mag_c = companions[filt][cdx]
+
                     # Add companion flux to system flux.
-                    f1 = 10**(-star_systems[filt][idx] / 2.5)
-                    f2 = 10**(-companions[filt][cdx] / 2.5)
+                    f1 = 10**(-mag_s / 2.5)
+                    f2 = 10**(-mag_c / 2.5)
+
+                    # For dark objects, turn the np.nan fluxes into zeros.
+                    f1 = np.nan_to_num(f1)
+                    f2 = np.nan_to_num(f2)
+
                     star_systems[filt][idx] = -2.5 * np.log10(f1 + f2)
 
         #####
@@ -331,6 +343,10 @@ class ResolvedCluster(Cluster):
             companions['mass_current'][cdx_rem_good] = r_mass_tmp[good]
             companions['phase'][cdx_rem_good] = r_id_tmp[good]
                 
+            # Give remnants a magnitude of nan, so they can be filtered out later when calculating flux.
+            for filt in self.filt_names:
+                companions[filt][cdx_rem_good] = np.full(len(cdx_rem_good), np.nan)
+
 
         # Notify if we have a lot of bad ones.
         idx = np.where(companions['Teff'] > 0)[0]
@@ -352,7 +368,6 @@ class ResolvedCluster(Cluster):
         removed. If self.ifmr != None, then we will save the high mass systems 
         since they will be pluggedd into an ifmr later.
         """
-        
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
