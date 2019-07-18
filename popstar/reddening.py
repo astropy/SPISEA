@@ -23,7 +23,7 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self):
         # Fetch the extinction curve, pre-interpolate across 3-8 microns
-        wave = np.arange(0.3, 8.0, 0.001)
+        wave = np.arange(0.5, 8.0, 0.001)
         
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
@@ -144,12 +144,12 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
     pysynphot.reddenining.CustomRedLaw (ArraySpectralElement)
 
     The wavelength range over which this law is calculated is
-    0.5 - 3.0 microns.
+    0.3 - 3.0 microns.
 
     User must specify Rv
     """
     def __init__(self, Rv):
-        # Fetch the extinction curve, pre-interpolate across 0.5-3 microns
+        # Fetch the extinction curve, pre-interpolate across 0.3-3 microns
         wave = np.arange(0.3, 3.0, 0.001)
         
         # This will eventually be scaled by AKs when you
@@ -692,7 +692,7 @@ class RedLawFitzpatrick09(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self, alpha, RV):
         # Fetch the extinction curve, pre-interpolate across 1-8 microns
-        wave = np.arange(0.3, 3.0, 0.001)
+        wave = np.arange(0.7, 3.0, 0.001)
         
         # This will eventually be scaled by AK when you
         # call reddening(). Right now, calc for AKs=1
@@ -1371,12 +1371,12 @@ class RedLawNoguerasLara18(RedLawPowerLaw):
     which consists of a power law with alpha = 2.3
 
     The wavelength range over which this law is calculated is
-    0.8 - 2.5 microns. The law is derived from HAWK-I JHKs 
+    0.8 - 2.8 microns. The law is derived from HAWK-I JHKs 
     observations
     """
     def __init__(self):
         wave_min = 0.8
-        wave_max = 2.5
+        wave_max = 2.8
         RedLawPowerLaw.__init__(self, 2.30, 2.15, wave_min=wave_min, wave_max=wave_max)
         
         # Set the upper/lower wavelength limits of law (in angstroms)
