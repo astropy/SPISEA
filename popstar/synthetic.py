@@ -107,7 +107,7 @@ class ResolvedCluster(Cluster):
         self.iso_interps = {}
         for ikey in interp_keys:
             self.iso_interps[ikey] = interpolate.interp1d(self.iso.points['mass'], self.iso.points[ikey],
-                                                          kind='linear', bounds_error=False, fill_value=0)
+                                                          kind='linear', bounds_error=False, fill_value=np.nan)
         
         ##### 
         # Make a table to contain all the information about each stellar system.
