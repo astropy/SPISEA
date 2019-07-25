@@ -200,7 +200,6 @@ class ResolvedCluster(Cluster):
         for filt in self.filt_names:
             star_systems[filt] = self.iso_interps[filt](star_systems['mass'])
 
-
         #####
         # Make Remnants
         #     Note: Some models already have WDs in them. If they do, then they shouldn't
@@ -211,7 +210,7 @@ class ResolvedCluster(Cluster):
         if self.ifmr != None:
             # Identify compact objects as those with Teff = 0 or with phase > 100.
             highest_mass_iso = self.iso.points['mass'].max()
-            idx_rem = np.where((star_systems['Teff'] == 0) & (star_systems['mass'] > highest_mass_iso))[0]
+            idx_rem = np.where((np.isnan(star_systems['Teff'])) & (star_systems['mass'] > highest_mass_iso))[0]
             
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
@@ -228,7 +227,7 @@ class ResolvedCluster(Cluster):
             # Give remnants a magnitude of nan, so they can be filtered out later when calculating flux.
             for filt in self.filt_names:
                 star_systems[filt][idx_rem_good] = np.full(len(idx_rem_good), np.nan)
-               
+
         return star_systems
         
     def _make_companions_table(self, star_systems, compMass):
@@ -320,7 +319,13 @@ class ResolvedCluster(Cluster):
                     f1 = np.nan_to_num(f1)
                     f2 = np.nan_to_num(f2)
 
-                    star_systems[filt][idx] = -2.5 * np.log10(f1 + f2)
+                    # If *both* objects are dark, then keep the magnitude
+                    # as np.nan. Otherwise, add fluxes together
+                    good = np.where( (f1 != 0) | (f2 != 0) )
+                    bad = np.where( (f1 == 0) & (f2 == 0) )
+                    
+                    star_systems[filt][idx[good]] = -2.5 * np.log10(f1[good] + f2[good])
+                    star_systems[filt][idx[bad]] = np.nan
 
         #####
         # Make Remnants with flux = 0 in all bands.
