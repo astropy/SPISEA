@@ -38,7 +38,7 @@ Example: 'ctio_osiris,H'
 ==========================
 DeCam
 ==========================
-Dark Energy Camera
+Dark Energy Camera (http://www.ctio.noao.edu/noao/content/DECam-filter-information)
 Filters: u, g, r, i, z, Y
 
 Example: 'decam,r'
