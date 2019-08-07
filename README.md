@@ -1,8 +1,8 @@
 # PopStar
 
-PopStar is an python package for generating simple stellar populations from synthetic evolution and atmosphere models. Currently, PopStar generates single-age, single-metallicity populations (i.e. star clusters). It supports different initial mass functions, multiplicity perscriptions, reddening laws, filter functions, atmosphere models, and evolution models. The pacakge is object oriented and is extensible. 
+PopStar is an python package for generating simple stellar populations from synthetic evolution and atmosphere models. Currently, PopStar generates single-age, single-metallicity populations (i.e. star clusters). It supports different initial mass functions, multiplicity perscriptions, reddening laws, filter functions, atmosphere models, and evolution models. It also produces compact object populations using an initial-final mass relation. The pacakge is object oriented and is extensible. 
 
-PopStar's primary strength is the large set of models that are accessible. In particular, we have created a set of models that "merge" the best-in-class evolution and atmosphere models to cover the full range of masses from 0.08 - 150 Msun at very young ages, including pre-main-sequence evolution.
+One of PopStar's strengths is the large set of models that are accessible. In particular, we have created a set of models that "merge" the best-in-class evolution and atmosphere models to cover the full range of masses from 0.08 - 150 Msun at very young ages, including pre-main-sequence evolution.
 
 Here is a brief list of things that PopStar can simulation built-in:
 
@@ -10,7 +10,7 @@ Here is a brief list of things that PopStar can simulation built-in:
 * make a star cluster at any age with an unusual IMF
 * make a spectrum of a star cluster in integrated light
 
-We encourage contributions to PopStar, particular those that add support for star formation histories, metallicity distributions, new models, higher spectral resolution, etc.
+We encourage contributions to PopStar, particular those that add support for star formation histories, new models, higher spectral resolution, etc.
 
 
 ## INSTALL (from git)
@@ -152,7 +152,9 @@ Otherwise, you should be all set! You may get warnings that say:
     
     UserWarning: No thermal tables found, no thermal calculations can be performed
     
-But these can be safely ignored. Try the examples in the Quick Start Guide below to 
+But these can be safely ignored. 
+
+Try the examples in the Quick Start Guide [here](https://github.com/astropy/PopStar/blob/master/docs/Quick_Start_Make_Cluster.ipynb) to 
 make sure everything is working. To test the range of evolution models, atmosphere models, and photometric
 filters available in PopStar, run the test functions in `popstar/tests/test_models.py`. 
     
@@ -160,6 +162,8 @@ filters available in PopStar, run the test functions in `popstar/tests/test_mode
 
 For a quick tutorial on how to make a star cluster with popstar, see
 the jupyter notebook at Popstar/docs/Quick_Start_Make_Cluster.ipynb.
+Jupyter notebooks with tutorials to produce the plots shown in the PopStar paper (in prep)
+can be found in PopStar/docs/paper_examples/. 
 
 Additional documentation:
 
