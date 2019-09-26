@@ -24,7 +24,7 @@ We encourage contributions to PyPopStar, particular those that add support for s
 * scipy
 * numpy
 * matplotlib
-* STScI CDBS data package (see [here](ftp://archive.stsci.edu/pub/hst/pysynphot/); you need the cdbs sub-directory, in particular cdbs/comp and cdbs/mtab (synphot1.tar.gz; 63 MB unzipped). You will also need the phoenix model atmospheres (synphot5.tar.gz; 791 MB unzipped) to be placed in the cdbs/grid subdirectory. )
+* STScI CDBS data package (see [here](http://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools/synphot-throughput-tables.html) and download the required data from ftp://archive.stsci.edu/pub/hst/pysynphot. You need the cdbs sub-directory, in particular cdbs/comp and cdbs/mtab (synphot1.tar.gz; 63 MB unzipped). You will also need the phoenix model atmospheres (synphot5.tar.gz; 791 MB unzipped) to be placed in the cdbs/grid subdirectory. )
 
 ### Build
 
