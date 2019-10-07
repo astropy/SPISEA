@@ -96,7 +96,7 @@ Example: 'nirc2,Ks'
 NACO
 ==========================
 ESO NACO filters (https://www.eso.org/sci/facilities/paranal/instruments/naco/inst/filters.html)
-Filters: J, H, K
+Filters: J, H, Ks
 
 Example: 'naco,H'
 
