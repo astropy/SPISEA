@@ -24,8 +24,7 @@ We encourage contributions to PyPopStar, particular those that add support for s
 * scipy
 * numpy
 * matplotlib
-* STScI CDBS data package (see [here](http://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools/synphot-throughput-tables.html) or download directly from ftp://archive.stsci.edu/pub/hst/pysynphot. You need
-the cdbs/comp and cdbs/mtab directories (in synphot1.tar.gz; 63 MB unzipped). You will also need the phoenix model atmospheres (synphot5.tar.gz; 791 MB unzipped). These will ultimately be placed in your local cdbs directory, see "Set up CDBS directory" below.)
+* STScI CDBS data package (see [here](http://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools/synphot-throughput-tables.html) or download directly from ftp://archive.stsci.edu/pub/hst/pysynphot. You need synphot1.tar.gz (63 MB unzipped) and synphot5.tar.gz (791 MB unzipped). See "Set up CDBS directory" below for further instructions.)
 
 ### Build
 
@@ -52,7 +51,7 @@ directory. The actual python functions should be found in the
 `PyPopStar/popstar/` sub-directory.
 
 ### Set up CDBS directory
-PyPopStar uses the STScI CDBS infrastructure to store model atmospheres and HST filter functions. It expects a top-level `cdbs` directory with 3 sub-directories: `comp`, `grid`, and `mtab`. The `comp` and `mtab` directories are obtained from CDBS download (synphot1.tar.gz --> grp/hst/cdbs/comp, grp/hst/cdbs/mtab). The `grid` directory will eventually hold all of the model atmospheres, but start by putting the Phoenix models you downloaded there (synphot5.tar.gz --> grp/hst/cdbs/grid/phoenix). You will add more atmosphere model directories to `cdbs/grid` in the "Install Evolution and Atmosphere Models" section below.
+PyPopStar uses the STScI CDBS infrastructure to store model atmospheres and HST filter functions. It expects a top-level `cdbs` directory with 3 sub-directories: `comp`, `grid`, and `mtab`. The `comp` and `mtab` directories are obtained from the `synphot1.tar.gz` file you downloaded (grp/hst/cdbs/comp, grp/hst/cdbs/mtab). The `grid` directory will eventually hold all of the model atmospheres, but start by putting the Phoenix model directory from `synphot5.tar.gz` there (grp/hst/cdbs/grid/phoenix). You will add additional atmosphere model directories to `cdbs/grid` in the "Install Evolution and Atmosphere Models" section below.
 
 So, you should end up with a single `cdbs` directory with the `cdbs/comp`, `cdbs/grid`, and `cdbs/mtab` directories defined.
 
@@ -75,7 +74,7 @@ You can also optionally download a third file, which contains high-resolution ve
 
 However, `popstar_cdbs_highres.tar.gz` is not needed for PyPopStar to run. PyPopStar uses the low-resolution atmospheres in `popstar_cdbs.tar.gz` for synthetic photometry by default, as this is much faster and is sufficient in most applications. 
 
-Once downloaded, `popstar_cdbs.tar.gz` (and `popstar_cdbs_highres.tar.gz`, if desired) file should be expanded in 
+Once downloaded, `popstar_cdbs.tar.gz` (and `popstar_cdbs_highres.tar.gz`, if desired) should be expanded in 
 the directory that houses `cdbs`. The `popstar_models.tar.gz` file can be expanded anywhere, as you will set
 an environment variable to its location. However, we recommend downloading it to the same location as your cdbs directory. 
 
@@ -90,7 +89,7 @@ tar xvf popstar_models.tar.gz
 
 `popstar_cdbs.tar.gz` will put the model atmospheres in `cdbs/grid`, and `popstar_models.tar.gz` will put the evolution models in a directory called `evolution/`. 
 
-See `PyPopStar/docs/README_EvolutionModels.txt` for a description of the stellar evolution models and `PyPopStar/docs/README_AtmoModels.txt` for a description of the stellar atmosphere models included in this download.
+See [README_EvolutionModels.txt](https://github.com/astropy/PyPopStar/blob/master/docs/README_EvolutionModels.txt) for a description of the stellar evolution models and [README_AtmoModels.txt](https://github.com/astropy/PyPopStar/blob/master/docs/README_AtmoModels.txt) for a description of the stellar atmosphere models included in this download.
 You can add additional evolution models and atmosphere models to PyPopStar if you wish.
 
 ### Setup Path to Models
@@ -147,7 +146,7 @@ filters available in PyPopStar, run the `test_evolution_models()`, `test_atmosph
 For a quick tutorial on how to make a star cluster with pypopstar, see
 the jupyter notebook at `PyPopstar/docs/Quick_Start_Make_Cluster.ipynb`.
 Additional Jupyter notebooks with tutorials to produce the plots shown in the PyPopStar paper (Hosek et al., in prep)
-can be found in `PyPopStar/docs/paper_examples/. 
+can be found in `PyPopStar/docs/paper_examples/`. 
 
 Additional documentation:
 
