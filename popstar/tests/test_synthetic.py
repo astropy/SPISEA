@@ -291,10 +291,10 @@ def test_UnresolvedCluster():
     atm_func = atm.get_merged_atmosphere
     iso = syn.Isochrone(log_age, AKs, distance, metallicity=metallicity,
                             evo_model=evo, atm_func=atm_func, mass_sampling=10)
-    print('Made cluster: %d seconds' % (time.time() - startTime))
+    print('Made Isochrone: %d seconds' % (time.time() - startTime))
 
     cluster = syn.UnresolvedCluster(iso, imf_in, cluster_mass)
-    print('Constructed unresolved cluster: %d seconds' % (time.time() - startTime))
+    print('Constructed unresolved cluster: %d seconds' % (t2 - t1))
 
     # Plot an integrated spectrum of the whole cluster.
     wave = cluster.wave_trim
