@@ -1,0 +1,271 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Installation From Git &#8212; sampledoc 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Quick Start Guide" href="quick_start.html" />
+    <link rel="prev" title="Getting Started" href="index.html" /> 
+  </head><body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><h1 style="font-size: 3em;">PyPopStar</h1></a>
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="quick_start.html" title="Quick Start Guide"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Getting Started"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Installation From Git</a><ul>
+<li><a class="reference internal" href="#dependencies">Dependencies</a></li>
+<li><a class="reference internal" href="#build">Build</a></li>
+<li><a class="reference internal" href="#set-up-cdbs-directory">Set Up CDBS Directory</a></li>
+<li><a class="reference internal" href="#stellar-evolution-and-atmosphere-models">Stellar Evolution and Atmosphere Models</a></li>
+<li><a class="reference internal" href="#setup-path-to-models">Setup Path to Models</a></li>
+<li><a class="reference internal" href="#testing-pypopstar-setup">Testing PyPopStar Setup</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="index.html"
+                        title="previous chapter">Getting Started</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="quick_start.html"
+                        title="next chapter">Quick Start Guide</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/getting_started.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="installation-from-git">
+<span id="getting-started"></span><h1>Installation From Git<a class="headerlink" href="#installation-from-git" title="Permalink to this headline">¶</a></h1>
+<p>PyPopStar is hosted on GitHub <a class="reference external" href="https://github.com/astropy/PyPopStar">here</a>.
+The master branch is the released version,
+while the development branch is the development version.</p>
+<div class="section" id="dependencies">
+<span id="id1"></span><h2>Dependencies<a class="headerlink" href="#dependencies" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li>python (preferably via AstroConda, as it includes some necessary
+packages, like astropy and pysynphot)</li>
+<li>astropy</li>
+<li>pysynphot</li>
+<li>scipy</li>
+<li>numpy</li>
+<li>matplotlib</li>
+<li>STScI CDBS data package (Download from <a class="reference external" href="http://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools/synphot-throughput-tables.html">here</a>
+or directly via ftp <a class="reference external" href="ftp://archive.stsci.edu/pub/hst/pysynphot">here</a>. You will need 2
+files: synphot1.tar.gz (63 MB unzipped) and synphot5.tar.gz (791 MB
+unzipped). See <a class="reference internal" href="#set-up-cdbs"><span class="std std-ref">Set Up CDBS Directory</span></a> below for further instructions.)</li>
+</ul>
+</div>
+<div class="section" id="build">
+<span id="id4"></span><h2>Build<a class="headerlink" href="#build" title="Permalink to this headline">¶</a></h2>
+<p>Clone the git repo.
+PyPopStar only consists of python codes, so you can either run the
+standard <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code>  or you can simply modify your path
+environment variables to point to the git python location.</p>
+<p>If the installation directory for PyPopStar (where you cloned the repo),
+is <code class="docutils literal notranslate"><span class="pre">path_to_pypopstar</span></code>, then for BASH, edit your <code class="docutils literal notranslate"><span class="pre">.bash_profile</span></code> to
+include:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>export PYTHONPATH=$PYTHONPATH:&lt;path_to_pypopstar&gt;/PyPopStar
+</pre></div>
+</div>
+<p>where you replace <code class="docutils literal notranslate"><span class="pre">&lt;path_to_pypostar&gt;</span></code> with the appropriate directory.</p>
+<p>For C-shell, edit your .cshrc to include:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">setenv</span> <span class="n">PYTHONPATH</span> <span class="o">&lt;</span><span class="n">path_to_pypopstar</span><span class="o">&gt;/</span><span class="n">PyPopStar</span>
+</pre></div>
+</div>
+<p>where you replace <code class="docutils literal notranslate"><span class="pre">path_to_postar</span></code> with the appropriate
+directory. Note, the python path should point to the top-level “PyPopStar”
+directory. The actual python functions should be found in the
+<code class="docutils literal notranslate"><span class="pre">PyPopStar/popstar/</span></code> sub-directory.</p>
+</div>
+<div class="section" id="set-up-cdbs-directory">
+<span id="set-up-cdbs"></span><h2>Set Up CDBS Directory<a class="headerlink" href="#set-up-cdbs-directory" title="Permalink to this headline">¶</a></h2>
+<p>PyPopStar uses the STScI CDBS infrastructure to store
+model atmospheres and HST filter functions. It expects
+a top-level <code class="docutils literal notranslate"><span class="pre">cdbs</span></code> directory with 3 sub-directories: <code class="docutils literal notranslate"><span class="pre">comp</span></code>, <code class="docutils literal notranslate"><span class="pre">grid</span></code>,
+and <code class="docutils literal notranslate"><span class="pre">mtab</span></code>. The <code class="docutils literal notranslate"><span class="pre">comp</span></code> and <code class="docutils literal notranslate"><span class="pre">mtab</span></code> directories are obtained from the
+<code class="docutils literal notranslate"><span class="pre">synphot1.tar.gz</span></code> file you downloaded (grp/hst/cdbs/comp,
+grp/hst/cdbs/mtab). The <code class="docutils literal notranslate"><span class="pre">grid</span></code> directory will eventually hold all of
+the model atmospheres, but start by putting the Phoenix model
+directory from <code class="docutils literal notranslate"><span class="pre">synphot5.tar.gz</span></code> there (grp/hst/cdbs/grid/phoenix).
+You will add additional atmosphere model directories to <code class="docutils literal notranslate"><span class="pre">cdbs/grid</span></code> in
+the <a class="reference internal" href="#models"><span class="std std-ref">Stellar Evolution and Atmosphere Models</span></a> section below.</p>
+<p>So, you should end up with a single <code class="docutils literal notranslate"><span class="pre">cdbs</span></code> directory with
+the <code class="docutils literal notranslate"><span class="pre">cdbs/comp</span></code>, <code class="docutils literal notranslate"><span class="pre">cdbs/grid</span></code>, and <code class="docutils literal notranslate"><span class="pre">cdbs/mtab</span></code> directories
+defined.</p>
+</div>
+<div class="section" id="stellar-evolution-and-atmosphere-models">
+<span id="models"></span><h2>Stellar Evolution and Atmosphere Models<a class="headerlink" href="#stellar-evolution-and-atmosphere-models" title="Permalink to this headline">¶</a></h2>
+<p>Once you have cloned the PyPopStar repository, you will need to download the
+grids of evolution and atmosphere models. The evolution models are
+stand-alone and specific to PyPopStar. The atmosphere models use the
+STScI CDBS conventions and should be copied into your <code class="docutils literal notranslate"><span class="pre">cdbs/grid</span></code> directory.</p>
+<p>The two files you need to download are:</p>
+<ul class="simple">
+<li><a class="reference external" href="http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz">popstar_models.tar.gz</a>. (2.6 GB; 18 GB unzipped)</li>
+<li><a class="reference external" href="http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs.tar.gz">postar_cdbs.tar.gz</a>  (142 MB; 248 MB unzipped)</li>
+</ul>
+<p>You can also optionally download a third file, which contains high-resolution versions of the atmospheres in <code class="docutils literal notranslate"><span class="pre">popstar_cdbs.tar.gz</span></code>:</p>
+<ul class="simple">
+<li><a class="reference external" href="http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs_highres.tar.gz">popstar_cdbs_highres.tar.gz</a> (50 GB; 74 GB unzipped)</li>
+</ul>
+<p>However, <cite>popstar_cdbs_highres.tar.gz`</cite> is not needed for PyPopStar
+to run. PyPopStar uses the low-resolution atmospheres in
+<code class="docutils literal notranslate"><span class="pre">popstar_cdbs.tar.gz</span></code> for synthetic photometry by default, as
+this is much faster and is sufficient in most applications.</p>
+<p>Once downloaded, <code class="docutils literal notranslate"><span class="pre">popstar_cdbs.tar.gz</span></code> (and
+<code class="docutils literal notranslate"><span class="pre">popstar_cdbs_highres.tar.gz</span></code>, if desired) should be
+expanded in  the directory that houses <code class="docutils literal notranslate"><span class="pre">cdbs</span></code>.
+The <code class="docutils literal notranslate"><span class="pre">popstar_models.tar.gz</span></code> file can be expanded
+anywhere, as you will set an environment variable to its location.
+However, we recommend downloading it to the same location as your cdbs directory.</p>
+<p>For instance, if your cdbs directory is <code class="docutils literal notranslate"><span class="pre">/g/lu/models/cdbs/</span></code>
+then you should put the .gz files in <code class="docutils literal notranslate"><span class="pre">/g/lu/models/</span></code>
+and then unzip them from there:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">cd</span> <span class="o">/</span><span class="n">g</span><span class="o">/</span><span class="n">lu</span><span class="o">/</span><span class="n">models</span><span class="o">/</span>
+<span class="n">tar</span> <span class="n">xvf</span> <span class="n">popstar_cdbs</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+<span class="n">tar</span> <span class="n">xvf</span> <span class="n">popstar_models</span><span class="o">.</span><span class="n">tar</span><span class="o">.</span><span class="n">gz</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">popstar_cdbs.tar.gz</span></code> will put the model atmospheres in
+<code class="docutils literal notranslate"><span class="pre">cdbs/grid</span></code>, and <code class="docutils literal notranslate"><span class="pre">popstar_models.tar.gz</span></code> will put the evolution
+models in a directory called <code class="docutils literal notranslate"><span class="pre">evolution/</span></code></p>
+<p>See
+[README_EvolutionModels.txt](<a class="reference external" href="https://github.com/astropy/PyPopStar/blob/master/docs/README_EvolutionModels.txt">https://github.com/astropy/PyPopStar/blob/master/docs/README_EvolutionModels.txt</a>)
+for a description of the stellar evolution models and
+[README_AtmoModels.txt](<a class="reference external" href="https://github.com/astropy/PyPopStar/blob/master/docs/README_AtmoModels.txt">https://github.com/astropy/PyPopStar/blob/master/docs/README_AtmoModels.txt</a>)
+for a description of the stellar atmosphere models included in this download.
+You can add additional evolution models and atmosphere models to PyPopStar if you wish.</p>
+</div>
+<div class="section" id="setup-path-to-models">
+<span id="setup-paths"></span><h2>Setup Path to Models<a class="headerlink" href="#setup-path-to-models" title="Permalink to this headline">¶</a></h2>
+<p>You need to notify python where the evolution and atmosphere models
+live. This is done with two environment variables, <code class="docutils literal notranslate"><span class="pre">PYSYN_CDBS</span></code> and
+<code class="docutils literal notranslate"><span class="pre">POPSTAR_MODELS</span></code>.  In your .cshrc or .bashrc, set them as the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">setenv</span> <span class="n">PYSYN_CDBS</span> <span class="o">/&lt;</span><span class="n">path_to_models_directory</span><span class="o">&gt;/</span><span class="n">cdbs</span>
+<span class="n">setenv</span> <span class="n">POPSTAR_MODELS</span> <span class="o">/&lt;</span><span class="n">path_models_directory</span><span class="o">&gt;/</span>
+</pre></div>
+</div>
+<dl class="docutils">
+<dt>or::</dt>
+<dd>export PYSYN_CDBS=/&lt;path_to_models_directory&gt;/cdbs
+export POPSTAR_MODELS=/&lt;path_to_models_directory&gt;</dd>
+</dl>
+<p>Where the <code class="docutils literal notranslate"><span class="pre">&lt;path_to_models_directory&gt;</span></code> is where you downloaded and
+expanded the <code class="docutils literal notranslate"><span class="pre">popstar_cdbs.tar.gz</span></code> and <code class="docutils literal notranslate"><span class="pre">popstar_models.tar.gz</span></code>
+files (e.g., where the <code class="docutils literal notranslate"><span class="pre">cdbs/</span></code> and <code class="docutils literal notranslate"><span class="pre">evolution/</span></code> directories live).</p>
+</div>
+<div class="section" id="testing-pypopstar-setup">
+<span id="test-setup"></span><h2>Testing PyPopStar Setup<a class="headerlink" href="#testing-pypopstar-setup" title="Permalink to this headline">¶</a></h2>
+<p>If all goes well, you should be able to import any of the PyPopStar functions
+in a python environment window using an import statement like those at the top
+of the Quick Start Guide, such as:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">popstar</span> <span class="k">import</span> <span class="n">synthetic</span>
+</pre></div>
+</div>
+<p>If the <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code> is broken, then python won’t know where to find the popstar codes and
+you will get an error reporting “No module named popstar”. If the <code class="docutils literal notranslate"><span class="pre">POPSTAR_MODELS</span></code> or
+<code class="docutils literal notranslate"><span class="pre">PYSYN_CDBS</span></code> paths are broken, then pypopstar won’t know here to go to get the
+stellar models. and you will get either or both of the following warnings:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ne">UserWarning</span><span class="p">:</span> <span class="n">PYSYN_CDBS</span> <span class="ow">is</span> <span class="n">undefined</span><span class="p">;</span> <span class="n">functionality</span> <span class="n">will</span> <span class="n">be</span> <span class="n">SEVERELY</span> <span class="n">crippled</span><span class="o">.</span>
+
+<span class="ne">UserWarning</span><span class="p">:</span> <span class="n">POPSTAR_MODELS</span> <span class="ow">is</span> <span class="n">undefined</span><span class="p">;</span> <span class="n">functionality</span> <span class="n">will</span> <span class="n">be</span> <span class="n">SEVERELY</span> <span class="n">crippled</span><span class="o">.</span>
+</pre></div>
+</div>
+<p>Otherwise, you should be all set! You may get warnings that say:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="ne">UserWarning</span><span class="p">:</span> <span class="n">Extinction</span> <span class="n">files</span> <span class="ow">not</span> <span class="n">found</span> <span class="ow">in</span> <span class="o">/</span><span class="n">u</span><span class="o">/</span><span class="n">mwhosek</span><span class="o">/</span><span class="n">models</span><span class="o">/</span><span class="n">cdbs</span><span class="o">/</span><span class="n">extinction</span>
+
+<span class="ne">UserWarning</span><span class="p">:</span> <span class="n">No</span> <span class="n">thermal</span> <span class="n">tables</span> <span class="n">found</span><span class="p">,</span> <span class="n">no</span> <span class="n">thermal</span> <span class="n">calculations</span> <span class="n">can</span> <span class="n">be</span> <span class="n">performed</span>
+</pre></div>
+</div>
+<p>But these can be safely ignored since PyPopstar doesn’t use this functionality.</p>
+<p>To further test PyPopstar, try running the <a class="reference internal" href="quick_start.html#quick-start"><span class="std std-ref">Quick Start Guide</span></a>.
+To test the range of evolution models, atmosphere models, and photometric
+filters available in PyPopStar, run the <code class="docutils literal notranslate"><span class="pre">test_evolution_models()</span></code>, <code class="docutils literal notranslate"><span class="pre">test_atmospheres_models()</span></code>, and <code class="docutils literal notranslate"><span class="pre">test_filters()</span></code> functions in <code class="docutils literal notranslate"><span class="pre">popstar/tests/test_models.py</span></code>.</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="quick_start.html" title="Quick Start Guide"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="index.html" title="Getting Started"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2009, John Hunter, Fernando Perez, Michael Droettboom.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.7.
+    </div>
+  </body>
+</html>

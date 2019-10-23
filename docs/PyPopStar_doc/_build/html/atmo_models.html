@@ -1,0 +1,309 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Atmosphere Model Object &#8212; sampledoc 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="IMF Object" href="imf.html" />
+    <link rel="prev" title="Evolution Model Object" href="evo_models.html" /> 
+  </head><body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><h1 style="font-size: 3em;">PyPopStar</h1></a>
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="imf.html" title="IMF Object"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="evo_models.html" title="Evolution Model Object"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Atmosphere Model Object</a><ul>
+<li><a class="reference internal" href="#get-merged-atmosphere">get_merged_atmosphere</a></li>
+<li><a class="reference internal" href="#get-wd-atmosphere">get_wd_atmosphere</a></li>
+<li><a class="reference internal" href="#get-castelli-atmosphere">get_castelli_atmosphere</a></li>
+<li><a class="reference internal" href="#get-phoenixv16-atmosphere">get_phoenixv16_atmosphere</a></li>
+<li><a class="reference internal" href="#get-btsettl-2015-atmosphere">get_BTSettl_2015_atmosphere</a></li>
+<li><a class="reference internal" href="#get-btsettl-atmosphere">get_BTSettl_atmosphere</a></li>
+<li><a class="reference internal" href="#get-wdkoester-atmosphere">get_wdKoester_atmosphere</a></li>
+<li><a class="reference internal" href="#get-kurucz-atmosphere">get_kurucz_atmosphere</a></li>
+<li><a class="reference internal" href="#get-phoenix-atmosphere">get_phoenix_atmosphere</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="evo_models.html"
+                        title="previous chapter">Evolution Model Object</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="imf.html"
+                        title="next chapter">IMF Object</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/atmo_models.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="atmosphere-model-object">
+<span id="atmo-models"></span><h1>Atmosphere Model Object<a class="headerlink" href="#atmosphere-model-object" title="Permalink to this headline">¶</a></h1>
+<p>Stellar atmosphere models are defined as functions in
+popstar/atmospheres.py. These can be called by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">popstar</span> <span class="k">import</span> <span class="n">atmospheres</span>
+<span class="n">atmo</span> <span class="o">=</span> <span class="n">atmospheres</span><span class="o">.&lt;</span><span class="n">function_name</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>To call an atmosphere for a particular star, user must define the
+metallicity ([Z], so metallicity = 0 is solar), temperature (in K),
+and gravity (in cgs):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spectrum</span> <span class="o">=</span> <span class="n">atmo</span><span class="p">(</span><span class="n">metallicity</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mi">5800</span><span class="p">,</span> <span class="n">gravity</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">wave</span> <span class="o">=</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">wave</span> <span class="c1"># Wavelength in Angstroms</span>
+<span class="n">flux</span> <span class="o">=</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">flux</span> <span class="c1"># Flux in ergs s^-1 cm^-2 Angstrom^-1</span>
+<span class="p">(</span><span class="n">pysynphot</span> <span class="n">Flam</span> <span class="n">units</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Otherwise, one can pass the atmosphere function into an Isochrone
+object, and that function will automatically be used to define the
+spectrum of each star in the isochrone model.</p>
+<p>PopStar uses the pysynphot framework to extract the model atmosphere,
+and the the output spectrum is a <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/ref_api.html#pysynphot.catalog.Icat">pysynphot.Icat object</a>.</p>
+<p>The atmosphere model grids currently supported are:</p>
+<ul class="simple">
+<li>get_merged_atmosphere (default for stars)</li>
+<li>get_wd_atmospheres (default for white dwarfs)</li>
+<li>get_castelli_atmosphere</li>
+<li>get_phoenixv16_atmosphere</li>
+<li>get_BTSettl_2015_atmosphere</li>
+<li>get_BTSettl_atmosphere</li>
+<li>get_wdKoester_atmosphere</li>
+<li>get_kurucz_atmosphere</li>
+<li>get_phoenix_atmosphere</li>
+<li>get_nextgen_atmosphere</li>
+<li>get_amesdusty_atmosphere</li>
+</ul>
+<div class="section" id="get-merged-atmosphere">
+<h2>get_merged_atmosphere<a class="headerlink" href="#get-merged-atmosphere" title="Permalink to this headline">¶</a></h2>
+<p>The get_merged_atmosphere function extracts a stellar atmosphere
+from a suite of different model grids, depending  on the input
+temperature, (all values in K):</p>
+<ul class="simple">
+<li>T &gt; 20,000: ATLAS</li>
+<li>5500 &lt;= T &lt; 20,000: ATLAS</li>
+<li>5000 &lt;= T &lt; 5500: ATLAS/PHOENIXv16 merge</li>
+<li>3800 &lt;= T &lt; 5000: PHOENIXv16</li>
+</ul>
+<p>For T &lt; 3800, there is an additional gravity and metallicity
+dependence:</p>
+<dl class="docutils">
+<dt>If T &lt; 3800 and [M/H] = 0:</dt>
+<dd><ul class="first last simple">
+<li>T &lt; 3800, logg &lt; 2.5: PHOENIX v16</li>
+<li>3200 &lt;= T &lt; 3800, logg &gt; 2.5: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge</li>
+<li>3200 &lt; T &lt;= 1200, logg &gt; 2.5: BTSettl_CIFITS2011_2015</li>
+</ul>
+</dd>
+<dt>Otherwise, if T &lt; 3800 and [M/H] != 0:</dt>
+<dd><ul class="first last simple">
+<li>T &lt; 3800: PHOENIX v16</li>
+</ul>
+</dd>
+</dl>
+<p>References:
+* ATLAS: ATLAS9 models (<a class="reference external" href="https://arxiv.org/abs/astro-ph/0405087">Castelli &amp; Kurucz 2004</a>)
+* PHOENIXv16 (<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2013A&amp;A...553A...6H/abstract">Husser et al. 2013</a>)
+* BTSettl_CIFITS2011_2015: Baraffee+15, Allard+
+(<a class="reference external" href="https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/">https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/</a>)</p>
+<p>Additional Notes:
+The ATLAS atmospheres are calculated with LTE, and so they
+are less accurate when non-LTE conditions apply (e.g. T &gt; 20,000
+K). Ultimately we’d like to add a non-LTE atmosphere grid for
+the hottest stars in the future.</p>
+<p>Merged atmospheres are a weighted average between the two
+atmosphere grids in the given temperature range. Near one boundary one model
+is weighted more heavily, while at the other boundary the other
+model is weighted more heavily. These are calculated in the
+temperature ranges where we switch between model grids, to
+ensure a smooth transition.</p>
+</div>
+<div class="section" id="get-wd-atmosphere">
+<h2>get_wd_atmosphere<a class="headerlink" href="#get-wd-atmosphere" title="Permalink to this headline">¶</a></h2>
+<p>This function is the default to extract atmospheres for white
+dwarfs. It calls the atmosphere grid from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2010MmSAI..81..921K/abstract">Koester et al. 2010</a>.
+If the desired WD parameters fall outside the grid, a blackbody spectrum
+at the input temperature is returned.</p>
+</div>
+<div class="section" id="get-castelli-atmosphere">
+<h2>get_castelli_atmosphere<a class="headerlink" href="#get-castelli-atmosphere" title="Permalink to this headline">¶</a></h2>
+<p>The pysynphot ATLAS9 atlas (<a class="reference external" href="http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html">Castelli &amp; Kurucz 2004</a>)</p>
+<ul class="simple">
+<li>Teff: 3500 - 50000 K</li>
+<li>gravity: 0 - 5.0 cgs</li>
+<li>[M/H]: -2.5 - 0.2</li>
+</ul>
+</div>
+<div class="section" id="get-phoenixv16-atmosphere">
+<h2>get_phoenixv16_atmosphere<a class="headerlink" href="#get-phoenixv16-atmosphere" title="Permalink to this headline">¶</a></h2>
+<p>Reference: <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2013A&amp;A...553A...6H/abstract">Husser et al. 2013</a></p>
+<p>-downloaded via ftp from <a class="reference external" href="http://phoenix.astro.physik.uni-goettingen.de/?page_id=15">here</a>
+-solar metallicity, solar [alpha/Fe]</p>
+<ul class="simple">
+<li>Teff: 2300 - 7000 K, steps of 100 K; 7000 - 12000 in steps of 200 K</li>
+<li>gravity: 0.0 - 6.0 cgs, steps of 0.5</li>
+<li>[M/H]: -4.0 - 1.0</li>
+</ul>
+</div>
+<div class="section" id="get-btsettl-2015-atmosphere">
+<h2>get_BTSettl_2015_atmosphere<a class="headerlink" href="#get-btsettl-2015-atmosphere" title="Permalink to this headline">¶</a></h2>
+<p>Reference: Allard+12, Baraffe+15
+CIFIST2011_2015 grid, downloaded from <a class="reference external" href="https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/FITS/">here</a> on 9/28/16</p>
+<ul class="simple">
+<li>Teff: 1200 - 7000 K</li>
+<li>gravity: 2.5 - 5.5 cgs</li>
+<li>[M/H] = 0</li>
+</ul>
+</div>
+<div class="section" id="get-btsettl-atmosphere">
+<h2>get_BTSettl_atmosphere<a class="headerlink" href="#get-btsettl-atmosphere" title="Permalink to this headline">¶</a></h2>
+<p>Reference: Allard+12
+CIFITS2011 grid, downloaded from <a class="reference external" href="https://phoenix.ens-lyon.fr/Grids/BT-Settl/">here</a></p>
+<ul class="simple">
+<li>[M/H] = -2.5, -2.0, -1.5, -1.0, -0.5, 0, 0.5</li>
+</ul>
+<p>Teff and gravity ranges depend on metallicity:</p>
+<p>[M/H] = -2.5</p>
+<ul class="simple">
+<li>Teff: 2600 - 4600 K</li>
+<li>gravity: 4.5 - 5.5</li>
+</ul>
+<p>[M/H] = -2.0</p>
+<ul class="simple">
+<li>Teff: 2600 - 7000</li>
+<li>gravity: 4.5 - 5.5</li>
+</ul>
+<p>[M/H] = -1.5</p>
+<ul class="simple">
+<li>Teff: 2600 - 7000</li>
+<li>gravity: 4.5 - 5.5</li>
+</ul>
+<p>[M/H] = -1.0</p>
+<ul class="simple">
+<li>Teff: 2600 - 7000</li>
+<li>gravity: Teff &lt; 3200 –&gt; 4.5 - 5.5; Teff &gt; 3200 –&gt; 2.5 - 5.5</li>
+</ul>
+<p>[M/H] = -0.5</p>
+<ul class="simple">
+<li>Teff: 1000 -7000</li>
+<li>gravity: Teff &lt; 3000 –&gt; 4.5 - 5.5; Teff &gt; 3000 –&gt; 3.0 - 6.0</li>
+</ul>
+<p>[M/H] = 0</p>
+<ul class="simple">
+<li>Teff: 750 - 7000</li>
+<li>gravity: Teff &lt; 2500 –&gt; 3.5 - 5.5; Teff &gt; 2500 –&gt; 0 - 5.5</li>
+</ul>
+<p>[M/H] = 0.5</p>
+<ul class="simple">
+<li>Teff: 1000 - 5000</li>
+<li>gravity: 3.5 - 5.0</li>
+</ul>
+<p>Note on alpha enhancement:
+* [M/H]= -0.0, +0.5 no anhancement
+* [M/H]= -0.5 with [alpha/H]=+0.2
+* [M/H]= -1.0, -1.5, -2.0, -2.5 with [alpha/H]=+0.4</p>
+</div>
+<div class="section" id="get-wdkoester-atmosphere">
+<h2>get_wdKoester_atmosphere<a class="headerlink" href="#get-wdkoester-atmosphere" title="Permalink to this headline">¶</a></h2>
+<p>White dwarf atmospheres
+Reference: <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2010MmSAI..81..921K/abstract">Koester et al. 2010</a></p>
+</div>
+<div class="section" id="get-kurucz-atmosphere">
+<h2>get_kurucz_atmosphere<a class="headerlink" href="#get-kurucz-atmosphere" title="Permalink to this headline">¶</a></h2>
+<p>The pysynphot Kurucz atlas (<a class="reference external" href="http://www.stsci.edu/hst/observatory/crds/k93models.html">Kurucz 1993</a>)</p>
+<ul class="simple">
+<li>Teff: 3000 - 50000 K</li>
+<li>gravity: 0 - 5 cgs</li>
+<li>metallicity: -5.0 - 1.0</li>
+</ul>
+</div>
+<div class="section" id="get-phoenix-atmosphere">
+<h2>get_phoenix_atmosphere<a class="headerlink" href="#get-phoenix-atmosphere" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference external" href="http://www.stsci.edu/hst/observatory/crds/SIfileInfo/pysynphottables/index_phoenix_models_html">pysynphot PHOENIX atlas</a></p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="imf.html" title="IMF Object"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="evo_models.html" title="Evolution Model Object"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2009, John Hunter, Fernando Perez, Michael Droettboom.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.7.
+    </div>
+  </body>
+</html>
