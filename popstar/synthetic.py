@@ -398,7 +398,7 @@ class ResolvedCluster(Cluster):
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 ifmr=None, red_law=default_red_law, verbose=False, set_random_seed=False):
+                 ifmr=None, verbose=False, set_random_seed=False):
 
         ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
                                      set_random_seed=set_random_seed)
@@ -407,6 +407,10 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         if set_random_seed:
             np.random.seed(seed=42)
 
+        # Extract the extinction law from the isochrone object
+        redlaw_str = iso.points.meta['REDLAW']
+        red_law = reddening.get_red_law(redlaw_str)
+            
         # For a given delta_AKs (Gaussian sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
         #t1 = time.time()
