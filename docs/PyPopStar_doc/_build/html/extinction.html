@@ -1,0 +1,250 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Extinction Law Object &#8212; PyPopStar 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Photometric Filters" href="filters.html" />
+    <link rel="prev" title="IFMR Object" href="ifmr.html" /> 
+  </head><body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><h1 style="font-size: 3em;">PyPopStar</h1></a>
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="filters.html" title="Photometric Filters"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="ifmr.html" title="IFMR Object"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Extinction Law Object</a><ul>
+<li><a class="reference internal" href="#redlawpowerlaw">RedLawPowerLaw</a></li>
+<li><a class="reference internal" href="#redlawcardelli">RedLawCardelli</a></li>
+<li><a class="reference internal" href="#redlawdamineli16">RedLawDamineli16</a></li>
+<li><a class="reference internal" href="#redlawdemarchi16">RedLawDeMarchi16</a></li>
+<li><a class="reference internal" href="#redlawfitzpatrick09">RedLawFitzpatrick09</a></li>
+<li><a class="reference internal" href="#redlawfritz11">RedLawFritz11</a></li>
+<li><a class="reference internal" href="#redlawhosek18">RedLawHosek18</a></li>
+<li><a class="reference internal" href="#redlawhosek18b">RedLawHosek18b</a></li>
+<li><a class="reference internal" href="#redlawnishiyama09">RedLawNishiyama09</a></li>
+<li><a class="reference internal" href="#redlawnogueraslara18">RedLawNoguerasLara18</a></li>
+<li><a class="reference internal" href="#redlawromanzuniga07">RedLawRomanZuniga07</a></li>
+<li><a class="reference internal" href="#redlawriekelebofsky">RedLawRiekeLebofsky</a></li>
+<li><a class="reference internal" href="#redlawschlafly16">RedLawSchlafly16</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="ifmr.html"
+                        title="previous chapter">IFMR Object</a></p>
+  <h4>Next topic</h4>
+  <p class="topless"><a href="filters.html"
+                        title="next chapter">Photometric Filters</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/extinction.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="extinction-law-object">
+<span id="ext-law"></span><h1>Extinction Law Object<a class="headerlink" href="#extinction-law-object" title="Permalink to this headline">¶</a></h1>
+<p>The extinction law can be defined using the classes in popstar/reddening.py. These can be called by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">popstar</span> <span class="k">import</span> <span class="n">reddening</span>
+<span class="n">red_law</span> <span class="o">=</span> <span class="n">reddening</span><span class="o">.&lt;</span><span class="n">redlaw_name</span><span class="o">&gt;</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>PyPopStar uses the pysynphot framework to define the extinction law.
+The output is a <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/ref_api.html#module-pysynphot.extinction">pysynphot.reddening.CustomRedLaw</a>
+oject.
+The reddening law is reported in terms of A_lambda / A_Ks, and thus is normalized to A_Ks = 1.</p>
+<p>The red_law object is passed into the Isochrone object in order to define the extinction for all of the stars. See Quick_Start_Make_Cluster for an example.</p>
+<p>Available extinction laws:</p>
+<ul class="simple">
+<li>RedLawPowerLaw</li>
+<li>RedLawCardelli</li>
+<li>RedLawDamineli16</li>
+<li>RedLawDeMarchi16</li>
+<li>RedLawFitzpatrick09</li>
+<li>RedLawFritz11</li>
+<li>RedLawHosek18 (deprecated)</li>
+<li>RedLawHosek18b</li>
+<li>RedLawNishiyama09 (default)</li>
+<li>RedLawNoguerasLara18</li>
+<li>RedLawRomanZuniga07</li>
+<li>RedLawRiekeLebofsky</li>
+<li>RedLawSchlafly16</li>
+</ul>
+<div class="section" id="redlawpowerlaw">
+<h2>RedLawPowerLaw<a class="headerlink" href="#redlawpowerlaw" title="Permalink to this headline">¶</a></h2>
+<p>This define a power-law extinction law (A_lambda /propto lambda^-alpha).</p>
+<p>Inputs:</p>
+<p>alpha – The power law exponent
+K_wave – Define the specific Ks wavelength to normalize the law too (in angstoms)
+wave_min, wave_max – The shortward and longward bound of the extinction law (in angstroms)</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">red_law</span> <span class="o">=</span> <span class="n">reddening</span><span class="o">.</span><span class="n">RedLawPowerLaw</span><span class="p">(</span><span class="mf">2.21</span><span class="p">,</span> <span class="mf">2.12</span><span class="p">,</span> <span class="n">wave_min</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">wave_max</span> <span class="o">=</span> <span class="mf">3.0</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This defines the reddening law as A_lambda / A_Ks = lambda^-2.12, where the Ks wavelength is taken to be 2.12 microns. The law is defined from 0.8 – 3.0 microns.</p>
+</div>
+<div class="section" id="redlawcardelli">
+<h2>RedLawCardelli<a class="headerlink" href="#redlawcardelli" title="Permalink to this headline">¶</a></h2>
+<p>Defines the extinction law of <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/1989ApJ...345..245C/abstract">Cardelli et al. 1989</a></p>
+<p>Wave range: 0.5 - 3.0 microns</p>
+<p>Inputs:</p>
+<p>Rv – The Cardelli+89 R_v parameter (R_v = 3.1 for average Milky Way ISM)</p>
+</div>
+<div class="section" id="redlawdamineli16">
+<h2>RedLawDamineli16<a class="headerlink" href="#redlawdamineli16" title="Permalink to this headline">¶</a></h2>
+<p>Defines the extinction law of <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2016MNRAS.463.2653D/abstract">Damineli et al. 2016</a>
+derived for Wd1</p>
+<p>Wave range: 0.5 - 8.0 microns</p>
+</div>
+<div class="section" id="redlawdemarchi16">
+<h2>RedLawDeMarchi16<a class="headerlink" href="#redlawdemarchi16" title="Permalink to this headline">¶</a></h2>
+<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2016MNRAS.455.4373D/abstract">De Marchi et al. 2016</a>
+derived for 30 Dorodus.</p>
+<p>Wave range: 0.3 - 8 microns</p>
+</div>
+<div class="section" id="redlawfitzpatrick09">
+<h2>RedLawFitzpatrick09<a class="headerlink" href="#redlawfitzpatrick09" title="Permalink to this headline">¶</a></h2>
+<p>Defines the extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2009ApJ...699.1209F/abstract">Fitzpactrick et al. 2009</a></p>
+<p>Wave range: 0.3 - 3 microns</p>
+<p>Inputs:</p>
+<p>alpha – free parameter in law (see their Eqn 5)
+RV – free parameter in law (see their Eqn 5)</p>
+</div>
+<div class="section" id="redlawfritz11">
+<h2>RedLawFritz11<a class="headerlink" href="#redlawfritz11" title="Permalink to this headline">¶</a></h2>
+<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2011ApJ...737...73F/abstract">Fritz et al. 2011</a>
+for the Galactic Center.</p>
+<p>Wave range: 1.0 – 19 microns</p>
+</div>
+<div class="section" id="redlawhosek18">
+<h2>RedLawHosek18<a class="headerlink" href="#redlawhosek18" title="Permalink to this headline">¶</a></h2>
+<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2018ApJ...855...13H/abstract">Hosek et al. 2018</a>
+for the Arches Cluster and Wd1.</p>
+<p>Wave range: 0.7 - 3.54 microns</p>
+<p>NOTE: this law has revised to <span class="xref std std-ref">Hosek_new</span>, which should be used
+instead.</p>
+</div>
+<div class="section" id="redlawhosek18b">
+<h2>RedLawHosek18b<a class="headerlink" href="#redlawhosek18b" title="Permalink to this headline">¶</a></h2>
+<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2019ApJ...870...44H/abstract">Hosek et al. 2019</a>
+for the Arches cluster adn Wd1. This should be used rather than <span class="xref std std-ref">Hosek_old</span></p>
+<p>Wave range: 0.7 - 3.54 microns</p>
+</div>
+<div class="section" id="redlawnishiyama09">
+<h2>RedLawNishiyama09<a class="headerlink" href="#redlawnishiyama09" title="Permalink to this headline">¶</a></h2>
+<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2009ApJ...696.1407N/abstract">Nishiyama et al. 2009</a>
+toward the Galactic Center. This is the default extinction law.</p>
+<p>Wave range: 0.3 – 8.0 microns</p>
+</div>
+<div class="section" id="redlawnogueraslara18">
+<h2>RedLawNoguerasLara18<a class="headerlink" href="#redlawnogueraslara18" title="Permalink to this headline">¶</a></h2>
+<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2018A&amp;A...610A..83N/abstract">Nogueras-Lara et al. 2018</a>
+for the Galactic Center.</p>
+<p>Wave range: 0.8 - 2.5 microns</p>
+</div>
+<div class="section" id="redlawromanzuniga07">
+<h2>RedLawRomanZuniga07<a class="headerlink" href="#redlawromanzuniga07" title="Permalink to this headline">¶</a></h2>
+<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2007ApJ...664..357R/abstract">Roman-Zuniga et al. 2007</a>
+for the dense cloud core Barnard 59.</p>
+<p>Wave range: 1.0 - 8.0 microns</p>
+</div>
+<div class="section" id="redlawriekelebofsky">
+<h2>RedLawRiekeLebofsky<a class="headerlink" href="#redlawriekelebofsky" title="Permalink to this headline">¶</a></h2>
+<p>Defines the extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/1985ApJ...288..618R/abstract">Rieke &amp; Lebofsky 1985</a>
+for the Galactic Center</p>
+<p>Wave range: 1 - 13 microns</p>
+</div>
+<div class="section" id="redlawschlafly16">
+<h2>RedLawSchlafly16<a class="headerlink" href="#redlawschlafly16" title="Permalink to this headline">¶</a></h2>
+<p>Defines the extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2016ApJ...821...78S/abstract">Schlafly et al. 2016</a></p>
+<p>Wave range: 0.5 - 8 microns</p>
+<p>Inputs:</p>
+<p>AH_AKs – Ratio of A_H / A_Ks, which sets the normalization of the law (see their Appendix)
+x – free parameter in extinction law (see their Eqn 6)</p>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="filters.html" title="Photometric Filters"
+             >next</a> |</li>
+        <li class="right" >
+          <a href="ifmr.html" title="IFMR Object"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Matt Hosek and Jessica Lu.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.7.
+    </div>
+  </body>
+</html>

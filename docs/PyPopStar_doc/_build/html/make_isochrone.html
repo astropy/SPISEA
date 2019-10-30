@@ -1,0 +1,238 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Isochrone Object &#8212; PyPopStar 1.0 documentation</title>
+    <link rel="stylesheet" href="_static/sphinxdoc.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" id="documentation_options" data-url_root="./" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Further Examples" href="more_examples.html" /> 
+  </head><body>
+
+<div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
+<a href="index.html"><h1 style="font-size: 3em;">PyPopStar</h1></a>
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             accesskey="I">index</a></li>
+        <li class="right" >
+          <a href="more_examples.html" title="Further Examples"
+             accesskey="P">previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+ 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">Isochrone Object</a><ul>
+<li><a class="reference internal" href="#isochrone">Isochrone</a><ul>
+<li><a class="reference internal" href="#example">Example</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#isochronephot">IsochronePhot</a></li>
+</ul>
+</li>
+</ul>
+
+  <h4>Previous topic</h4>
+  <p class="topless"><a href="more_examples.html"
+                        title="previous chapter">Further Examples</a></p>
+  <div role="note" aria-label="source link">
+    <h3>This Page</h3>
+    <ul class="this-page-menu">
+      <li><a href="_sources/make_isochrone.rst.txt"
+            rel="nofollow">Show Source</a></li>
+    </ul>
+   </div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="isochrone-object">
+<span id="isochrone-objects"></span><h1>Isochrone Object<a class="headerlink" href="#isochrone-object" title="Permalink to this headline">¶</a></h1>
+<div class="section" id="isochrone">
+<h2>Isochrone<a class="headerlink" href="#isochrone" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt>
+<code class="descname">class Isochrone(params)</code></dt>
+<dd><p>Create a theoretical cluster isochrone.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>logAge</strong> – The age of the isochrone, in log(years)</li>
+<li><strong>AKs</strong> – The extinction of the isochrone, in magnitudes in the Ks filter</li>
+<li><strong>distance</strong> – The distance to the isochrone, in parsecs</li>
+<li><strong>metallicity</strong> – The metallicity of the isochrone, in [M/H]</li>
+<li><strong>evo_models</strong> – The stellar evolution models used (<a class="reference internal" href="evo_models.html#evo-models"><span class="std std-ref">Evolution Model Object</span></a>)</li>
+<li><strong>atm_func</strong> – The stellar atmosphere models used (<a class="reference internal" href="atmo_models.html#atmo-models"><span class="std std-ref">Atmosphere Model Object</span></a>)</li>
+<li><strong>red_law</strong> – The extinction law to be used (<a class="reference internal" href="extinction.html#ext-law"><span class="std std-ref">Extinction Law Object</span></a>)</li>
+<li><strong>mass_sampling</strong> – Sample the raw isochrone at every N
+points, where N=mass_sampling. Must be an
+integer value.</li>
+<li><strong>wave_range</strong> – A list of length=2 that defines the min/max
+wavelength of the stellar spectra.</li>
+<li><strong>min_mass</strong> – Set the minimum mass of the isochone, in M_sun</li>
+<li><strong>max_mass</strong> – Set the maximum mass of the isochone, in M_sun</li>
+<li><strong>rebin</strong> – If true, rebin the resolution of the atmospheres so
+they are the same as the Castelli+04 atmospheres</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<div class="section" id="example">
+<h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
+</div>
+</div>
+<div class="section" id="isochronephot">
+<h2>IsochronePhot<a class="headerlink" href="#isochronephot" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="synthetic.calc_ab_vega_filter_conversion">
+<code class="descclassname">synthetic.</code><code class="descname">calc_ab_vega_filter_conversion</code><span class="sig-paren">(</span><em>filt_str</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.calc_ab_vega_filter_conversion" title="Permalink to this definition">¶</a></dt>
+<dd><p>Function to calculate the conversion between
+AB and Vega magnitudes for a given filter:
+m_AB - m_vega</p>
+<p>Note: this conversion is just the vega magnitude in 
+AB system</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="synthetic.IsochronePhot">
+<em class="property">class </em><code class="descclassname">synthetic.</code><code class="descname">IsochronePhot</code><span class="sig-paren">(</span><em>logAge</em>, <em>AKs</em>, <em>distance</em>, <em>metallicity=0.0</em>, <em>evo_model=&lt;popstar.evolution.MergedBaraffePisaEkstromParsec object&gt;</em>, <em>atm_func=&lt;function get_merged_atmosphere&gt;</em>, <em>wd_atm_func=&lt;function get_wd_atmosphere&gt;</em>, <em>red_law=&lt;popstar.reddening.RedLawNishiyama09 object&gt;</em>, <em>mass_sampling=1</em>, <em>iso_dir='./'</em>, <em>min_mass=None</em>, <em>max_mass=None</em>, <em>rebin=True</em>, <em>recomp=False</em>, <em>filters={'ubv</em>, <em>U'</em>, <em>'acs</em>, <em>wfc1</em>, <em>f814w'</em>, <em>'wfc3</em>, <em>ir</em>, <em>f139m'</em>, <em>'wfc3</em>, <em>ir</em>, <em>f160w'</em>, <em>'nirc2</em>, <em>J'</em>, <em>'ubv</em>, <em>R'</em>, <em>'ubv</em>, <em>V'</em>, <em>'ubv</em>, <em>I'</em>, <em>'nirc2</em>, <em>Kp'</em>, <em>'wfc3</em>, <em>ir</em>, <em>f127m'</em>, <em>'wfc3</em>, <em>ir</em>, <em>f153m'</em>, <em>'wfc3</em>, <em>ir</em>, <em>f125w'</em>, <em>'ubv</em>, <em>B'</em>, <em>'nirc2</em>, <em>H'}</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.IsochronePhot" title="Permalink to this definition">¶</a></dt>
+<dd><p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#synthetic.IsochronePhot.make_photometry" title="synthetic.IsochronePhot.make_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_photometry</span></code></a>([rebin,&nbsp;vega])</td>
+<td>Make synthetic photometry for the specified filters.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#synthetic.IsochronePhot.plot_CMD" title="synthetic.IsochronePhot.plot_CMD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_CMD</span></code></a>(mag1,&nbsp;mag2[,&nbsp;savefile])</td>
+<td>Make a CMD with mag1 vs.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_HR_diagram</span></code>([savefile])</td>
+<td>Make a standard HR diagram for this isochrone.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_mass_luminosity</span></code>([savefile])</td>
+<td>Make a standard mass-luminosity relation plot for this isochrone.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_mass_magnitude</span></code>(mag[,&nbsp;savefile])</td>
+<td>Make a standard mass-luminosity relation plot for this isochrone.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="44%" />
+<col width="56%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>trim</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="synthetic.IsochronePhot.make_photometry">
+<code class="descname">make_photometry</code><span class="sig-paren">(</span><em>rebin=True</em>, <em>vega=&lt;pysynphot.spectrum.CompositeSourceSpectrum object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.IsochronePhot.make_photometry" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make synthetic photometry for the specified filters. This function
+udpates the self.points table to include new columns with the
+photometry.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="synthetic.IsochronePhot.plot_CMD">
+<code class="descname">plot_CMD</code><span class="sig-paren">(</span><em>mag1</em>, <em>mag2</em>, <em>savefile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.IsochronePhot.plot_CMD" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a CMD with mag1 vs. mag1 - mag2</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>mag1</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">The name of the first magnitude column to be plotted.</p>
+</dd>
+<dt><strong>mag2</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
+<dd><p class="first last">The name of the second magnitude column to be plotted.</p>
+</dd>
+<dt><strong>savefile</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string (default None)</span></dt>
+<dd><p class="first last">If a savefile is specified, then the plot will be saved to that file.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="genindex.html" title="General Index"
+             >index</a></li>
+        <li class="right" >
+          <a href="more_examples.html" title="Further Examples"
+             >previous</a> |</li>
+        <li><a href="index.html">home</a>|&nbsp;</li>
+        <li><a href="search.html">search</a>|&nbsp;</li>
+ 
+      </ul>
+    </div>
+    <div class="footer" role="contentinfo">
+        &#169; Copyright 2019, Matt Hosek and Jessica Lu.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.7.7.
+    </div>
+  </body>
+</html>
