@@ -34,61 +34,25 @@ Available extinction laws:
 
 
   
-RedLawPowerLaw
+Extinction Law Classes
 --------------------------
-This define a power-law extinction law (A_lambda /propto lambda^-alpha).
 
-Inputs:
-
-alpha -- The power law exponent
-K_wave -- Define the specific Ks wavelength to normalize the law too (in angstoms) 
-wave_min, wave_max -- The shortward and longward bound of the extinction law (in angstroms)
-
-Example::
-
-  red_law = reddening.RedLawPowerLaw(2.21, 2.12, wave_min=0.8, wave_max = 3.0)
-
-This defines the reddening law as A_lambda / A_Ks = lambda^-2.12, where the Ks wavelength is taken to be 2.12 microns. The law is defined from 0.8 -- 3.0 microns.
+.. autoclass:: reddening.RedLawPowerLaw
+	       :members: powerlaw
 
 
-RedLawCardelli
------------------------------
-Defines the extinction law of `Cardelli et al. 1989 <https://ui.adsabs.harvard.edu//#abs/1989ApJ...345..245C/abstract>`_
 
-Wave range: 0.5 - 3.0 microns
+.. autoclass:: reddening.RedLawCardelli
+	       :members: Cardelli89
 
-Inputs:
+.. autoclass:: reddening.RedLawDamineli16
+	       :members: Damineli16
 
-Rv -- The Cardelli+89 R_v parameter (R_v = 3.1 for average Milky Way ISM)
-
-
-RedLawDamineli16
-----------------------------
-Defines the extinction law of `Damineli et al. 2016
-<https://ui.adsabs.harvard.edu//#abs/2016MNRAS.463.2653D/abstract>`_
-derived for Wd1
-
-Wave range: 0.5 - 8.0 microns
-
-RedLawDeMarchi16
-----------------------------
-Defines extinction law from `De Marchi et al. 2016
-<https://ui.adsabs.harvard.edu//#abs/2016MNRAS.455.4373D/abstract>`_
-derived for 30 Dorodus.
-
-Wave range: 0.3 - 8 microns
-
-
-RedLawFitzpatrick09
-----------------------------
-Defines the extinction law from `Fitzpactrick et al. 2009 <https://ui.adsabs.harvard.edu//#abs/2009ApJ...699.1209F/abstract>`_
-
-Wave range: 0.3 - 3 microns
-
-Inputs:
-
-alpha -- free parameter in law (see their Eqn 5)
-RV -- free parameter in law (see their Eqn 5)
+.. autoclass:: reddening.RedLawDeMarchi16
+	       :members: DeMarchi16
+			 
+.. autoclass:: reddening.RedLawFitzpatrick09
+	       :members: Fitzpatrick09
 
 RedLawFritz11
 -----------------------------
