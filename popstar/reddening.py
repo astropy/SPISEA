@@ -11,6 +11,59 @@ import pysynphot
 from scipy.linalg import solve_banded
 import pdb
 
+
+def get_red_law(str):
+    """
+    Given a reddening law name, return the reddening
+    law object.
+
+    Parameters:
+    ----------
+    str: str
+        Reddening law name and additional params (comma-separated).
+        Name must match 
+    """
+    # Parse the string, extracting redlaw name and other params
+    tmp = str.split(',')
+    name = tmp[0]
+    params = ()
+    if len(tmp) > 1:
+        for ii in range(len(tmp) - 1):
+            params = params + (float(tmp[ii+1]),)
+
+    # Define dictionary connecting redlaw names to the redlaw classes
+    name_dict = {'N09':RedLawNishiyama09,
+                     'C89': RedLawCardelli,
+                     'RZ07': RedLawRomanZuniga07,
+                     'RL85': RedLawRiekeLebofsky,
+                     'D16': RedLawDamineli16,
+                     'DM16': RedLawDeMarchi16,
+                     'F09': RedLawFitzpatrick09,
+                     'S16': RedLawSchlafly16,
+                     'pl': RedLawPowerLaw,
+                     'F11': RedLawFritz11,
+                     'H18': RedLawHosek18,
+                     'H18b': RedLawHosek18b,
+                     'NL18': RedLawNoguerasLara18}
+
+    # Make reddening law object, including params if necessary.
+    # This is not great coding, but I really strugged to generalize this...
+    if len(params) == 0:
+        red_law = name_dict[name]()
+    elif len(params) == 1:
+        red_law = name_dict[name](params[0])
+    elif len(params) == 2:
+        red_law = name_dict[name](params[0], params[1])
+    elif len(params) == 3:
+        red_law = name_dict[name](params[0], params[1], params[2])
+    elif len(params) == 4:
+        red_law = name_dict[name](params[0], params[1], params[2], params[3])
+    else:
+        mes = 'Redlaw contains more params than reddening.get_red_law currently supports'
+        raise ValueError(mes)
+
+    return red_law
+
 class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
     """
     An object that represents the reddening vs. wavelength for the 
@@ -170,7 +223,7 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
-        self.name = 'C89'
+        self.name = 'C89,{0}'.format(Rv)
 
     @staticmethod
     def _derive_cardelli(wavelength, Rv):
@@ -694,7 +747,7 @@ class RedLawFitzpatrick09(pysynphot.reddening.CustomRedLaw):
         
         # This will eventually be scaled by AK when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawFitzpactrick09._derive_Fitzpatrick09(wave, alpha, RV)
+        Alambda_scaled = RedLawFitzpatrick09._derive_Fitzpatrick09(wave, alpha, RV)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -702,13 +755,13 @@ class RedLawFitzpatrick09(pysynphot.reddening.CustomRedLaw):
         pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
                                                   waveunits='angstrom',
                                                   Avscaled=Alambda_scaled,
-                                                  name='Fitzpactrick09',
-                                                  litref='Fitzpactrick+ 2009')
+                                                  name='Fitzpatrick09',
+                                                  litref='Fitzpatrick+ 2009')
 
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
-        self.name = 'F09'
+        self.name = 'F09,{0},{1}'.format(alpha, RV)
 
     @staticmethod
     def _derive_Fitzpatrick09(wavelength, alpha, RV):
@@ -816,7 +869,7 @@ class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
-        self.name = 'S16'
+        self.name = 'S16,{0},{1}'.format(AH_AKs,x)
 
     @staticmethod
     def derive_Schlafly16(wavelength, AH_AKs, x):
@@ -1008,7 +1061,7 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
-        self.name = 'pl'
+        self.name = 'pl,{0},{1},{2},{3}'.format(alpha,K_wave,wave_min,wave_max)
 
     @staticmethod
     def _derive_powerlaw(wavelength, alpha, K_wave):
