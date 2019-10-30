@@ -35,6 +35,9 @@ Example
 IsochronePhot
 =================
 
+.. autofunction:: synthetic.calc_ab_vega_filter_conversion
 
+.. autoclass:: synthetic.IsochronePhot
+	       :members: make_photometry, plot_CMD
 
 

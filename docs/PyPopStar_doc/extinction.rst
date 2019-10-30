@@ -33,6 +33,7 @@ Available extinction laws:
 * RedLawSchlafly16
 
 
+  
 RedLawPowerLaw
 --------------------------
 This define a power-law extinction law (A_lambda /propto lambda^-alpha).

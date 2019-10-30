@@ -533,20 +533,22 @@ class Isochrone(object):
         """
         Parameters
         ----------
-        logAge : float
+        logAge: float
             The log of the age of the isochrone.
-        AKs : float
+        AKs: float
             The extinction in units if A_Ks (mag).
-        distance : float
+        distance: float
             The distance in pc.
-        metallicity : float
+        metallicity: float
             The metallicity in [M/H]
-        evModel : model cl
-        mass_sampling - Sample the raw isochrone every ## steps. The default
-                       is mass_sampling = 10, which takes every 10th point.
-                       The isochrones are already very finely sampled. Must be
-                       an integer value.
-        wave_range : list
+        ev0_model: model evolution model
+            Specify the evolution model you want to use
+        mass_sampling: int
+            Sample the raw isochrone every ## steps. The default
+            is mass_sampling = 10, which takes every 10th point.
+            The isochrones are already very finely sampled. Must be
+            an integer value.
+        wave_range: list
             length=2 list with the wavelength min/max of the final spectra.
             Units are Angstroms. 
         min_mass: float or None
@@ -716,23 +718,14 @@ class IsochronePhot(Isochrone):
                           'ubv,R', 'ubv,I'}):
 
         """
-        Make an isochrone with photometry in various filters.
-
-        Description
-        -----------
         Make an isochrone with photometry in various filters. Load from file
         or save to file if possible.
 
-        Parameters
+        Attributes
         ---------- 
         rebin: boolean (default=True)
             If true, rebins the filter functions such that they have no more than 1500 pts
-            over the non-zero throughput region
-
-
-        Returns
-        -------
-                 
+            over the non-zero throughput region                 
         """
         # Make and input/output file name for the stored isochrone photometry.
         # For solar metallicity case, allow for legacy isochrones (which didn't have

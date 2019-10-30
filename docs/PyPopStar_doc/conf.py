@@ -11,12 +11,13 @@
 # All configuration values have a default; values that are commented out
 # serve to show the default.
 
-import sys, os
+import sys, os, pdb
 
 # If your extensions are in another directory, add it here. If the directory
 # is relative to the documentation root, use os.path.abspath to make it
 # absolute, like shown here.
-# sys.path.append(os.path.abspath('sphinxext'))
+#sys.path.append(os.path.abspath('popstar'))
+sys.path.append('/Users/mwhosek/code/python/PyPopStar/popstar')
 
 # -- General configuration -----------------------------------------------------
 
@@ -30,7 +31,8 @@ extensions = ['matplotlib.sphinxext.only_directives',
               'sphinx.ext.autodoc',
               'sphinx.ext.doctest',
               'sphinx.ext.inheritance_diagram',
-              'numpydoc']
+              'numpydoc',
+              'sphinx.ext.autodoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
@@ -45,8 +47,8 @@ source_suffix = '.rst'
 master_doc = 'index'
 
 # General information about the project.
-project = u'sampledoc'
-copyright = u'2009, John Hunter, Fernando Perez, Michael Droettboom'
+project = u'PyPopStar'
+copyright = u'2019, Matt Hosek and Jessica Lu'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
