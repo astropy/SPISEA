@@ -16,7 +16,6 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Stellar Multiplicity Object" href="multiplicity.html" />
     <link rel="prev" title="Atmosphere Model Object" href="atmo_models.html" /> 
   </head><body>
 
@@ -31,9 +30,6 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="multiplicity.html" title="Stellar Multiplicity Object"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
           <a href="atmo_models.html" title="Atmosphere Model Object"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
@@ -44,12 +40,20 @@
 
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">IMF Object</a><ul>
+<li><a class="reference internal" href="#base-imf-class">Base IMF Class</a></li>
+<li><a class="reference internal" href="#broken-power-law-imfs">Broken Power-Law IMFs</a><ul>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+
   <h4>Previous topic</h4>
   <p class="topless"><a href="atmo_models.html"
                         title="previous chapter">Atmosphere Model Object</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="multiplicity.html"
-                        title="next chapter">Stellar Multiplicity Object</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -79,7 +83,580 @@
             
   <div class="section" id="imf-object">
 <span id="imf-objects"></span><h1>IMF Object<a class="headerlink" href="#imf-object" title="Permalink to this headline">¶</a></h1>
-<p>[under construction]</p>
+<div class="section" id="base-imf-class">
+<h2>Base IMF Class<a class="headerlink" href="#base-imf-class" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="imf.imf.IMF">
+<em class="property">class </em><code class="descclassname">imf.imf.</code><code class="descname">IMF</code><span class="sig-paren">(</span><em>massLimits=array([1.0e-01</em>, <em>1.5e+02])</em>, <em>multiplicity=None</em><span class="sig-paren">)</span><a class="headerlink" href="#imf.imf.IMF" title="Permalink to this definition">¶</a></dt>
+<dd><p>The IMF base class. The mass sampling and multiplicity 
+implementation is here.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>massLimits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">2 element array; optional</span></dt>
+<dd><p class="first last">Define the minimum and maximum stellar masses in the IMF, in 
+solar masses. First element is taken as the min, second element 
+the max (e.g. <cite>massLimits</cite> = [min_mass, max_mass]).</p>
+</dd>
+<dt><strong>multiplicity</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Multiplicity object or None</span></dt>
+<dd><p class="first last">If None, no multiplicity is assumed. Otherwise, use 
+multiplicity object to create multiple star systems.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Code author: J. Lu.</p>
+<p>Original code was taken from libimf package written by Jan Pflamm-Altenburg
+(<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2006MNRAS.373..295P/abstract">Pflamm-Altenburg &amp; Kroupa 2006</a>)
+and has been modified only marginally, though more convinient and general purpose
+functions have been added. The libimf code was licensed under
+a GNU General Public License.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#imf.imf.IMF.calc_multi" title="imf.imf.IMF.calc_multi"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_multi</span></code></a>(newMasses,&nbsp;compMasses,&nbsp;…)</td>
+<td>Helper function to calculate multiples more efficiently.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#imf.imf.IMF.generate_cluster" title="imf.imf.IMF.generate_cluster"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_cluster</span></code></a>(totalMass[,&nbsp;set_random_seed])</td>
+<td>Generate a cluster of stellar systems with the specified IMF.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="imf.imf.IMF.calc_multi">
+<code class="descname">calc_multi</code><span class="sig-paren">(</span><em>newMasses</em>, <em>compMasses</em>, <em>newSystemMasses</em>, <em>newIsMultiple</em>, <em>CSF</em>, <em>MF</em><span class="sig-paren">)</span><a class="headerlink" href="#imf.imf.IMF.calc_multi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper function to calculate multiples more efficiently.
+We will use array operations as much as possible</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="imf.imf.IMF.generate_cluster">
+<code class="descname">generate_cluster</code><span class="sig-paren">(</span><em>totalMass</em>, <em>set_random_seed=False</em><span class="sig-paren">)</span><a class="headerlink" href="#imf.imf.IMF.generate_cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Generate a cluster of stellar systems with the specified IMF.</p>
+<p>Randomly sample from an IMF with specified mass
+limits until the desired total mass is reached. The maximum
+stellar mass is not allowed to exceed the total cluster mass.
+The simulated total mass will not be exactly equivalent to the
+desired total mass; but we will take one star above or below
+(whichever brings us closer to the desired total) the desired
+total cluster mass break point.</p>
+<p>Primary stars are sampled from the IMF, companions are generated
+based on the multiplicity properties provided.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>totalMass</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">The total mass of the cluster (including companions) in solar masses.</p>
+</dd>
+<dt><strong>set_random_seed: boolean</strong></dt>
+<dd><p class="first last">If true, sets the random seed for the stellar mass generation. This
+is for debugging purposes</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="broken-power-law-imfs">
+<h2>Broken Power-Law IMFs<a class="headerlink" href="#broken-power-law-imfs" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="imf.imf.IMF_broken_powerlaw">
+<em class="property">class </em><code class="descclassname">imf.imf.</code><code class="descname">IMF_broken_powerlaw</code><span class="sig-paren">(</span><em>mass_limits</em>, <em>powers</em>, <em>multiplicity=None</em><span class="sig-paren">)</span><a class="headerlink" href="#imf.imf.IMF_broken_powerlaw" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#imf.imf.IMF" title="imf.imf.IMF"><code class="xref py py-class docutils literal notranslate"><span class="pre">imf.imf.IMF</span></code></a></p>
+<p>Initialize a multi-part power-law with N parts. Each part of the
+power-law is described with a probability density function:</p>
+<blockquote>
+<div>P(m) propto m ** power[n]</div></blockquote>
+<p>for mass_limits[n] &lt; m &lt;= mass_limits[n+1].</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>mass_limits</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy array</span></dt>
+<dd><p class="first last">Array of length (N + 1) with lower and upper limits of 
+the power-law segments.</p>
+</dd>
+<dt><strong>coefficients</strong> <span class="classifier-delimiter">:</span> <span class="classifier">numpy array</span></dt>
+<dd><p class="first last">Array of length N that contains the powers for each
+power-law segment.</p>
+</dd>
+<dt><strong>multiplicity</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Multiplicity object or None</span></dt>
+<dd><p class="first last">If None, no multiplicity is assumed. Otherwise, use 
+multiplicity object to create multiple star systems.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_multi</span></code>(newMasses,&nbsp;compMasses,&nbsp;…)</td>
+<td>Helper function to calculate multiples more efficiently.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">dice_star_cl</span></code>(r)</td>
+<td>Given a list of random numbers (r), return a list of masses selected from the IMF.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_cluster</span></code>(totalMass[,&nbsp;set_random_seed])</td>
+<td>Generate a cluster of stellar systems with the specified IMF.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMassBetween</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated mass between some low and high  mass value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getProbabilityBetween</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated probability between some low and high  mass value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_mxi</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated total mass between some low and high stellar mass value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_xi</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated probability between some low and high  mass value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">m_xi</span></code>(m)</td>
+<td>Mass-weighted probability m*xi</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code>(Mcl[,&nbsp;Mmin,&nbsp;Mmax])</td>
+<td>Normalize the IMF to a total cluster mass within a specified minimum and maximum stellar mass range.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">xi</span></code>(m)</td>
+<td>Probability density describing the IMF.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="62%" />
+<col width="38%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>int_mxi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>int_xi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>mxi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>norm_cl_wk04</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>prim_mxi</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>prim_xi</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>xi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="imf.imf.IMFSalpeter1955">
+<em class="property">class </em><code class="descclassname">imf.imf.</code><code class="descname">IMFSalpeter1955</code><span class="sig-paren">(</span><em>multiplicity=None</em><span class="sig-paren">)</span><a class="headerlink" href="#imf.imf.IMFSalpeter1955" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#imf.imf.IMF_broken_powerlaw" title="imf.imf.IMF_broken_powerlaw"><code class="xref py py-class docutils literal notranslate"><span class="pre">imf.imf.IMF_broken_powerlaw</span></code></a></p>
+<p>Define IMF from <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/1955ApJ...121..161S/abstract">Salpeter (1955)</a>.
+Mass range is 0.4 M_sun - 10 M_sun.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_multi</span></code>(newMasses,&nbsp;compMasses,&nbsp;…)</td>
+<td>Helper function to calculate multiples more efficiently.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">dice_star_cl</span></code>(r)</td>
+<td>Given a list of random numbers (r), return a list of masses selected from the IMF.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_cluster</span></code>(totalMass[,&nbsp;set_random_seed])</td>
+<td>Generate a cluster of stellar systems with the specified IMF.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMassBetween</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated mass between some low and high  mass value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getProbabilityBetween</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated probability between some low and high  mass value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_mxi</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated total mass between some low and high stellar mass value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_xi</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated probability between some low and high  mass value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">m_xi</span></code>(m)</td>
+<td>Mass-weighted probability m*xi</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code>(Mcl[,&nbsp;Mmin,&nbsp;Mmax])</td>
+<td>Normalize the IMF to a total cluster mass within a specified minimum and maximum stellar mass range.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">xi</span></code>(m)</td>
+<td>Probability density describing the IMF.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="62%" />
+<col width="38%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>int_mxi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>int_xi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>mxi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>norm_cl_wk04</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>prim_mxi</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>prim_xi</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>xi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="imf.imf.Miller_Scalo_1979">
+<em class="property">class </em><code class="descclassname">imf.imf.</code><code class="descname">Miller_Scalo_1979</code><span class="sig-paren">(</span><em>multiplicity=None</em><span class="sig-paren">)</span><a class="headerlink" href="#imf.imf.Miller_Scalo_1979" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#imf.imf.IMF_broken_powerlaw" title="imf.imf.IMF_broken_powerlaw"><code class="xref py py-class docutils literal notranslate"><span class="pre">imf.imf.IMF_broken_powerlaw</span></code></a></p>
+<p>Define IMF from <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/1979ApJS...41..513M/abstract">Miller &amp; Scalo (1979)</a>.
+Mass range is 0.1 M_sun - inf M_sun.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_multi</span></code>(newMasses,&nbsp;compMasses,&nbsp;…)</td>
+<td>Helper function to calculate multiples more efficiently.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">dice_star_cl</span></code>(r)</td>
+<td>Given a list of random numbers (r), return a list of masses selected from the IMF.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_cluster</span></code>(totalMass[,&nbsp;set_random_seed])</td>
+<td>Generate a cluster of stellar systems with the specified IMF.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMassBetween</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated mass between some low and high  mass value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getProbabilityBetween</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated probability between some low and high  mass value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_mxi</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated total mass between some low and high stellar mass value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_xi</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated probability between some low and high  mass value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">m_xi</span></code>(m)</td>
+<td>Mass-weighted probability m*xi</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code>(Mcl[,&nbsp;Mmin,&nbsp;Mmax])</td>
+<td>Normalize the IMF to a total cluster mass within a specified minimum and maximum stellar mass range.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">xi</span></code>(m)</td>
+<td>Probability density describing the IMF.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="62%" />
+<col width="38%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>int_mxi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>int_xi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>mxi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>norm_cl_wk04</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>prim_mxi</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>prim_xi</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>xi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="imf.imf.Kennicutt_1983">
+<em class="property">class </em><code class="descclassname">imf.imf.</code><code class="descname">Kennicutt_1983</code><span class="sig-paren">(</span><em>multiplicity=None</em><span class="sig-paren">)</span><a class="headerlink" href="#imf.imf.Kennicutt_1983" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#imf.imf.IMF_broken_powerlaw" title="imf.imf.IMF_broken_powerlaw"><code class="xref py py-class docutils literal notranslate"><span class="pre">imf.imf.IMF_broken_powerlaw</span></code></a></p>
+<p>Define IMF from <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/1983ApJ...272...54K/abstract">Kennicutt (1983)</a>.
+Mass range is 0.1 M_sun - inf M_sun.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_multi</span></code>(newMasses,&nbsp;compMasses,&nbsp;…)</td>
+<td>Helper function to calculate multiples more efficiently.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">dice_star_cl</span></code>(r)</td>
+<td>Given a list of random numbers (r), return a list of masses selected from the IMF.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_cluster</span></code>(totalMass[,&nbsp;set_random_seed])</td>
+<td>Generate a cluster of stellar systems with the specified IMF.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMassBetween</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated mass between some low and high  mass value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getProbabilityBetween</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated probability between some low and high  mass value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_mxi</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated total mass between some low and high stellar mass value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_xi</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated probability between some low and high  mass value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">m_xi</span></code>(m)</td>
+<td>Mass-weighted probability m*xi</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code>(Mcl[,&nbsp;Mmin,&nbsp;Mmax])</td>
+<td>Normalize the IMF to a total cluster mass within a specified minimum and maximum stellar mass range.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">xi</span></code>(m)</td>
+<td>Probability density describing the IMF.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="62%" />
+<col width="38%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>int_mxi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>int_xi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>mxi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>norm_cl_wk04</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>prim_mxi</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>prim_xi</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>xi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="imf.imf.Kroupa_2001">
+<em class="property">class </em><code class="descclassname">imf.imf.</code><code class="descname">Kroupa_2001</code><span class="sig-paren">(</span><em>multiplicity=None</em><span class="sig-paren">)</span><a class="headerlink" href="#imf.imf.Kroupa_2001" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#imf.imf.IMF_broken_powerlaw" title="imf.imf.IMF_broken_powerlaw"><code class="xref py py-class docutils literal notranslate"><span class="pre">imf.imf.IMF_broken_powerlaw</span></code></a></p>
+<p>Define IMF from <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2001MNRAS.322..231K/abstract">Kroupa (2001)</a>.
+Mass range is 0.01 M_sun - inf M_sun.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_multi</span></code>(newMasses,&nbsp;compMasses,&nbsp;…)</td>
+<td>Helper function to calculate multiples more efficiently.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">dice_star_cl</span></code>(r)</td>
+<td>Given a list of random numbers (r), return a list of masses selected from the IMF.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_cluster</span></code>(totalMass[,&nbsp;set_random_seed])</td>
+<td>Generate a cluster of stellar systems with the specified IMF.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMassBetween</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated mass between some low and high  mass value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getProbabilityBetween</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated probability between some low and high  mass value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_mxi</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated total mass between some low and high stellar mass value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_xi</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated probability between some low and high  mass value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">m_xi</span></code>(m)</td>
+<td>Mass-weighted probability m*xi</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code>(Mcl[,&nbsp;Mmin,&nbsp;Mmax])</td>
+<td>Normalize the IMF to a total cluster mass within a specified minimum and maximum stellar mass range.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">xi</span></code>(m)</td>
+<td>Probability density describing the IMF.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="62%" />
+<col width="38%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>int_mxi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>int_xi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>mxi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>norm_cl_wk04</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>prim_mxi</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>prim_xi</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>xi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="imf.imf.Weidner_Kroupa_2004">
+<em class="property">class </em><code class="descclassname">imf.imf.</code><code class="descname">Weidner_Kroupa_2004</code><span class="sig-paren">(</span><em>multiplicity=None</em><span class="sig-paren">)</span><a class="headerlink" href="#imf.imf.Weidner_Kroupa_2004" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#imf.imf.IMF_broken_powerlaw" title="imf.imf.IMF_broken_powerlaw"><code class="xref py py-class docutils literal notranslate"><span class="pre">imf.imf.IMF_broken_powerlaw</span></code></a></p>
+<p>Define IMF from <a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2004MNRAS.348..187W/abstract">Weidner &amp; Kroupa (2004)</a>.
+Mass range is 0.01 M_sun - inf M_sun.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">calc_multi</span></code>(newMasses,&nbsp;compMasses,&nbsp;…)</td>
+<td>Helper function to calculate multiples more efficiently.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">dice_star_cl</span></code>(r)</td>
+<td>Given a list of random numbers (r), return a list of masses selected from the IMF.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_cluster</span></code>(totalMass[,&nbsp;set_random_seed])</td>
+<td>Generate a cluster of stellar systems with the specified IMF.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getMassBetween</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated mass between some low and high  mass value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">getProbabilityBetween</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated probability between some low and high  mass value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_mxi</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated total mass between some low and high stellar mass value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">int_xi</span></code>(massLo,&nbsp;massHi)</td>
+<td>Return the integrated probability between some low and high  mass value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">m_xi</span></code>(m)</td>
+<td>Mass-weighted probability m*xi</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize</span></code>(Mcl[,&nbsp;Mmin,&nbsp;Mmax])</td>
+<td>Normalize the IMF to a total cluster mass within a specified minimum and maximum stellar mass range.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">xi</span></code>(m)</td>
+<td>Probability density describing the IMF.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="62%" />
+<col width="38%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>int_mxi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>int_xi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>mxi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>norm_cl_wk04</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>prim_mxi</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>prim_xi</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-odd"><td><strong>xi_cl</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -94,9 +671,6 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li class="right" >
-          <a href="multiplicity.html" title="Stellar Multiplicity Object"
-             >next</a> |</li>
         <li class="right" >
           <a href="atmo_models.html" title="Atmosphere Model Object"
              >previous</a> |</li>

@@ -43,11 +43,8 @@
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Isochrone Object</a><ul>
-<li><a class="reference internal" href="#isochrone">Isochrone</a><ul>
-<li><a class="reference internal" href="#example">Example</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#isochronephot">IsochronePhot</a></li>
+<li><a class="reference internal" href="#base-isochrone-class">Base Isochrone Class</a></li>
+<li><a class="reference internal" href="#isochrone-sub-classes">Isochrone Sub-classes</a></li>
 </ul>
 </li>
 </ul>
@@ -84,70 +81,234 @@
             
   <div class="section" id="isochrone-object">
 <span id="isochrone-objects"></span><h1>Isochrone Object<a class="headerlink" href="#isochrone-object" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="isochrone">
-<h2>Isochrone<a class="headerlink" href="#isochrone" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt>
-<code class="descname">class Isochrone(params)</code></dt>
-<dd><p>Create a theoretical cluster isochrone.</p>
+<div class="section" id="base-isochrone-class">
+<h2>Base Isochrone Class<a class="headerlink" href="#base-isochrone-class" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="synthetic.Isochrone">
+<em class="property">class </em><code class="descclassname">synthetic.</code><code class="descname">Isochrone</code><span class="sig-paren">(</span><em>logAge, AKs, distance, metallicity=0.0, evo_model=&lt;popstar.evolution.MISTv1 object&gt;, atm_func=&lt;function get_merged_atmosphere&gt;, wd_atm_func=&lt;function get_wd_atmosphere&gt;, red_law=&lt;popstar.reddening.RedLawNishiyama09 object&gt;, mass_sampling=1, wave_range=[3000, 52000], min_mass=None, max_mass=None, rebin=True</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.Isochrone" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base Isochrone class.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>logAge</strong> – The age of the isochrone, in log(years)</li>
-<li><strong>AKs</strong> – The extinction of the isochrone, in magnitudes in the Ks filter</li>
-<li><strong>distance</strong> – The distance to the isochrone, in parsecs</li>
-<li><strong>metallicity</strong> – The metallicity of the isochrone, in [M/H]</li>
-<li><strong>evo_models</strong> – The stellar evolution models used (<a class="reference internal" href="evo_models.html#evo-models"><span class="std std-ref">Evolution Model Object</span></a>)</li>
-<li><strong>atm_func</strong> – The stellar atmosphere models used (<a class="reference internal" href="atmo_models.html#atmo-models"><span class="std std-ref">Atmosphere Model Object</span></a>)</li>
-<li><strong>red_law</strong> – The extinction law to be used (<a class="reference internal" href="extinction.html#ext-law"><span class="std std-ref">Extinction Law Object</span></a>)</li>
-<li><strong>mass_sampling</strong> – Sample the raw isochrone at every N
-points, where N=mass_sampling. Must be an
-integer value.</li>
-<li><strong>wave_range</strong> – A list of length=2 that defines the min/max
-wavelength of the stellar spectra.</li>
-<li><strong>min_mass</strong> – Set the minimum mass of the isochone, in M_sun</li>
-<li><strong>max_mass</strong> – Set the maximum mass of the isochone, in M_sun</li>
-<li><strong>rebin</strong> – If true, rebin the resolution of the atmospheres so
-they are the same as the Castelli+04 atmospheres</li>
-</ul>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>logAge</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">The age of the isochrone, in log(years)</p>
+</dd>
+<dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">The total extinction in Ks filter, in magnitudes</p>
+</dd>
+<dt><strong>distance</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">The distance of the isochrone, in pc</p>
+</dd>
+<dt><strong>metallicity</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
+<dd><p class="first last">The metallicity of the isochrone, in [M/H].
+Default is 0.</p>
+</dd>
+<dt><strong>evo_model: model evolution class, optional</strong></dt>
+<dd><p class="first last">Set the stellar evolution model class. 
+Default is evolution.MISTv1().</p>
+</dd>
+<dt><strong>atm_func: model atmosphere function, optional</strong></dt>
+<dd><p class="first last">Set the stellar atmosphere models for the stars. 
+Default is get_merged_atmosphere.</p>
+</dd>
+<dt><strong>wd_atm_func: white dwarf model atmosphere function, optional</strong></dt>
+<dd><p class="first last">Set the stellar atmosphere models for the white dwafs. 
+Default is get_wd_atmosphere</p>
+</dd>
+<dt><strong>mass_sampling</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">Sample the raw isochrone every <cite>mass_sampling</cite> steps. The default
+is mass_sampling = 0, which is the native isochrone mass sampling 
+of the evolution model.</p>
+</dd>
+<dt><strong>wave_range</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list, optional</span></dt>
+<dd><p class="first last">length=2 list with the wavelength min/max of the final spectra.
+Units are Angstroms. Default is [3000, 52000].</p>
+</dd>
+<dt><strong>min_mass</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or None, optional</span></dt>
+<dd><p class="first last">If float, defines the minimum mass in the isochrone.
+Unit is solar masses. Default is None</p>
+</dd>
+<dt><strong>max_mass</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or None, optional</span></dt>
+<dd><p class="first last">If float, defines the maxmimum mass in the isochrone.
+Units is solar masses. Default is None.</p>
+</dd>
+<dt><strong>rebin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">boolean, optional</span></dt>
+<dd><p class="first last">If true, rebins the atmospheres so that they are the same
+resolution as the Castelli+04 atmospheres. Default is False,
+which is often sufficient synthetic photometry in most cases.</p>
+</dd>
+</dl>
 </td>
 </tr>
 </tbody>
 </table>
-</dd></dl>
-
-<div class="section" id="example">
-<h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
-</div>
-</div>
-<div class="section" id="isochronephot">
-<h2>IsochronePhot<a class="headerlink" href="#isochronephot" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt id="synthetic.calc_ab_vega_filter_conversion">
-<code class="descclassname">synthetic.</code><code class="descname">calc_ab_vega_filter_conversion</code><span class="sig-paren">(</span><em>filt_str</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.calc_ab_vega_filter_conversion" title="Permalink to this definition">¶</a></dt>
-<dd><p>Function to calculate the conversion between
-AB and Vega magnitudes for a given filter:
-m_AB - m_vega</p>
-<p>Note: this conversion is just the vega magnitude in 
-AB system</p>
-</dd></dl>
-
-<dl class="class">
-<dt id="synthetic.IsochronePhot">
-<em class="property">class </em><code class="descclassname">synthetic.</code><code class="descname">IsochronePhot</code><span class="sig-paren">(</span><em>logAge</em>, <em>AKs</em>, <em>distance</em>, <em>metallicity=0.0</em>, <em>evo_model=&lt;popstar.evolution.MergedBaraffePisaEkstromParsec object&gt;</em>, <em>atm_func=&lt;function get_merged_atmosphere&gt;</em>, <em>wd_atm_func=&lt;function get_wd_atmosphere&gt;</em>, <em>red_law=&lt;popstar.reddening.RedLawNishiyama09 object&gt;</em>, <em>mass_sampling=1</em>, <em>iso_dir='./'</em>, <em>min_mass=None</em>, <em>max_mass=None</em>, <em>rebin=True</em>, <em>recomp=False</em>, <em>filters={'wfc3</em>, <em>ir</em>, <em>f125w'</em>, <em>'acs</em>, <em>wfc1</em>, <em>f814w'</em>, <em>'wfc3</em>, <em>ir</em>, <em>f127m'</em>, <em>'nirc2</em>, <em>Kp'</em>, <em>'ubv</em>, <em>I'</em>, <em>'nirc2</em>, <em>H'</em>, <em>'wfc3</em>, <em>ir</em>, <em>f139m'</em>, <em>'ubv</em>, <em>B'</em>, <em>'wfc3</em>, <em>ir</em>, <em>f153m'</em>, <em>'nirc2</em>, <em>J'</em>, <em>'ubv</em>, <em>U'</em>, <em>'wfc3</em>, <em>ir</em>, <em>f160w'</em>, <em>'ubv</em>, <em>V'</em>, <em>'ubv</em>, <em>R'}</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.IsochronePhot" title="Permalink to this definition">¶</a></dt>
-<dd><p class="rubric">Methods</p>
+<p class="rubric">Methods</p>
 <table border="1" class="longtable docutils">
 <colgroup>
 <col width="10%" />
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#synthetic.IsochronePhot.make_photometry" title="synthetic.IsochronePhot.make_photometry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_photometry</span></code></a>([rebin,&nbsp;vega])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#synthetic.Isochrone.plot_HR_diagram" title="synthetic.Isochrone.plot_HR_diagram"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_HR_diagram</span></code></a>([savefile])</td>
+<td>Make a standard HR diagram for this isochrone.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#synthetic.Isochrone.plot_mass_luminosity" title="synthetic.Isochrone.plot_mass_luminosity"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_mass_luminosity</span></code></a>([savefile])</td>
+<td>Make a standard mass-luminosity relation plot for this isochrone.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="44%" />
+<col width="56%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>trim</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="synthetic.Isochrone.plot_HR_diagram">
+<code class="descname">plot_HR_diagram</code><span class="sig-paren">(</span><em>savefile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.Isochrone.plot_HR_diagram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a standard HR diagram for this isochrone.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>savefile: path or None, optional</strong></dt>
+<dd><p class="first last">Path to file plot too, if desired. 
+Default is None</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="synthetic.Isochrone.plot_mass_luminosity">
+<code class="descname">plot_mass_luminosity</code><span class="sig-paren">(</span><em>savefile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.Isochrone.plot_mass_luminosity" title="Permalink to this definition">¶</a></dt>
+<dd><p>Make a standard mass-luminosity relation plot for this isochrone.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>savefile: path or None, optional</strong></dt>
+<dd><p class="first last">Path to file plot too, if desired. 
+Default is None</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+<div class="section" id="isochrone-sub-classes">
+<h2>Isochrone Sub-classes<a class="headerlink" href="#isochrone-sub-classes" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="synthetic.IsochronePhot">
+<em class="property">class </em><code class="descclassname">synthetic.</code><code class="descname">IsochronePhot</code><span class="sig-paren">(</span><em>logAge, AKs, distance, metallicity=0.0, evo_model=&lt;popstar.evolution.MISTv1 object&gt;, atm_func=&lt;function get_merged_atmosphere&gt;, wd_atm_func=&lt;function get_wd_atmosphere&gt;, red_law=&lt;popstar.reddening.RedLawNishiyama09 object&gt;, mass_sampling=1, iso_dir='./', min_mass=None, max_mass=None, rebin=True, recomp=False, filters=['ubv,U', 'ubv,B', 'ubv,V', 'ubv,R', 'ubv,I']</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.IsochronePhot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#synthetic.Isochrone" title="synthetic.Isochrone"><code class="xref py py-class docutils literal notranslate"><span class="pre">synthetic.Isochrone</span></code></a></p>
+<p>Make an isochrone with synthetic photometry in various filters. 
+Load from file if possible.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>logAge</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">The age of the isochrone, in log(years)</p>
+</dd>
+<dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">The total extinction in Ks filter, in magnitudes</p>
+</dd>
+<dt><strong>distance</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">The distance of the isochrone, in pc</p>
+</dd>
+<dt><strong>metallicity</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float, optional</span></dt>
+<dd><p class="first last">The metallicity of the isochrone, in [M/H].
+Default is 0.</p>
+</dd>
+<dt><strong>evo_model: model evolution class, optional</strong></dt>
+<dd><p class="first last">Set the stellar evolution model class. 
+Default is evolution.MISTv1().</p>
+</dd>
+<dt><strong>atm_func: model atmosphere function, optional</strong></dt>
+<dd><p class="first last">Set the stellar atmosphere models for the stars. 
+Default is atmospheres.get_merged_atmosphere.</p>
+</dd>
+<dt><strong>wd_atm_func: white dwarf model atmosphere function, optional</strong></dt>
+<dd><p class="first last">Set the stellar atmosphere models for the white dwafs. 
+Default is atmospheres.get_wd_atmosphere</p>
+</dd>
+<dt><strong>red_law</strong> <span class="classifier-delimiter">:</span> <span class="classifier">reddening law object, optional</span></dt>
+<dd><p class="first last">Define the reddening law for the synthetic photometry.
+Default is reddening.RedLawNishiyama09().</p>
+</dd>
+<dt><strong>iso_dir</strong> <span class="classifier-delimiter">:</span> <span class="classifier">path, optional</span></dt>
+<dd><p class="first last">Path to isochrone directory. Code will check isochrone
+directory to see if isochrone file already exists; if it 
+does, it will just read the isochrone. If the isochrone 
+file doesn’t exist, then save isochrone to the isochrone
+directory.</p>
+</dd>
+<dt><strong>mass_sampling</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int, optional</span></dt>
+<dd><p class="first last">Sample the raw isochrone every <cite>mass_sampling</cite> steps. The default
+is mass_sampling = 0, which is the native isochrone mass sampling 
+of the evolution model.</p>
+</dd>
+<dt><strong>wave_range</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list, optional</span></dt>
+<dd><p class="first last">length=2 list with the wavelength min/max of the final spectra.
+Units are Angstroms. Default is [3000, 52000].</p>
+</dd>
+<dt><strong>min_mass</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or None, optional</span></dt>
+<dd><p class="first last">If float, defines the minimum mass in the isochrone.
+Unit is solar masses. Default is None</p>
+</dd>
+<dt><strong>max_mass</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or None, optional</span></dt>
+<dd><p class="first last">If float, defines the maxmimum mass in the isochrone.
+Units is solar masses. Default is None.</p>
+</dd>
+<dt><strong>rebin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">boolean, optional</span></dt>
+<dd><p class="first last">If true, rebins the atmospheres so that they are the same
+resolution as the Castelli+04 atmospheres. Default is False,
+which is often sufficient synthetic photometry in most cases.</p>
+</dd>
+<dt><strong>recomp</strong> <span class="classifier-delimiter">:</span> <span class="classifier">boolean, optional</span></dt>
+<dd><p class="first last">If true, recalculate the isochrone photometry even if 
+the savefile exists</p>
+</dd>
+<dt><strong>filters</strong> <span class="classifier-delimiter">:</span> <span class="classifier">array of strings, optional</span></dt>
+<dd><p class="first last">Define what filters the synthetic photometry
+will be calculated for, via the filter string 
+identifier.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_photometry</span></code>([rebin,&nbsp;vega])</td>
 <td>Make synthetic photometry for the specified filters.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#synthetic.IsochronePhot.plot_CMD" title="synthetic.IsochronePhot.plot_CMD"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_CMD</span></code></a>(mag1,&nbsp;mag2[,&nbsp;savefile])</td>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_CMD</span></code>(mag1,&nbsp;mag2[,&nbsp;savefile])</td>
 <td>Make a CMD with mag1 vs.</td>
 </tr>
 <tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_HR_diagram</span></code>([savefile])</td>
@@ -172,39 +333,6 @@ AB system</p>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="synthetic.IsochronePhot.make_photometry">
-<code class="descname">make_photometry</code><span class="sig-paren">(</span><em>rebin=True</em>, <em>vega=&lt;pysynphot.spectrum.CompositeSourceSpectrum object&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.IsochronePhot.make_photometry" title="Permalink to this definition">¶</a></dt>
-<dd><p>Make synthetic photometry for the specified filters. This function
-udpates the self.points table to include new columns with the
-photometry.</p>
-</dd></dl>
-
-<dl class="method">
-<dt id="synthetic.IsochronePhot.plot_CMD">
-<code class="descname">plot_CMD</code><span class="sig-paren">(</span><em>mag1</em>, <em>mag2</em>, <em>savefile=None</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.IsochronePhot.plot_CMD" title="Permalink to this definition">¶</a></dt>
-<dd><p>Make a CMD with mag1 vs. mag1 - mag2</p>
-<table class="docutils field-list" frame="void" rules="none">
-<col class="field-name" />
-<col class="field-body" />
-<tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
-<dt><strong>mag1</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd><p class="first last">The name of the first magnitude column to be plotted.</p>
-</dd>
-<dt><strong>mag2</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string</span></dt>
-<dd><p class="first last">The name of the second magnitude column to be plotted.</p>
-</dd>
-<dt><strong>savefile</strong> <span class="classifier-delimiter">:</span> <span class="classifier">string (default None)</span></dt>
-<dd><p class="first last">If a savefile is specified, then the plot will be saved to that file.</p>
-</dd>
-</dl>
-</td>
-</tr>
-</tbody>
-</table>
-</dd></dl>
-
 </dd></dl>
 
 </div>

@@ -28,7 +28,7 @@ import warnings
 import pdb
 from scipy.spatial import cKDTree as KDTree
 
-default_evo_model = evolution.MergedBaraffePisaEkstromParsec()
+default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
 default_wd_atm_func = atm.get_wd_atmosphere
@@ -528,44 +528,65 @@ class UnresolvedCluster(Cluster):
         return
         
 class Isochrone(object):
+    """
+    Base Isochrone class. 
+
+    Parameters
+    ----------
+    logAge : float
+        The age of the isochrone, in log(years)
+
+    AKs : float
+        The total extinction in Ks filter, in magnitudes
+
+    distance : float
+        The distance of the isochrone, in pc
+
+    metallicity : float, optional
+        The metallicity of the isochrone, in [M/H].
+        Default is 0.
+
+    evo_model: model evolution class, optional
+        Set the stellar evolution model class. 
+        Default is evolution.MISTv1().
+
+    atm_func: model atmosphere function, optional
+        Set the stellar atmosphere models for the stars. 
+        Default is get_merged_atmosphere.
+
+    wd_atm_func: white dwarf model atmosphere function, optional
+        Set the stellar atmosphere models for the white dwafs. 
+        Default is get_wd_atmosphere   
+
+    mass_sampling : int, optional
+        Sample the raw isochrone every `mass_sampling` steps. The default
+        is mass_sampling = 0, which is the native isochrone mass sampling 
+        of the evolution model.
+
+    wave_range : list, optional
+        length=2 list with the wavelength min/max of the final spectra.
+        Units are Angstroms. Default is [3000, 52000].
+
+    min_mass : float or None, optional
+        If float, defines the minimum mass in the isochrone.
+        Unit is solar masses. Default is None
+
+    max_mass : float or None, optional
+        If float, defines the maxmimum mass in the isochrone.
+        Units is solar masses. Default is None.
+
+    rebin : boolean, optional
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.
+    """
     def __init__(self, logAge, AKs, distance, metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1,
                  wave_range=[3000, 52000], min_mass=None, max_mass=None,
                  rebin=True):
-        """
-        Parameters
-        ----------
-        logAge: float
-            The log of the age of the isochrone.
-        AKs: float
-            The extinction in units if A_Ks (mag).
-        distance: float
-            The distance in pc.
-        metallicity: float
-            The metallicity in [M/H]
-        ev0_model: model evolution model
-            Specify the evolution model you want to use
-        mass_sampling: int
-            Sample the raw isochrone every ## steps. The default
-            is mass_sampling = 10, which takes every 10th point.
-            The isochrones are already very finely sampled. Must be
-            an integer value.
-        wave_range: list
-            length=2 list with the wavelength min/max of the final spectra.
-            Units are Angstroms. 
-        min_mass: float or None
-            If float, defines the minimum mass in the isochrone.
-            Units: solar masses
-        max_mass: float or None
-            If float, defines the maxmimum mass in the isochrone.
-            Units: solar masses
-        rebin: boolean
-            If true, rebins the atmospheres so that they are the same
-            resolution as the Castelli+04 atmospheres
-            
-        """
+
 
         t1 = time.time()
         
@@ -670,6 +691,12 @@ class Isochrone(object):
     def plot_HR_diagram(self, savefile=None):
         """
         Make a standard HR diagram for this isochrone.
+
+        Parameters
+        -----------
+        savefile: path or None, optional
+             Path to file plot too, if desired. 
+             Default is None
         """
         plt.clf()
         plt.loglog(self.points['Teff'], self.points['L'],
@@ -691,6 +718,12 @@ class Isochrone(object):
     def plot_mass_luminosity(self, savefile=None):
         """
         Make a standard mass-luminosity relation plot for this isochrone.
+
+        Parameters
+        -----------
+        savefile: path or None, optional
+             Path to file plot too, if desired. 
+             Default is None
         """
         plt.clf()
         plt.loglog(self.points['mass'], self.points['L'], 'k.')
@@ -708,29 +741,88 @@ class Isochrone(object):
         return
 
 class IsochronePhot(Isochrone):
+    """
+    Make an isochrone with synthetic photometry in various filters. 
+    Load from file if possible. 
+
+    Parameters
+    ----------
+    logAge : float
+        The age of the isochrone, in log(years)
+
+    AKs : float
+        The total extinction in Ks filter, in magnitudes
+
+    distance : float
+        The distance of the isochrone, in pc
+
+    metallicity : float, optional
+        The metallicity of the isochrone, in [M/H].
+        Default is 0.
+
+    evo_model: model evolution class, optional
+        Set the stellar evolution model class. 
+        Default is evolution.MISTv1().
+
+    atm_func: model atmosphere function, optional
+        Set the stellar atmosphere models for the stars. 
+        Default is atmospheres.get_merged_atmosphere.
+
+    wd_atm_func: white dwarf model atmosphere function, optional
+        Set the stellar atmosphere models for the white dwafs. 
+        Default is atmospheres.get_wd_atmosphere   
+
+    red_law : reddening law object, optional
+        Define the reddening law for the synthetic photometry.
+        Default is reddening.RedLawNishiyama09().
+
+    iso_dir : path, optional
+         Path to isochrone directory. Code will check isochrone
+         directory to see if isochrone file already exists; if it 
+         does, it will just read the isochrone. If the isochrone 
+         file doesn't exist, then save isochrone to the isochrone
+         directory.
+
+    mass_sampling : int, optional
+        Sample the raw isochrone every `mass_sampling` steps. The default
+        is mass_sampling = 0, which is the native isochrone mass sampling 
+        of the evolution model.
+
+    wave_range : list, optional
+        length=2 list with the wavelength min/max of the final spectra.
+        Units are Angstroms. Default is [3000, 52000].
+
+    min_mass : float or None, optional
+        If float, defines the minimum mass in the isochrone.
+        Unit is solar masses. Default is None
+
+    max_mass : float or None, optional
+        If float, defines the maxmimum mass in the isochrone.
+        Units is solar masses. Default is None.
+
+    rebin : boolean, optional
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.
+
+    recomp : boolean, optional
+        If true, recalculate the isochrone photometry even if 
+        the savefile exists
+
+    filters : array of strings, optional
+        Define what filters the synthetic photometry
+        will be calculated for, via the filter string 
+        identifier. 
+    """
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False, 
-                 filters={'wfc3,ir,f127m', 'wfc3,ir,f139m',
-                          'wfc3,ir,f153m', 'acs,wfc1,f814w',
-                          'wfc3,ir,f125w', 'wfc3,ir,f160w',
-                          'nirc2,J', 'nirc2,H', 'nirc2,Kp',
-                          'ubv,U', 'ubv,B', 'ubv,V',
-                          'ubv,R', 'ubv,I'}):
+                 filters=['ubv,U', 'ubv,B', 'ubv,V',
+                          'ubv,R', 'ubv,I']):
 
-        """
-        Make an isochrone with photometry in various filters. Load from file
-        or save to file if possible.
-
-        Attributes
-        ---------- 
-        rebin: boolean (default=True)
-            If true, rebins the filter functions such that they have no more than 1500 pts
-            over the non-zero throughput region                 
-        """
         # Make and input/output file name for the stored isochrone photometry.
         # For solar metallicity case, allow for legacy isochrones (which didn't have
         # metallicity tag since they were all solar metallicity) to be read

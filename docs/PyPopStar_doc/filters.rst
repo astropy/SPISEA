@@ -2,7 +2,18 @@
 Photometric Filters
 ========================
 
-When calling synthetic.IsochronePhot, the user can specify the filters used for synthetic photometry. Each filter is identified by a unique string, and an array of such strings are passed into the <filters> variable (see Quick_Start_Make_Cluster.ipynb for example). These strings follow the format "<telescope/filter_set>,<filter>." Note that there is no space after the comma, and case matters.
+When calling ``synthetic.IsochronePhot`` [ADD LINK], the user can
+specify the filters used for synthetic photometry. Each filter is
+identified by a unique string, and an array of such strings are passed
+into the ``filters`` variable in the Isochrone call. For example::
+    # Use the HST WFC3-IR F127M and F153M filters, along with NIRC2 Kp
+    >>> filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f153m', 'nirc2,Kp']
+    >>> my_iso = synthetic.IsochronePhot(logAge, AKs, dist, metallicity=0,
+                            evo_model=evo_model, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list)
+    
+These strings follow the format ``<telescope/filter_set>,<filter>``.
+Note that there is no space after the comma, and case matters.
 
 Available filters:
 
@@ -28,7 +39,7 @@ These filter functions are stored in the PopStar/filt_func directory.
 `Two-Micron Sky Survey <https://old.ipac.caltech.edu/2mass/>`_
 Filters: J, H, Ks
 
-Example: '2mass,H'
+Example: ``'2mass,H'``
 
 
 CTIO_OSIRIS
@@ -36,7 +47,7 @@ CTIO_OSIRIS
 `OSIRIS imager <http://www.ctio.noao.edu/soar/content/ohio-state-infrared-imagerspectrograph-osiris>`_ on the CTIO telescope 
 Filters: H, K
 
-Example: 'ctio_osiris,H'
+Example: ``'ctio_osiris,H'``
 
 
 DeCam
@@ -44,14 +55,14 @@ DeCam
 `Dark Energy Camera <http://www.ctio.noao.edu/noao/content/DECam-filter-information>`_
 Filters: u, g, r, i, z, Y
 
-Example: 'decam,r'
+Example: ``'decam,r'``
 
 
 Hubble Space Telescope
 -------------------------------
 HST filters are defined by their `pysynphot OBSMODE strings <https://pysynphot.readthedocs.io/en/latest/appendixb.html#pysynphot-appendixb>`_. Note that the pysynphot cdbs/comp directory must be downloaded in order for this to work.
 
-Example: WFC3-IR F125W filter: 'wfc3,ir,f125w'
+Example: ``'wfc3,ir,f125w'``
 
 
 Johnson-Cousins
@@ -59,14 +70,14 @@ Johnson-Cousins
 Johnson-Cousin filters (downloaded from http://www.aip.de/en/research/facilities/stella/instruments/data/johnson-ubvri-filter-curves)
 Filters: U, B, V, R, I
 
-Example: 'ubv,B'
+Example: ``'ubv,B'``
 
 Johnson-Glass
 --------------------------
 Johnson-Glass passbands taken from `Bessell et al. 1988 <https://ui.adsabs.harvard.edu//#abs/1988PASP..100.1134B/abstract>`_
 Filters: J, H, K
 
-Example: 'jg,K'
+Example: ``'jg,K'``
 
 JWST
 ---------
@@ -74,7 +85,7 @@ JWST NIRCam filters, downloaded from `NIRCam website <https://jwst-docs.stsci.ed
 
 Filters: F070W, F090W,  F115W, F140M, F150W, F150W2, F162M, F164N, F182M, F187N, F200W, F210M, F212N, F250M, F277W, F300M, F322W2, F323N, F335M, F356W, F360M, F405N, F410M, F430M,  F444W, F460M, F466N, F470N, F480M, 
 
-Example: 'jwst,F356W'
+Example: ``'jwst,F356W'``
 						
 
 Keck NIRC
@@ -82,7 +93,7 @@ Keck NIRC
 `NIRC1 filters <https://www2.keck.hawaii.edu/inst/nirc/>`_ on the Keck Telescope
 Filters: H, K
 
-Example: 'nirc1,H'
+Example: ``'nirc1,H'``
 
 
 Keck NIRC2
@@ -91,7 +102,7 @@ Keck NIRC2
 on the Keck Telescope ()
 Filters: J, H, Hcont, K, Kp, Ks, Kcont, Lp, Ms, Brgamma, FeII
 
-Example: 'nirc2,Ks'
+Example: ``'nirc2,Ks'``
 
 
 NACO
@@ -99,7 +110,7 @@ NACO
 `ESO NACO filters <https://www.eso.org/sci/facilities/paranal/instruments/naco/inst/filters.html>`_
 Filters: J, H, Ks
 
-Example: 'naco,H'
+Example: ``'naco,H'``
 
 
 PanStarrs1
@@ -107,7 +118,7 @@ PanStarrs1
 PanStarrs 1 filters from `Tonry et al. 2012 <https://ui.adsabs.harvard.edu/#abs/arXiv:1203.0297>`_
 Filters: g, r, i, z, y
 
-Example: 'ps1, g'
+Example: ``'ps1, g'``
 
 
 UKIRT
@@ -115,7 +126,7 @@ UKIRT
 UKIRT Telescope (http://www.ukidss.org/technical/photom/photom.html)
 Filters: J, H, K
 
-Example: 'ukirt,K'
+Example: ``'ukirt,K'``
 
 
 VISTA
@@ -123,14 +134,16 @@ VISTA
 `VISTA Telescope <http://casu.ast.cam.ac.uk/surveys-projects/vista/technical/filter-set>`_
 Filters: Z, Y, J, H, K
 
-Example: "vista,Y"
+Example: ``'vista,Y'``
 
 
 GAIA
 ----------
 The `GAIA Space Telescope filters <https://www.cosmos.esa.int/web/gaia/iow_20180316>`_.
 Note that three sets are available: the pre-launch passbands used in DR1
-(Jordi+10), the passbands used for the DR2 published photometry, and
+(`Jordi+10
+<https://ui.adsabs.harvard.edu/abs/2010A%26A...523A..48J/abstract>`_),
+the passbands used for the DR2 published photometry, and
 the *revised* DR2 passbands based on the DR2 data (October 2017). The
 user specifies which one they want by 'dr1', 'dr2', or 'dr2_rev', respectively.
 
@@ -138,4 +151,4 @@ To calculate synthetic fluxes, the dr2_rev passbands are advised.
 
 Filters: G, Gbp, Grp
 
-Example: 'gaia,dr2_rev,G'
+Example (gaia G filter from revised DR2 passbands): ``'gaia,dr2_rev,G'``

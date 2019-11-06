@@ -46,15 +46,6 @@
 <li><a class="reference internal" href="#extinction-law-classes">Extinction Law Classes</a><ul>
 </ul>
 </li>
-<li><a class="reference internal" href="#redlawfitzpatrick09">RedLawFitzpatrick09</a></li>
-<li><a class="reference internal" href="#redlawfritz11">RedLawFritz11</a></li>
-<li><a class="reference internal" href="#redlawhosek18">RedLawHosek18</a></li>
-<li><a class="reference internal" href="#redlawhosek18b">RedLawHosek18b</a></li>
-<li><a class="reference internal" href="#redlawnishiyama09">RedLawNishiyama09</a></li>
-<li><a class="reference internal" href="#redlawnogueraslara18">RedLawNoguerasLara18</a></li>
-<li><a class="reference internal" href="#redlawromanzuniga07">RedLawRomanZuniga07</a></li>
-<li><a class="reference internal" href="#redlawriekelebofsky">RedLawRiekeLebofsky</a></li>
-<li><a class="reference internal" href="#redlawschlafly16">RedLawSchlafly16</a></li>
 </ul>
 </li>
 </ul>
@@ -100,7 +91,9 @@
 The output is a <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/ref_api.html#module-pysynphot.extinction">pysynphot.reddening.CustomRedLaw</a>
 oject.
 The reddening law is reported in terms of A_lambda / A_Ks, and thus is normalized to A_Ks = 1.</p>
-<p>The red_law object is passed into the Isochrone object in order to define the extinction for all of the stars. See Quick_Start_Make_Cluster for an example.</p>
+<p>The red_law object is passed into the Isochrone object in order to
+define the extinction for the stars. See
+Quick_Start_Make_Cluster for an example.</p>
 <p>Available extinction laws:</p>
 <ul class="simple">
 <li>RedLawPowerLaw</li>
@@ -130,18 +123,30 @@ where <span class="math notranslate nohighlight">\(A_{\lambda} / A_{Ks} = 1\)</s
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">red_law</span> <span class="o">=</span> <span class="n">reddening</span><span class="o">.</span><span class="n">RedLawPowerLaw</span><span class="p">(</span><span class="mf">2.21</span><span class="p">,</span> <span class="mf">2.12</span><span class="p">,</span> <span class="n">wave_min</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span> <span class="n">wave_max</span><span class="o">=</span><span class="mf">3.0</span><span class="p">)</span>
 </pre></div>
 </div>
-<dl class="docutils">
-<dt>alpha <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd>Exponent of the extinction power-law.</dd>
-<dt>K_wave <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd>Extinction law is normalized such that AKs = 1 at <cite>K_wave</cite>.</dd>
-<dt>wave_min <span class="classifier-delimiter">:</span> <span class="classifier">float; optional</span></dt>
-<dd>Minimum wavelength of the extinction law, in microns.
-Default is 0.5 microns.</dd>
-<dt>wave_max <span class="classifier-delimiter">:</span> <span class="classifier">float; optional</span></dt>
-<dd>Maximum wavelength of the extinction law, in microns.
-Default is 5.0 microns</dd>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>alpha</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Exponent of the extinction power-law.</p>
+</dd>
+<dt><strong>K_wave</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Extinction law is normalized such that AKs = 1 at <cite>K_wave</cite>.</p>
+</dd>
+<dt><strong>wave_min</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float; optional</span></dt>
+<dd><p class="first last">Minimum wavelength of the extinction law, in microns.
+Default is 0.5 microns.</p>
+</dd>
+<dt><strong>wave_max</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float; optional</span></dt>
+<dd><p class="first last">Maximum wavelength of the extinction law, in microns.
+Default is 5.0 microns</p>
+</dd>
 </dl>
+</td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Methods</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -189,11 +194,20 @@ extinction law and an overall <cite>AKs</cite> value.</p>
 <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/1989ApJ...345..245C/abstract">Cardelli et al. 1989</a>. 
 The law is defined from 0.3 - 3 microns, and in terms
 of <span class="math notranslate nohighlight">\(A_{\lambda} / A_{Ks}\)</span>, where Ks is 2.174 microns.</p>
-<dl class="docutils">
-<dt>Rv <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd>Ratio of absolute to selective extinction, <span class="math notranslate nohighlight">\(A(V) / E(B-V)\)</span>. 
-The standard value for the diffuse ISM is 3.1.</dd>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>Rv</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Ratio of absolute to selective extinction, <span class="math notranslate nohighlight">\(A(V) / E(B-V)\)</span>. 
+The standard value for the diffuse ISM is 3.1.</p>
+</dd>
 </dl>
+</td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Methods</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -248,7 +262,7 @@ derived for the Wd1 cluster. The law is derived between
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><a class="reference internal" href="#reddening.RedLawDamineli16.Damineli16" title="reddening.RedLawDamineli16.Damineli16"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Damineli16</span></code></a>(wavelength,&nbsp;AKs)</td>
-<td>Return the value of the extinction law at given wavelengths with a total overall extinction.</td>
+<td>Return the extinction at a given wavelength assuming the  extinction law and an overall <cite>AKs</cite> value.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reddening</span></code>(extval)</td>
 <td>Compute the reddening for the given extinction.</td>
@@ -258,18 +272,18 @@ derived for the Wd1 cluster. The law is derived between
 <dl class="method">
 <dt id="reddening.RedLawDamineli16.Damineli16">
 <code class="descname">Damineli16</code><span class="sig-paren">(</span><em>wavelength</em>, <em>AKs</em><span class="sig-paren">)</span><a class="headerlink" href="#reddening.RedLawDamineli16.Damineli16" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the value of the extinction law at given wavelengths
-with a total overall extinction.</p>
+<dd><p>Return the extinction at a given wavelength assuming the 
+extinction law and an overall <cite>AKs</cite> value.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
 <dt><strong>wavelength</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or array</span></dt>
-<dd><p class="first last">Wavelength to derive extinction for, in microns</p>
+<dd><p class="first last">Wavelength to return extinction for, in microns</p>
 </dd>
 <dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">in magnitudes</p>
+<dd><p class="first last">Total extinction in AKs, in mags</p>
 </dd>
 </dl>
 </td>
@@ -293,7 +307,7 @@ derived for 30 Dorodus. The law is defined between 0.3 - 8.0 microns.</p>
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><a class="reference internal" href="#reddening.RedLawDeMarchi16.DeMarchi16" title="reddening.RedLawDeMarchi16.DeMarchi16"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DeMarchi16</span></code></a>(wavelength,&nbsp;AK)</td>
-<td>Return the value of the extinction law at given wavelengths with a total overall extinction.</td>
+<td>Return the extinction at a given wavelength assuming the  extinction law and an overall <cite>AKs</cite> value.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reddening</span></code>(extval)</td>
 <td>Compute the reddening for the given extinction.</td>
@@ -303,18 +317,18 @@ derived for 30 Dorodus. The law is defined between 0.3 - 8.0 microns.</p>
 <dl class="method">
 <dt id="reddening.RedLawDeMarchi16.DeMarchi16">
 <code class="descname">DeMarchi16</code><span class="sig-paren">(</span><em>wavelength</em>, <em>AK</em><span class="sig-paren">)</span><a class="headerlink" href="#reddening.RedLawDeMarchi16.DeMarchi16" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the value of the extinction law at given wavelengths
-with a total overall extinction.</p>
+<dd><p>Return the extinction at a given wavelength assuming the 
+extinction law and an overall <cite>AKs</cite> value.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
 <dt><strong>wavelength</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or array</span></dt>
-<dd><p class="first last">Wavelength to derive extinction for, in microns</p>
+<dd><p class="first last">Wavelength to return extinction for, in microns</p>
 </dd>
-<dt><strong>AK</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">in magnitudes</p>
+<dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Total extinction in AKs, in mags</p>
 </dd>
 </dl>
 </td>
@@ -335,12 +349,22 @@ The law is defined between 0.3 – 3 microns.</p>
 free parameters: <span class="math notranslate nohighlight">\(lpha\)</span> and R(V). Averaged over 14 sight-lines,
 the authors generally find either <span class="math notranslate nohighlight">\(alpha\)</span> ~ 2.5, R(V) ~ 3, or 
 <span class="math notranslate nohighlight">\(alpha\)</span> ~ 1.8, R(V) ~ 5 (their Figure 6).</p>
-<dl class="docutils">
-<dt>alpha <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd>alpha parameter for extinction law.</dd>
-<dt>RV <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd>R(V) parameter for extinction law.</dd>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>alpha</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">alpha parameter for extinction law.</p>
+</dd>
+<dt><strong>RV</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">R(V) parameter for extinction law.</p>
+</dd>
 </dl>
+</td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Methods</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -349,7 +373,7 @@ the authors generally find either <span class="math notranslate nohighlight">\(a
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><a class="reference internal" href="#reddening.RedLawFitzpatrick09.Fitzpatrick09" title="reddening.RedLawFitzpatrick09.Fitzpatrick09"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Fitzpatrick09</span></code></a>(wavelength,&nbsp;AKs)</td>
-<td>Return the value of the extinction law at given wavelengths with a total overall extinction.</td>
+<td>Return the extinction at a given wavelength assuming the  extinction law and an overall <cite>AKs</cite> value.</td>
 </tr>
 <tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reddening</span></code>(extval)</td>
 <td>Compute the reddening for the given extinction.</td>
@@ -359,18 +383,18 @@ the authors generally find either <span class="math notranslate nohighlight">\(a
 <dl class="method">
 <dt id="reddening.RedLawFitzpatrick09.Fitzpatrick09">
 <code class="descname">Fitzpatrick09</code><span class="sig-paren">(</span><em>wavelength</em>, <em>AKs</em><span class="sig-paren">)</span><a class="headerlink" href="#reddening.RedLawFitzpatrick09.Fitzpatrick09" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return the value of the extinction law at given wavelengths
-with a total overall extinction.</p>
+<dd><p>Return the extinction at a given wavelength assuming the 
+extinction law and an overall <cite>AKs</cite> value.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
 <dt><strong>wavelength</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or array</span></dt>
-<dd><p class="first last">Wavelength to derive extinction for, in microns</p>
+<dd><p class="first last">Wavelength to return extinction for, in microns</p>
 </dd>
 <dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">in magnitudes</p>
+<dd><p class="first last">Total extinction in AKs, in mags</p>
 </dd>
 </dl>
 </td>
@@ -381,66 +405,391 @@ with a total overall extinction.</p>
 
 </dd></dl>
 
-</div>
-<div class="section" id="redlawfitzpatrick09">
-<h2>RedLawFitzpatrick09<a class="headerlink" href="#redlawfitzpatrick09" title="Permalink to this headline">¶</a></h2>
-<p>Defines the extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2009ApJ...699.1209F/abstract">Fitzpactrick et al. 2009</a></p>
-<p>Wave range: 0.3 - 3 microns</p>
-<p>Inputs:</p>
-<p>alpha – free parameter in law (see their Eqn 5)
-RV – free parameter in law (see their Eqn 5)</p>
-</div>
-<div class="section" id="redlawfritz11">
-<h2>RedLawFritz11<a class="headerlink" href="#redlawfritz11" title="Permalink to this headline">¶</a></h2>
-<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2011ApJ...737...73F/abstract">Fritz et al. 2011</a>
-for the Galactic Center.</p>
-<p>Wave range: 1.0 – 19 microns</p>
-</div>
-<div class="section" id="redlawhosek18">
-<h2>RedLawHosek18<a class="headerlink" href="#redlawhosek18" title="Permalink to this headline">¶</a></h2>
-<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2018ApJ...855...13H/abstract">Hosek et al. 2018</a>
-for the Arches Cluster and Wd1.</p>
-<p>Wave range: 0.7 - 3.54 microns</p>
-<p>NOTE: this law has revised to <span class="xref std std-ref">Hosek_new</span>, which should be used
-instead.</p>
-</div>
-<div class="section" id="redlawhosek18b">
-<h2>RedLawHosek18b<a class="headerlink" href="#redlawhosek18b" title="Permalink to this headline">¶</a></h2>
-<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2019ApJ...870...44H/abstract">Hosek et al. 2019</a>
-for the Arches cluster adn Wd1. This should be used rather than <span class="xref std std-ref">Hosek_old</span></p>
-<p>Wave range: 0.7 - 3.54 microns</p>
-</div>
-<div class="section" id="redlawnishiyama09">
-<h2>RedLawNishiyama09<a class="headerlink" href="#redlawnishiyama09" title="Permalink to this headline">¶</a></h2>
-<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2009ApJ...696.1407N/abstract">Nishiyama et al. 2009</a>
-toward the Galactic Center. This is the default extinction law.</p>
-<p>Wave range: 0.3 – 8.0 microns</p>
-</div>
-<div class="section" id="redlawnogueraslara18">
-<h2>RedLawNoguerasLara18<a class="headerlink" href="#redlawnogueraslara18" title="Permalink to this headline">¶</a></h2>
-<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2018A&amp;A...610A..83N/abstract">Nogueras-Lara et al. 2018</a>
-for the Galactic Center.</p>
-<p>Wave range: 0.8 - 2.5 microns</p>
-</div>
-<div class="section" id="redlawromanzuniga07">
-<h2>RedLawRomanZuniga07<a class="headerlink" href="#redlawromanzuniga07" title="Permalink to this headline">¶</a></h2>
-<p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2007ApJ...664..357R/abstract">Roman-Zuniga et al. 2007</a>
-for the dense cloud core Barnard 59.</p>
-<p>Wave range: 1.0 - 8.0 microns</p>
-</div>
-<div class="section" id="redlawriekelebofsky">
-<h2>RedLawRiekeLebofsky<a class="headerlink" href="#redlawriekelebofsky" title="Permalink to this headline">¶</a></h2>
-<p>Defines the extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/1985ApJ...288..618R/abstract">Rieke &amp; Lebofsky 1985</a>
-for the Galactic Center</p>
-<p>Wave range: 1 - 13 microns</p>
-</div>
-<div class="section" id="redlawschlafly16">
-<h2>RedLawSchlafly16<a class="headerlink" href="#redlawschlafly16" title="Permalink to this headline">¶</a></h2>
-<p>Defines the extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2016ApJ...821...78S/abstract">Schlafly et al. 2016</a></p>
-<p>Wave range: 0.5 - 8 microns</p>
-<p>Inputs:</p>
-<p>AH_AKs – Ratio of A_H / A_Ks, which sets the normalization of the law (see their Appendix)
-x – free parameter in extinction law (see their Eqn 6)</p>
+<dl class="class">
+<dt id="reddening.RedLawFritz11">
+<em class="property">class </em><code class="descclassname">reddening.</code><code class="descname">RedLawFritz11</code><a class="headerlink" href="#reddening.RedLawFritz11" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2011ApJ...737...73F/abstract">Fritz et al. 2011</a>
+for the Galactic Center. The law is defined from 1.0 – 19 microns.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#reddening.RedLawFritz11.Fritz11" title="reddening.RedLawFritz11.Fritz11"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Fritz11</span></code></a>(wavelength,&nbsp;AKs)</td>
+<td>Return the extinction at a given wavelength assuming the  extinction law and an overall <cite>AKs</cite> value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reddening</span></code>(extval)</td>
+<td>Compute the reddening for the given extinction.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="reddening.RedLawFritz11.Fritz11">
+<code class="descname">Fritz11</code><span class="sig-paren">(</span><em>wavelength</em>, <em>AKs</em><span class="sig-paren">)</span><a class="headerlink" href="#reddening.RedLawFritz11.Fritz11" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the extinction at a given wavelength assuming the 
+extinction law and an overall <cite>AKs</cite> value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wavelength</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or array</span></dt>
+<dd><p class="first last">Wavelength to return extinction for, in microns</p>
+</dd>
+<dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Total extinction in AKs, in mags</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="hosek-old"></span><dl class="class">
+<dt id="reddening.RedLawHosek18">
+<em class="property">class </em><code class="descclassname">reddening.</code><code class="descname">RedLawHosek18</code><a class="headerlink" href="#reddening.RedLawHosek18" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2018ApJ...855...13H/abstract">Hosek et al. 2018</a>
+for the Arches Cluster and Wd1. The law is defined between 
+0.7 - 3.54 microns.</p>
+<p>WARNING: DEPRECATED! This law has revised to RedLawHosek18b, which 
+should be used instead</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#reddening.RedLawHosek18.Hosek18" title="reddening.RedLawHosek18.Hosek18"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Hosek18</span></code></a>(wavelength,&nbsp;AKs)</td>
+<td>Return the extinction at a given wavelength assuming the  extinction law and an overall <cite>AKs</cite> value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reddening</span></code>(extval)</td>
+<td>Compute the reddening for the given extinction.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="reddening.RedLawHosek18.Hosek18">
+<code class="descname">Hosek18</code><span class="sig-paren">(</span><em>wavelength</em>, <em>AKs</em><span class="sig-paren">)</span><a class="headerlink" href="#reddening.RedLawHosek18.Hosek18" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the extinction at a given wavelength assuming the 
+extinction law and an overall <cite>AKs</cite> value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wavelength</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or array</span></dt>
+<dd><p class="first last">Wavelength to return extinction for, in microns</p>
+</dd>
+<dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Total extinction in AKs, in mags</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="hosek-new"></span><dl class="class">
+<dt id="reddening.RedLawHosek18b">
+<em class="property">class </em><code class="descclassname">reddening.</code><code class="descname">RedLawHosek18b</code><a class="headerlink" href="#reddening.RedLawHosek18b" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2019ApJ...870...44H/abstract">Hosek et al. 2019</a>
+for the Arches cluster and Wd1. This should be used over RedLawHosek18b.
+The law is derived between 0.7 - 3.54 microns</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#reddening.RedLawHosek18b.Hosek18b" title="reddening.RedLawHosek18b.Hosek18b"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Hosek18b</span></code></a>(wavelength,&nbsp;AKs)</td>
+<td>Return the extinction at a given wavelength assuming the  extinction law and an overall <cite>AKs</cite> value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reddening</span></code>(extval)</td>
+<td>Compute the reddening for the given extinction.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="reddening.RedLawHosek18b.Hosek18b">
+<code class="descname">Hosek18b</code><span class="sig-paren">(</span><em>wavelength</em>, <em>AKs</em><span class="sig-paren">)</span><a class="headerlink" href="#reddening.RedLawHosek18b.Hosek18b" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the extinction at a given wavelength assuming the 
+extinction law and an overall <cite>AKs</cite> value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wavelength</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or array</span></dt>
+<dd><p class="first last">Wavelength to return extinction for, in microns</p>
+</dd>
+<dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Total extinction in AKs, in mags</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="reddening.RedLawNishiyama09">
+<em class="property">class </em><code class="descclassname">reddening.</code><code class="descname">RedLawNishiyama09</code><a class="headerlink" href="#reddening.RedLawNishiyama09" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2009ApJ...696.1407N/abstract">Nishiyama et al. 2009</a>
+toward the Galactic Center. This is the default extinction law. 
+The law is defined between 0.5 – 8 microns.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#reddening.RedLawNishiyama09.Nishiyama09" title="reddening.RedLawNishiyama09.Nishiyama09"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Nishiyama09</span></code></a>(wavelength,&nbsp;AKs)</td>
+<td>Return the extinction at a given wavelength assuming the  extinction law and an overall <cite>AKs</cite> value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reddening</span></code>(extval)</td>
+<td>Compute the reddening for the given extinction.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="reddening.RedLawNishiyama09.Nishiyama09">
+<code class="descname">Nishiyama09</code><span class="sig-paren">(</span><em>wavelength</em>, <em>AKs</em><span class="sig-paren">)</span><a class="headerlink" href="#reddening.RedLawNishiyama09.Nishiyama09" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the extinction at a given wavelength assuming the 
+extinction law and an overall <cite>AKs</cite> value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wavelength</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or array</span></dt>
+<dd><p class="first last">Wavelength to return extinction for, in microns</p>
+</dd>
+<dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Total extinction in AKs, in mags</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="reddening.RedLawNoguerasLara18">
+<em class="property">class </em><code class="descclassname">reddening.</code><code class="descname">RedLawNoguerasLara18</code><a class="headerlink" href="#reddening.RedLawNoguerasLara18" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2018A&amp;A...610A..83N/abstract">Nogueras-Lara et al. 2018</a>
+for the Galactic Center. It is defined between 0.8 - 2.5 microns.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#reddening.RedLawNoguerasLara18.NoguerasLara18" title="reddening.RedLawNoguerasLara18.NoguerasLara18"><code class="xref py py-obj docutils literal notranslate"><span class="pre">NoguerasLara18</span></code></a>(wavelength,&nbsp;AKs)</td>
+<td>Return the extinction at a given wavelength assuming the  extinction law and an overall <cite>AKs</cite> value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">powerlaw</span></code>(wavelength,&nbsp;AKs)</td>
+<td>Return the extinction at a given wavelength assuming the  extinction law and an overall <cite>AKs</cite> value.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reddening</span></code>(extval)</td>
+<td>Compute the reddening for the given extinction.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="reddening.RedLawNoguerasLara18.NoguerasLara18">
+<code class="descname">NoguerasLara18</code><span class="sig-paren">(</span><em>wavelength</em>, <em>AKs</em><span class="sig-paren">)</span><a class="headerlink" href="#reddening.RedLawNoguerasLara18.NoguerasLara18" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the extinction at a given wavelength assuming the 
+extinction law and an overall <cite>AKs</cite> value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wavelength</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or array</span></dt>
+<dd><p class="first last">Wavelength to return extinction for, in microns</p>
+</dd>
+<dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Total extinction in AKs, in mags</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="reddening.RedLawRomanZuniga07">
+<em class="property">class </em><code class="descclassname">reddening.</code><code class="descname">RedLawRomanZuniga07</code><a class="headerlink" href="#reddening.RedLawRomanZuniga07" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2007ApJ...664..357R/abstract">Roman-Zuniga et al. 2007</a>
+for the dense cloud core Barnard 59. It is defined between 1.0 - 8.0
+microns.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#reddening.RedLawRomanZuniga07.RomanZuniga07" title="reddening.RedLawRomanZuniga07.RomanZuniga07"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RomanZuniga07</span></code></a>(wavelength,&nbsp;AKs)</td>
+<td>Return the extinction at a given wavelength assuming the  extinction law and an overall <cite>AKs</cite> value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reddening</span></code>(extval)</td>
+<td>Compute the reddening for the given extinction.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="reddening.RedLawRomanZuniga07.RomanZuniga07">
+<code class="descname">RomanZuniga07</code><span class="sig-paren">(</span><em>wavelength</em>, <em>AKs</em><span class="sig-paren">)</span><a class="headerlink" href="#reddening.RedLawRomanZuniga07.RomanZuniga07" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the extinction at a given wavelength assuming the 
+extinction law and an overall <cite>AKs</cite> value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wavelength</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or array</span></dt>
+<dd><p class="first last">Wavelength to return extinction for, in microns</p>
+</dd>
+<dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Total extinction in AKs, in mags</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="reddening.RedLawRiekeLebofsky">
+<em class="property">class </em><code class="descclassname">reddening.</code><code class="descname">RedLawRiekeLebofsky</code><a class="headerlink" href="#reddening.RedLawRiekeLebofsky" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/1985ApJ...288..618R/abstract">Rieke &amp; Lebofsky 1985</a>
+for the Galactic Center. The law is defined between 1.0 - 13 microns.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#reddening.RedLawRiekeLebofsky.RiekeLebofsky85" title="reddening.RedLawRiekeLebofsky.RiekeLebofsky85"><code class="xref py py-obj docutils literal notranslate"><span class="pre">RiekeLebofsky85</span></code></a>(wavelength,&nbsp;AKs)</td>
+<td>Return the extinction at a given wavelength assuming the  extinction law and an overall <cite>AKs</cite> value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reddening</span></code>(extval)</td>
+<td>Compute the reddening for the given extinction.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="reddening.RedLawRiekeLebofsky.RiekeLebofsky85">
+<code class="descname">RiekeLebofsky85</code><span class="sig-paren">(</span><em>wavelength</em>, <em>AKs</em><span class="sig-paren">)</span><a class="headerlink" href="#reddening.RedLawRiekeLebofsky.RiekeLebofsky85" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the extinction at a given wavelength assuming the 
+extinction law and an overall <cite>AKs</cite> value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wavelength</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or array</span></dt>
+<dd><p class="first last">Wavelength to return extinction for, in microns</p>
+</dd>
+<dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Total extinction in AKs, in mags</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="reddening.RedLawSchlafly16">
+<em class="property">class </em><code class="descclassname">reddening.</code><code class="descname">RedLawSchlafly16</code><span class="sig-paren">(</span><em>AH_AKs</em>, <em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#reddening.RedLawSchlafly16" title="Permalink to this definition">¶</a></dt>
+<dd><p>Defines the extinction law from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2016ApJ...821...78S/abstract">Schlafly et al. 2016</a>.
+The law is defined between 0.5 - 8 microns.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>AH_AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Ratio of A_H / A_Ks, which sets the normalization of the law (see Schlafly+16)</p>
+</dd>
+<dt><strong>x</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Free parameter in extinction law (see Schlafly+16, Eqn 6)</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#reddening.RedLawSchlafly16.Schlafly16" title="reddening.RedLawSchlafly16.Schlafly16"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Schlafly16</span></code></a>(wavelength,&nbsp;AKs)</td>
+<td>Return the extinction at a given wavelength assuming the  extinction law and an overall <cite>AKs</cite> value.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">reddening</span></code>(extval)</td>
+<td>Compute the reddening for the given extinction.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="reddening.RedLawSchlafly16.Schlafly16">
+<code class="descname">Schlafly16</code><span class="sig-paren">(</span><em>wavelength</em>, <em>AKs</em><span class="sig-paren">)</span><a class="headerlink" href="#reddening.RedLawSchlafly16.Schlafly16" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the extinction at a given wavelength assuming the 
+extinction law and an overall <cite>AKs</cite> value.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>wavelength</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float or array</span></dt>
+<dd><p class="first last">Wavelength to return extinction for, in microns</p>
+</dd>
+<dt><strong>AKs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
+<dd><p class="first last">Total extinction in AKs, in mags</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
 </div>
 </div>
 

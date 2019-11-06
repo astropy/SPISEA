@@ -21,10 +21,33 @@ import logging
 log = logging.getLogger('imf')
 
 class IMF(object):
+    """
+    The IMF base class. The mass sampling and multiplicity 
+    implementation is here. 
+
+    Notes
+    -----
+    Code author: J. Lu. 
+
+    Original code was taken from libimf package written by Jan Pflamm-Altenburg
+    (`Pflamm-Altenburg & Kroupa 2006 <https://ui.adsabs.harvard.edu/abs/2006MNRAS.373..295P/abstract>`_)
+    and has been modified only marginally, though more convinient and general purpose
+    functions have been added. The libimf code was licensed under
+    a GNU General Public License. 
+
+
+    Parameters
+    ----------
+    massLimits : 2 element array; optional
+        Define the minimum and maximum stellar masses in the IMF, in 
+        solar masses. First element is taken as the min, second element 
+        the max (e.g. `massLimits` = [min_mass, max_mass]).
+
+    multiplicity : Multiplicity object or None
+        If None, no multiplicity is assumed. Otherwise, use 
+        multiplicity object to create multiple star systems.
+    """
     def __init__(self, massLimits=np.array([0.1,150]), multiplicity=None):
-        """
-        The IMF base class. The multiplicity implementation is here.
-        """
         self._multi_props = multiplicity
         self._mass_limits = massLimits
 
@@ -265,25 +288,29 @@ class IMF(object):
         
     
 class IMF_broken_powerlaw(IMF):
+    """
+    Initialize a multi-part power-law with N parts. Each part of the
+    power-law is described with a probability density function:
+
+        P(m) \propto m ** power[n]
+
+    for mass_limits[n] < m <= mass_limits[n+1].
+
+    Parameters
+    ----------
+    mass_limits : numpy array
+        Array of length (N + 1) with lower and upper limits of 
+        the power-law segments.
+
+    coefficients : numpy array
+        Array of length N that contains the powers for each
+        power-law segment.
+
+    multiplicity : Multiplicity object or None
+        If None, no multiplicity is assumed. Otherwise, use 
+        multiplicity object to create multiple star systems.
+    """
     def __init__(self, mass_limits, powers, multiplicity=None):
-        """
-        Initialze a multi-part power-law with N parts. Each part of the
-        power-law is described with a probability density function:
-
-            `P(m) \propto m ** power[n]`  
-
-        for mass_limits[n] < m <= mass_limits[n+1].
-
-        Parameters
-        ----------
-        mass_limits : numpy array
-            Array of length (N + 1) with lower and upper limits of 
-            the power-law segments.
-
-        coefficients : numpy array
-            Array of length N that contains the powers for each
-            power-law segment.
-        """
         if len(mass_limits) != len(powers) + 1:
             msg = 'Incorrect specification of multi-part powerlaw.\n'
             msg += '    len(massLimts) != len(powers)+1\n'
@@ -579,6 +606,10 @@ class IMF_broken_powerlaw(IMF):
             return y * z
 
 class IMFSalpeter1955(IMF_broken_powerlaw):
+    """
+    Define IMF from `Salpeter (1955) <https://ui.adsabs.harvard.edu/abs/1955ApJ...121..161S/abstract>`_.
+    Mass range is 0.4 M_sun - 10 M_sun.
+    """
     def __init__(self, multiplicity=None):
 
         massLimits = np.array([0.40, 10.0])
@@ -589,6 +620,10 @@ class IMFSalpeter1955(IMF_broken_powerlaw):
 
 
 class Miller_Scalo_1979(IMF_broken_powerlaw):
+    """
+    Define IMF from `Miller & Scalo (1979) <https://ui.adsabs.harvard.edu/abs/1979ApJS...41..513M/abstract>`_.
+    Mass range is 0.1 M_sun - inf M_sun.
+    """
     def __init__(self, multiplicity=None):
         massLimits = np.array([0.1, 1, 10, np.inf])
         powers = np.array([-1.4, -2.5, -3.3])
@@ -597,6 +632,10 @@ class Miller_Scalo_1979(IMF_broken_powerlaw):
                                      multiplicity=multiplicity)
 
 class Kennicutt_1983(IMF_broken_powerlaw):
+    """
+    Define IMF from `Kennicutt (1983) <https://ui.adsabs.harvard.edu/abs/1983ApJ...272...54K/abstract>`_.
+    Mass range is 0.1 M_sun - inf M_sun.
+    """
     def __init__(self, multiplicity=None):
         massLimits = np.array([0.1, 1, np.inf])
         powers = np.array([-1.4, -2.5])
@@ -605,6 +644,10 @@ class Kennicutt_1983(IMF_broken_powerlaw):
                                      multiplicity=multiplicity)
 
 class Kroupa_2001(IMF_broken_powerlaw):
+    """
+    Define IMF from `Kroupa (2001) <https://ui.adsabs.harvard.edu/abs/2001MNRAS.322..231K/abstract>`_.
+    Mass range is 0.01 M_sun - inf M_sun.
+    """
     def __init__(self, multiplicity=None):
         massLimits = np.array([0.01, 0.08, 0.5, 1, np.inf])
         powers = np.array([-0.3, -1.3, -2.3, -2.3])
@@ -613,6 +656,10 @@ class Kroupa_2001(IMF_broken_powerlaw):
                                      multiplicity=multiplicity)
 
 class Weidner_Kroupa_2004(IMF_broken_powerlaw):
+    """
+    Define IMF from `Weidner & Kroupa (2004) <https://ui.adsabs.harvard.edu/abs/2004MNRAS.348..187W/abstract>`_.
+    Mass range is 0.01 M_sun - inf M_sun.
+    """
     def __init__(self, multiplicity=None):
         massLimits = np.array([0.01, 0.08, 0.5, 1, np.inf])
         powers = np.array([-0.3, -1.3, -2.3, -2.35])
