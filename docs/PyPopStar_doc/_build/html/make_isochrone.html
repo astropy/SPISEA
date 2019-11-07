@@ -81,6 +81,21 @@
             
   <div class="section" id="isochrone-object">
 <span id="isochrone-objects"></span><h1>Isochrone Object<a class="headerlink" href="#isochrone-object" title="Permalink to this headline">¶</a></h1>
+<p>The isochrone classes are defined in popstar/synthetic.py. The primary
+inputs to a isochrone object is the stellar population age, distance,
+and metallicity, along with the <a class="reference internal" href="atmo_models.html#atmo-models"><span class="std std-ref">Atmosphere Model Object</span></a> and
+<a class="reference internal" href="evo_models.html#evo-models"><span class="std std-ref">Evolution Model Object</span></a>.</p>
+<p>If the IsochronePhot sub-class is used, then synthetic photometry
+will be produced. Additional inputs such as total extinction,
+<a class="reference internal" href="extinction.html#ext-law"><span class="std std-ref">Extinction Law Object</span></a>, and <a class="reference internal" href="filters.html#filters"><span class="std std-ref">Photometric Filters</span></a> can be defined.</p>
+<p>To define an isochrone:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">popstar</span> <span class="k">import</span> <span class="n">synthetic</span>
+<span class="n">iso</span> <span class="o">=</span> <span class="n">synthetic</span><span class="o">.&lt;</span><span class="n">Isochrone_class</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>See <a class="reference external" href="https://github.com/astropy/PyPopStar/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb">Quick Start Example</a>
+for a detailed example for how to make an isochrone and interact with
+the output.</p>
 <div class="section" id="base-isochrone-class">
 <h2>Base Isochrone Class<a class="headerlink" href="#base-isochrone-class" title="Permalink to this headline">¶</a></h2>
 <dl class="class">

@@ -16,8 +16,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Evolution Model Object" href="evo_models.html" />
-    <link rel="prev" title="Isochrone Object" href="make_isochrone.html" /> 
+    <link rel="next" title="Evolution Model Object" href="evo_models.html" /> 
   </head><body>
 
 <div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
@@ -33,9 +32,6 @@
         <li class="right" >
           <a href="evo_models.html" title="Evolution Model Object"
              accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="make_isochrone.html" title="Isochrone Object"
-             accesskey="P">previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
  
@@ -47,19 +43,12 @@
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Cluster Object</a><ul>
-<li><a class="reference internal" href="#resolvedcluster">ResolvedCluster</a><ul>
-<li><a class="reference internal" href="#example">Example</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#resolvedclusterdiffredden">ResolvedClusterDiffRedden</a></li>
-<li><a class="reference internal" href="#clusterunresolved">ClusterUnresolved</a></li>
+<li><a class="reference internal" href="#base-cluster-class">Base Cluster Class</a></li>
+<li><a class="reference internal" href="#cluster-sub-classes">Cluster Sub-classes</a></li>
 </ul>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="make_isochrone.html"
-                        title="previous chapter">Isochrone Object</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="evo_models.html"
                         title="next chapter">Evolution Model Object</a></p>
@@ -92,40 +81,213 @@
             
   <div class="section" id="cluster-object">
 <span id="cluster-objects"></span><h1>Cluster Object<a class="headerlink" href="#cluster-object" title="Permalink to this headline">¶</a></h1>
-<div class="section" id="resolvedcluster">
-<h2>ResolvedCluster<a class="headerlink" href="#resolvedcluster" title="Permalink to this headline">¶</a></h2>
-<dl class="function">
-<dt>
-<code class="descname">class Isochrone(params)</code></dt>
-<dd><p>Simulate a star cluster.</p>
+<p>The cluster classes are defined in popstar/synthetic.py. The primary
+inputs to a cluster object is the cluster mass,
+<a class="reference internal" href="make_isochrone.html#isochrone-objects"><span class="std std-ref">Isochrone Object</span></a>, and <a class="reference internal" href="imf.html#imf-objects"><span class="std std-ref">IMF Object</span></a>.  In addition, an
+<a class="reference internal" href="ifmr.html#ifmr-objects"><span class="std std-ref">IFMR Object</span></a> may be defined to produce compact stellar remnants.</p>
+<p>To make a cluster:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">popstar</span> <span class="k">import</span> <span class="n">synthetic</span>
+<span class="n">clust</span> <span class="o">=</span> <span class="n">synthetic</span><span class="o">.&lt;</span><span class="n">Cluster_class</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>See <a class="reference external" href="https://github.com/astropy/PyPopStar/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb">Quick Start Example</a>
+for a detailed example for how to make a cluster with the different
+sub-classes and interact with the subsequent output.</p>
+<div class="section" id="base-cluster-class">
+<h2>Base Cluster Class<a class="headerlink" href="#base-cluster-class" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="synthetic.Cluster">
+<em class="property">class </em><code class="descclassname">synthetic.</code><code class="descname">Cluster</code><span class="sig-paren">(</span><em>iso</em>, <em>imf</em>, <em>cluster_mass</em>, <em>ifmr=None</em>, <em>verbose=False</em>, <em>set_random_seed=False</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.Cluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class to create a cluster with user-specified isochrone,
+imf, ifmr, and total mass.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>iso</strong> – The theoretical cluster isochrone (<a class="reference internal" href="make_isochrone.html#isochrone-objects"><span class="std std-ref">Isochrone Object</span></a>)</li>
-<li><strong>imf</strong> – The initial mass function (<a class="reference internal" href="imf.html#imf-objects"><span class="std std-ref">IMF Object</span></a>)</li>
-<li><strong>cluster_mass</strong> – The cluster mass, in M_sun</li>
-<li><strong>ifmr</strong> – The initial-final mass relation (<a class="reference internal" href="ifmr.html#ifmr-objects"><span class="std std-ref">IFMR Object</span></a>)</li>
-<li><strong>set_random_seed</strong> – If true, then set random seed of IMF
-sampling</li>
-<li><strong>verbose</strong> – If true, print out additional info</li>
-</ul>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>iso: isochrone object</strong></dt>
+<dd><p class="first last">PyPopStar isochrone object</p>
+</dd>
+<dt><strong>imf: imf object</strong></dt>
+<dd><p class="first last">PyPopStar IMF object</p>
+</dd>
+<dt><strong>cluster_mass: float</strong></dt>
+<dd><p class="first last">Total initial mass of the cluster, in M_sun</p>
+</dd>
+<dt><strong>ifmr: ifmr object or None</strong></dt>
+<dd><p class="first last">If ifmr object is defined, will create compact remnants
+produced by the cluster at the given isochrone age. Otherwise,
+no compact remnants are produced.</p>
+</dd>
+<dt><strong>set_random_seed: boolean</strong></dt>
+<dd><p class="first last">If true, then random seed is set for all random processes</p>
+</dd>
+<dt><strong>vebose: boolean</strong></dt>
+<dd><p class="first last">True for verbose output.</p>
+</dd>
+</dl>
 </td>
 </tr>
 </tbody>
 </table>
 </dd></dl>
 
-<div class="section" id="example">
-<h3>Example<a class="headerlink" href="#example" title="Permalink to this headline">¶</a></h3>
 </div>
-</div>
-<div class="section" id="resolvedclusterdiffredden">
-<h2>ResolvedClusterDiffRedden<a class="headerlink" href="#resolvedclusterdiffredden" title="Permalink to this headline">¶</a></h2>
-</div>
-<div class="section" id="clusterunresolved">
-<h2>ClusterUnresolved<a class="headerlink" href="#clusterunresolved" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="cluster-sub-classes">
+<h2>Cluster Sub-classes<a class="headerlink" href="#cluster-sub-classes" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="synthetic.ResolvedCluster">
+<em class="property">class </em><code class="descclassname">synthetic.</code><code class="descname">ResolvedCluster</code><span class="sig-paren">(</span><em>iso</em>, <em>imf</em>, <em>cluster_mass</em>, <em>ifmr=None</em>, <em>verbose=True</em>, <em>set_random_seed=False</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.ResolvedCluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#synthetic.Cluster" title="synthetic.Cluster"><code class="xref py py-class docutils literal notranslate"><span class="pre">synthetic.Cluster</span></code></a></p>
+<p>Cluster sub-class that produces a <em>resolved</em> stellar cluster.
+A table is output with the synthetic photometry and intrinsic 
+properties of the individual stars (or stellar systems, if 
+mutliplicity is used in the IMF object).</p>
+<p>If multiplicity is used, than a second table is produced that 
+contains the properties of the companion stars independent of their
+primary stars.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>iso: isochrone object</strong></dt>
+<dd><p class="first last">PyPopStar isochrone object</p>
+</dd>
+<dt><strong>imf: imf object</strong></dt>
+<dd><p class="first last">PyPopStar IMF object</p>
+</dd>
+<dt><strong>cluster_mass: float</strong></dt>
+<dd><p class="first last">Total initial mass of the cluster, in M_sun</p>
+</dd>
+<dt><strong>ifmr: ifmr object or None</strong></dt>
+<dd><p class="first last">If ifmr object is defined, will create compact remnants
+produced by the cluster at the given isochrone age. Otherwise,
+no compact remnants are produced.</p>
+</dd>
+<dt><strong>set_random_seed: boolean</strong></dt>
+<dd><p class="first last">If true, then random seed is set for all random processes</p>
+</dd>
+<dt><strong>vebose: boolean</strong></dt>
+<dd><p class="first last">True for verbose output.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="67%" />
+<col width="33%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>save_to_file</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>set_filter_names</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="synthetic.ResolvedClusterDiffRedden">
+<em class="property">class </em><code class="descclassname">synthetic.</code><code class="descname">ResolvedClusterDiffRedden</code><span class="sig-paren">(</span><em>iso</em>, <em>imf</em>, <em>cluster_mass</em>, <em>deltaAKs</em>, <em>ifmr=None</em>, <em>verbose=False</em>, <em>set_random_seed=False</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.ResolvedClusterDiffRedden" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#synthetic.ResolvedCluster" title="synthetic.ResolvedCluster"><code class="xref py py-class docutils literal notranslate"><span class="pre">synthetic.ResolvedCluster</span></code></a></p>
+<p>Sub-class of ResolvedCluster that applies differential
+extinction to the synthetic photometry.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>iso: isochrone object</strong></dt>
+<dd><p class="first last">PyPopStar isochrone object</p>
+</dd>
+<dt><strong>imf: imf object</strong></dt>
+<dd><p class="first last">PyPopStar IMF object</p>
+</dd>
+<dt><strong>cluster_mass: float</strong></dt>
+<dd><p class="first last">Total initial mass of the cluster, in M_sun</p>
+</dd>
+<dt><strong>delta_AKs: float</strong></dt>
+<dd><p class="first last">Amount of differential extinction to apply to synthetic photometry,
+in terms of magnitudes of extinction in the Ks filter. Specifically,
+delta_AKs defines the standard deviation of a Gaussian distribution 
+from which the delta_AKs values will be drawn from for each individual
+system.</p>
+</dd>
+<dt><strong>ifmr: ifmr object or None</strong></dt>
+<dd><p class="first last">If ifmr object is defined, will create compact remnants
+produced by the cluster at the given isochrone age. Otherwise,
+no compact remnants are produced.</p>
+</dd>
+<dt><strong>set_random_seed: boolean</strong></dt>
+<dd><p class="first last">If true, then random seed is set for all random processes</p>
+</dd>
+<dt><strong>vebose: boolean</strong></dt>
+<dd><p class="first last">True for verbose output.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="67%" />
+<col width="33%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>save_to_file</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>set_filter_names</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="synthetic.UnresolvedCluster">
+<em class="property">class </em><code class="descclassname">synthetic.</code><code class="descname">UnresolvedCluster</code><span class="sig-paren">(</span><em>iso, imf, cluster_mass, wave_range=[3000, 52000], verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#synthetic.UnresolvedCluster" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#synthetic.Cluster" title="synthetic.Cluster"><code class="xref py py-class docutils literal notranslate"><span class="pre">synthetic.Cluster</span></code></a></p>
+<p>Cluster sub-class that produces an <em>unresolved</em> stellar cluster.
+Output is a combined spectrum that is the sum of the individual 
+spectra of the cluster stars.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>iso: isochrone object</strong></dt>
+<dd><p class="first last">PyPopStar isochrone object</p>
+</dd>
+<dt><strong>imf: imf object</strong></dt>
+<dd><p class="first last">PyPopStar IMF object</p>
+</dd>
+<dt><strong>cluster_mass: float</strong></dt>
+<dd><p class="first last">Total initial mass of the cluster, in M_sun</p>
+</dd>
+<dt><strong>wave_range: 2-element array</strong></dt>
+<dd><p class="first last">Define the minumum and maximum wavelengths of the final
+output spectrum, in Angstroms. Array should be [min_wave, max_wave]</p>
+</dd>
+<dt><strong>vebose: boolean</strong></dt>
+<dd><p class="first last">True for verbose output.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 </div>
 
@@ -144,9 +306,6 @@ sampling</li>
         <li class="right" >
           <a href="evo_models.html" title="Evolution Model Object"
              >next</a> |</li>
-        <li class="right" >
-          <a href="make_isochrone.html" title="Isochrone Object"
-             >previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
  

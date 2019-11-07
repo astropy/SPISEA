@@ -15,8 +15,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Extinction Law Object" href="extinction.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
   </head><body>
 
 <div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
@@ -29,9 +28,6 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="extinction.html" title="Extinction Law Object"
-             accesskey="N">next</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
  
@@ -40,9 +36,14 @@
 
       <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
         <div class="sphinxsidebarwrapper">
-  <h4>Next topic</h4>
-  <p class="topless"><a href="extinction.html"
-                        title="next chapter">Extinction Law Object</a></p>
+  <h3><a href="index.html">Table Of Contents</a></h3>
+  <ul>
+<li><a class="reference internal" href="#">IFMR Object</a><ul>
+<li><a class="reference internal" href="#ifmr-base-class">IFMR Base Class</a></li>
+</ul>
+</li>
+</ul>
+
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -72,7 +73,110 @@
             
   <div class="section" id="ifmr-object">
 <span id="ifmr-objects"></span><h1>IFMR Object<a class="headerlink" href="#ifmr-object" title="Permalink to this headline">¶</a></h1>
-<p>[under construction]</p>
+<p>The Initial-Final Mass Relation (IFMR) maps a star’s initial zero-age main sequence (ZAMS)
+mass to the type and mass of the compact object it will form. The
+PyPopStar IFMR class supports white dwarfs (WD), neutron stars (NS),
+and black holes (BH). The associated code is found in popstar/ifmr.py.</p>
+<p>To define an IFMR object:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">popstar</span> <span class="k">import</span> <span class="n">ifmr</span>
+<span class="n">ifmr_obj</span> <span class="o">=</span> <span class="n">ifmr</span><span class="o">.&lt;</span><span class="n">class_name</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>Compact objects are included in the output tables produced by
+<a class="reference internal" href="make_cluster.html#cluster-objects"><span class="std std-ref">Cluster Object</span></a>, and can be identified by the “phase” column:</p>
+<ul class="simple">
+<li>WD: phase = 101</li>
+<li>NS: phase = 102</li>
+<li>BH: phase = 103</li>
+</ul>
+<p>See <a class="reference external" href="https://github.com/astropy/PyPopStar/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb">Quick Start Example</a>
+for more examples of how to interact with the <a class="reference internal" href="make_cluster.html#cluster-objects"><span class="std std-ref">Cluster Object</span></a>
+output.</p>
+<div class="section" id="ifmr-base-class">
+<h2>IFMR Base Class<a class="headerlink" href="#ifmr-base-class" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="ifmr.IFMR">
+<em class="property">class </em><code class="descclassname">ifmr.</code><code class="descname">IFMR</code><a class="headerlink" href="#ifmr.IFMR" title="Permalink to this definition">¶</a></dt>
+<dd><p>The IFMR base class. The IFMR is a combination of the 
+WD IFMR from 
+<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract">Kalirai et al. (2008)</a>
+and the NS/BH IFMR from
+<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2018ApJ...856...35R/abstract">Raithel et al. (2018)</a>.</p>
+<p>See Lam et al. (submitted) for more details.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">BH_mass_all_low</span></code>(MZAMS)</td>
+<td>Eqn (2)                                                                                                   Paper: 15 &lt; MZAMS &lt; 40                                                                                    Us extending: 15 &lt; MZAMS &lt; 42.22</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">BH_mass_core_low</span></code>(MZAMS)</td>
+<td>Eqn (1)                                                                                                   Paper: 15 &lt; MZAMS &lt; 40                                                                                    Us extending: 15 &lt; MZAMS &lt; 42.22</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">BH_mass_high</span></code>(MZAMS)</td>
+<td>Eqn (3)                                                                                                   Paper: 45 &lt; MZAMS &lt; 120                                                                                   Us extending: 42.22 &lt; MZAMS &lt; 120</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">BH_mass_low</span></code>(MZAMS,&nbsp;f_ej)</td>
+<td>Eqn (4)                                                                                                   Paper: 15 &lt; MZAMS &lt; 40                                                                                    Us extending: 15 &lt; MZAMS &lt; 42.22</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">NS_mass</span></code>(MZAMS)</td>
+<td>Paper: 9 &lt; MZAMS 120                                                                                      Simplify to just return one value</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">WD_mass</span></code>(MZAMS)</td>
+<td>From Kalirai+07                                                                                           1.16 &lt; MZAMS &lt; 6.5                                                                                        FIXME: need to extend these ranges…</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#ifmr.IFMR.generate_death_mass" title="ifmr.IFMR.generate_death_mass"><code class="xref py py-obj docutils literal notranslate"><span class="pre">generate_death_mass</span></code></a>(mass_array)</td>
+<td>The top-level function that assigns the remnant type  and mass based on the stellar initial mass.</td>
+</tr>
+</tbody>
+</table>
+<dl class="method">
+<dt id="ifmr.IFMR.generate_death_mass">
+<code class="descname">generate_death_mass</code><span class="sig-paren">(</span><em>mass_array</em><span class="sig-paren">)</span><a class="headerlink" href="#ifmr.IFMR.generate_death_mass" title="Permalink to this definition">¶</a></dt>
+<dd><p>The top-level function that assigns the remnant type 
+and mass based on the stellar initial mass.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
+<dt><strong>mass_arr: array of floats</strong></dt>
+<dd><p class="first last">Array of initial stellar masses. Units are
+M_sun.</p>
+</dd>
+</dl>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>output_arr: 2-element array</strong></dt>
+<dd><p class="first last">output_array[0] contains the remnant mass, and 
+output_array[1] contains the typecode</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The output typecode tells what compact object formed:</p>
+<ul class="simple">
+<li>WD: typecode = 101</li>
+<li>NS: typecode = 102</li>
+<li>BH: typecode = 103</li>
+</ul>
+<p>A typecode of value -1 means you’re outside the range of 
+validity for applying the ifmr formula.</p>
+<p>A remnant mass of -99 means you’re outside the range of 
+validity for applying the ifmr formula.</p>
+<p>Range of validity: 0.5 &lt; MZAMS &lt; 120</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
 </div>
 
 
@@ -87,9 +191,6 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li class="right" >
-          <a href="extinction.html" title="Extinction Law Object"
-             >next</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
  

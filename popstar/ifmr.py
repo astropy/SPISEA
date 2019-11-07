@@ -11,10 +11,16 @@ import numpy as np
 
 
 class IFMR(object):
+    """
+    The IFMR base class. The IFMR is a combination of the 
+    WD IFMR from 
+    `Kalirai et al. (2008) <https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract>`_
+    and the NS/BH IFMR from
+    `Raithel et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018ApJ...856...35R/abstract>`_.
+
+    See Lam et al. (submitted) for more details.
+    """
     def __init__(self):
-        """
-        The IFMR class, without all the for loops
-        """
         pass
 
     def BH_mass_core_low(self, MZAMS):
@@ -66,16 +72,36 @@ class IFMR(object):
 
     def generate_death_mass(self, mass_array):
         """
-        typecode tells what compact object formed:
-        WD: typecode = 101
-        NS: typecode = 102
-        BH: typecode = 103
+        The top-level function that assigns the remnant type 
+        and mass based on the stellar initial mass. 
+        
+        Parameters
+        ----------
+        mass_arr: array of floats
+            Array of initial stellar masses. Units are
+            M_sun.
 
-        typecode of value -1 means you're outside the range of validity for applying the ifmr formula
-        remnant mass of -99 means you're outside the range of validity for applying the ifmr formula
-        range of validity: 0.5 < MZAMS < 120
-        output_array[0] contains the remnant mass
-        output_array[1] contains the typecode
+        Notes
+        ------
+        The output typecode tells what compact object formed:
+        
+        * WD: typecode = 101
+        * NS: typecode = 102
+        * BH: typecode = 103
+
+        A typecode of value -1 means you're outside the range of 
+        validity for applying the ifmr formula. 
+
+        A remnant mass of -99 means you're outside the range of 
+        validity for applying the ifmr formula.
+
+        Range of validity: 0.5 < MZAMS < 120
+
+        Returns
+        -------
+        output_arr: 2-element array
+            output_array[0] contains the remnant mass, and 
+            output_array[1] contains the typecode
         """
 
         #output_array[0] holds the remnant mass

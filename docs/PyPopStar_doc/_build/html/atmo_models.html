@@ -16,8 +16,7 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="IMF Object" href="imf.html" />
-    <link rel="prev" title="Evolution Model Object" href="evo_models.html" /> 
+    <link rel="next" title="IMF Object" href="imf.html" /> 
   </head><body>
 
 <div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
@@ -33,9 +32,6 @@
         <li class="right" >
           <a href="imf.html" title="IMF Object"
              accesskey="N">next</a> |</li>
-        <li class="right" >
-          <a href="evo_models.html" title="Evolution Model Object"
-             accesskey="P">previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
  
@@ -47,22 +43,11 @@
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Atmosphere Model Object</a><ul>
-<li><a class="reference internal" href="#get-merged-atmosphere">get_merged_atmosphere</a></li>
-<li><a class="reference internal" href="#get-wd-atmosphere">get_wd_atmosphere</a></li>
-<li><a class="reference internal" href="#get-castelli-atmosphere">get_castelli_atmosphere</a></li>
-<li><a class="reference internal" href="#get-phoenixv16-atmosphere">get_phoenixv16_atmosphere</a></li>
-<li><a class="reference internal" href="#get-btsettl-2015-atmosphere">get_BTSettl_2015_atmosphere</a></li>
-<li><a class="reference internal" href="#get-btsettl-atmosphere">get_BTSettl_atmosphere</a></li>
-<li><a class="reference internal" href="#get-wdkoester-atmosphere">get_wdKoester_atmosphere</a></li>
-<li><a class="reference internal" href="#get-kurucz-atmosphere">get_kurucz_atmosphere</a></li>
-<li><a class="reference internal" href="#get-phoenix-atmosphere">get_phoenix_atmosphere</a></li>
+<li><a class="reference internal" href="#model-atmosphere-classes">Model Atmosphere Classes</a></li>
 </ul>
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="evo_models.html"
-                        title="previous chapter">Evolution Model Object</a></p>
   <h4>Next topic</h4>
   <p class="topless"><a href="imf.html"
                         title="next chapter">IMF Object</a></p>
@@ -102,16 +87,15 @@ popstar/atmospheres.py. These can be called by:</p>
 </pre></div>
 </div>
 <p>To call an atmosphere for a particular star, user must define the
-metallicity ([Z], so metallicity = 0 is solar), temperature (in K),
-and gravity (in cgs):</p>
+metallicity ([Z]), temperature (in K), and gravity (in cgs):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">spectrum</span> <span class="o">=</span> <span class="n">atmo</span><span class="p">(</span><span class="n">metallicity</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mi">5800</span><span class="p">,</span> <span class="n">gravity</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="n">wave</span> <span class="o">=</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">wave</span> <span class="c1"># Wavelength in Angstroms</span>
 <span class="n">flux</span> <span class="o">=</span> <span class="n">spectrum</span><span class="o">.</span><span class="n">flux</span> <span class="c1"># Flux in ergs s^-1 cm^-2 Angstrom^-1</span>
 <span class="p">(</span><span class="n">pysynphot</span> <span class="n">Flam</span> <span class="n">units</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Otherwise, one can pass the atmosphere function into an Isochrone
-object, and that function will automatically be used to define the
+<p>The atmosphere function is an input for the <a class="reference internal" href="make_isochrone.html#isochrone-objects"><span class="std std-ref">Isochrone Object</span></a>,
+and will automatically be used to define the
 spectrum of each star in the isochrone model.</p>
 <p>PopStar uses the pysynphot framework to extract the model atmosphere,
 and the the output spectrum is a <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/ref_api.html#pysynphot.catalog.Icat">pysynphot.Icat object</a>.</p>
@@ -129,11 +113,43 @@ and the the output spectrum is a <a class="reference external" href="https://pys
 <li>get_nextgen_atmosphere</li>
 <li>get_amesdusty_atmosphere</li>
 </ul>
-<div class="section" id="get-merged-atmosphere">
-<h2>get_merged_atmosphere<a class="headerlink" href="#get-merged-atmosphere" title="Permalink to this headline">¶</a></h2>
-<p>The get_merged_atmosphere function extracts a stellar atmosphere
-from a suite of different model grids, depending  on the input
-temperature, (all values in K):</p>
+<div class="section" id="model-atmosphere-classes">
+<h2>Model Atmosphere Classes<a class="headerlink" href="#model-atmosphere-classes" title="Permalink to this headline">¶</a></h2>
+<dl class="function">
+<dt id="atmospheres.get_merged_atmosphere">
+<code class="descclassname">atmospheres.</code><code class="descname">get_merged_atmosphere</code><span class="sig-paren">(</span><em>metallicity=0</em>, <em>temperature=20000</em>, <em>gravity=4.5</em>, <em>verbose=False</em>, <em>rebin=True</em><span class="sig-paren">)</span><a class="headerlink" href="#atmospheres.get_merged_atmosphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a stellar atmosphere from a suite of different model grids, 
+depending  on the input temperature, (all values in K).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>metallicity: float</strong></dt>
+<dd><p class="first last">The stellar metallicity, in terms of [Z]</p>
+</dd>
+<dt><strong>temperature: float</strong></dt>
+<dd><p class="first last">The stellar temperature, in units of K</p>
+</dd>
+<dt><strong>gravity: float</strong></dt>
+<dd><p class="first last">The stellar gravity, in cgs units</p>
+</dd>
+<dt><strong>rebin: boolean</strong></dt>
+<dd><p class="first last">If true, rebins the atmospheres so that they are the same
+resolution as the Castelli+04 atmospheres. Default is False,
+which is often sufficient synthetic photometry in most cases.</p>
+</dd>
+<dt><strong>verbose: boolean</strong></dt>
+<dd><p class="first last">True for verbose output</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>The underlying stellar model grid used changes as a function of 
+stellar temperature (in K):</p>
 <ul class="simple">
 <li>T &gt; 20,000: ATLAS</li>
 <li>5500 &lt;= T &lt; 20,000: ATLAS</li>
@@ -142,78 +158,223 @@ temperature, (all values in K):</p>
 </ul>
 <p>For T &lt; 3800, there is an additional gravity and metallicity
 dependence:</p>
-<dl class="docutils">
-<dt>If T &lt; 3800 and [M/H] = 0:</dt>
-<dd><ul class="first last simple">
+<p>If T &lt; 3800 and [M/H] = 0:</p>
+<ul class="simple">
 <li>T &lt; 3800, logg &lt; 2.5: PHOENIX v16</li>
-<li>3200 &lt;= T &lt; 3800, logg &gt; 2.5: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge</li>
+<li>3200 &lt;= T &lt; 3800, logg &gt; 2.5: BTSettl_CIFITS2011_2015/PHOENIXV16 merge</li>
 <li>3200 &lt; T &lt;= 1200, logg &gt; 2.5: BTSettl_CIFITS2011_2015</li>
 </ul>
-</dd>
-<dt>Otherwise, if T &lt; 3800 and [M/H] != 0:</dt>
-<dd><ul class="first last simple">
+<p>Otherwise, if T &lt; 3800 and [M/H] != 0:</p>
+<ul class="simple">
 <li>T &lt; 3800: PHOENIX v16</li>
 </ul>
-</dd>
-</dl>
-<p>References:
-* ATLAS: ATLAS9 models (<a class="reference external" href="https://arxiv.org/abs/astro-ph/0405087">Castelli &amp; Kurucz 2004</a>)
-* PHOENIXv16 (<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2013A&amp;A...553A...6H/abstract">Husser et al. 2013</a>)
-* BTSettl_CIFITS2011_2015: Baraffee+15, Allard+
-(<a class="reference external" href="https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/">https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/</a>)</p>
-<p>Additional Notes:
-The ATLAS atmospheres are calculated with LTE, and so they
+<p>References:</p>
+<ul class="simple">
+<li>ATLAS: ATLAS9 models (<a class="reference external" href="https://arxiv.org/abs/astro-ph/0405087">Castelli &amp; Kurucz 2004</a>)</li>
+<li>PHOENIXv16 (<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2013A&amp;A...553A...6H/abstract">Husser et al. 2013</a>)</li>
+<li>BTSettl_CIFITS2011_2015: Baraffee+15, Allard+ (<a class="reference external" href="https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/">https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/</a>)</li>
+</ul>
+<p>LTE WARNING:</p>
+<p>The ATLAS atmospheres are calculated with LTE, and so they
 are less accurate when non-LTE conditions apply (e.g. T &gt; 20,000
 K). Ultimately we’d like to add a non-LTE atmosphere grid for
 the hottest stars in the future.</p>
-<p>Merged atmospheres are a weighted average between the two
-atmosphere grids in the given temperature range. Near one boundary one model
-is weighted more heavily, while at the other boundary the other
-model is weighted more heavily. These are calculated in the
-temperature ranges where we switch between model grids, to
+<p>HOW BOUNDARIES BETWEEN MODELS ARE TREATED:</p>
+<p>At the boundary between two models grids a temperature range is defined 
+where the resulting atmosphere is a weighted average between the two 
+grids. Near one boundary one model
+is weighted more heavily, while at the other boundary the other 
+model is weighted more heavily. These are calculated in the 
+temperature ranges where we switch between model grids, to 
 ensure a smooth transition.</p>
-</div>
-<div class="section" id="get-wd-atmosphere">
-<h2>get_wd_atmosphere<a class="headerlink" href="#get-wd-atmosphere" title="Permalink to this headline">¶</a></h2>
-<p>This function is the default to extract atmospheres for white
-dwarfs. It calls the atmosphere grid from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2010MmSAI..81..921K/abstract">Koester et al. 2010</a>.
-If the desired WD parameters fall outside the grid, a blackbody spectrum
-at the input temperature is returned.</p>
-</div>
-<div class="section" id="get-castelli-atmosphere">
-<h2>get_castelli_atmosphere<a class="headerlink" href="#get-castelli-atmosphere" title="Permalink to this headline">¶</a></h2>
-<p>The pysynphot ATLAS9 atlas (<a class="reference external" href="http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html">Castelli &amp; Kurucz 2004</a>)</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="atmospheres.get_wd_atmosphere">
+<code class="descclassname">atmospheres.</code><code class="descname">get_wd_atmosphere</code><span class="sig-paren">(</span><em>metallicity=0</em>, <em>temperature=20000</em>, <em>gravity=4</em>, <em>verbose=False</em><span class="sig-paren">)</span><a class="headerlink" href="#atmospheres.get_wd_atmosphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the white dwarf atmosphere from 
+<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2010MmSAI..81..921K/abstract">Koester et al. 2010</a>. 
+If desired parameters are 
+outside of grid, return a blackbody spectrum instead</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>metallicity: float</strong></dt>
+<dd><p class="first last">The stellar metallicity, in terms of [Z]</p>
+</dd>
+<dt><strong>temperature: float</strong></dt>
+<dd><p class="first last">The stellar temperature, in units of K</p>
+</dd>
+<dt><strong>gravity: float</strong></dt>
+<dd><p class="first last">The stellar gravity, in cgs units</p>
+</dd>
+<dt><strong>rebin: boolean</strong></dt>
+<dd><p class="first last">If true, rebins the atmospheres so that they are the same
+resolution as the Castelli+04 atmospheres. Default is False,
+which is often sufficient synthetic photometry in most cases.</p>
+</dd>
+<dt><strong>verbose: boolean</strong></dt>
+<dd><p class="first last">True for verbose output</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="atmospheres.get_castelli_atmosphere">
+<code class="descclassname">atmospheres.</code><code class="descname">get_castelli_atmosphere</code><span class="sig-paren">(</span><em>metallicity=0</em>, <em>temperature=20000</em>, <em>gravity=4</em><span class="sig-paren">)</span><a class="headerlink" href="#atmospheres.get_castelli_atmosphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return atmospheres from the pysynphot ATLAS9 atlas 
+(<a class="reference external" href="http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html">Castelli &amp; Kurucz 2004</a>).</p>
+<p>Grid Range:</p>
 <ul class="simple">
 <li>Teff: 3500 - 50000 K</li>
 <li>gravity: 0 - 5.0 cgs</li>
 <li>[M/H]: -2.5 - 0.2</li>
 </ul>
-</div>
-<div class="section" id="get-phoenixv16-atmosphere">
-<h2>get_phoenixv16_atmosphere<a class="headerlink" href="#get-phoenixv16-atmosphere" title="Permalink to this headline">¶</a></h2>
-<p>Reference: <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2013A&amp;A...553A...6H/abstract">Husser et al. 2013</a></p>
-<p>-downloaded via ftp from <a class="reference external" href="http://phoenix.astro.physik.uni-goettingen.de/?page_id=15">here</a>
--solar metallicity, solar [alpha/Fe]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>metallicity: float</strong></dt>
+<dd><p class="first last">The stellar metallicity, in terms of [Z]</p>
+</dd>
+<dt><strong>temperature: float</strong></dt>
+<dd><p class="first last">The stellar temperature, in units of K</p>
+</dd>
+<dt><strong>gravity: float</strong></dt>
+<dd><p class="first last">The stellar gravity, in cgs units</p>
+</dd>
+<dt><strong>rebin: boolean</strong></dt>
+<dd><p class="first last">If true, rebins the atmospheres so that they are the same
+resolution as the Castelli+04 atmospheres. Default is False,
+which is often sufficient synthetic photometry in most cases.</p>
+</dd>
+<dt><strong>verbose: boolean</strong></dt>
+<dd><p class="first last">True for verbose output</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="atmospheres.get_phoenixv16_atmosphere">
+<code class="descclassname">atmospheres.</code><code class="descname">get_phoenixv16_atmosphere</code><span class="sig-paren">(</span><em>metallicity=0</em>, <em>temperature=4000</em>, <em>gravity=4</em>, <em>rebin=True</em><span class="sig-paren">)</span><a class="headerlink" href="#atmospheres.get_phoenixv16_atmosphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return PHOENIX v16 atmospheres from  
+<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2013A&amp;A...553A...6H/abstract">Husser et al. 2013</a>.</p>
+<p>Models originally downloaded via ftp <a class="reference external" href="http://phoenix.astro.physik.uni-goettingen.de/?page_id=15">here</a>.
+Solar metallicity and [alpha/Fe] is used.</p>
+<p>Grid Range:</p>
 <ul class="simple">
 <li>Teff: 2300 - 7000 K, steps of 100 K; 7000 - 12000 in steps of 200 K</li>
 <li>gravity: 0.0 - 6.0 cgs, steps of 0.5</li>
 <li>[M/H]: -4.0 - 1.0</li>
 </ul>
-</div>
-<div class="section" id="get-btsettl-2015-atmosphere">
-<h2>get_BTSettl_2015_atmosphere<a class="headerlink" href="#get-btsettl-2015-atmosphere" title="Permalink to this headline">¶</a></h2>
-<p>Reference: Allard+12, Baraffe+15
-CIFIST2011_2015 grid, downloaded from <a class="reference external" href="https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/FITS/">here</a> on 9/28/16</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>metallicity: float</strong></dt>
+<dd><p class="first last">The stellar metallicity, in terms of [Z]</p>
+</dd>
+<dt><strong>temperature: float</strong></dt>
+<dd><p class="first last">The stellar temperature, in units of K</p>
+</dd>
+<dt><strong>gravity: float</strong></dt>
+<dd><p class="first last">The stellar gravity, in cgs units</p>
+</dd>
+<dt><strong>rebin: boolean</strong></dt>
+<dd><p class="first last">If true, rebins the atmospheres so that they are the same
+resolution as the Castelli+04 atmospheres. Default is False,
+which is often sufficient synthetic photometry in most cases.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="atmospheres.get_BTSettl_2015_atmosphere">
+<code class="descclassname">atmospheres.</code><code class="descname">get_BTSettl_2015_atmosphere</code><span class="sig-paren">(</span><em>metallicity=0</em>, <em>temperature=2500</em>, <em>gravity=4</em>, <em>rebin=True</em><span class="sig-paren">)</span><a class="headerlink" href="#atmospheres.get_BTSettl_2015_atmosphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return atmosphere from CIFIST2011_2015 grid 
+(<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2012RSPTA.370.2765A/abstract">Allard et al. 2012</a>, 
+<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2015A%26A...577A..42B/abstract">Baraffe et al. 2015</a> )</p>
+<p>Grid originally downloaded <a class="reference external" href="https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/FITS/">here</a>.</p>
+<p>Grid Range:</p>
 <ul class="simple">
 <li>Teff: 1200 - 7000 K</li>
 <li>gravity: 2.5 - 5.5 cgs</li>
 <li>[M/H] = 0</li>
 </ul>
-</div>
-<div class="section" id="get-btsettl-atmosphere">
-<h2>get_BTSettl_atmosphere<a class="headerlink" href="#get-btsettl-atmosphere" title="Permalink to this headline">¶</a></h2>
-<p>Reference: Allard+12
-CIFITS2011 grid, downloaded from <a class="reference external" href="https://phoenix.ens-lyon.fr/Grids/BT-Settl/">here</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>metallicity: float</strong></dt>
+<dd><p class="first last">The stellar metallicity, in terms of [Z]</p>
+</dd>
+<dt><strong>temperature: float</strong></dt>
+<dd><p class="first last">The stellar temperature, in units of K</p>
+</dd>
+<dt><strong>gravity: float</strong></dt>
+<dd><p class="first last">The stellar gravity, in cgs units</p>
+</dd>
+<dt><strong>rebin: boolean</strong></dt>
+<dd><p class="first last">If true, rebins the atmospheres so that they are the same
+resolution as the Castelli+04 atmospheres. Default is False,
+which is often sufficient synthetic photometry in most cases.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="atmospheres.get_BTSettl_atmosphere">
+<code class="descclassname">atmospheres.</code><code class="descname">get_BTSettl_atmosphere</code><span class="sig-paren">(</span><em>metallicity=0</em>, <em>temperature=2500</em>, <em>gravity=4.5</em>, <em>rebin=True</em><span class="sig-paren">)</span><a class="headerlink" href="#atmospheres.get_BTSettl_atmosphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return atmosphere from CIFIST2011 grid 
+(<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2012RSPTA.370.2765A/abstract">Allard et al. 2012</a>)</p>
+<p>Grid originally downloaded <a class="reference external" href="https://phoenix.ens-lyon.fr/Grids/BT-Settl/">here</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>metallicity: float</strong></dt>
+<dd><p class="first last">The stellar metallicity, in terms of [Z]</p>
+</dd>
+<dt><strong>temperature: float</strong></dt>
+<dd><p class="first last">The stellar temperature, in units of K</p>
+</dd>
+<dt><strong>gravity: float</strong></dt>
+<dd><p class="first last">The stellar gravity, in cgs units</p>
+</dd>
+<dt><strong>rebin: boolean</strong></dt>
+<dd><p class="first last">If true, rebins the atmospheres so that they are the same
+resolution as the Castelli+04 atmospheres. Default is False,
+which is often sufficient synthetic photometry in most cases.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Notes</p>
+<p>Grid Range:</p>
 <ul class="simple">
 <li>[M/H] = -2.5, -2.0, -1.5, -1.0, -0.5, 0, 0.5</li>
 </ul>
@@ -253,28 +414,113 @@ CIFITS2011 grid, downloaded from <a class="reference external" href="https://pho
 <li>Teff: 1000 - 5000</li>
 <li>gravity: 3.5 - 5.0</li>
 </ul>
-<p>Note on alpha enhancement:
-* [M/H]= -0.0, +0.5 no anhancement
-* [M/H]= -0.5 with [alpha/H]=+0.2
-* [M/H]= -1.0, -1.5, -2.0, -2.5 with [alpha/H]=+0.4</p>
-</div>
-<div class="section" id="get-wdkoester-atmosphere">
-<h2>get_wdKoester_atmosphere<a class="headerlink" href="#get-wdkoester-atmosphere" title="Permalink to this headline">¶</a></h2>
-<p>White dwarf atmospheres
-Reference: <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2010MmSAI..81..921K/abstract">Koester et al. 2010</a></p>
-</div>
-<div class="section" id="get-kurucz-atmosphere">
-<h2>get_kurucz_atmosphere<a class="headerlink" href="#get-kurucz-atmosphere" title="Permalink to this headline">¶</a></h2>
-<p>The pysynphot Kurucz atlas (<a class="reference external" href="http://www.stsci.edu/hst/observatory/crds/k93models.html">Kurucz 1993</a>)</p>
+<p>Alpha enhancement:</p>
+<ul class="simple">
+<li>[M/H]= -0.0, +0.5 no anhancement</li>
+<li>[M/H]= -0.5 with [alpha/H]=+0.2</li>
+<li>[M/H]= -1.0, -1.5, -2.0, -2.5 with [alpha/H]=+0.4</li>
+</ul>
+</dd></dl>
+
+<dl class="function">
+<dt id="atmospheres.get_wdKoester_atmosphere">
+<code class="descclassname">atmospheres.</code><code class="descname">get_wdKoester_atmosphere</code><span class="sig-paren">(</span><em>metallicity=0</em>, <em>temperature=20000</em>, <em>gravity=7</em><span class="sig-paren">)</span><a class="headerlink" href="#atmospheres.get_wdKoester_atmosphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return white dwarf atmospheres from  
+<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2010MmSAI..81..921K/abstract">Koester et al. 2010</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>metallicity: float</strong></dt>
+<dd><p class="first last">The stellar metallicity, in terms of [Z]</p>
+</dd>
+<dt><strong>temperature: float</strong></dt>
+<dd><p class="first last">The stellar temperature, in units of K</p>
+</dd>
+<dt><strong>gravity: float</strong></dt>
+<dd><p class="first last">The stellar gravity, in cgs units</p>
+</dd>
+<dt><strong>rebin: boolean</strong></dt>
+<dd><p class="first last">If true, rebins the atmospheres so that they are the same
+resolution as the Castelli+04 atmospheres. Default is False,
+which is often sufficient synthetic photometry in most cases.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="atmospheres.get_kurucz_atmosphere">
+<code class="descclassname">atmospheres.</code><code class="descname">get_kurucz_atmosphere</code><span class="sig-paren">(</span><em>metallicity=0</em>, <em>temperature=20000</em>, <em>gravity=4</em><span class="sig-paren">)</span><a class="headerlink" href="#atmospheres.get_kurucz_atmosphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return atmosphere from the Kurucz pysnphot grid 
+(<a class="reference external" href="http://www.stsci.edu/hst/observatory/crds/k93models.html">Kurucz 1993</a>).</p>
+<p>Grid Range:</p>
 <ul class="simple">
 <li>Teff: 3000 - 50000 K</li>
 <li>gravity: 0 - 5 cgs</li>
 <li>metallicity: -5.0 - 1.0</li>
 </ul>
-</div>
-<div class="section" id="get-phoenix-atmosphere">
-<h2>get_phoenix_atmosphere<a class="headerlink" href="#get-phoenix-atmosphere" title="Permalink to this headline">¶</a></h2>
-<p>The <a class="reference external" href="http://www.stsci.edu/hst/observatory/crds/SIfileInfo/pysynphottables/index_phoenix_models_html">pysynphot PHOENIX atlas</a></p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>metallicity: float</strong></dt>
+<dd><p class="first last">The stellar metallicity, in terms of [Z]</p>
+</dd>
+<dt><strong>temperature: float</strong></dt>
+<dd><p class="first last">The stellar temperature, in units of K</p>
+</dd>
+<dt><strong>gravity: float</strong></dt>
+<dd><p class="first last">The stellar gravity, in cgs units</p>
+</dd>
+<dt><strong>rebin: boolean</strong></dt>
+<dd><p class="first last">If true, rebins the atmospheres so that they are the same
+resolution as the Castelli+04 atmospheres. Default is False,
+which is often sufficient synthetic photometry in most cases.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="atmospheres.get_phoenix_atmosphere">
+<code class="descclassname">atmospheres.</code><code class="descname">get_phoenix_atmosphere</code><span class="sig-paren">(</span><em>metallicity=0</em>, <em>temperature=5000</em>, <em>gravity=4</em><span class="sig-paren">)</span><a class="headerlink" href="#atmospheres.get_phoenix_atmosphere" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return atmosphere from the pysynphot 
+<a class="reference external" href="http://www.stsci.edu/hst/observatory/crds/SIfileInfo/pysynphottables/index_phoenix_models_html">PHOENIX atlas</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>metallicity: float</strong></dt>
+<dd><p class="first last">The stellar metallicity, in terms of [Z]</p>
+</dd>
+<dt><strong>temperature: float</strong></dt>
+<dd><p class="first last">The stellar temperature, in units of K</p>
+</dd>
+<dt><strong>gravity: float</strong></dt>
+<dd><p class="first last">The stellar gravity, in cgs units</p>
+</dd>
+<dt><strong>rebin: boolean</strong></dt>
+<dd><p class="first last">If true, rebins the atmospheres so that they are the same
+resolution as the Castelli+04 atmospheres. Default is False,
+which is often sufficient synthetic photometry in most cases.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 </div>
 
@@ -293,9 +539,6 @@ Reference: <a class="reference external" href="https://ui.adsabs.harvard.edu//#a
         <li class="right" >
           <a href="imf.html" title="IMF Object"
              >next</a> |</li>
-        <li class="right" >
-          <a href="evo_models.html" title="Evolution Model Object"
-             >previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
  

@@ -23,6 +23,23 @@ except KeyError:
     models_dir = ''
     
 class StellarEvolution(object):
+    """
+    Base Stellar evolution class.
+
+    Parameters
+    ----------
+    model_dir: path
+        Directory path to evolution model files
+
+    age_list: list
+        List of ages
+
+    mass_list: list
+        List of masses
+
+    z_list: list
+        List of metallicities
+    """
     def __init__(self, model_dir, age_list, mass_list, z_list):
         self.model_dir = model_dir
         self.z_list = z_list
@@ -98,10 +115,18 @@ class Geneva(StellarEvolution):
 #---------------------------------------#
 
 class Ekstrom12(StellarEvolution):
+    """
+    Evolution models from 
+    `Ekstrom et al. 2012 <https://ui.adsabs.harvard.edu//#abs/2012A&A...537A.146E/abstract>`_.
+
+    Downloaded from `here <http://obswww.unige.ch/Recherche/evoldb/index/Isochrone/>`_.
+
+    Parameters
+    ----------
+    rot: boolean, optional
+        If true, then use rotating Ekstrom models. Default is true.
+    """
     def __init__(self, rot=True):
-        r"""
-        Define intrinsic properties for the Ekstrom+12 Geneva stellar models.
-        """
         # define metallicity parameters for Ekstrom+12 models
         self.z_list = [0.014]
         
@@ -239,7 +264,7 @@ class Ekstrom12(StellarEvolution):
     def create_iso(fileList, ageList, rot=True):
         """
         Given a set of isochrone files downloaded from
-        http://obswww.unige.ch/Recherche/evoldb/index/Isochrone/, put in correct
+        the server, put in correct
         iso.fits format for parse_iso code.
 
         fileList: list of downloaded isochrone files (could be one)
@@ -302,6 +327,25 @@ class Ekstrom12(StellarEvolution):
 #---------------------------------------#
 
 class Parsec(StellarEvolution):
+    """
+    Evolution models from 
+    `Bressan et al. 2012 <https://ui.adsabs.harvard.edu//#abs/2012MNRAS.427..127B/abstract>`_,
+    version 1.2s.
+
+    Downloaded from `here <http://stev.oapd.inaf.it/cgi-bin/cmd>_`
+
+    Notes
+    -----
+    Evolution model parameters used in download:
+
+    * n_Reimers parameter (mass loss on RGB) = 0.2
+    * photometric system: HST/WFC3 IR channel
+    * bolometric corrections OBC from Girardi+08, based on ATLAS9 ODFNEW models
+    * Carbon star bolometric corrections from Aringer+09
+    * no dust
+    * no extinction
+    * Chabrier+01 mass function
+    """
     def __init__(self):
         r"""
         Define intrinsic properties for the Parsec version 1.2s stellar
@@ -435,6 +479,20 @@ class Parsec(StellarEvolution):
 #---------------------------------------#
 
 class Pisa(StellarEvolution):
+    """
+    Evolution models from 
+    `Tognelli et al. 2011< https://ui.adsabs.harvard.edu//#abs/2011A&A...533A.109T/abstract>`_.
+    
+    Downloaded from `here <http://astro.df.unipi.it/stellar-models/index.php?m=1>`_
+
+    Notes
+    ------
+    Parameters used in download:
+
+    * Y = middle value of 3 provided (changes for different metallicities)
+    * mixing length = 1.68
+    * Deuterium fraction: 2*10^-5 for Z = 0.015, 0.03; 4*10^-4 for 0.005
+    """
     def __init__(self):
         r"""
         Define intrinsic properties for the Pisa (Tognelli+11) stellar
@@ -587,11 +645,13 @@ class Pisa(StellarEvolution):
 # Baraffe+15 models
 #==============================#
 class Baraffe15(StellarEvolution):
+    """
+    Evolution models published in 
+    `Baraffe et al. 2015 <https://ui.adsabs.harvard.edu//#abs/2015A&A...577A..42B/abstract>`_.
+
+    Downloaded from `here <http://perso.ens-lyon.fr/isabelle.baraffe/BHAC15dir/BHAC15_tracks>`_.
+    """
     def __init__(self):
-        r"""
-        Define intrinsic properties for the Baraffe+15 stellar
-        models.
-        """
         # define metallicity parameters for Baraffe models
         self.z_list = [0.015]
         
@@ -873,19 +933,21 @@ def compare_Baraffe_Pisa(BaraffeIso, PisaIso):
 # MIST v.1 (Choi+16)
 #===============================#
 class MISTv1(StellarEvolution):
-    def __init__(self, version=1.2):
-        r"""
-        Define intrinsic properties for the MIST version 1 stellar
-        models.
+    """
+    Define intrinsic properties for the MIST v1 stellar
+    models. 
 
-        Parameters:
-        -----------
-        version: either 1.0 or 1.2
-            Specify which version of MIST models you want. Version 1.0
-            was downloaded from MIST website on 2/2017, while Version 1.2
-            was downloaded on 8/2018 (solar metallicity)
-            and 4/2019 (other metallicities)
-        """
+    Models originally downloaded from `here <http://waps.cfa.harvard.edu/MIST/interp_isos.html>`_.
+
+    Parameters
+    ----------
+    version: '1.0' or '1.2', optional
+        Specify which version of MIST models you want. Version 1.0
+        was downloaded from MIST website on 2/2017, while Version 1.2
+        was downloaded on 8/2018 (solar metallicity)
+        and 4/2019 (other metallicities). Default is 1.2.
+    """
+    def __init__(self, version=1.2):
         # define metallicity parameters for Parsec models
         self.z_list = [0.0000015,   # [Fe/H] = -4.00
                        0.0000047,   # [Fe/H] = -3.50
@@ -1072,11 +1134,35 @@ class MISTv1(StellarEvolution):
 # Merged model classes
 #==============================#
 class MergedBaraffePisaEkstromParsec(StellarEvolution):
+    """
+    This is a combination of several different evolution models:
+
+    * Baraffe (`Baraffe et al. 2015 <https://ui.adsabs.harvard.edu//#abs/2015A&A...577A..42B/abstract>`_)
+    * Pisa (`Tognelli et al. 2011 <https://ui.adsabs.harvard.edu//#abs/2011A&A...533A.109T/abstract>`_)
+    * Geneva (`Ekstrom et al. 2012 <https://ui.adsabs.harvard.edu//#abs/2012A&A...537A.146E/abstract>`_)
+    * Parsec (version 1.2s, `Bressan+12 <https://ui.adsabs.harvard.edu//#abs/2012MNRAS.427..127B/abstract>`_)
+
+    The model used depends on the age of the population and what stellar masses
+    are being modeled:
+    
+
+    For logAge < 7.4:
+
+    * Baraffe: 0.08 - 0.4 M_sun
+    * Baraffe/Pisa transition: 0.4 - 0.5 M_sun 
+    * Pisa: 0.5 M_sun to the highest mass in Pisa isochrone (typically 5 - 7 Msun)
+    * Geneva: Highest mass of Pisa models to 120 M_sun
+
+    For logAge > 7.4:
+
+    * Parsec v1.2s: full mass range
+    
+    Parameters
+    ----------
+    rot: boolean, optional
+        If true, then use rotating Ekstrom models. Default is true.
+    """
     def __init__(self, rot=True):
-        """
-        Define intrinsic properties for merged Baraffe-Pisa-Ekstrom-Parsec
-        stellar models. If rot=True (default), use the rotating Ekstrom models.
-        """
         # populate list of model masses (in solar masses)
         mass_list = [(0.1 + i*0.005) for i in range(181)]
         
@@ -1100,7 +1186,8 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
-        Extract an individual isochrone from the Geneva collection.
+        Extract an individual isochrone from the Baraffe-Pisa-Ekstrom-Parsec 
+        collection
         """
         # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity
@@ -1151,11 +1238,16 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
 
 
 class MergedPisaEkstromParsec(StellarEvolution):
+    """
+    Same as MergedBaraffePisaEkstromParsec, but without
+    the Baraffe models. 
+
+    Parameters
+    ----------
+    rot: boolean, optional
+        If true, then use rotating Ekstrom models. Default is true.
+    """
     def __init__(self, rot=True):
-        """
-        Define intrinsic properties for merged Pisa-Ekstrom-Parsec
-        stellar models. If rot=True (default), use the rotating Ekstrom models.
-        """
         # populate list of model masses (in solar masses)
         mass_list = [(0.1 + i*0.005) for i in range(181)]
         
@@ -1220,6 +1312,26 @@ class MergedPisaEkstromParsec(StellarEvolution):
         return iso
 
 class MergedSiessGenevaPadova(StellarEvolution):
+    """
+    This is a combination of several different evolution models.
+
+    The model used depends on the age of the population and what stellar masses
+    are being modeled:
+
+    * Siess (`Siess et al. 2000 <https://ui.adsabs.harvard.edu//#abs/2000A&A...358..593S/abstract>`_)
+    * Geneva (`Meynet & Maeder 2003 <https://ui.adsabs.harvard.edu//#abs/2003A&A...404..975M/abstract>`_)
+    * Padova (`Marigo et al. 2008 <https://ui.adsabs.harvard.edu/abs/2008A%26A...482..883M/abstract>`_)
+
+    For logAge < 7.4:
+    
+    * Siess: 0.1 - 7 M_sun
+    * Siess/Geneva transition: 7 - 9 M_sun
+    * Geneva: > 9 M_sun
+
+    For logAge > 7.4:
+    
+    * Padova: full mass range
+    """
     def __init__(self):
         """
         Define intrinsic properties for merged Siess-meynetMaeder-Padova 

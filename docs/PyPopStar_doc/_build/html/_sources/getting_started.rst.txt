@@ -6,7 +6,7 @@ Installation From Git
 ==========================
 PyPopStar is hosted on GitHub `here
 <https://github.com/astropy/PyPopStar>`_.
-The master branch is the released version,
+The master branch is the current release,
 while the development branch is the development version.
 
 

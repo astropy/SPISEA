@@ -16,7 +16,6 @@
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
     <link rel="search" title="Search" href="search.html" />
-    <link rel="next" title="Atmosphere Model Object" href="atmo_models.html" />
     <link rel="prev" title="Cluster Object" href="make_cluster.html" /> 
   </head><body>
 
@@ -31,9 +30,6 @@
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
         <li class="right" >
-          <a href="atmo_models.html" title="Atmosphere Model Object"
-             accesskey="N">next</a> |</li>
-        <li class="right" >
           <a href="make_cluster.html" title="Cluster Object"
              accesskey="P">previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
@@ -47,14 +43,10 @@
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Evolution Model Object</a><ul>
-<li><a class="reference internal" href="#mergedbaraffepisaekstromparsec">MergedBaraffePisaEkstromParsec</a></li>
-<li><a class="reference internal" href="#mistv1">MISTv1</a></li>
-<li><a class="reference internal" href="#mergedpisaekstromparsec">MergedPisaEkstromParsec</a></li>
-<li><a class="reference internal" href="#mergedsiessgenevapadova">MergedSiessGenevaPadova</a></li>
-<li><a class="reference internal" href="#baraffe15">Baraffe15</a></li>
-<li><a class="reference internal" href="#esktrom12">Esktrom12</a></li>
-<li><a class="reference internal" href="#parsec">Parsec</a></li>
-<li><a class="reference internal" href="#pisa">Pisa</a></li>
+<li><a class="reference internal" href="#base-evolution-model-class">Base Evolution Model Class</a></li>
+<li><a class="reference internal" href="#specific-evolution-model-classes">Specific Evolution Model Classes</a><ul>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -62,9 +54,6 @@
   <h4>Previous topic</h4>
   <p class="topless"><a href="make_cluster.html"
                         title="previous chapter">Cluster Object</a></p>
-  <h4>Next topic</h4>
-  <p class="topless"><a href="atmo_models.html"
-                        title="next chapter">Atmosphere Model Object</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -100,11 +89,12 @@ popstar/evolution.py. These can be called by:</p>
 <span class="n">evo</span> <span class="o">=</span> <span class="n">evolution</span><span class="o">.&lt;</span><span class="n">model_name</span><span class="o">&gt;</span><span class="p">()</span>
 </pre></div>
 </div>
+<p>The evolution object is an input for the <a class="reference internal" href="make_isochrone.html#isochrone-objects"><span class="std std-ref">Isochrone Object</span></a>.</p>
 <p>The stellar evolution model classes currently supported by PyPopStar
 are:</p>
 <ul class="simple">
-<li>MergedBaraffePisaEkstromParsec (default)</li>
-<li>MISTv1</li>
+<li>MISTv1 (default)</li>
+<li>MergedBaraffePisaEkstromParsec</li>
 <li>MergedPisaEkstromParsec</li>
 <li>MergedSiessGenevaPadova</li>
 <li>Baraffe15</li>
@@ -112,19 +102,118 @@ are:</p>
 <li>Parsec</li>
 <li>Pisa</li>
 </ul>
-<p>&lt;Include table with model properties here&gt;</p>
-<p>The properties of the individual classes are detailed below.</p>
-<div class="section" id="mergedbaraffepisaekstromparsec">
-<span id="merged"></span><h2>MergedBaraffePisaEkstromParsec<a class="headerlink" href="#mergedbaraffepisaekstromparsec" title="Permalink to this headline">¶</a></h2>
-<p>This is a combination of several different evolution models, and is
-the default set used unless otherwise specified.</p>
-<p>Component Models:</p>
+<div class="section" id="base-evolution-model-class">
+<h2>Base Evolution Model Class<a class="headerlink" href="#base-evolution-model-class" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="evolution.StellarEvolution">
+<em class="property">class </em><code class="descclassname">evolution.</code><code class="descname">StellarEvolution</code><span class="sig-paren">(</span><em>model_dir</em>, <em>age_list</em>, <em>mass_list</em>, <em>z_list</em><span class="sig-paren">)</span><a class="headerlink" href="#evolution.StellarEvolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base Stellar evolution class.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>model_dir: path</strong></dt>
+<dd><p class="first last">Directory path to evolution model files</p>
+</dd>
+<dt><strong>age_list: list</strong></dt>
+<dd><p class="first last">List of ages</p>
+</dd>
+<dt><strong>mass_list: list</strong></dt>
+<dd><p class="first last">List of masses</p>
+</dd>
+<dt><strong>z_list: list</strong></dt>
+<dd><p class="first last">List of metallicities</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="57%" />
+<col width="43%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>isochrone</strong></td>
+<td>&#160;</td>
+</tr>
+<tr class="row-even"><td><strong>massTrack</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+<div class="section" id="specific-evolution-model-classes">
+<h2>Specific Evolution Model Classes<a class="headerlink" href="#specific-evolution-model-classes" title="Permalink to this headline">¶</a></h2>
+<dl class="class">
+<dt id="evolution.MISTv1">
+<em class="property">class </em><code class="descclassname">evolution.</code><code class="descname">MISTv1</code><span class="sig-paren">(</span><em>version=1.2</em><span class="sig-paren">)</span><a class="headerlink" href="#evolution.MISTv1" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#evolution.StellarEvolution" title="evolution.StellarEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">evolution.StellarEvolution</span></code></a></p>
+<p>Define intrinsic properties for the MIST v1 stellar
+models.</p>
+<p>Models originally downloaded from <a class="reference external" href="http://waps.cfa.harvard.edu/MIST/interp_isos.html">here</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>version: ‘1.0’ or ‘1.2’, optional</strong></dt>
+<dd><p class="first last">Specify which version of MIST models you want. Version 1.0
+was downloaded from MIST website on 2/2017, while Version 1.2
+was downloaded on 8/2018 (solar metallicity)
+and 4/2019 (other metallicities). Default is 1.2.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_isochrones</span></code>(input_iso_dir,&nbsp;…)</td>
+<td>Parse isochrone file downloaded from MIST web server, create individual isochrone files for the different ages.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isochrone</span></code>([age,&nbsp;metallicity])</td>
+<td>Extract an individual isochrone from the MISTv1 collection.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="57%" />
+<col width="43%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>massTrack</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="evolution.MergedBaraffePisaEkstromParsec">
+<em class="property">class </em><code class="descclassname">evolution.</code><code class="descname">MergedBaraffePisaEkstromParsec</code><span class="sig-paren">(</span><em>rot=True</em><span class="sig-paren">)</span><a class="headerlink" href="#evolution.MergedBaraffePisaEkstromParsec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#evolution.StellarEvolution" title="evolution.StellarEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">evolution.StellarEvolution</span></code></a></p>
+<p>This is a combination of several different evolution models:</p>
 <ul class="simple">
 <li>Baraffe (<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2015A&amp;A...577A..42B/abstract">Baraffe et al. 2015</a>)</li>
 <li>Pisa (<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2011A&amp;A...533A.109T/abstract">Tognelli et al. 2011</a>)</li>
 <li>Geneva (<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2012A&amp;A...537A.146E/abstract">Ekstrom et al. 2012</a>)</li>
 <li>Parsec (version 1.2s, <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2012MNRAS.427..127B/abstract">Bressan+12</a>)</li>
 </ul>
+<p>The model used depends on the age of the population and what stellar masses
+are being modeled:</p>
 <p>For logAge &lt; 7.4:</p>
 <ul class="simple">
 <li>Baraffe: 0.08 - 0.4 M_sun</li>
@@ -132,23 +221,99 @@ the default set used unless otherwise specified.</p>
 <li>Pisa: 0.5 M_sun to the highest mass in Pisa isochrone (typically 5 - 7 Msun)</li>
 <li>Geneva: Highest mass of Pisa models to 120 M_sun</li>
 </ul>
-<p>For logAge &gt; 7.4:
-* Parsec v1.2s: full mass range</p>
-</div>
-<div class="section" id="mistv1">
-<h2>MISTv1<a class="headerlink" href="#mistv1" title="Permalink to this headline">¶</a></h2>
-<p>Mesa Isochrone and Stellar Tracks (MIST) (<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2016ApJ...823..102C/abstract">Choi et al. 2016</a>)</p>
-<p>Versions 1.0, 1.2 supported. v1.2 is the default</p>
-<p>Downloaded via web interpolator: <a class="reference external" href="http://waps.cfa.harvard.edu/MIST/interp_isos.html">http://waps.cfa.harvard.edu/MIST/interp_isos.html</a></p>
-</div>
-<div class="section" id="mergedpisaekstromparsec">
-<h2>MergedPisaEkstromParsec<a class="headerlink" href="#mergedpisaekstromparsec" title="Permalink to this headline">¶</a></h2>
-<p>Same blend of models as <a class="reference internal" href="#merged"><span class="std std-ref">MergedBaraffePisaEkstromParsec</span></a>, but without Baraffe+15.</p>
-</div>
-<div class="section" id="mergedsiessgenevapadova">
-<h2>MergedSiessGenevaPadova<a class="headerlink" href="#mergedsiessgenevapadova" title="Permalink to this headline">¶</a></h2>
+<p>For logAge &gt; 7.4:</p>
+<ul class="simple">
+<li>Parsec v1.2s: full mass range</li>
+</ul>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>rot: boolean, optional</strong></dt>
+<dd><p class="first last">If true, then use rotating Ekstrom models. Default is true.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isochrone</span></code>([age,&nbsp;metallicity])</td>
+<td>Extract an individual isochrone from the Baraffe-Pisa-Ekstrom-Parsec  collection</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="57%" />
+<col width="43%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>massTrack</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="evolution.MergedPisaEkstromParsec">
+<em class="property">class </em><code class="descclassname">evolution.</code><code class="descname">MergedPisaEkstromParsec</code><span class="sig-paren">(</span><em>rot=True</em><span class="sig-paren">)</span><a class="headerlink" href="#evolution.MergedPisaEkstromParsec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#evolution.StellarEvolution" title="evolution.StellarEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">evolution.StellarEvolution</span></code></a></p>
+<p>Same as MergedBaraffePisaEkstromParsec, but without
+the Baraffe models.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>rot: boolean, optional</strong></dt>
+<dd><p class="first last">If true, then use rotating Ekstrom models. Default is true.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isochrone</span></code>([age,&nbsp;metallicity])</td>
+<td>Extract an individual isochrone from the Geneva collection.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="57%" />
+<col width="43%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>massTrack</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="evolution.MergedSiessGenevaPadova">
+<em class="property">class </em><code class="descclassname">evolution.</code><code class="descname">MergedSiessGenevaPadova</code><a class="headerlink" href="#evolution.MergedSiessGenevaPadova" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#evolution.StellarEvolution" title="evolution.StellarEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">evolution.StellarEvolution</span></code></a></p>
 <p>This is a combination of several different evolution models.</p>
-<p>Component Models:</p>
+<p>The model used depends on the age of the population and what stellar masses
+are being modeled:</p>
 <ul class="simple">
 <li>Siess (<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2000A&amp;A...358..593S/abstract">Siess et al. 2000</a>)</li>
 <li>Geneva (<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2003A&amp;A...404..975M/abstract">Meynet &amp; Maeder 2003</a>)</li>
@@ -164,23 +329,130 @@ the default set used unless otherwise specified.</p>
 <ul class="simple">
 <li>Padova: full mass range</li>
 </ul>
-</div>
-<div class="section" id="baraffe15">
-<h2>Baraffe15<a class="headerlink" href="#baraffe15" title="Permalink to this headline">¶</a></h2>
-<p>Models published in <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2015A&amp;A...577A..42B/abstract">Baraffe et al. 2015</a>,
-Downloaded from <a class="reference external" href="http://perso.ens-lyon.fr/isabelle.baraffe/BHAC15dir/BHAC15_tracks">http://perso.ens-lyon.fr/isabelle.baraffe/BHAC15dir/BHAC15_tracks</a></p>
-</div>
-<div class="section" id="esktrom12">
-<h2>Esktrom12<a class="headerlink" href="#esktrom12" title="Permalink to this headline">¶</a></h2>
-<p>Models published in <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2012A&amp;A...537A.146E/abstract">Ekstrom et al. 2012</a>,
-Downloaded from <a class="reference external" href="http://obswww.unige.ch/Recherche/evoldb/index/Isochrone/">http://obswww.unige.ch/Recherche/evoldb/index/Isochrone/</a></p>
-</div>
-<div class="section" id="parsec">
-<h2>Parsec<a class="headerlink" href="#parsec" title="Permalink to this headline">¶</a></h2>
-<p>Models published in <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2012MNRAS.427..127B/abstract">Bressan et al. 2012</a>,
-version 1.2s.
-Downloaded from <a class="reference external" href="http://stev.oapd.inaf.it/cgi-bin/cmd">http://stev.oapd.inaf.it/cgi-bin/cmd</a></p>
-<p>Parameters used in download:</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isochrone</span></code>([age,&nbsp;metallicity])</td>
+<td>Extract an individual isochrone from the Geneva collection.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="57%" />
+<col width="43%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>massTrack</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="evolution.Baraffe15">
+<em class="property">class </em><code class="descclassname">evolution.</code><code class="descname">Baraffe15</code><a class="headerlink" href="#evolution.Baraffe15" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#evolution.StellarEvolution" title="evolution.StellarEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">evolution.StellarEvolution</span></code></a></p>
+<p>Evolution models published in 
+<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2015A&amp;A...577A..42B/abstract">Baraffe et al. 2015</a>.</p>
+<p>Downloaded from <a class="reference external" href="http://perso.ens-lyon.fr/isabelle.baraffe/BHAC15dir/BHAC15_tracks">here</a>.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isochrone</span></code>([age,&nbsp;metallicity])</td>
+<td>Extract an individual isochrone from the Baraffe+15 collection.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">test_age_interp</span></code>(onlineIso,&nbsp;interpIso)</td>
+<td>Compare one of our interpolated ischrones with one of the isochrones provided online by Baraffe+15.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">tracks_to_isochrones</span></code>(tracksFile)</td>
+<td>Create isochrones at desired age sampling (6.0 &lt; logAge &lt; 8.0, steps of 0.01; hardcoded) from the Baraffe+15 tracks downloaded online.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="57%" />
+<col width="43%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>massTrack</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="evolution.Ekstrom12">
+<em class="property">class </em><code class="descclassname">evolution.</code><code class="descname">Ekstrom12</code><span class="sig-paren">(</span><em>rot=True</em><span class="sig-paren">)</span><a class="headerlink" href="#evolution.Ekstrom12" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#evolution.StellarEvolution" title="evolution.StellarEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">evolution.StellarEvolution</span></code></a></p>
+<p>Evolution models from 
+<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2012A&amp;A...537A.146E/abstract">Ekstrom et al. 2012</a>.</p>
+<p>Downloaded from <a class="reference external" href="http://obswww.unige.ch/Recherche/evoldb/index/Isochrone/">here</a>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first last docutils">
+<dt><strong>rot: boolean, optional</strong></dt>
+<dd><p class="first last">If true, then use rotating Ekstrom models. Default is true.</p>
+</dd>
+</dl>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">create_iso</span></code>(ageList[,&nbsp;rot])</td>
+<td>Given a set of isochrone files downloaded from the server, put in correct iso.fits format for parse_iso code.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_isochrones</span></code>()</td>
+<td>Parse iso.fits (filename hardcoded) file downloaded from Ekstrom+12 models, create individual isochrone files for the different ages.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isochrone</span></code>([age,&nbsp;metallicity])</td>
+<td>Extract an individual isochrone from the Ekstrom+12 Geneva collection.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="57%" />
+<col width="43%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>massTrack</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="evolution.Parsec">
+<em class="property">class </em><code class="descclassname">evolution.</code><code class="descname">Parsec</code><a class="headerlink" href="#evolution.Parsec" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#evolution.StellarEvolution" title="evolution.StellarEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">evolution.StellarEvolution</span></code></a></p>
+<p>Evolution models from 
+<a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/2012MNRAS.427..127B/abstract">Bressan et al. 2012</a>,
+version 1.2s.</p>
+<p>Downloaded from <cite>here &lt;http://stev.oapd.inaf.it/cgi-bin/cmd&gt;_</cite></p>
+<p class="rubric">Notes</p>
+<p>Evolution model parameters used in download:</p>
 <ul class="simple">
 <li>n_Reimers parameter (mass loss on RGB) = 0.2</li>
 <li>photometric system: HST/WFC3 IR channel</li>
@@ -190,17 +462,79 @@ Downloaded from <a class="reference external" href="http://stev.oapd.inaf.it/cgi
 <li>no extinction</li>
 <li>Chabrier+01 mass function</li>
 </ul>
-</div>
-<div class="section" id="pisa">
-<h2>Pisa<a class="headerlink" href="#pisa" title="Permalink to this headline">¶</a></h2>
-<p>Models published in <a href="#id3"><span class="problematic" id="id4">`Tognelli et al. 2011&lt; https://ui.adsabs.harvard.edu//#abs/2011A&amp;A...533A.109T/abstract&gt;`_</span></a>,
-Downloaded from <a class="reference external" href="http://astro.df.unipi.it/stellar-models/index.php?m=1">http://astro.df.unipi.it/stellar-models/index.php?m=1</a></p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_isochrones</span></code>(metallicity_list)</td>
+<td>Parse isochrone file downloaded from Parsec version 1.2 for different metallicities, create individual isochrone files for the different ages.</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isochrone</span></code>([age,&nbsp;metallicity])</td>
+<td>Extract an individual isochrone from the Parsec version 1.2s collection.</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="57%" />
+<col width="43%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>massTrack</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt id="evolution.Pisa">
+<em class="property">class </em><code class="descclassname">evolution.</code><code class="descname">Pisa</code><a class="headerlink" href="#evolution.Pisa" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#evolution.StellarEvolution" title="evolution.StellarEvolution"><code class="xref py py-class docutils literal notranslate"><span class="pre">evolution.StellarEvolution</span></code></a></p>
+<p>Evolution models from 
+<a href="#id6"><span class="problematic" id="id7">`Tognelli et al. 2011&lt; https://ui.adsabs.harvard.edu//#abs/2011A&amp;A...533A.109T/abstract&gt;`_</span></a>.</p>
+<p>Downloaded from <a class="reference external" href="http://astro.df.unipi.it/stellar-models/index.php?m=1">here</a></p>
+<p class="rubric">Notes</p>
 <p>Parameters used in download:</p>
 <ul class="simple">
 <li>Y = middle value of 3 provided (changes for different metallicities)</li>
 <li>mixing length = 1.68</li>
 <li>Deuterium fraction: 2*10^-5 for Z = 0.015, 0.03; 4*10^-4 for 0.005</li>
 </ul>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">format_isochrones</span></code>(metallicity_list)</td>
+<td>Rename the isochrone files extracted from Pisa (Tognelli+11) to fit naming/directory scheme</td>
+</tr>
+<tr class="row-even"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">isochrone</span></code>([age,&nbsp;metallicity])</td>
+<td>Extract an individual isochrone from the Pisa (Tognelli+11) collection.</td>
+</tr>
+<tr class="row-odd"><td><code class="xref py py-obj docutils literal notranslate"><span class="pre">make_isochrone_grid</span></code>()</td>
+<td>Create isochrone grid of given metallicity with time sampling = 0.01 in logAge (hardcoded).</td>
+</tr>
+</tbody>
+</table>
+<table border="1" class="docutils">
+<colgroup>
+<col width="57%" />
+<col width="43%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><strong>massTrack</strong></td>
+<td>&#160;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
 </div>
 </div>
 
@@ -216,9 +550,6 @@ Downloaded from <a class="reference external" href="http://astro.df.unipi.it/ste
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li class="right" >
-          <a href="atmo_models.html" title="Atmosphere Model Object"
-             >next</a> |</li>
         <li class="right" >
           <a href="make_cluster.html" title="Cluster Object"
              >previous</a> |</li>

@@ -3,8 +3,19 @@
 ==========
 IMF Object
 ==========
+Initial Mass Functions (IMFs) are defined as classes in
+popstar/imf/imf.py. These can be defined by::
 
+  from popstar.imf import imf
+  imf_obj = imf.<class_name>
 
+The IMF object is an input for the :ref:`cluster_objects`, and will
+be used to draw the inital stellar mass distribution for the cluster.
+A :ref:`multi_obj` may be passed to the IMF object to
+form multiple star systems.
+
+The IMFs are defined as broken power laws. Additional functional forms
+may be implemented as sub-classes off of the base IMF class.
 
 
 Base IMF Class

@@ -39,20 +39,7 @@
   <h3><a href="index.html">Table Of Contents</a></h3>
   <ul>
 <li><a class="reference internal" href="#">Photometric Filters</a><ul>
-<li><a class="reference internal" href="#mass">2MASS</a></li>
-<li><a class="reference internal" href="#ctio-osiris">CTIO_OSIRIS</a></li>
-<li><a class="reference internal" href="#decam">DeCam</a></li>
-<li><a class="reference internal" href="#hubble-space-telescope">Hubble Space Telescope</a></li>
-<li><a class="reference internal" href="#johnson-cousins">Johnson-Cousins</a></li>
-<li><a class="reference internal" href="#johnson-glass">Johnson-Glass</a></li>
-<li><a class="reference internal" href="#jwst">JWST</a></li>
-<li><a class="reference internal" href="#keck-nirc">Keck NIRC</a></li>
-<li><a class="reference internal" href="#keck-nirc2">Keck NIRC2</a></li>
-<li><a class="reference internal" href="#naco">NACO</a></li>
-<li><a class="reference internal" href="#panstarrs1">PanStarrs1</a></li>
-<li><a class="reference internal" href="#ukirt">UKIRT</a></li>
-<li><a class="reference internal" href="#vista">VISTA</a></li>
-<li><a class="reference internal" href="#gaia">GAIA</a></li>
+<li><a class="reference internal" href="#filter-sets">Filter Sets</a></li>
 </ul>
 </li>
 </ul>
@@ -85,25 +72,32 @@
           <div class="body" role="main">
             
   <div class="section" id="photometric-filters">
-<h1>Photometric Filters<a class="headerlink" href="#photometric-filters" title="Permalink to this headline">¶</a></h1>
-<p>When calling <code class="docutils literal notranslate"><span class="pre">synthetic.IsochronePhot</span></code> [ADD LINK], the user can
-specify the filters used for synthetic photometry. Each filter is
-identified by a unique string, and an array of such strings are passed
-into the <code class="docutils literal notranslate"><span class="pre">filters</span></code> variable in the Isochrone call. For example:</p>
+<span id="filters"></span><h1>Photometric Filters<a class="headerlink" href="#photometric-filters" title="Permalink to this headline">¶</a></h1>
+<p>The user can specify what filters are used for synthetic photometry
+when defining the <a class="reference internal" href="make_isochrone.html#isochrone-objects"><span class="std std-ref">Isochrone Object</span></a>.  Each filter is
+identified by a unique string, and an array of such strings
+are passed into the Isochrone call.</p>
+<p>For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use the HST WFC3-IR F127M and F153M filters, along with NIRC2 Kp</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">filt_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;wfc3,ir,f127m&#39;</span><span class="p">,</span> <span class="s1">&#39;wfc3,ir,f153m&#39;</span><span class="p">,</span> <span class="s1">&#39;nirc2,Kp&#39;</span><span class="p">]</span>
-<span class="o">&gt;&gt;&gt;</span> <span class="n">my_iso</span> <span class="o">=</span> <span class="n">synthetic</span><span class="o">.</span><span class="n">IsochronePhot</span><span class="p">(</span><span class="n">logAge</span><span class="p">,</span> <span class="n">AKs</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">metallicity</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<span class="n">filt_list</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;wfc3,ir,f127m&#39;</span><span class="p">,</span> <span class="s1">&#39;wfc3,ir,f153m&#39;</span><span class="p">,</span> <span class="s1">&#39;nirc2,Kp&#39;</span><span class="p">]</span>
+<span class="n">my_iso</span> <span class="o">=</span> <span class="n">synthetic</span><span class="o">.</span><span class="n">IsochronePhot</span><span class="p">(</span><span class="n">logAge</span><span class="p">,</span> <span class="n">AKs</span><span class="p">,</span> <span class="n">dist</span><span class="p">,</span> <span class="n">metallicity</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                         <span class="n">evo_model</span><span class="o">=</span><span class="n">evo_model</span><span class="p">,</span> <span class="n">atm_func</span><span class="o">=</span><span class="n">atm_func</span><span class="p">,</span>
                         <span class="n">red_law</span><span class="o">=</span><span class="n">red_law</span><span class="p">,</span> <span class="n">filters</span><span class="o">=</span><span class="n">filt_list</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>These strings follow the format <code class="docutils literal notranslate"><span class="pre">&lt;telescope/filter_set&gt;,&lt;filter&gt;</span></code>.
 Note that there is no space after the comma, and case matters.</p>
+<p>Filter transmissions are stored in specific sub-directories
+in PyPopStar/filt_func. The functions in popstar/filters.py tell
+the <a class="reference internal" href="make_isochrone.html#isochrone-objects"><span class="std std-ref">Isochrone Object</span></a> how to interpret the filter strings
+and pull the corresponding transmission functions from the filt_func
+directories.</p>
 <p>Available filters:</p>
 <ul class="simple">
 <li>2MASS</li>
 <li>CTIO_OSIRIS</li>
 <li>DeCam</li>
+<li>GAIA</li>
 <li>Hubble Space Telescope</li>
 <li>Johnson-Cousins</li>
 <li>Johnson-Glass</li>
@@ -114,89 +108,31 @@ Note that there is no space after the comma, and case matters.</p>
 <li>PanStarrs 1</li>
 <li>UKIRT</li>
 <li>VISTA</li>
-<li>GAIA</li>
 </ul>
-<p>These filter functions are stored in the PopStar/filt_func directory.</p>
-<div class="section" id="mass">
-<h2>2MASS<a class="headerlink" href="#mass" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="https://old.ipac.caltech.edu/2mass/">Two-Micron Sky Survey</a>
-Filters: J, H, Ks</p>
+<blockquote>
+<div>If the user wants to add new filters, there are 3 steps:</div></blockquote>
+<ol class="arabic simple">
+<li>Save the filter transmissions as text files in a filt_func
+sub-directory.</li>
+<li>Define a new function in filters.py that can read the new filt string
+input and pull the transmission files from the proper directory.</li>
+<li>Edit the synthetic.get_filter_info to call the new filters.py
+function when the new filt string is used.</li>
+</ol>
+<div class="section" id="filter-sets">
+<h2>Filter Sets<a class="headerlink" href="#filter-sets" title="Permalink to this headline">¶</a></h2>
+<p><strong>2MASS</strong></p>
+<p><a class="reference external" href="https://old.ipac.caltech.edu/2mass/">Two-Micron Sky Survey</a> Filters: J, H, Ks</p>
 <p>Example: <code class="docutils literal notranslate"><span class="pre">'2mass,H'</span></code></p>
-</div>
-<div class="section" id="ctio-osiris">
-<h2>CTIO_OSIRIS<a class="headerlink" href="#ctio-osiris" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="http://www.ctio.noao.edu/soar/content/ohio-state-infrared-imagerspectrograph-osiris">OSIRIS imager</a> on the CTIO telescope
-Filters: H, K</p>
+<p><strong>CTIO_OSIRIS</strong></p>
+<p><a class="reference external" href="http://www.ctio.noao.edu/soar/content/ohio-state-infrared-imagerspectrograph-osiris">OSIRIS imager</a>
+on the CTIO telescope. Filters: H, K</p>
 <p>Example: <code class="docutils literal notranslate"><span class="pre">'ctio_osiris,H'</span></code></p>
-</div>
-<div class="section" id="decam">
-<h2>DeCam<a class="headerlink" href="#decam" title="Permalink to this headline">¶</a></h2>
+<p><strong>DeCam</strong></p>
 <p><a class="reference external" href="http://www.ctio.noao.edu/noao/content/DECam-filter-information">Dark Energy Camera</a>
 Filters: u, g, r, i, z, Y</p>
 <p>Example: <code class="docutils literal notranslate"><span class="pre">'decam,r'</span></code></p>
-</div>
-<div class="section" id="hubble-space-telescope">
-<h2>Hubble Space Telescope<a class="headerlink" href="#hubble-space-telescope" title="Permalink to this headline">¶</a></h2>
-<p>HST filters are defined by their <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/appendixb.html#pysynphot-appendixb">pysynphot OBSMODE strings</a>. Note that the pysynphot cdbs/comp directory must be downloaded in order for this to work.</p>
-<p>Example: <code class="docutils literal notranslate"><span class="pre">'wfc3,ir,f125w'</span></code></p>
-</div>
-<div class="section" id="johnson-cousins">
-<h2>Johnson-Cousins<a class="headerlink" href="#johnson-cousins" title="Permalink to this headline">¶</a></h2>
-<p>Johnson-Cousin filters (downloaded from <a class="reference external" href="http://www.aip.de/en/research/facilities/stella/instruments/data/johnson-ubvri-filter-curves">http://www.aip.de/en/research/facilities/stella/instruments/data/johnson-ubvri-filter-curves</a>)
-Filters: U, B, V, R, I</p>
-<p>Example: <code class="docutils literal notranslate"><span class="pre">'ubv,B'</span></code></p>
-</div>
-<div class="section" id="johnson-glass">
-<h2>Johnson-Glass<a class="headerlink" href="#johnson-glass" title="Permalink to this headline">¶</a></h2>
-<p>Johnson-Glass passbands taken from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/1988PASP..100.1134B/abstract">Bessell et al. 1988</a>
-Filters: J, H, K</p>
-<p>Example: <code class="docutils literal notranslate"><span class="pre">'jg,K'</span></code></p>
-</div>
-<div class="section" id="jwst">
-<h2>JWST<a class="headerlink" href="#jwst" title="Permalink to this headline">¶</a></h2>
-<p>JWST NIRCam filters, downloaded from <a class="reference external" href="https://jwst-docs.stsci.edu/display/JTI/NIRCam+Filters#NIRCamFilters-filt_trans">NIRCam website</a>. The filter functions in the nircam_throughputs/modAB_mean/nrc_plus_ote folder is used.</p>
-<p>Filters: F070W, F090W,  F115W, F140M, F150W, F150W2, F162M, F164N, F182M, F187N, F200W, F210M, F212N, F250M, F277W, F300M, F322W2, F323N, F335M, F356W, F360M, F405N, F410M, F430M,  F444W, F460M, F466N, F470N, F480M,</p>
-<p>Example: <code class="docutils literal notranslate"><span class="pre">'jwst,F356W'</span></code></p>
-</div>
-<div class="section" id="keck-nirc">
-<h2>Keck NIRC<a class="headerlink" href="#keck-nirc" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="https://www2.keck.hawaii.edu/inst/nirc/">NIRC1 filters</a> on the Keck Telescope
-Filters: H, K</p>
-<p>Example: <code class="docutils literal notranslate"><span class="pre">'nirc1,H'</span></code></p>
-</div>
-<div class="section" id="keck-nirc2">
-<h2>Keck NIRC2<a class="headerlink" href="#keck-nirc2" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="https://www2.keck.hawaii.edu/inst/nirc2/filters.html">NIRC2 filters</a>
-on the Keck Telescope ()
-Filters: J, H, Hcont, K, Kp, Ks, Kcont, Lp, Ms, Brgamma, FeII</p>
-<p>Example: <code class="docutils literal notranslate"><span class="pre">'nirc2,Ks'</span></code></p>
-</div>
-<div class="section" id="naco">
-<h2>NACO<a class="headerlink" href="#naco" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="https://www.eso.org/sci/facilities/paranal/instruments/naco/inst/filters.html">ESO NACO filters</a>
-Filters: J, H, Ks</p>
-<p>Example: <code class="docutils literal notranslate"><span class="pre">'naco,H'</span></code></p>
-</div>
-<div class="section" id="panstarrs1">
-<h2>PanStarrs1<a class="headerlink" href="#panstarrs1" title="Permalink to this headline">¶</a></h2>
-<p>PanStarrs 1 filters from <a class="reference external" href="https://ui.adsabs.harvard.edu/#abs/arXiv:1203.0297">Tonry et al. 2012</a>
-Filters: g, r, i, z, y</p>
-<p>Example: <code class="docutils literal notranslate"><span class="pre">'ps1,</span> <span class="pre">g'</span></code></p>
-</div>
-<div class="section" id="ukirt">
-<h2>UKIRT<a class="headerlink" href="#ukirt" title="Permalink to this headline">¶</a></h2>
-<p>UKIRT Telescope (<a class="reference external" href="http://www.ukidss.org/technical/photom/photom.html">http://www.ukidss.org/technical/photom/photom.html</a>)
-Filters: J, H, K</p>
-<p>Example: <code class="docutils literal notranslate"><span class="pre">'ukirt,K'</span></code></p>
-</div>
-<div class="section" id="vista">
-<h2>VISTA<a class="headerlink" href="#vista" title="Permalink to this headline">¶</a></h2>
-<p><a class="reference external" href="http://casu.ast.cam.ac.uk/surveys-projects/vista/technical/filter-set">VISTA Telescope</a>
-Filters: Z, Y, J, H, K</p>
-<p>Example: <code class="docutils literal notranslate"><span class="pre">'vista,Y'</span></code></p>
-</div>
-<div class="section" id="gaia">
-<h2>GAIA<a class="headerlink" href="#gaia" title="Permalink to this headline">¶</a></h2>
+<p><strong>GAIA</strong></p>
 <p>The <a class="reference external" href="https://www.cosmos.esa.int/web/gaia/iow_20180316">GAIA Space Telescope filters</a>.
 Note that three sets are available: the pre-launch passbands used in DR1
 (<a class="reference external" href="https://ui.adsabs.harvard.edu/abs/2010A%26A...523A..48J/abstract">Jordi+10</a>),
@@ -206,6 +142,47 @@ user specifies which one they want by ‘dr1’, ‘dr2’, or ‘dr2_rev’, re
 <p>To calculate synthetic fluxes, the dr2_rev passbands are advised.</p>
 <p>Filters: G, Gbp, Grp</p>
 <p>Example (gaia G filter from revised DR2 passbands): <code class="docutils literal notranslate"><span class="pre">'gaia,dr2_rev,G'</span></code></p>
+<p><strong>Hubble Space Telescope</strong></p>
+<p>HST filters are defined by their <a class="reference external" href="https://pysynphot.readthedocs.io/en/latest/appendixb.html#pysynphot-appendixb">pysynphot OBSMODE strings</a>.</p>
+<p>Example: <code class="docutils literal notranslate"><span class="pre">'wfc3,ir,f125w'</span></code></p>
+<p><strong>Johnson-Cousins</strong></p>
+<p>Johnson-Cousin filters (downloaded from
+<a class="reference external" href="http://www.aip.de/en/research/facilities/stella/instruments/data/johnson-ubvri-filter-curves">http://www.aip.de/en/research/facilities/stella/instruments/data/johnson-ubvri-filter-curves</a>). Filters:
+U, B, V, R, I</p>
+<p>Example: <code class="docutils literal notranslate"><span class="pre">'ubv,B'</span></code></p>
+<p><strong>Johnson-Glass</strong></p>
+<p>Johnson-Glass passbands taken from <a class="reference external" href="https://ui.adsabs.harvard.edu//#abs/1988PASP..100.1134B/abstract">Bessell et al. 1988</a>
+Filters: J, H, K</p>
+<p>Example: <code class="docutils literal notranslate"><span class="pre">'jg,K'</span></code></p>
+<p><strong>JWST</strong></p>
+<p>JWST NIRCam filters, downloaded from <a class="reference external" href="https://jwst-docs.stsci.edu/display/JTI/NIRCam+Filters#NIRCamFilters-filt_trans">NIRCam website</a>. The filter functions in the nircam_throughputs/modAB_mean/nrc_plus_ote folder is used.</p>
+<p>Filters: F070W, F090W,  F115W, F140M, F150W, F150W2, F162M, F164N, F182M, F187N, F200W, F210M, F212N, F250M, F277W, F300M, F322W2, F323N, F335M, F356W, F360M, F405N, F410M, F430M,  F444W, F460M, F466N, F470N, F480M,</p>
+<p>Example: <code class="docutils literal notranslate"><span class="pre">'jwst,F356W'</span></code></p>
+<p><strong>Keck NIRC</strong></p>
+<p><a class="reference external" href="https://www2.keck.hawaii.edu/inst/nirc/">NIRC1 filters</a> on the Keck Telescope
+Filters: H, K</p>
+<p>Example: <code class="docutils literal notranslate"><span class="pre">'nirc1,H'</span></code></p>
+<p><strong>Keck NIRC2</strong></p>
+<p><a class="reference external" href="https://www2.keck.hawaii.edu/inst/nirc2/filters.html">NIRC2 filters</a>
+on the Keck Telescope ()
+Filters: J, H, Hcont, K, Kp, Ks, Kcont, Lp, Ms, Brgamma, FeII</p>
+<p>Example: <code class="docutils literal notranslate"><span class="pre">'nirc2,Ks'</span></code></p>
+<p><strong>NACO</strong></p>
+<p><a class="reference external" href="https://www.eso.org/sci/facilities/paranal/instruments/naco/inst/filters.html">ESO NACO filters</a>
+Filters: J, H, Ks</p>
+<p>Example: <code class="docutils literal notranslate"><span class="pre">'naco,H'</span></code></p>
+<p><strong>PanStarrs1</strong></p>
+<p>PanStarrs 1 filters from <a class="reference external" href="https://ui.adsabs.harvard.edu/#abs/arXiv:1203.0297">Tonry et al. 2012</a>
+Filters: g, r, i, z, y</p>
+<p>Example: <code class="docutils literal notranslate"><span class="pre">'ps1,</span> <span class="pre">g'</span></code></p>
+<p><strong>UKIRT</strong></p>
+<p>UKIRT Telescope (<a class="reference external" href="http://www.ukidss.org/technical/photom/photom.html">http://www.ukidss.org/technical/photom/photom.html</a>)
+Filters: J, H, K</p>
+<p>Example: <code class="docutils literal notranslate"><span class="pre">'ukirt,K'</span></code></p>
+<p><strong>VISTA</strong></p>
+<p><a class="reference external" href="http://casu.ast.cam.ac.uk/surveys-projects/vista/technical/filter-set">VISTA Telescope</a>
+Filters: Z, Y, J, H, K</p>
+<p>Example: <code class="docutils literal notranslate"><span class="pre">'vista,Y'</span></code></p>
 </div>
 </div>
 

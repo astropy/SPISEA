@@ -89,20 +89,30 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
 
 def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4):
     """
-    metallicity in [Fe/H] (def = +0.0): 
-          +1.0, +0.5, +0.3, +0.2, +0.1, +0.0, -0.1, -0.2, -0.3, -0.5, -1.0, 
-          -1.5, -2.0, -2.5, -3.0, -3.5, -4.0, -4.5, -5.0.
+    Return atmosphere from the Kurucz pysnphot grid 
+    (`Kurucz 1993 <http://www.stsci.edu/hst/observatory/crds/k93models.html>`_).
 
-    temperatures (def = 20,000 Kelvin):
-                Temperature Range      Grid Step
-                       K                   K
+    Grid Range:
 
-                  3000 - 10000            250 
-                 10000 - 13000            500
-                 13000 - 35000           1000
-                 35000 - 50000           2500
+    * Teff: 3000 - 50000 K
+    * gravity: 0 - 5 cgs
+    * metallicity: -5.0 - 1.0
 
-    log gravity (def = 0.0) in the range of 0.0 - 5.0 in 0.5 increments
+    Parameters
+    ----------
+    metallicity: float
+        The stellar metallicity, in terms of [Z]
+
+    temperature: float
+        The stellar temperature, in units of K
+
+    gravity: float
+        The stellar gravity, in cgs units
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.
     """
     try:
         sp = pysynphot.Icat('k93models', temperature, metallicity, gravity)
@@ -127,17 +137,33 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4):
 
 def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
     """
-    metallicity in [Fe/H] (def = +0.0): 
-          0.0, -0.5, -1.0, -1.5, -2.0, -2.5.
+    Return atmospheres from the pysynphot ATLAS9 atlas 
+    (`Castelli & Kurucz 2004 <http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html>`_).
 
-    temperatures (def = 20,000 Kelvin):
-                Temperature Range      Grid Step
-                       K                   K
+    Grid Range: 
 
-                  3000 -  13000            250 
-                  13000 - 50000            1000
+    * Teff: 3500 - 50000 K
+    * gravity: 0 - 5.0 cgs
+    * [M/H]: -2.5 - 0.2
 
-    log gravity (def = 4.0) in the range of 2.0 - 5.0 in 0.5 increments
+    Parameters
+    ----------
+    metallicity: float
+        The stellar metallicity, in terms of [Z]
+
+    temperature: float
+        The stellar temperature, in units of K
+
+    gravity: float
+        The stellar gravity, in cgs units
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.
+
+    verbose: boolean
+        True for verbose output
     """
     try:
         sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
@@ -207,9 +233,25 @@ def get_amesdusty_atmosphere(metallicity=0, temperature=5000, gravity=4):
 
 def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4):
     """
-    metallicity = [M/H] (def = 0)
-    temperature = Kelvin (def = 5000)
-    gravity = log gravity (def = 4.0)
+    Return atmosphere from the pysynphot 
+    `PHOENIX atlas <http://www.stsci.edu/hst/observatory/crds/SIfileInfo/pysynphottables/index_phoenix_models_html>`_.
+
+    Parameters
+    ----------
+    metallicity: float
+        The stellar metallicity, in terms of [Z]
+
+    temperature: float
+        The stellar temperature, in units of K
+
+    gravity: float
+        The stellar gravity, in cgs units
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.
+
     """
     try:
         sp = pysynphot.Icat('phoenix', temperature, metallicity, gravity)
@@ -380,15 +422,34 @@ def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=30000, gravity=4.14):
 
 def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=True):
     """
-    metallicity = [M/H] (def = 0)
-    temperature = Kelvin (def = 5000)
-    gravity = log gravity (def = 4.0)
+    Return PHOENIX v16 atmospheres from  
+    `Husser et al. 2013 <https://ui.adsabs.harvard.edu//#abs/2013A&A...553A...6H/abstract>`_. 
+    
+    Models originally downloaded via ftp `here <http://phoenix.astro.physik.uni-goettingen.de/?page_id=15>`_.
+    Solar metallicity and [alpha/Fe] is used.
 
-    temp: 2300 - 7000 steps of 100 K; 7000 - 12000 in steps of 200 K
-    grav: 0.0 - 6.0, steps of 0.5 (gaurenteed over all temps)
+    Grid Range:
 
-    If rebin = True, pull from spectra that have been rebinned to ck04model resolution;
-    this is important for spectrophotometry, otherwise it takes forever
+    * Teff: 2300 - 7000 K, steps of 100 K; 7000 - 12000 in steps of 200 K
+    * gravity: 0.0 - 6.0 cgs, steps of 0.5
+    * [M/H]: -4.0 - 1.0
+
+    Parameters
+    ----------
+    metallicity: float
+        The stellar metallicity, in terms of [Z]
+
+    temperature: float
+        The stellar temperature, in units of K
+
+    gravity: float
+        The stellar gravity, in cgs units
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.
+
     """
     atm_model_name = 'phoenix_v16'
     if rebin == True:
@@ -419,15 +480,33 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
 
 def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebin=True):
     """
-    metallicity = [M/H] (def = 0)
-    temperature = Kelvin (def = 3000)
-    gravity = log gravity (def = 4.0)
+    Return atmosphere from CIFIST2011_2015 grid 
+    (`Allard et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012RSPTA.370.2765A/abstract>`_, 
+    `Baraffe et al. 2015 <https://ui.adsabs.harvard.edu/abs/2015A%26A...577A..42B/abstract>`_ )
 
-    temp: 1200 - 7000 K
-    grav: 2.5 - 5.5
+    Grid originally downloaded `here <https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/FITS/>`_.
 
-    If rebin = True, pull from spectra that have been rebinned to ck04model resolution;
-    this is important for spectrophotometry, otherwise it takes forever
+    Grid Range:
+    
+    * Teff: 1200 - 7000 K
+    * gravity: 2.5 - 5.5 cgs
+    * [M/H] = 0
+
+    Parameters
+    ----------
+    metallicity: float
+        The stellar metallicity, in terms of [Z]
+
+    temperature: float
+        The stellar temperature, in units of K
+
+    gravity: float
+        The stellar gravity, in cgs units
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.    
     """
     if rebin == True:
         atm_name = 'BTSettl_2015_rebin'
@@ -458,12 +537,76 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
 
 def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=True):
     """
-    metallicity = [M/H] (def = 0)
-    temperature = Kelvin (def = 3000)
-    gravity = log gravity (def = 4.0)
+    Return atmosphere from CIFIST2011 grid 
+    (`Allard et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012RSPTA.370.2765A/abstract>`_)
 
-    If rebin = True, pull from spectra that have been rebinned to ck04model resolution;
-    this is important for spectrophotometry, otherwise it takes forever
+    Grid originally downloaded `here <https://phoenix.ens-lyon.fr/Grids/BT-Settl/>`_
+
+    Notes
+    ------
+    Grid Range:
+    
+    * [M/H] = -2.5, -2.0, -1.5, -1.0, -0.5, 0, 0.5
+    
+    Teff and gravity ranges depend on metallicity:
+
+    [M/H] = -2.5
+
+    * Teff: 2600 - 4600 K
+    * gravity: 4.5 - 5.5
+    
+    [M/H] = -2.0
+
+    * Teff: 2600 - 7000
+    * gravity: 4.5 - 5.5
+
+    [M/H] = -1.5
+
+    * Teff: 2600 - 7000
+    * gravity: 4.5 - 5.5
+
+    [M/H] = -1.0
+
+    * Teff: 2600 - 7000
+    * gravity: Teff < 3200 --> 4.5 - 5.5; Teff > 3200 --> 2.5 - 5.5 
+
+    [M/H] = -0.5
+
+    * Teff: 1000 -7000
+    * gravity: Teff < 3000 --> 4.5 - 5.5; Teff > 3000 --> 3.0 - 6.0
+
+    [M/H] = 0
+
+    * Teff: 750 - 7000
+    * gravity: Teff < 2500 --> 3.5 - 5.5; Teff > 2500 --> 0 - 5.5
+
+    [M/H] = 0.5
+
+    * Teff: 1000 - 5000
+    * gravity: 3.5 - 5.0
+
+
+    Alpha enhancement:
+
+    * [M/H]= -0.0, +0.5 no anhancement
+    * [M/H]= -0.5 with [alpha/H]=+0.2
+    * [M/H]= -1.0, -1.5, -2.0, -2.5 with [alpha/H]=+0.4
+
+    Parameters
+    ----------
+    metallicity: float
+        The stellar metallicity, in terms of [Z]
+
+    temperature: float
+        The stellar temperature, in units of K
+
+    gravity: float
+        The stellar gravity, in cgs units
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.
     """
     if rebin == True:
         atm_name = 'BTSettl_rebin'
@@ -494,9 +637,24 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
 
 def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
     """
-    metallicity = [M/H] (def = 0)
-    temperature = Kelvin (def = 5000)
-    gravity = log gravity (def = 4.0)
+    Return white dwarf atmospheres from  
+    `Koester et al. 2010 <https://ui.adsabs.harvard.edu//#abs/2010MmSAI..81..921K/abstract>`_
+
+    Parameters
+    ----------
+    metallicity: float
+        The stellar metallicity, in terms of [Z]
+
+    temperature: float
+        The stellar temperature, in units of K
+
+    gravity: float
+        The stellar gravity, in cgs units
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.
     """
     sp = pysynphot.Icat('wdKoester', temperature, metallicity, gravity)
 
@@ -569,15 +727,73 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose=False,
                               rebin=True):
     """
-    5500 <= T: ATLAS (ck04)
-    5000 <= T < 5500: ATLAS/PHOENIX merge
-    3800 <= T < 5000: PHOENIXv16 (Husser+13)
-    If [M/H] != 0:
-        T < 3800: PHOENIXV6 (Husser+13)
-    else:
-        T < 3800, logg < 2.5: PHOENIXv16 (Husser+13)
-        3200 <= T < 3800, logg > 2.5: BTSettl_CIFITS2011_2015/ PHOENIXV16 merge
-        3200 < T <= 1200, logg > 2.5: BTSettl_CIFITS2011_2015 is solar
+    Return a stellar atmosphere from a suite of different model grids, 
+    depending  on the input temperature, (all values in K).
+
+    Parameters
+    ----------
+    metallicity: float
+        The stellar metallicity, in terms of [Z]
+
+    temperature: float
+        The stellar temperature, in units of K
+
+    gravity: float
+        The stellar gravity, in cgs units
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.
+
+    verbose: boolean
+        True for verbose output
+
+    Notes
+    -----
+    The underlying stellar model grid used changes as a function of 
+    stellar temperature (in K):
+
+    * T > 20,000: ATLAS
+    * 5500 <= T < 20,000: ATLAS
+    * 5000 <= T < 5500: ATLAS/PHOENIXv16 merge
+    * 3800 <= T < 5000: PHOENIXv16
+
+    For T < 3800, there is an additional gravity and metallicity
+    dependence:
+
+    If T < 3800 and [M/H] = 0: 
+    
+    * T < 3800, logg < 2.5: PHOENIX v16
+    * 3200 <= T < 3800, logg > 2.5: BTSettl_CIFITS2011_2015/PHOENIXV16 merge
+    * 3200 < T <= 1200, logg > 2.5: BTSettl_CIFITS2011_2015
+
+    Otherwise, if T < 3800 and [M/H] != 0:
+    
+    * T < 3800: PHOENIX v16
+
+    References:
+
+    * ATLAS: ATLAS9 models (`Castelli & Kurucz 2004 <https://arxiv.org/abs/astro-ph/0405087>`_)
+    * PHOENIXv16 (`Husser et al. 2013 <https://ui.adsabs.harvard.edu//#abs/2013A&A...553A...6H/abstract>`_)
+    * BTSettl_CIFITS2011_2015: Baraffee+15, Allard+ (https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/)
+
+    LTE WARNING: 
+
+    The ATLAS atmospheres are calculated with LTE, and so they
+    are less accurate when non-LTE conditions apply (e.g. T > 20,000
+    K). Ultimately we'd like to add a non-LTE atmosphere grid for
+    the hottest stars in the future.
+
+    HOW BOUNDARIES BETWEEN MODELS ARE TREATED: 
+
+    At the boundary between two models grids a temperature range is defined 
+    where the resulting atmosphere is a weighted average between the two 
+    grids. Near one boundary one model
+    is weighted more heavily, while at the other boundary the other 
+    model is weighted more heavily. These are calculated in the 
+    temperature ranges where we switch between model grids, to 
+    ensure a smooth transition.
     """
     # For T < 3800, atmosphere depends on metallicity + gravity.
     # If solar metallicity, use BTSettl 2015 grid. Only solar metallicity is
@@ -657,8 +873,29 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
 
 def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False):
     """
-    Pull white dwarf atmosphere from Koester+10. If desired parameters are 
+    Return the white dwarf atmosphere from 
+    `Koester et al. 2010 <https://ui.adsabs.harvard.edu//#abs/2010MmSAI..81..921K/abstract>`_. 
+    If desired parameters are 
     outside of grid, return a blackbody spectrum instead
+
+    Parameters
+    ----------
+    metallicity: float
+        The stellar metallicity, in terms of [Z]
+
+    temperature: float
+        The stellar temperature, in units of K
+
+    gravity: float
+        The stellar gravity, in cgs units
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.
+
+    verbose: boolean
+        True for verbose output
     """
     try:
         if verbose:

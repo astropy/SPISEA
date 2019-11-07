@@ -51,19 +51,34 @@ def Vega():
 vega = Vega()
 
 class Cluster(object):
+    """
+    Base class to create a cluster with user-specified isochrone,
+    imf, ifmr, and total mass. 
+
+    Parameters
+    -----------
+    iso: isochrone object
+        PyPopStar isochrone object
+    
+    imf: imf object
+        PyPopStar IMF object
+
+    cluster_mass: float
+        Total initial mass of the cluster, in M_sun
+
+    ifmr: ifmr object or None
+        If ifmr object is defined, will create compact remnants
+        produced by the cluster at the given isochrone age. Otherwise,
+        no compact remnants are produced.
+
+    set_random_seed: boolean
+        If true, then random seed is set for all random processes
+
+    vebose: boolean
+        True for verbose output.
+    """
     def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=False,
                      set_random_seed=False):
-        """
-        Code to model a cluster with user-specified logAge, AKs, and distance.
-        Must also specify directory containing the isochrone (made using popstar
-        synthetic code).
-
-        Can also specify IMF slope, mass limits, cluster mass, and parameters for
-        multiple stars.
-
-        If set_random_seed = True, then random seed is set for all random processes.
-        This is for debugging purposes
-        """
         self.verbose = verbose
         self.iso = iso
         self.imf = imf
@@ -74,16 +89,42 @@ class Cluster(object):
         return
     
 class ResolvedCluster(Cluster):
-    def __init__(self, iso, imf, cluster_mass, ifmr=None, save_dir='./', verbose=True,
+    """
+    Cluster sub-class that produces a *resolved* stellar cluster.
+    A table is output with the synthetic photometry and intrinsic 
+    properties of the individual stars (or stellar systems, if 
+    mutliplicity is used in the IMF object).
+
+    If multiplicity is used, than a second table is produced that 
+    contains the properties of the companion stars independent of their
+    primary stars.
+
+    Parameters
+    -----------
+    iso: isochrone object
+        PyPopStar isochrone object
+    
+    imf: imf object
+        PyPopStar IMF object
+
+    cluster_mass: float
+        Total initial mass of the cluster, in M_sun
+
+    ifmr: ifmr object or None
+        If ifmr object is defined, will create compact remnants
+        produced by the cluster at the given isochrone age. Otherwise,
+        no compact remnants are produced.
+
+    set_random_seed: boolean
+        If true, then random seed is set for all random processes
+
+    vebose: boolean
+        True for verbose output.
+    """
+    def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=True,
                      set_random_seed=False):
         Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
                              set_random_seed=set_random_seed)
-
-        # if os.path.exists(save_sys_file):
-        #     self.star_systems = Table.read(save_sys_file)
-
-        #     if self.imf.make_multiples:
-        #         self.companions = Table.read(save_comp_file)
 
         # Provide a user warning is random seed is set
         if set_random_seed:
@@ -397,6 +438,39 @@ class ResolvedCluster(Cluster):
 
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
+    """
+    Sub-class of ResolvedCluster that applies differential
+    extinction to the synthetic photometry.
+
+    Parameters
+    -----------
+    iso: isochrone object
+        PyPopStar isochrone object
+    
+    imf: imf object
+        PyPopStar IMF object
+
+    cluster_mass: float
+        Total initial mass of the cluster, in M_sun
+
+    delta_AKs: float
+        Amount of differential extinction to apply to synthetic photometry,
+        in terms of magnitudes of extinction in the Ks filter. Specifically,
+        delta_AKs defines the standard deviation of a Gaussian distribution 
+        from which the delta_AKs values will be drawn from for each individual
+        system.
+
+    ifmr: ifmr object or None
+        If ifmr object is defined, will create compact remnants
+        produced by the cluster at the given isochrone age. Otherwise,
+        no compact remnants are produced.
+
+    set_random_seed: boolean
+        If true, then random seed is set for all random processes
+
+    vebose: boolean
+        True for verbose output.
+    """
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
                  ifmr=None, verbose=False, set_random_seed=False):
 
@@ -452,11 +526,31 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         return
     
 class UnresolvedCluster(Cluster):
+    """
+    Cluster sub-class that produces an *unresolved* stellar cluster.
+    Output is a combined spectrum that is the sum of the individual 
+    spectra of the cluster stars.
+
+    Parameters
+    -----------
+    iso: isochrone object
+        PyPopStar isochrone object
+    
+    imf: imf object
+        PyPopStar IMF object
+
+    cluster_mass: float
+        Total initial mass of the cluster, in M_sun
+
+    wave_range: 2-element array
+        Define the minumum and maximum wavelengths of the final
+        output spectrum, in Angstroms. Array should be [min_wave, max_wave]
+
+    vebose: boolean
+        True for verbose output.
+    """
     def __init__(self, iso, imf, cluster_mass,
                  wave_range=[3000, 52000], verbose=False):
-        """
-        iso : Isochrone
-        """
         # Doesn't do much.
         Cluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
         

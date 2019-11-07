@@ -15,8 +15,7 @@
     <script type="text/javascript" src="_static/doctools.js"></script>
     <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="index" title="Index" href="genindex.html" />
-    <link rel="search" title="Search" href="search.html" />
-    <link rel="prev" title="IMF Object" href="imf.html" /> 
+    <link rel="search" title="Search" href="search.html" /> 
   </head><body>
 
 <div style="background-color: white; text-align: left; padding: 10px 10px 15px 15px">
@@ -29,9 +28,6 @@
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              accesskey="I">index</a></li>
-        <li class="right" >
-          <a href="imf.html" title="IMF Object"
-             accesskey="P">previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
  
@@ -48,9 +44,6 @@
 </li>
 </ul>
 
-  <h4>Previous topic</h4>
-  <p class="topless"><a href="imf.html"
-                        title="previous chapter">IMF Object</a></p>
   <div role="note" aria-label="source link">
     <h3>This Page</h3>
     <ul class="this-page-menu">
@@ -79,9 +72,17 @@
           <div class="body" role="main">
             
   <div class="section" id="stellar-multiplicity-object">
-<h1>Stellar Multiplicity Object<a class="headerlink" href="#stellar-multiplicity-object" title="Permalink to this headline">¶</a></h1>
+<span id="multi-obj"></span><h1>Stellar Multiplicity Object<a class="headerlink" href="#stellar-multiplicity-object" title="Permalink to this headline">¶</a></h1>
 <p>The properties of multiple systems in the stellar population is
-defined by the stellar multiplicity object.</p>
+defined by the stellar multiplicity object. The multiplicity classes
+are defined in popstar/imf/multiplicity.py.</p>
+<p>To call a multiplicity class:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">popstar.imf</span> <span class="k">import</span> <span class="n">multiplicity</span>
+<span class="n">multi_obj</span> <span class="o">=</span> <span class="n">multiplicity</span><span class="o">.&lt;</span><span class="n">class_name</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>The multiplicity object is an input for the <a class="reference internal" href="imf.html#imf-objects"><span class="std std-ref">IMF Object</span></a>, as it
+impacts how the stellar masses are drawn.</p>
 <div class="section" id="stellar-multiplicity-classes">
 <h2>Stellar Multiplicity Classes<a class="headerlink" href="#stellar-multiplicity-classes" title="Permalink to this headline">¶</a></h2>
 <dl class="class">
@@ -300,9 +301,6 @@ to the inverse of the CDF.</p>
         <li class="right" style="margin-right: 10px">
           <a href="genindex.html" title="General Index"
              >index</a></li>
-        <li class="right" >
-          <a href="imf.html" title="IMF Object"
-             >previous</a> |</li>
         <li><a href="index.html">home</a>|&nbsp;</li>
         <li><a href="search.html">search</a>|&nbsp;</li>
  

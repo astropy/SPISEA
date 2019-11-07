@@ -83,6 +83,18 @@
             
   <div class="section" id="imf-object">
 <span id="imf-objects"></span><h1>IMF Object<a class="headerlink" href="#imf-object" title="Permalink to this headline">¶</a></h1>
+<p>Initial Mass Functions (IMFs) are defined as classes in
+popstar/imf/imf.py. These can be defined by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">popstar.imf</span> <span class="k">import</span> <span class="n">imf</span>
+<span class="n">imf_obj</span> <span class="o">=</span> <span class="n">imf</span><span class="o">.&lt;</span><span class="n">class_name</span><span class="o">&gt;</span>
+</pre></div>
+</div>
+<p>The IMF object is an input for the <a class="reference internal" href="make_cluster.html#cluster-objects"><span class="std std-ref">Cluster Object</span></a>, and will
+be used to draw the inital stellar mass distribution for the cluster.
+A <a class="reference internal" href="multiplicity.html#multi-obj"><span class="std std-ref">Stellar Multiplicity Object</span></a> may be passed to the IMF object to
+form multiple star systems.</p>
+<p>The IMFs are defined as broken power laws. Additional functional forms
+may be implemented as sub-classes off of the base IMF class.</p>
 <div class="section" id="base-imf-class">
 <h2>Base IMF Class<a class="headerlink" href="#base-imf-class" title="Permalink to this headline">¶</a></h2>
 <dl class="class">

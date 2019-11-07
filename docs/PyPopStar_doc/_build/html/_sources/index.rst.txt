@@ -57,5 +57,6 @@ Contributions
 We encourage contributions to PyPopStar, particular
 those that add support for star formation histories,
 new models, higher spectral resolution, etc.
-[details how to contribute: pull down development branch,
-contact us, etc]
+For feature additions, we ask that users fork or
+branch off of the development repository, make their changes,
+and then submit merge and pull requests.
