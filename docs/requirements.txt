@@ -1,6 +1,6 @@
 matplotlib
 numpy
-numpydocs
+numpydoc
 astropy
 pysynphot
 scipy
