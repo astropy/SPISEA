@@ -1,5 +1,6 @@
 matplotlib
 numpy
+numpydocs
 astropy
 pysynphot
 scipy
