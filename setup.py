@@ -7,7 +7,7 @@ setup(name='PyPopStar',
       author='TODO',
       author_email='todo@example.org',
       license='TODO',
-      packages=['popstar'],
+      packages=['PyPopStar'],
       zip_safe=False,
       install_requires=[],
       )
