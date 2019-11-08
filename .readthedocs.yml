@@ -6,8 +6,8 @@
 version: 2
 
 # Build conda environment
-conda:
-  environment: .environment.yml
+#conda:
+#  environment: .environment.yml
 
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
