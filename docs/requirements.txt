@@ -5,4 +5,3 @@ astropy
 pysynphot
 scipy
 sphinx
-popstar
