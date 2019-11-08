@@ -32,7 +32,8 @@ sys.path.append('/Users/mwhosek/code/python/PyPopStar/popstar')
 #              'sphinx.ext.inheritance_diagram',
 #              'numpydoc',
 #              'sphinx.ext.autodoc']
-extensions = ['sphinx.ext.autodoc']
+extensions = ['sphinx.ext.autodoc',
+                  'numpydoc']
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
