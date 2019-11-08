@@ -20,7 +20,7 @@ Dependencies
 * scipy
 * numpy
 * matplotlib
-* STScI CDBS data package (Download from `here
+* STScI CDBS data package (Download from the `website
   <http://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools/synphot-throughput-tables.html>`_
   or directly via ftp `here
   <ftp://archive.stsci.edu/pub/hst/pysynphot>`_. You will need 2
@@ -109,7 +109,7 @@ models in a directory called ``evolution/``
 .. _setup-paths:
 
 Set Paths to Models
---------------------------------------
+-------------------------------------
 
 You need to notify python where the evolution and atmosphere models
 live. This is done by setting two environment variables, ``PYSYN_CDBS`` and
