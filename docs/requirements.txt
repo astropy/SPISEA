@@ -4,3 +4,4 @@ numpydoc
 astropy
 pysynphot
 scipy
+sphinx
