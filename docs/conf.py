@@ -37,7 +37,11 @@ extensions = ['sphinx.ext.autodoc',
                   'sphinx.ext.mathjax',
                   'sphinx.ext.doctest']
 
-autodoc_mock_imports = ['popstar']
+import mock
+
+MOCK_MODULES = ['popstar']
+for mod_name in MOCK_MODULES:
+    sys.modules[mod_name] = mock.Mock()
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
