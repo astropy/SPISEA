@@ -85,10 +85,6 @@ class Cluster(object):
         self.ifmr = ifmr
         self.cluster_mass = cluster_mass
         self.set_random_seed = set_random_seed
-
-        # Set vega spectrum
-        vega = Vega()
-        self.vega = vega
         
         return
     
@@ -494,8 +490,8 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         #t1 = time.time()
         delta_red_filt = {}
         AKs = iso.points.meta['AKS']
-        red_vega_lo = self.vega * red_law.reddening(AKs).resample(self.vega.wave)
-        red_vega_hi = self.vega * red_law.reddening(AKs + deltaAKs).resample(self.vega.wave)
+        red_vega_lo = iso.vega * red_law.reddening(AKs).resample(iso.vega.wave)
+        red_vega_hi = iso.vega * red_law.reddening(AKs + deltaAKs).resample(iso.vega.wave)
 
         for filt in self.filt_names:
             obs_str = get_obs_str(filt)
@@ -685,9 +681,11 @@ class Isochrone(object):
                  wave_range=[3000, 52000], min_mass=None, max_mass=None,
                  rebin=True):
 
-
-        t1 = time.time()
+        # Set vega spectrum
+        vega = Vega()
+        self.vega = vega
         
+        t1 = time.time()
         c = constants
 
         # Get solar metallicity models for a population at a specific age.
@@ -966,7 +964,7 @@ class IsochronePhot(Isochrone):
 
         return
 
-    def make_photometry(self, rebin=True, vega=self.vega):
+    def make_photometry(self, rebin=True, vega=Vega()):
         """ 
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
@@ -990,7 +988,7 @@ class IsochronePhot(Isochrone):
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
             print( prt_fmt.format(ii, time.time() - startTime))
             
-            filt = get_filter_info(ii, rebin=rebin, vega=self.vega)
+            filt = get_filter_info(ii, rebin=rebin, vega=vega)
             filt_name = get_filter_col_name(ii)
 
             # Make the column to hold magnitudes in this filter. Add to points table.
