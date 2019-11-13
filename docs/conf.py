@@ -17,7 +17,6 @@ import sys
 import pdb
 sys.path.insert(0, os.path.abspath('../popstar'))
 sys.path.insert(0, os.path.abspath('../'))
-pdb.set_trace()
 
 # -- Project information -----------------------------------------------------
 
