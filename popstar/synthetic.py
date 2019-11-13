@@ -48,7 +48,7 @@ def Vega():
     
     return vega
 
-vega = Vega()
+#vega = Vega()
 
 class Cluster(object):
     """
@@ -85,6 +85,10 @@ class Cluster(object):
         self.ifmr = ifmr
         self.cluster_mass = cluster_mass
         self.set_random_seed = set_random_seed
+
+        # Set vega spectrum
+        vega = Vega()
+        self.vega = vega
         
         return
     
@@ -490,8 +494,8 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         #t1 = time.time()
         delta_red_filt = {}
         AKs = iso.points.meta['AKS']
-        red_vega_lo = vega * red_law.reddening(AKs).resample(vega.wave)
-        red_vega_hi = vega * red_law.reddening(AKs + deltaAKs).resample(vega.wave)
+        red_vega_lo = self.vega * red_law.reddening(AKs).resample(self.vega.wave)
+        red_vega_hi = self.vega * red_law.reddening(AKs + deltaAKs).resample(self.vega.wave)
 
         for filt in self.filt_names:
             obs_str = get_obs_str(filt)
@@ -952,7 +956,7 @@ class IsochronePhot(Isochrone):
             self.verbose = True
             
             # Make photometry
-            self.make_photometry(rebin=rebin, vega=vega)
+            self.make_photometry(rebin=rebin, vega=self.vega)
         else:
             try:
                 self.points = Table.read(self.save_file)
@@ -962,7 +966,7 @@ class IsochronePhot(Isochrone):
 
         return
 
-    def make_photometry(self, rebin=True, vega=vega):
+    def make_photometry(self, rebin=True, vega=self.vega):
         """ 
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
@@ -986,7 +990,7 @@ class IsochronePhot(Isochrone):
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
             print( prt_fmt.format(ii, time.time() - startTime))
             
-            filt = get_filter_info(ii, rebin=rebin, vega=vega)
+            filt = get_filter_info(ii, rebin=rebin, vega=self.vega)
             filt_name = get_filter_col_name(ii)
 
             # Make the column to hold magnitudes in this filter. Add to points table.
@@ -1299,7 +1303,7 @@ class iso_table(object):
             # Define filter info
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
             print( prt_fmt.format(filt_name, time.time() - ts))
-            filt = get_filter_info(filt_str, rebin=rebin, vega=vega)
+            filt = get_filter_info(filt_str, rebin=rebin, vega=self.vega)
 
             # Make the column to hold magnitudes in this filter. Add to points table.
             col_name = 'mag_' + filt_name
@@ -1319,7 +1323,7 @@ class iso_table(object):
 
         return
 
-def get_filter_info(name, vega=vega, rebin=True):
+def get_filter_info(name, vega=Vega(), rebin=True):
     """ 
     Define filter functions, setting ZP according to
     Vega spectrum. Input name is the popstar
@@ -1620,6 +1624,9 @@ def calc_ab_vega_filter_conversion(filt_str):
     # Get filter info
     filt = get_filter_info(filt_str)
 
+    # Get vega
+    vega = Vega()
+    
     # Let's convert everything into frequency space
     c = 2.997*10**18 # A / s
     vega_wave = vega.wave
