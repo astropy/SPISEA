@@ -119,7 +119,7 @@ class Ekstrom12(StellarEvolution):
     Evolution models from 
     `Ekstrom et al. 2012 <https://ui.adsabs.harvard.edu//#abs/2012A&A...537A.146E/abstract>`_.
 
-    Downloaded from `here <http://obswww.unige.ch/Recherche/evoldb/index/Isochrone/>`_.
+    Downloaded from `website <http://obswww.unige.ch/Recherche/evoldb/index/Isochrone/>`_.
 
     Parameters
     ----------
@@ -481,9 +481,9 @@ class Parsec(StellarEvolution):
 class Pisa(StellarEvolution):
     """
     Evolution models from 
-    `Tognelli et al. 2011< https://ui.adsabs.harvard.edu//#abs/2011A&A...533A.109T/abstract>`_.
+    `Tognelli et al. 2011 <https://ui.adsabs.harvard.edu//#abs/2011A&A...533A.109T/abstract>`_.
     
-    Downloaded from `here <http://astro.df.unipi.it/stellar-models/index.php?m=1>`_
+    Downloaded `online <http://astro.df.unipi.it/stellar-models/index.php?m=1>`_
 
     Notes
     ------
@@ -649,7 +649,7 @@ class Baraffe15(StellarEvolution):
     Evolution models published in 
     `Baraffe et al. 2015 <https://ui.adsabs.harvard.edu//#abs/2015A&A...577A..42B/abstract>`_.
 
-    Downloaded from `here <http://perso.ens-lyon.fr/isabelle.baraffe/BHAC15dir/BHAC15_tracks>`_.
+    Downloaded from `BHAC15 site <http://perso.ens-lyon.fr/isabelle.baraffe/BHAC15dir/BHAC15_tracks>`_.
     """
     def __init__(self):
         # define metallicity parameters for Baraffe models
@@ -937,7 +937,7 @@ class MISTv1(StellarEvolution):
     Define intrinsic properties for the MIST v1 stellar
     models. 
 
-    Models originally downloaded from `here <http://waps.cfa.harvard.edu/MIST/interp_isos.html>`_.
+    Models originally downloaded from `online server <http://waps.cfa.harvard.edu/MIST/interp_isos.html>`_.
 
     Parameters
     ----------
