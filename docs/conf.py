@@ -23,6 +23,7 @@ print('=================================')
 print('{0}'.format(os.getcwd()))
 print('{0}'.format(sys.path))
 print('{0}'.format(os.listdir()))
+print('{0}'.format(os.listdir('../')))
 print('=================================')
 print('=================================')
 
