@@ -18,15 +18,6 @@ import pdb
 sys.path.insert(0, os.path.abspath('../popstar'))
 sys.path.insert(0, os.path.abspath('../'))
 
-print('=================================')
-print('=================================')
-print('{0}'.format(os.getcwd()))
-print('{0}'.format(sys.path))
-print('{0}'.format(os.listdir()))
-print('{0}'.format(os.listdir('../')))
-print('=================================')
-print('=================================')
-
 # -- Project information -----------------------------------------------------
 
 project = 'PyPopStar'

@@ -1,8 +1,9 @@
 import time
 import pylab as plt
 import numpy as np
-from popstar import synthetic, reddening
+from popstar import synthetic, reddening, evolution, atmospheres
 import pysynphot
+import os
 import pdb
 from scipy.spatial import cKDTree as KDTree
 
