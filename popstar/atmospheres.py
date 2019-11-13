@@ -425,7 +425,7 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
     Return PHOENIX v16 atmospheres from  
     `Husser et al. 2013 <https://ui.adsabs.harvard.edu//#abs/2013A&A...553A...6H/abstract>`_. 
     
-    Models originally downloaded via ftp `here <http://phoenix.astro.physik.uni-goettingen.de/?page_id=15>`_.
+    Models originally downloaded via `ftp <http://phoenix.astro.physik.uni-goettingen.de/?page_id=15>`_.
     Solar metallicity and [alpha/Fe] is used.
 
     Grid Range:
@@ -484,7 +484,7 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
     (`Allard et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012RSPTA.370.2765A/abstract>`_, 
     `Baraffe et al. 2015 <https://ui.adsabs.harvard.edu/abs/2015A%26A...577A..42B/abstract>`_ )
 
-    Grid originally downloaded `here <https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/FITS/>`_.
+    Grid originally downloaded from `website <https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/FITS/>`_.
 
     Grid Range:
     
@@ -774,7 +774,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
 
     References:
 
-    * ATLAS: ATLAS9 models (`Castelli & Kurucz 2004 <https://arxiv.org/abs/astro-ph/0405087>`_)
+    * ATLAS: ATLAS9 models (`Castelli & Kurucz 2004 <http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html>`_)
     * PHOENIXv16 (`Husser et al. 2013 <https://ui.adsabs.harvard.edu//#abs/2013A&A...553A...6H/abstract>`_)
     * BTSettl_CIFITS2011_2015: Baraffee+15, Allard+ (https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/)
 

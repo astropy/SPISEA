@@ -83,8 +83,8 @@ class IMF(object):
             If true, sets the random seed for the stellar mass generation. This
             is for debugging purposes
 
-        Return
-        ------
+        Returns
+        -------
         masses : numpy float array
             List of primary star masses.
 
