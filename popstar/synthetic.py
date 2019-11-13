@@ -48,7 +48,7 @@ def Vega():
     
     return vega
 
-#vega = Vega()
+vega = Vega()
 
 class Cluster(object):
     """
