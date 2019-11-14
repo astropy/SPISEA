@@ -13,9 +13,7 @@ populations (i.e. star clusters). It gives the user control over many parameters
 Here is a brief list of things that PyPopStar can do:
 
 * make a cluster isochrone in many filters using different stellar models
-  
 * make a star cluster at any age with an unusual IMF and unresolved multiplicity
-  
 * make a spectrum of a star cluster in integrated light
 
 See [documentation](https://pypopstar.readthedocs.io/en/latest/) for details on 
