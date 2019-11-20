@@ -114,7 +114,8 @@ Set Paths to Models
 You need to notify python where the evolution and atmosphere models
 live. This is done by setting two environment variables, ``PYSYN_CDBS`` and
 ``POPSTAR_MODELS``, to point to the ``cdbs`` and ``models``
-directories (i.e. the directory where the ``evolution/`` directory lives). For example, in your .bash_profile::
+directories (i.e. the directory where the ``evolution/`` directory
+lives), respectively. For example, in your .bash_profile::
   
   export PYSYN_CDBS=/<path_to_cdbs_directory>
   export POPSTAR_MODELS=/<path_to_models_directory>
