@@ -17,7 +17,7 @@ atmosphere models and reddening law. Photometry will be calculated in
 several HST filters, and you will construct a color-magnitude diagram,
 identifying the position of a 1 solar-mass star.
 
-.. figure:: images/cluster_cmd_example.png
+.. figure:: images/cmd_example.png
 	    :align: center
 
 

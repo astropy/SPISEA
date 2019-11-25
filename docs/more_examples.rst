@@ -30,7 +30,7 @@ Figure 5: Clusters with Different IMFs: Luminosity Function + BH Mass Function
 	    :align: center
 
 
-
+		    
 Figure 7: Unresolved Cluster Spectra at Different Ages
 ----------------------------------------------------------
 .. figure:: images/clust_unresolved_example.png
