@@ -1137,10 +1137,10 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
     """
     This is a combination of several different evolution models:
 
-    * Baraffe (`Baraffe et al. 2015 <https://ui.adsabs.harvard.edu//#abs/2015A&A...577A..42B/abstract>`_)
+    * Baraffe (`Baraffe et al. 2015 <https://ui.adsabs.harvard.edu/abs/2015A%26A...577A..42B/abstract>`_)
     * Pisa (`Tognelli et al. 2011 <https://ui.adsabs.harvard.edu//#abs/2011A&A...533A.109T/abstract>`_)
     * Geneva (`Ekstrom et al. 2012 <https://ui.adsabs.harvard.edu//#abs/2012A&A...537A.146E/abstract>`_)
-    * Parsec (version 1.2s, `Bressan+12 <https://ui.adsabs.harvard.edu//#abs/2012MNRAS.427..127B/abstract>`_)
+    * Parsec (version 1.2s, `Bressan+12 <https://ui.adsabs.harvard.edu/abs/2012MNRAS.427..127B/abstract>`_)
 
     The model used depends on the age of the population and what stellar masses
     are being modeled:
