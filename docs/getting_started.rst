@@ -2,7 +2,7 @@
 
 
 ==========================
-Installation From Git
+Install From Git
 ==========================
 PyPopStar is hosted on `GitHub <https://github.com/astropy/PyPopStar>`_.
 To begin, clone the git repository.

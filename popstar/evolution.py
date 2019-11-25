@@ -47,12 +47,6 @@ class StellarEvolution(object):
         self.age_list = age_list
         
         return
-
-    def massTrack(self, mass, metallicity):
-        pass
-
-    def isochrone(self, age=1.e8, metallicity=0.0):
-        pass
     
 class Geneva(StellarEvolution):
     def __init__(self):
@@ -1271,7 +1265,7 @@ class MergedPisaEkstromParsec(StellarEvolution):
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
-        Extract an individual isochrone from the Geneva collection.
+        Extract an individual isochrone from the Pisa-Ekstrom-Parsec collection.
         """
         # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity
@@ -1374,7 +1368,7 @@ class MergedSiessGenevaPadova(StellarEvolution):
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
-        Extract an individual isochrone from the Geneva collection.
+        Extract an individual isochrone from the Siess-Geneva-Padova collection.
         """
         # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity

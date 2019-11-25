@@ -175,18 +175,10 @@ class ResolvedCluster(Cluster):
 
         return
 
-    def save_to_file(self, fileroot, overwrite=True):
-        # Unique parameters
-        save_sys_file = fileroot + '.fits'
-        save_comp_file = fileroot + '_comp.fits'
-
-        self.star_systems.write(save_sys_file, format='fits', overwrite=overwrite)
-        self.companions.write(save_comp_file, format='fits', overwrite=overwrite)
-                
-        return
-    
-        
     def set_filter_names(self):
+        """
+        Set filter column names
+        """
         filt_names = []
         
         for col_name in self.iso.points.colnames:
@@ -775,13 +767,6 @@ class Isochrone(object):
         print( 'Isochrone generation took {0:f} s.'.format(t2-t1))
         return
 
-    def trim(self, keep_indices):
-        # Convert luminosity to erg/s
-        self.points = self.points[keep_indices]
-        self.spec_list = self.spec_list[keep_indices]
-
-        return
-
     def plot_HR_diagram(self, savefile=None):
         """
         Make a standard HR diagram for this isochrone.
@@ -1016,7 +1001,7 @@ class IsochronePhot(Isochrone):
 
     def plot_CMD(self, mag1, mag2, savefile=None):
         """
-        Make a CMD with mag1 vs. mag1 - mag2
+        Make a CMD with mag1 vs mag1 - mag2
 
         Parameters
         ----------

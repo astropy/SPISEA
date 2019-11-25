@@ -180,9 +180,15 @@ class MultiplicityUnresolved(object):
         return  q
 
     def random_is_multiple(self, x, MF):
+        """
+        Helper function: determine if star is in multiple system.
+        """
         return x < MF
 
     def random_companion_count(self, x, CSF, MF):
+        """
+        Helper function: calculate number of companions.
+        """
         n_comp = 1 + np.random.poisson((CSF / MF) - 1)
 
         return n_comp

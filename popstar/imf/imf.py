@@ -420,6 +420,7 @@ class IMF_broken_powerlaw(IMF):
 
     def prim_xi(self, a):
         """
+        Helper function
         """
         returnFloat = type(a) == float
 
@@ -446,6 +447,9 @@ class IMF_broken_powerlaw(IMF):
             return val
 
     def prim_mxi(self, a):
+        """
+        Helper function
+        """
         returnFloat = type(a) == float
         
         a = np.atleast_1d(a)
@@ -501,6 +505,9 @@ class IMF_broken_powerlaw(IMF):
         self.lamda = self.int_xi_cl(self._m_limits_low[0], self._mass_limits)
 
     def norm_cl_wk04(self, Mcl, Mmax=None, Mmin=None):
+        """
+        Helper function
+        """
         self.k = 1.0
         self.Mcl = Mcl
 
@@ -538,12 +545,21 @@ class IMF_broken_powerlaw(IMF):
         self.lamda = self.int_xi_cl(self._m_limits_low[0], self._mass_limits)
 
     def xi_cl(self, m):
+        """
+        Helper function
+        """
         return theta_closed(self.norm_Mmax - m) * self.xi(m)
 
     def mxi_cl(self, m):
+        """
+        Helper function
+        """
         return theta_closed(self.norm_Mmax - m) * self.m_xi(m)
 
     def int_xi_cl(self, left, right):
+        """
+        Helper function
+        """
         t1 = self.prim_xi(right)
         t2 = theta_closed(right - self.norm_Mmax)
         t3 = self.int_xi(self.norm_Mmax, right)
