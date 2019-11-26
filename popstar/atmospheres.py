@@ -423,7 +423,7 @@ def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=30000, gravity=4.14):
 def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=True):
     """
     Return PHOENIX v16 atmospheres from  
-    `Husser et al. 2013 <https://ui.adsabs.harvard.edu//#abs/2013A&A...553A...6H/abstract>`_. 
+    `Husser et al. 2013 <https://ui.adsabs.harvard.edu/abs/2013A%26A...553A...6H/abstract>`_. 
     
     Models originally downloaded via `ftp <http://phoenix.astro.physik.uni-goettingen.de/?page_id=15>`_.
     Solar metallicity and [alpha/Fe] is used.
@@ -638,7 +638,7 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
 def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
     """
     Return white dwarf atmospheres from  
-    `Koester et al. 2010 <https://ui.adsabs.harvard.edu//#abs/2010MmSAI..81..921K/abstract>`_
+    `Koester et al. 2010 <https://ui.adsabs.harvard.edu/abs/2010MmSAI..81..921K/abstract>`_
 
     Parameters
     ----------
@@ -775,7 +775,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
     References:
 
     * ATLAS: ATLAS9 models (`Castelli & Kurucz 2004 <http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html>`_)
-    * PHOENIXv16 (`Husser et al. 2013 <https://ui.adsabs.harvard.edu//#abs/2013A&A...553A...6H/abstract>`_)
+    * PHOENIXv16 (`Husser et al. 2013 <https://ui.adsabs.harvard.edu/abs/2013A%26A...553A...6H/abstract>`_)
     * BTSettl_CIFITS2011_2015: Baraffee+15, Allard+ (https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/)
 
     LTE WARNING: 
@@ -874,7 +874,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
 def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False):
     """
     Return the white dwarf atmosphere from 
-    `Koester et al. 2010 <https://ui.adsabs.harvard.edu//#abs/2010MmSAI..81..921K/abstract>`_. 
+    `Koester et al. 2010 <https://ui.adsabs.harvard.edu/abs/2010MmSAI..81..921K/abstract>`_. 
     If desired parameters are 
     outside of grid, return a blackbody spectrum instead
 

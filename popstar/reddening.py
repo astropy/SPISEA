@@ -67,7 +67,7 @@ def get_red_law(str):
 class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
     """
     Defines extinction law from `Nishiyama et al. 2009 
-    <https://ui.adsabs.harvard.edu//#abs/2009ApJ...696.1407N/abstract>`_
+    <https://ui.adsabs.harvard.edu/abs/2009ApJ...696.1407N/abstract>`_
     toward the Galactic Center. This is the default extinction law. 
     The law is defined between 0.5 -- 8 microns.
     """
@@ -189,7 +189,7 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
 class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
     """
     Defines the extinction law from  
-    `Cardelli et al. 1989 <https://ui.adsabs.harvard.edu//#abs/1989ApJ...345..245C/abstract>`_. 
+    `Cardelli et al. 1989 <https://ui.adsabs.harvard.edu/abs/1989ApJ...345..245C/abstract>`_. 
     The law is defined from 0.3 - 3 microns, and in terms
     of :math:`A_{\lambda} / A_{Ks}`, where Ks is 2.174 microns.
 
@@ -334,7 +334,7 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
 class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
     """
     Defines extinction law from `Roman-Zuniga et al. 2007
-    <https://ui.adsabs.harvard.edu//#abs/2007ApJ...664..357R/abstract>`_
+    <https://ui.adsabs.harvard.edu/abs/2007ApJ...664..357R/abstract>`_
     for the dense cloud core Barnard 59. It is defined between 1.0 - 8.0
     microns.
     """
@@ -415,7 +415,7 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
 class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
     """
     Defines the extinction law from `Rieke & Lebofsky 1985
-    <https://ui.adsabs.harvard.edu//#abs/1985ApJ...288..618R/abstract>`_
+    <https://ui.adsabs.harvard.edu/abs/1985ApJ...288..618R/abstract>`_
     for the Galactic Center. The law is defined between 1.0 - 13 microns.
     """
     def __init__(self):
@@ -518,7 +518,7 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
 class RedLawDamineli16(pysynphot.reddening.CustomRedLaw):
     """
     Defines the extinction law of `Damineli et al. 2016
-    <https://ui.adsabs.harvard.edu//#abs/2016MNRAS.463.2653D/abstract>`_,
+    <https://ui.adsabs.harvard.edu/abs/2016MNRAS.463.2653D/abstract>`_,
     derived for the Wd1 cluster. The law is derived between
     0.5 - 8.0 microns.
     """
@@ -609,7 +609,7 @@ class RedLawDamineli16(pysynphot.reddening.CustomRedLaw):
 class RedLawDeMarchi16(pysynphot.reddening.CustomRedLaw):
     """
     Defines extinction law from `De Marchi et al. 2016
-    <https://ui.adsabs.harvard.edu//#abs/2016MNRAS.455.4373D/abstract>`_
+    <https://ui.adsabs.harvard.edu/abs/2016MNRAS.455.4373D/abstract>`_
     derived for 30 Dorodus. The law is defined between 0.3 - 8.0 microns.
     """
     def __init__(self):
@@ -716,7 +716,7 @@ class RedLawDeMarchi16(pysynphot.reddening.CustomRedLaw):
 class RedLawFitzpatrick09(pysynphot.reddening.CustomRedLaw):
     """
     Defines the extinction law from 
-    `Fitzpatrick et al. 2009 <https://ui.adsabs.harvard.edu//#abs/2009ApJ...699.1209F/abstract>`_.
+    `Fitzpatrick et al. 2009 <https://ui.adsabs.harvard.edu/abs/2009ApJ...699.1209F/abstract>`_.
     The law is defined between 0.3 -- 3 microns.
 
     The extinction law is as defined in their equation 5, and has two
@@ -833,7 +833,7 @@ class RedLawFitzpatrick09(pysynphot.reddening.CustomRedLaw):
 class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
     """
     Defines the extinction law from `Schlafly et al. 2016 
-    <https://ui.adsabs.harvard.edu//#abs/2016ApJ...821...78S/abstract>`_.
+    <https://ui.adsabs.harvard.edu/abs/2016ApJ...821...78S/abstract>`_.
     The law is defined between 0.5 - 8 microns.
 
     Parameters
@@ -1093,7 +1093,7 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
 class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
     """
     Defines extinction law from `Fritz et al. 2011 
-    <https://ui.adsabs.harvard.edu//#abs/2011ApJ...737...73F/abstract>`_
+    <https://ui.adsabs.harvard.edu/abs/2011ApJ...737...73F/abstract>`_
     for the Galactic Center. The law is defined from 1.0 -- 19 microns.
     """
     def __init__(self):
@@ -1190,7 +1190,7 @@ class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
 class RedLawHosek18(pysynphot.reddening.CustomRedLaw):
     """
     Defines extinction law from `Hosek et al. 2018 
-    <https://ui.adsabs.harvard.edu//#abs/2018ApJ...855...13H/abstract>`_
+    <https://ui.adsabs.harvard.edu/abs/2018ApJ...855...13H/abstract>`_
     for the Arches Cluster and Wd1. The law is defined between 
     0.7 - 3.54 microns.
 
@@ -1289,7 +1289,7 @@ class RedLawHosek18(pysynphot.reddening.CustomRedLaw):
 class RedLawHosek18b(pysynphot.reddening.CustomRedLaw):
     """
     Defines extinction law from `Hosek et al. 2019 
-    <https://ui.adsabs.harvard.edu//#abs/2019ApJ...870...44H/abstract>`_
+    <https://ui.adsabs.harvard.edu/abs/2019ApJ...870...44H/abstract>`_
     for the Arches cluster and Wd1. This should be used over RedLawHosek18b.
     The law is derived between 0.7 - 3.54 microns
     """
@@ -1384,7 +1384,7 @@ class RedLawHosek18b(pysynphot.reddening.CustomRedLaw):
 class RedLawNoguerasLara18(RedLawPowerLaw):
     """
     Defines extinction law from `Nogueras-Lara et al. 2018 
-    <https://ui.adsabs.harvard.edu//#abs/2018A&A...610A..83N/abstract>`_
+    <https://ui.adsabs.harvard.edu/abs/2018A%26A...610A..83N/abstract>`_
     for the Galactic Center. It is defined between 0.8 - 2.5 microns.
     """
     def __init__(self):

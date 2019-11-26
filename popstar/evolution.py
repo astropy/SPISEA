@@ -111,7 +111,7 @@ class Geneva(StellarEvolution):
 class Ekstrom12(StellarEvolution):
     """
     Evolution models from 
-    `Ekstrom et al. 2012 <https://ui.adsabs.harvard.edu//#abs/2012A&A...537A.146E/abstract>`_.
+    `Ekstrom et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012A%26A...537A.146E/abstract>`_.
 
     Downloaded from `website <http://obswww.unige.ch/Recherche/evoldb/index/Isochrone/>`_.
 
@@ -323,7 +323,7 @@ class Ekstrom12(StellarEvolution):
 class Parsec(StellarEvolution):
     """
     Evolution models from 
-    `Bressan et al. 2012 <https://ui.adsabs.harvard.edu//#abs/2012MNRAS.427..127B/abstract>`_,
+    `Bressan et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012MNRAS.427..127B/abstract>`_,
     version 1.2s.
 
     Downloaded from `here <http://stev.oapd.inaf.it/cgi-bin/cmd>_`
@@ -475,7 +475,7 @@ class Parsec(StellarEvolution):
 class Pisa(StellarEvolution):
     """
     Evolution models from 
-    `Tognelli et al. 2011 <https://ui.adsabs.harvard.edu//#abs/2011A&A...533A.109T/abstract>`_.
+    `Tognelli et al. 2011 <https://ui.adsabs.harvard.edu/abs/2011A%26A...533A.109T/abstract>`_.
     
     Downloaded `online <http://astro.df.unipi.it/stellar-models/index.php?m=1>`_
 
@@ -641,7 +641,7 @@ class Pisa(StellarEvolution):
 class Baraffe15(StellarEvolution):
     """
     Evolution models published in 
-    `Baraffe et al. 2015 <https://ui.adsabs.harvard.edu//#abs/2015A&A...577A..42B/abstract>`_.
+    `Baraffe et al. 2015 <https://ui.adsabs.harvard.edu/abs/2015A%26A...577A..42B/abstract>`_.
 
     Downloaded from `BHAC15 site <http://perso.ens-lyon.fr/isabelle.baraffe/BHAC15dir/BHAC15_tracks>`_.
     """
@@ -1132,8 +1132,8 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
     This is a combination of several different evolution models:
 
     * Baraffe (`Baraffe et al. 2015 <https://ui.adsabs.harvard.edu/abs/2015A%26A...577A..42B/abstract>`_)
-    * Pisa (`Tognelli et al. 2011 <https://ui.adsabs.harvard.edu//#abs/2011A&A...533A.109T/abstract>`_)
-    * Geneva (`Ekstrom et al. 2012 <https://ui.adsabs.harvard.edu//#abs/2012A&A...537A.146E/abstract>`_)
+    * Pisa (`Tognelli et al. 2011 <https://ui.adsabs.harvard.edu/abs/2011A%26A...533A.109T/abstract>`_)
+    * Geneva (`Ekstrom et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012A%26A...537A.146E/abstract>`_)
     * Parsec (version 1.2s, `Bressan+12 <https://ui.adsabs.harvard.edu/abs/2012MNRAS.427..127B/abstract>`_)
 
     The model used depends on the age of the population and what stellar masses
@@ -1312,8 +1312,8 @@ class MergedSiessGenevaPadova(StellarEvolution):
     The model used depends on the age of the population and what stellar masses
     are being modeled:
 
-    * Siess (`Siess et al. 2000 <https://ui.adsabs.harvard.edu//#abs/2000A&A...358..593S/abstract>`_)
-    * Geneva (`Meynet & Maeder 2003 <https://ui.adsabs.harvard.edu//#abs/2003A&A...404..975M/abstract>`_)
+    * Siess (`Siess et al. 2000 <https://ui.adsabs.harvard.edu/abs/2000A%26A...358..593S/abstractt>`_)
+    * Geneva (`Meynet & Maeder 2003 <https://ui.adsabs.harvard.edu/abs/2003A%26A...404..975M/abstract>`_)
     * Padova (`Marigo et al. 2008 <https://ui.adsabs.harvard.edu/abs/2008A%26A...482..883M/abstract>`_)
 
     For logAge < 7.4:
