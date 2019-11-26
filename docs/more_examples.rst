@@ -30,6 +30,10 @@ Figure 5: Clusters with Different IMFs: Luminosity Function + BH Mass Function
 	    :align: center
 
 
+Figure 6: Wolf-Rayet Star Populations with Different Evolution Models
+--------------------------------------------------------------------
+.. figure:: images/WRstars_example.png
+	    :align: center
 		    
 Figure 7: Unresolved Cluster Spectra at Different Ages
 ----------------------------------------------------------
