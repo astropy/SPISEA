@@ -42,10 +42,11 @@ def test_IsochronePhot(plot=False):
     distance = 4000
     filt_list = ['wfc3,ir,f127m', 'nirc2,J']
     mass_sampling=1
+    iso_dir = 'iso/'
 
     startTime = time.time()
     iso = syn.IsochronePhot(logAge, AKs, distance, filters=filt_list,
-                                mass_sampling=mass_sampling)
+                                mass_sampling=mass_sampling, iso_dir=iso_dir)
     endTime = time.time()
     print('Test completed in: %d seconds' % (endTime - startTime))
     # Typically takes 120 seconds if file is regenerated.
