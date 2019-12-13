@@ -902,6 +902,10 @@ class IsochronePhot(Isochrone):
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
                           'ubv,R', 'ubv,I']):
 
+        # Make the iso_dir, if it doesn't already exist
+        if not os.path.exists(iso_dir):
+            os.mkdir(iso_dir)
+
         # Make and input/output file name for the stored isochrone photometry.
         # For solar metallicity case, allow for legacy isochrones (which didn't have
         # metallicity tag since they were all solar metallicity) to be read
