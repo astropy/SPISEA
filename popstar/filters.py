@@ -391,8 +391,8 @@ def get_ztf_filt(name):
     except:
         raise ValueError('Could not find ztf filter {0} in {1}/ztf'.format(name, filters_dir))
 
-    wave = t['col1']
-    trans = t['col2']
+    wave = t['Wavelength']
+    trans = t['Transmission']
 
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='ztf_{0}'.format(name))
 
