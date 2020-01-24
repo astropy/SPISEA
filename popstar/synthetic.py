@@ -1356,6 +1356,9 @@ def get_filter_info(name, vega=vega, rebin=True):
     elif name.startswith('keck_osiris'):
         filt = filters.get_keck_osiris_filt(filterName)
 
+    elif name.startswith('ztf'):
+        filt = filters.get_ztf_filt(filterName)
+
     elif name.startswith('gaia'):
         version = tmp[1]
         filt = filters.get_gaia_filt(version, filterName)

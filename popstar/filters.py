@@ -380,3 +380,20 @@ def get_gaia_filt(version, name):
                                            name='gaia_{0}_{1}'.format(version, name))
 
     return spectrum
+
+def get_ztf_filt(name):
+    """
+    Define ztf filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/ztf/{1}.dat'.format(filters_dir, name),
+                       format='ascii')
+    except:
+        raise ValueError('Could not find ztf filter {0} in {1}/ztf'.format(name, filters_dir))
+
+    wave = t['col1']
+    trans = t['col2']
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='ztf_{0}'.format(name))
+
+    return spectrum
