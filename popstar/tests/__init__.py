@@ -1,9 +1,10 @@
 # Licensed under a 3-clause BSD style license - see LICENSE.rst
 """
-This packages contains affiliated package tests.
+This packages contains package tests.
 """
+
 def test_evolution_merged_pisa_ekstrom():
-    """Test the MergedPisaEkstromParsec() class in 
+    """Test the MergedPisaEkstromParsec() class in
     evolution.py
     """
 
@@ -18,6 +19,3 @@ def test_evolution_merged_pisa_ekstrom():
     assert iso1['mass'].max() > iso2['mass'].max()
 
     return
-    
-    
-    
