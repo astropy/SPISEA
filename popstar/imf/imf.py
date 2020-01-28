@@ -79,8 +79,8 @@ class IMF(object):
         totalMass : float
             The total mass of the cluster (including companions) in solar masses.
 
-        seed : int
-            If set to non-zero, all random sampling will be seeded with the
+        seed: int
+            If set to non-None, all random sampling will be seeded with the
             specified seed, forcing identical output.
             Default None
 

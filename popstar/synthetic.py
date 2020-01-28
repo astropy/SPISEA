@@ -71,8 +71,8 @@ class Cluster(object):
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
 
-    seed : int
-        If set to non-zero, all random sampling will be seeded with the
+    seed: int
+        If set to non-None, all random sampling will be seeded with the
         specified seed, forcing identical output.
         Default None
 
@@ -117,8 +117,8 @@ class ResolvedCluster(Cluster):
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
 
-    seed : int
-        If set to non-zero, all random sampling will be seeded with the
+    seed: int
+        If set to non-None, all random sampling will be seeded with the
         specified seed, forcing identical output.
         Default None
 
@@ -461,8 +461,8 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
 
-    seed : int
-        If set to non-zero, all random sampling will be seeded with the
+    seed: int
+        If set to non-None, all random sampling will be seeded with the
         specified seed, forcing identical output.
         Default None
 
