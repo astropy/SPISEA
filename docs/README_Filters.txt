@@ -139,3 +139,11 @@ To calculate synthetic fluxes, the dr2_rev passbands are advised.
 Filters: G, Gbp, Grp
 
 Example: 'gaia,dr2_rev,G'
+
+==========================
+ZTF
+==========================
+ZTF Telescope (ttps://www.ztf.caltech.edu/page/technical)
+Filters: G, R, I
+
+Example: "ZTF,G"

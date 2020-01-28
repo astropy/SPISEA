@@ -71,20 +71,22 @@ class Cluster(object):
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
 
-    set_random_seed: boolean
-        If true, then random seed is set for all random processes
+    seed : int
+        If set to non-zero, all random sampling will be seeded with the
+        specified seed, forcing identical output.
+        Default None
 
     vebose: boolean
         True for verbose output.
     """
     def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=False,
-                     set_random_seed=False):
+                     seed=None):
         self.verbose = verbose
         self.iso = iso
         self.imf = imf
         self.ifmr = ifmr
         self.cluster_mass = cluster_mass
-        self.set_random_seed = set_random_seed
+        self.seed = seed
         
         return
     
@@ -115,27 +117,29 @@ class ResolvedCluster(Cluster):
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
 
-    set_random_seed: boolean
-        If true, then random seed is set for all random processes
+    seed : int
+        If set to non-zero, all random sampling will be seeded with the
+        specified seed, forcing identical output.
+        Default None
 
     vebose: boolean
         True for verbose output.
     """
     def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=True,
-                     set_random_seed=False):
+                     seed=None):
         Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
-                             set_random_seed=set_random_seed)
+                             seed=seed)
 
         # Provide a user warning is random seed is set
-        if set_random_seed:
-            print('WARNING: random seed set to 42')
+        if seed:
+            print('WARNING: random seed set to %i' % seed)
 
         t1 = time.time()
         ##### 
         # Sample the IMF to build up our cluster mass.
         #####
         mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass,
-                                                                    set_random_seed=set_random_seed)
+                                                                    seed=seed)
 
         # Figure out the filters we will make.
         self.filt_names = self.set_filter_names()
@@ -457,21 +461,23 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
 
-    set_random_seed: boolean
-        If true, then random seed is set for all random processes
+    seed : int
+        If set to non-zero, all random sampling will be seeded with the
+        specified seed, forcing identical output.
+        Default None
 
     vebose: boolean
         True for verbose output.
     """
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 ifmr=None, verbose=False, set_random_seed=False):
+                 ifmr=None, verbose=False, seed=None):
 
         ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
-                                     set_random_seed=set_random_seed)
+                                     seed=seed)
 
         # Set random seed, if desired
-        if set_random_seed:
-            np.random.seed(seed=42)
+        if seed:
+            np.random.seed(seed=seed)
 
         # Extract the extinction law from the isochrone object
         redlaw_str = iso.points.meta['REDLAW']
@@ -1463,7 +1469,8 @@ def get_obs_str(col):
                  'nirc2_Lp': 'nirc2,Lp', 'nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
                  'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
                  'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K',
-                 'nirc1_K':'nirc1,K', 'ctio_osiris_K': 'ctio_osirirs,K'}
+                 'nirc1_K':'nirc1,K', 'ctio_osiris_K': 'ctio_osirirs,K',
+                 'ztf_G':'ztf,G', 'ztf_R':'ztf,R', 'ztf_I':'ztf,I'}
 
     obs_str = filt_list[name]
         

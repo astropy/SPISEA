@@ -59,7 +59,7 @@ class IMF(object):
         return
             
 
-    def generate_cluster(self, totalMass, set_random_seed=False):
+    def generate_cluster(self, totalMass, seed=None):
         """
         Generate a cluster of stellar systems with the specified IMF.
         
@@ -79,9 +79,10 @@ class IMF(object):
         totalMass : float
             The total mass of the cluster (including companions) in solar masses.
 
-        set_random_seed: boolean
-            If true, sets the random seed for the stellar mass generation. This
-            is for debugging purposes
+        seed : int
+            If set to non-zero, all random sampling will be seeded with the
+            specified seed, forcing identical output.
+            Default None
 
         Returns
         -------
@@ -121,8 +122,8 @@ class IMF(object):
         loopCnt = 0
 
         # Set the random seed, if desired
-        if set_random_seed:
-            np.random.seed(seed=42)
+        if seed:
+            np.random.seed(seed=seed)
         
         while totalMassTally < totalMass:
             # Generate a random number array.

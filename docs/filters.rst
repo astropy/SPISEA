@@ -42,6 +42,7 @@ Available filters:
 * PanStarrs 1
 * UKIRT
 * VISTA
+* ZTF
 
  If the user wants to add new filters, there are 3 steps:
 
@@ -173,3 +174,10 @@ Example: ``'ukirt,K'``
 Filters: Z, Y, J, H, K
 
 Example: ``'vista,Y'``
+
+**ZTF**
+
+`ZTF Telescope <https://www.ztf.caltech.edu/page/technical>`_
+Filters: G, R, I
+
+Example: ``'ztf,G'``
