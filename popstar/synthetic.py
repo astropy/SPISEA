@@ -906,7 +906,7 @@ class IsochronePhot(Isochrone):
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
-                 min_mass=None, max_mass=None, rebin=True, recomp=False, 
+                 min_mass=None, max_mass=None, rebin=True, recomp=False,
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
                           'ubv,R', 'ubv,I']):
 
@@ -1007,7 +1007,9 @@ class IsochronePhot(Isochrone):
         print( '      Time taken: {0:.2f} seconds'.format(endTime - startTime))
 
         if self.save_file != None:
-            self.points.write(self.save_file, overwrite=True)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                self.points.write(self.save_file, overwrite=True)
 
         return
 
