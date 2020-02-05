@@ -226,7 +226,9 @@ class ResolvedCluster(Cluster):
         # then round it down to 5, rather than up to 101).
         # Note: this only becomes relevant when the cluster is > 10**6 M-sun, this
         # effect is so small
-        bad = np.where( (star_systems['phase'] > 5) & (star_systems['phase'] < 101) & (star_systems['phase'] != 9))
+        # Convert nan_to_num to avoid errors on greater than, less than comparisons
+        star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'])
+        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9))
         # Print warning, if desired
         verbose=False
         if verbose:
