@@ -131,7 +131,7 @@ class ResolvedCluster(Cluster):
                              seed=seed)
 
         # Provide a user warning is random seed is set
-        if seed:
+        if seed is not None:
             print('WARNING: random seed set to %i' % seed)
 
         t1 = time.time()
@@ -476,7 +476,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
                                      seed=seed)
 
         # Set random seed, if desired
-        if seed:
+        if seed is not None:
             np.random.seed(seed=seed)
 
         # Extract the extinction law from the isochrone object
