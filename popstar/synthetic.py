@@ -131,7 +131,7 @@ class ResolvedCluster(Cluster):
                              seed=seed)
 
         # Provide a user warning is random seed is set
-        if seed:
+        if seed is not None:
             print('WARNING: random seed set to %i' % seed)
 
         t1 = time.time()
@@ -226,7 +226,9 @@ class ResolvedCluster(Cluster):
         # then round it down to 5, rather than up to 101).
         # Note: this only becomes relevant when the cluster is > 10**6 M-sun, this
         # effect is so small
-        bad = np.where( (star_systems['phase'] > 5) & (star_systems['phase'] < 101) & (star_systems['phase'] != 9))
+        # Convert nan_to_num to avoid errors on greater than, less than comparisons
+        star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'])
+        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9))
         # Print warning, if desired
         verbose=False
         if verbose:
@@ -476,7 +478,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
                                      seed=seed)
 
         # Set random seed, if desired
-        if seed:
+        if seed is not None:
             np.random.seed(seed=seed)
 
         # Extract the extinction law from the isochrone object
@@ -904,7 +906,7 @@ class IsochronePhot(Isochrone):
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
-                 min_mass=None, max_mass=None, rebin=True, recomp=False, 
+                 min_mass=None, max_mass=None, rebin=True, recomp=False,
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
                           'ubv,R', 'ubv,I']):
 
@@ -1005,7 +1007,9 @@ class IsochronePhot(Isochrone):
         print( '      Time taken: {0:.2f} seconds'.format(endTime - startTime))
 
         if self.save_file != None:
-            self.points.write(self.save_file, overwrite=True)
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                self.points.write(self.save_file, overwrite=True)
 
         return
 
