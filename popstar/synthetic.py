@@ -335,7 +335,9 @@ class ResolvedCluster(Cluster):
                 # the ones we have definition for, as a result of the interpolation. For these
                 # stars, round phase down to nearest defined phase (e.g., if phase is 71,
                 # then round it down to 5, rather than up to 101).
-                bad = np.where( (companions['phase'] > 5) & (companions['phase'] < 101) & (companions['phase'] != 9))
+                # Convert nan_to_num to avoid errors on greater than, less than comparisons
+                star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'])
+                bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9))
                 # Print warning, if desired
                 verbose=False
                 if verbose:
@@ -393,7 +395,9 @@ class ResolvedCluster(Cluster):
 
 
         # Notify if we have a lot of bad ones.
-        idx = np.where(companions['Teff'] > 0)[0]
+        # Convert nan_to_num to avoid errors on greater than, less than comparisons
+        companions_teff_non_nan = np.nan_to_num(companions['Teff'])
+        idx = np.where(companions_teff_non_nan > 0)[0]
         if len(idx) != N_comp_tot and self.verbose:
             print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
 
@@ -415,12 +419,15 @@ class ResolvedCluster(Cluster):
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
+        # Convert nan_to_num to avoid errors on greater than, less than comparisons
+        star_systems_teff_non_nan = np.nan_to_num(star_systems['Teff'])
+        star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-1)
         if self.ifmr == None:
             # Keep only those stars with Teff assigned.
-            idx = np.where(star_systems['Teff'] > 0)[0]
+            idx = np.where(star_systems_teff_non_nan > 0)[0]
         else:
             # Keep stars (with Teff) and any other compact objects (with phase info). 
-            idx = np.where( (star_systems['Teff'] > 0) | (star_systems['phase'] >= 0) )[0]
+            idx = np.where( (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) )[0]
 
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
