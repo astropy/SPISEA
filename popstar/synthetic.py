@@ -227,8 +227,8 @@ class ResolvedCluster(Cluster):
         # Note: this only becomes relevant when the cluster is > 10**6 M-sun, this
         # effect is so small
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
-        star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'])
-        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9))
+        star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
+        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
         # Print warning, if desired
         verbose=False
         if verbose:
@@ -336,8 +336,8 @@ class ResolvedCluster(Cluster):
                 # stars, round phase down to nearest defined phase (e.g., if phase is 71,
                 # then round it down to 5, rather than up to 101).
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
-                star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'])
-                bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9))
+                star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
+                bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
                 # Print warning, if desired
                 verbose=False
                 if verbose:
@@ -396,7 +396,7 @@ class ResolvedCluster(Cluster):
 
         # Notify if we have a lot of bad ones.
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
-        companions_teff_non_nan = np.nan_to_num(companions['Teff'])
+        companions_teff_non_nan = np.nan_to_num(companions['Teff'], nan=-99)
         idx = np.where(companions_teff_non_nan > 0)[0]
         if len(idx) != N_comp_tot and self.verbose:
             print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
@@ -420,8 +420,8 @@ class ResolvedCluster(Cluster):
 
         # Get rid of the bad ones
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
-        star_systems_teff_non_nan = np.nan_to_num(star_systems['Teff'])
-        star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-1)
+        star_systems_teff_non_nan = np.nan_to_num(star_systems['Teff'], nan=-99)
+        star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
         if self.ifmr == None:
             # Keep only those stars with Teff assigned.
             idx = np.where(star_systems_teff_non_nan > 0)[0]
