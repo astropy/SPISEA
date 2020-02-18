@@ -631,7 +631,7 @@ def test_phot_consistency(filt='all'):
                          'nirc2,FeII', 'nirc2,Brgamma',
                          'jg,J', 'jg,H', 'jg,K',
                          'nirc1,K', 'nirc1_H', 'ctio_osiris,K', 'ctio_osiris,H',
-                         'naco,H', 'naco,Ks', 'ztf,G', 'ztf,R', 'ztf,I']
+                         'naco,H', 'naco,Ks', 'ztf,g', 'ztf,r', 'ztf,i']
 
     elif filt == 'decam':
         filt_list = ['decam,y', 'decam,i', 'decam,z',
@@ -661,7 +661,7 @@ def test_phot_consistency(filt='all'):
     elif filt == 'jg':
         filt_list = ['jg,J', 'jg,H', 'jg,K']
     elif filt == 'ztf':
-        filt_list = ['ztf,G', 'ztf,R', 'ztf,I']
+        filt_list = ['ztf,g', 'ztf,r', 'ztf,i']
     elif filt == 'misc':
         filt_list=['nirc1,K', 'nirc1,H', 'ctio_osiris,K', 'ctio_osiris,H',
                        'naco,H', 'naco,Ks']
