@@ -18,7 +18,7 @@ class IFMR(object):
 
 class IFMR_Spera15(IFMR):
     
-    def Mco (Z, MZAMS): #equation C11 of Spera
+    def Mco (self, Z, MZAMS): #equation C11 of Spera
         if Z > 4.0*10**(-3): #C13 of Spera
             B1= 59.63 -2.969*10**(3)*Z + 4.988*10**(4)*Z*Z
             K1= 45.04 -2.176*10**(3)*Z+3.806*10**(4)*Z*Z
@@ -46,8 +46,8 @@ class IFMR_Spera15(IFMR):
         
         return -2.0 + (B1 + 2)*g1 + g2 #C11 0f Spera
 
-    def M_rem_low_metal(Z, MZAMS): #C1 of Spera, valid for Z<=5.0*10**(-4)
-        Mco= Mco(Z, MZAMS)
+    def M_rem_low_metal(self, Z, MZAMS): #C1 of Spera, valid for Z<=5.0*10**(-4)
+        Mco= self.Mco(Z, MZAMS)
 
         p= -2.333 + 0.1559*Mco +0.2700*Mco*Mco #C2 of Spera
 
@@ -64,8 +64,8 @@ class IFMR_Spera15(IFMR):
             f= m*Mco + q #C2 of Spera
             return min(p, f)
 
-    def M_rem_high_metal(Z, MZAMS): #C4 of Spera, valid for Z>5.0*10**(-4)
-        Mco= Mco(Z,MZAMS)
+    def M_rem_high_metal(self, Z, MZAMS): #C4 of Spera, valid for Z>5.0*10**(-4)
+        Mco= self.Mco(Z,MZAMS)
 
         if Z >= 1.0*10**(-3): #C6 of Spera
             A1= 1.340 - 29.46/(1+(Z/(1.110*10**(-3)))**(2.361))
@@ -106,8 +106,6 @@ class IFMR_Spera15(IFMR):
             
             return max(h, f)
         
-
-    
 
 
 
@@ -156,6 +154,11 @@ class IFMR_Spera15(IFMR):
         random_array = np.random.randint(1, 1001, size = len(mass_array))
 
         codes = {'WD': 101, 'NS': 102, 'BH': 103}
+
+
+        rem_mass_array = np.zeroes(len(mass_array))
+
+        low_metal_idx= np.where(metallcity
         
 
 
