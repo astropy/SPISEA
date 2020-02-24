@@ -19,26 +19,26 @@ class IFMR(object):
 class IFMR_Spera15(IFMR):
     
     def Mco (self, Z, MZAMS): #equation C11 of Spera
-        if Z > 4.0*10**(-3): #C13 of Spera
-            B1= 59.63 -2.969*10**(3)*Z + 4.988*10**(4)*Z*Z
-            K1= 45.04 -2.176*10**(3)*Z+3.806*10**(4)*Z*Z
-            K2= 1.389*10**(2)-4.664*10**(3)*Z+5.106*10**(4)*Z*Z
-            d1= 2.790*10**(-2)-1.780*10**(-2)*Z+77.05*Z*Z
-            d2= 6.730*10**(-3) +2.690*Z -52.39*Z*Z
+        if Z > 4.0e-3: #C13 of Spera
+            B1= 59.63 - 2.969e3*Z + 4.988e4*Z**2
+            K1= 45.04 - 2.176e3*Z + 3.806e4*Z**2
+            K2= 1.389e2 - 4.664e3*Z + 5.106e4*Z**2
+            d1= 2.790e-2 - 1.780e-2*Z + 77.05*Z**2
+            d2= 6.730e-3 + 2.690*Z - 52.39*Z**2
 
-        if Z<= 1.0*10**-3 and Z<=4.0*10**(-3): #C14 of Spera
-            B1= 40.98 +3.415*10**(4)*Z - 8.064*10**(6)*Z*Z
-            K1= 35.17 +1.548*10**(4)*Z - 3.759*10**(6)*Z*Z
-            K2= 20.36 +1.162*10**(5)*Z - 2.276*10**(7)*Z*Z
-            d1= 2.500*10**(-2) -4.346*Z + 1.340*10**(3)*Z*Z
-            d2= 1.750*10**(-2) +11.39*Z - 2.902*10**(3)*Z*Z
+        if Z<= 1.0e-3 and Z<=4.0e-3: #C14 of Spera
+            B1= 40.98 + 3.415e4*Z - 8.064e6*Z**2
+            K1= 35.17 + 1.548e4*Z - 3.759e6*Z**2
+            K2= 20.36 + 1.162e5*Z - 2.276e7*Z**2
+            d1= 2.500e-2 - 4.346*Z + 1.340e3*Z**2
+            d2= 1.750e-2 + 11.39*Z - 2.902e3*Z**2
             
-        if Z > 4.0*10^^(-3): #C15 of Spera
+        if Z > 4.0e-3: #C15 of Spera
             B1= 67.07
             K1= 46.89
-            K2= 1.138*10**(2)
-            d1= 2.199*10**(-2)
-            d2= 2.602*10**(-2)
+            K2= 1.138e2
+            d1= 2.199e-2
+            d2= 2.602e-2
 
         g1= 0.5/(1+10**((K1-MZAMS)*(d1))) #C12 of Spera
         g2= 0.5/(1+10**((K2-MZAMS)*(d2))) #C12 of Spera
@@ -46,10 +46,10 @@ class IFMR_Spera15(IFMR):
         
         return -2.0 + (B1 + 2)*g1 + g2 #C11 0f Spera
 
-    def M_rem_low_metal(self, Z, MZAMS): #C1 of Spera, valid for Z<=5.0*10**(-4)
+    def M_rem_low_metal(self, Z, MZAMS): #C1 of Spera, valid for Z<=5.0e-4
         Mco= self.Mco(Z, MZAMS)
 
-        p= -2.333 + 0.1559*Mco +0.2700*Mco*Mco #C2 of Spera
+        p= -2.333 + 0.1559*Mco + 0.2700*Mco*Mco #C2 of Spera
 
         if Mco <= 5.:
             return max(p, 1.27)
@@ -58,48 +58,48 @@ class IFMR_Spera15(IFMR):
             return p
 
         if Mco >= 10.:
-            m= -6.476*10**(2)*Z + 1.911 #C3 of Spera
-            q= 2.300*10**(3)*Z + 11.67 #C3 of Spera
+            m= -6.476e2*Z + 1.911 #C3 of Spera
+            q= 2.300e3*Z + 11.67 #C3 of Spera
             
             f= m*Mco + q #C2 of Spera
             return min(p, f)
 
-    def M_rem_high_metal(self, Z, MZAMS): #C4 of Spera, valid for Z>5.0*10**(-4)
+    def M_rem_high_metal(self, Z, MZAMS): #C4 of Spera, valid for Z>5.0e-4
         Mco= self.Mco(Z,MZAMS)
 
-        if Z >= 1.0*10**(-3): #C6 of Spera
-            A1= 1.340 - 29.46/(1+(Z/(1.110*10**(-3)))**(2.361))
-            A2= 80.22 -74.73*Z**(0.965)/(2.720*10**(-3)+Z**(0.965))
-            L= 5.683 + 3.533/(1+(Z/(7.430*10**(-3)))**(1.993))
-            n= 1.066 - 1.121/(1+(Z/(2.558*10**(-2)))**(0.609))
+        if Z >= 1.0e-3: #C6 of Spera
+            A1= 1.340 - 29.46/(1 + (Z/(1.110e-3))**(2.361))
+            A2= 80.22 - 74.73*Z**(0.965)/(2.720e-3 + Z**(0.965))
+            L= 5.683 + 3.533/(1 + (Z/(7.430e-3))**(1.993))
+            n= 1.066 - 1.121/(1 + (Z/(2.558e-2))**(0.609))
 
-        if Z < 1.*10**(-3): #C7 of Spera
-            A1= 1.105*10**(5)*Z -1.258*10**(2)
-            A2= 91.56 -1.957*10**(4)*Z -1.558*10**(7)*Z*Z
-            L= 1.134*10**(4)*Z -2.143
-            n= 3.090*10**(-2) -22.30*Z +7.363*10**(4)*Z*Z
+        if Z < 1.0e-3: #C7 of Spera
+            A1= 1.105*e5*Z - 1.258e2
+            A2= 91.56 - 1.957e4*Z - 1.558e7*Z**2
+            L= 1.134e4*Z - 2.143
+            n= 3.090e-2 - 22.30*Z + 7.363e4*Z**2
         
 
-        h= A1 + (A2-A1)/(1+10**((L-Mco)*n)) #C5 of Spera
+        h= A1 + (A2 - A1)/(1 + 10**((L- Mco)*n)) #C5 of Spera
 
-        if Mco <= 5.:
+        if Mco <= 5.0:
             return max(h, 1.27)
 
-        if Mco > 5. and Mco < 10.:
+        if Mco > 5.0 and Mco < 10.0:
             return h
 
-        if Mco >= 10.:
-            if Z >= 2.0*10**(-3): #C8 of Spera
+        if Mco >= 10.0:
+            if Z >= 2.0e-3: #C8 of Spera
                 m= 1.217
                 q= 1.061
 
-            if Z >= 1.0*10**(-3) and Z < 2.0*10**(-3): #C9 of Spera
+            if Z >= 1.0e-3 and Z < 2.0e-3: #C9 of Spera
                 m= -43.82*Z + 1.304
-                q= -1.296*10**(4)*Z + 26.98
+                q= -1.296e4*Z + 26.98
 
-            if Z < 1.0*10**(-3): #C10 of Spera
-                m= -6.476*10**(2)*Z + 1.911
-                q= 2.300*10**(3)*Z + 11.67
+            if Z < 1.0e-3: #C10 of Spera
+                m= -6.476e2*Z + 1.911
+                q= 2.300e3*Z + 11.67
                 
 
             f= m*Mco + q #C5 of Spera
@@ -155,12 +155,12 @@ class IFMR_Spera15(IFMR):
         #create array to store the remnant masses generated by Spera equations
         rem_mass_array = np.zeroes(len(mass_array))
 
-        #remnant masses of stars with Z < 5.0*10**(-4)
-        low_metal_idx= np.where(metallcity_array < 5.0*10**(-4))
+        #remnant masses of stars with Z < 5.0e-4
+        low_metal_idx= np.where(metallcity_array < 5.0e-4)
         rem_mass_array[low_metal_idx]= self.M_rem_low_metal(metallicity_array[low_metal_idx], mass_array[low_metal_idx])
 
-        #remnant masses of stars with Z >= 5.0*10**(-4)
-        high_metal_idx= np.where(metallicity_array >= 5.0*10**(-4))
+        #remnant masses of stars with Z >= 5.0e-4
+        high_metal_idx= np.where(metallicity_array >= 5.0e-4)
         rem_mass_array[high_metal_idx]= self.M_rem_high_metal(metallicity_array[high_metal_idx], mass_array[high_metal_idx])
 
         #assign object types based on remnant mass #FIXME-not sure I understand what Spera is saying. I feel like there shoud be some probablistic way of doing this instead of having hard cutoffs
