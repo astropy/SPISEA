@@ -253,7 +253,7 @@ class ResolvedCluster(Cluster):
             
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
-            r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(star_systems['mass'][idx_rem], star_systems['FIXME-Metallicty in star_system#'][idx_rem])
+            r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(star_systems['mass'][idx_rem], star_systems['metallicity'][idx_rem])
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
@@ -377,7 +377,7 @@ class ResolvedCluster(Cluster):
             
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
-            r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(companions['mass'][cdx_rem], companions['FIXME-tag for metallicity in companions'][cdx_rem])
+            r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(companions['mass'][cdx_rem], companions['metallicity'][cdx_rem])
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
