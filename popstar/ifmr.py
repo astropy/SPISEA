@@ -190,7 +190,7 @@ class IFMR_Spera15(IFMR):
         A1 = 1.340 - 29.46/(1 + (Z/(1.110e-3))**(2.361))
         A2 = 80.22 - 74.73*Z**(0.965)/(2.720e-3 + Z**(0.965))
         L = 5.683 + 3.533/(1 + (Z/(7.430e-3))**(1.993))
-        n = 1.066 - 1.121/(1 + (Z/(2.558e-2))**(0.609)
+        n = 1.066 - 1.121/(1 + (Z/(2.558e-2))**(0.609))
 
         h = A1 + (A2 - A1)/(1 + 10**((L- Mco)*n)) #C5 of Spera
 
@@ -210,7 +210,7 @@ class IFMR_Spera15(IFMR):
         A1 = 1.340 - 29.46/(1 + (Z/(1.110e-3))**(2.361))
         A2 = 80.22 - 74.73*Z**(0.965)/(2.720e-3 + Z**(0.965))
         L = 5.683 + 3.533/(1 + (Z/(7.430e-3))**(1.993))
-        n = 1.066 - 1.121/(1 + (Z/(2.558e-2))**(0.609)
+        n = 1.066 - 1.121/(1 + (Z/(2.558e-2))**(0.609))
 
         h = A1 + (A2 - A1)/(1 + 10**((L- Mco)*n)) #C5 of Spera
 
@@ -259,7 +259,7 @@ class IFMR_Spera15(IFMR):
         A1 = 1.340 - 29.46/(1 + (Z/(1.110e-3))**(2.361))
         A2 = 80.22 - 74.73*Z**(0.965)/(2.720e-3 + Z**(0.965))
         L = 5.683 + 3.533/(1 + (Z/(7.430e-3))**(1.993))
-        n = 1.066 - 1.121/(1 + (Z/(2.558e-2))**(0.609)
+        n = 1.066 - 1.121/(1 + (Z/(2.558e-2))**(0.609))
 
         h = A1 + (A2 - A1)/(1 + 10**((L- Mco)*n)) #C5 of Spera
 
@@ -272,7 +272,7 @@ class IFMR_Spera15(IFMR):
         return max(h, f)
 
 
-        def generate_death_mass(self, mass_array, metallicity_array):
+    def generate_death_mass(self, mass_array, metallicity_array):
         """
         The top-level function that assigns the remnant type 
         and mass based on the stellar initial mass. 
@@ -320,67 +320,67 @@ class IFMR_Spera15(IFMR):
         ##### very low metallicity Z < 5.0e-4
         
         #remnant masses of stars with Z < 5.0e-4 and MZAMS < 5.0
-        very_low_metal_low_mass_idx = np.where(Z_array < 5.0e-4 and mass_array < 5.0)
+        very_low_metal_low_mass_idx = np.where((Z_array < 5.0e-4) and (mass_array < 5.0))
         rem_mass_array[very_low_metal_low_mass_idx] = self.M_rem_very_low_metal_low_mass(Z_array[very_low_metal_low_mass_idx], mass_array[very_low_metal_low_mass_idx])
 
         #remnant masses of stars with Z < 5.0e-4 and 5.0 <= MZAMS <= 10.0
-        very_low_metal_med_mass_idx = np.where(Z_array < 5.0e-4 and mass_array >= 5.0 and mass_array <= 10.0)
+        very_low_metal_med_mass_idx = np.where((Z_array < 5.0e-4) and (mass_array >= 5.0) and (mass_array <= 10.0))
         rem_mass_array[very_low_metal_med_mass_idx] = self.M_rem_very_low_metal_med_mass(Z_array[very_low_metal_med_mass_idx], mass_array[very_low_metal_med_mass_idx])
 
         #remnant masses of stars with Z < 5.0e-4 and MZAMS > 10.0
-        very_low_metal_high_mass_idx = np.where(Z_array < 5.0e-4 and mass_array > 10.0)
+        very_low_metal_high_mass_idx = np.where((Z_array < 5.0e-4) and (mass_array > 10.0))
         rem_mass_array[very_low_metal_high_mass_idx] = self.M_rem_very_low_metal_high_mass(Z_array[very_low_metal_high_mass_idx], mass_array[very_low_metal_high_mass_idx])
 
         #### low metallicity 5.0e-4 <= Z < 1.0e-3
         
         #remnant masses of stars with 5.0e-4 <= Z < 1.0e-3 and MZAMS < 5.0
-        low_metal_low_mass_idx = np.where(Z_array >= 5.0e-4 and Z_array < 1.0e-3 and mass_array < 5.0)
+        low_metal_low_mass_idx = np.where((Z_array >= 5.0e-4) and (Z_array < 1.0e-3) and (mass_array < 5.0))
         rem_mass_array[low_metal_low_mass_idx] = self.M_rem_low_metal_low_mass(Z_array[low_metal_low_mass_idx], mass_array[low_metal_low_mass_idx])
 
         #remnant masses of stars with 5.0e-4 <= Z < 1.0e-3 and 5.0 <= MZAMS <= 10.0
-        low_metal_med_mass_idx = np.where(Z_array >= 5.0e-4 and Z_array < 1.0e-3 and mass_array >= 5.0 and mass_array <= 10.0)
+        low_metal_med_mass_idx = np.where((Z_array >= 5.0e-4) and (Z_array < 1.0e-3) and (mass_array >= 5.0) and (mass_array <= 10.0))
         rem_mass_array[low_metal_med_mass_idx] = self.M_rem_low_metal_med_mass(Z_array[low_metal_med_mass_idx], mass_array[low_metal_med_mass_idx])
 
         #remnant masses of stars with 5.0e-4 <= Z < 1.0e-3 and MZAMS > 10.0
-        low_metal_high_mass_idx = np.where(Z_array >= 5.0e-4 and Z_array < 1.0e-3 and mass_array > 10.0)
+        low_metal_high_mass_idx = np.where((Z_array >= 5.0e-4) and (Z_array < 1.0e-3) and (mass_array > 10.0))
         rem_mass_array[low_metal_high_mass_idx] = self.M_rem_low_metal_high_mass(Z_array[low_metal_high_mass_idx], mass_array[low_metal_high_mass_idx])
                 
         #### medium metallicity 1.0e-3 <= Z <= 4.0e-3
         
         #remnant masses of stars with 1.0e-3 <= Z <= 4.0e-3 and MZAMS < 5.0
-        med_metal_low_mass_idx = np.where(Z_array >= 1.0e-3 and Z_array <= 4.0e-3 and mass_array < 5.0)
+        med_metal_low_mass_idx = np.where((Z_array >= 1.0e-3) and (Z_array <= 4.0e-3) and (mass_array < 5.0))
         rem_mass_array[med_metal_low_mass_idx] = self.M_rem_med_metal_low_mass(Z_array[med_metal_low_mass_idx], mass_array[med_metal_low_mass_idx])
 
         #remnant masses of stars with 1.0e-3 <= Z <= 4.0e-3 and 5.0 <= MZAMS <= 10.0
-        med_metal_med_mass_idx = np.where(Z_array >= 1.0e-3 and Z_array <= 4.0e-3 and mass_array >= 5.0 and mass_array <= 10.0)
+        med_metal_med_mass_idx = np.where((Z_array >= 1.0e-3) and (Z_array <= 4.0e-3) and (mass_array >= 5.0) and (mass_array <= 10.0))
         rem_mass_array[med_metal_med_mass_idx] = self.M_rem_med_metal_med_mass(Z_array[med_metal_med_mass_idx], mass_array[med_metal_med_mass_idx])
 
         #remnant masses of stars with 1.0e-3 <= Z < 2.0e-3 and MZAMS > 10.0
-        med_metal_high_mass_idx_1 = np.where(Z_array >= 1.0e-3 and Z_array < 2.0e-3 and mass_array > 10.0)
+        med_metal_high_mass_idx_1 = np.where((Z_array >= 1.0e-3) and (Z_array < 2.0e-3) and (mass_array > 10.0))
         rem_mass_array[med_metal_high_mass_idx_1] = self.M_rem_med_metal_high_mass_1(Z_array[med_metal_high_mass_idx_1], mass_array[med_metal_high_mass_idx_1])
 
         #remnant masses of stars with 2.0e-3 <= Z <= 4.0e-3 and MZAMS > 10.0
-        med_metal_high_mass_idx_2 = np.where(Z_array >= 2.0e-3 and Z_array <= 4.0e-3 and mass_array > 10.0)
+        med_metal_high_mass_idx_2 = np.where((Z_array >= 2.0e-3) and (Z_array <= 4.0e-3) and (mass_array > 10.0))
         rem_mass_array[med_metal_high_mass_idx] = self.M_rem_med_metal_high_mass_2(Z_array[med_metal_high_mass_idx_2], mass_array[med_metal_high_mass_idx_2])
         
         #### high metallicity Z > 4.0e-3
         
         #remnant masses of stars with Z > 4.0e-3 and MZAMS < 5.0
-        high_metal_low_mass_idx = np.where(Z_array > 4.0e-3 and mass_array < 5.0)
+        high_metal_low_mass_idx = np.where((Z_array > 4.0e-3) and (mass_array < 5.0))
         rem_mass_array[high_metal_low_mass_idx] = self.M_rem_high_metal_low_mass(Z_array[high_metal_low_mass_idx], mass_array[high_metal_low_mass_idx])
 
         #remnant masses of stars with Z > 4.0e-3 and 5.0 <= MZAMS <= 10.0
-        high_metal_med_mass_idx = np.where(Z_array > 4.0e-3 and mass_array >= 5.0 and mass_array <= 10.0)
+        high_metal_med_mass_idx = np.where((Z_array > 4.0e-3) and (mass_array >= 5.0) and (mass_array <= 10.0))
         rem_mass_array[high_metal_med_mass_idx] = self.M_rem_high_metal_med_mass(Z_array[high_metal_med_mass_idx], mass_array[high_metal_med_mass_idx])
 
         #remnant masses of stars with Z > 4.0e-3 and MZAMS > 10.0
-        high_metal_high_mass_idx = np.where(Z_array > 4.0e-3 and mass_array > 10.0)
+        high_metal_high_mass_idx = np.where((Z_array > 4.0e-3) and (mass_array > 10.0))
         rem_mass_array[high_metal_high_mass_idx] = self.M_rem_high_metal_high_mass(Z_array[high_metal_high_mass_idx], mass_array[high_metal_high_mass_idx])
         
         #assign object types based on remnant mass #FIXME-not sure I understand what Spera is saying. I feel like there shoud be some probablistic way of doing this instead of having hard cutoffs
         WD_idx = np.where(rem_mass_array <= 1.4 ) #based on the Chandresekhar limit
-        NS_idx = np.where(rem_mass_array > 1.4 and rem_mass_array <= 3.) #based on figures 15-17 of Spera (dubious because neutron stars can be less than 1.4 Msun (1.25 Msun)
-        BH_idx = np.where(rem_mass_array > 3.) #based on figures 15-17 of Spera (also dubious)
+        NS_idx = np.where((rem_mass_array > 1.4) and (rem_mass_array <= 3.0)) #based on figures 15-17 of Spera (dubious because neutron stars can be less than 1.4 Msun (1.25 Msun)
+        BH_idx = np.where(rem_mass_array > 3.0) #based on figures 15-17 of Spera (also dubious)
 
         output_array[0][WD_idx] = rem_mass_array[WD_IDX]
         output_array[1][WD_idx] = codes['WD']
