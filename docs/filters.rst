@@ -178,6 +178,6 @@ Example: ``'vista,Y'``
 **ZTF**
 
 `ZTF Telescope <https://www.ztf.caltech.edu/page/technical>`_
-Filters: G, R, I
+Filters: g, r, i
 
-Example: ``'ztf,G'``
+Example: ``'ztf,g'``

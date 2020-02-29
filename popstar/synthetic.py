@@ -1481,7 +1481,7 @@ def get_obs_str(col):
                  'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
                  'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K',
                  'nirc1_K':'nirc1,K', 'ctio_osiris_K': 'ctio_osirirs,K',
-                 'ztf_G':'ztf,G', 'ztf_R':'ztf,R', 'ztf_I':'ztf,I'}
+                 'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i'}
 
     obs_str = filt_list[name]
         
