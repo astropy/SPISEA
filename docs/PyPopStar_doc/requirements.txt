@@ -1,4 +1,0 @@
-# Requirements to build docs
-matplotlib
-ipython
-numpydoc

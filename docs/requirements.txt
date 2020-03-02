@@ -1,0 +1,6 @@
+matplotlib
+numpy
+numpydoc
+astropy
+pysynphot
+scipy

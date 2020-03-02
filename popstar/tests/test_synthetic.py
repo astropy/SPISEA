@@ -1,8 +1,9 @@
 import time
 import pylab as plt
 import numpy as np
-from popstar import synthetic, reddening
+from popstar import synthetic, reddening, evolution, atmospheres
 import pysynphot
+import os
 import pdb
 from scipy.spatial import cKDTree as KDTree
 
@@ -41,10 +42,11 @@ def test_IsochronePhot(plot=False):
     distance = 4000
     filt_list = ['wfc3,ir,f127m', 'nirc2,J']
     mass_sampling=1
+    iso_dir = 'iso/'
 
     startTime = time.time()
     iso = syn.IsochronePhot(logAge, AKs, distance, filters=filt_list,
-                                mass_sampling=mass_sampling)
+                                mass_sampling=mass_sampling, iso_dir=iso_dir)
     endTime = time.time()
     print('Test completed in: %d seconds' % (endTime - startTime))
     # Typically takes 120 seconds if file is regenerated.
@@ -629,7 +631,7 @@ def test_phot_consistency(filt='all'):
                          'nirc2,FeII', 'nirc2,Brgamma',
                          'jg,J', 'jg,H', 'jg,K',
                          'nirc1,K', 'nirc1_H', 'ctio_osiris,K', 'ctio_osiris,H',
-                         'naco,H', 'naco,Ks']
+                         'naco,H', 'naco,Ks', 'ztf,g', 'ztf,r', 'ztf,i']
 
     elif filt == 'decam':
         filt_list = ['decam,y', 'decam,i', 'decam,z',
@@ -658,7 +660,8 @@ def test_phot_consistency(filt='all'):
                          'nirc2,FeII', 'nirc2,Brgamma']
     elif filt == 'jg':
         filt_list = ['jg,J', 'jg,H', 'jg,K']
-        
+    elif filt == 'ztf':
+        filt_list = ['ztf,g', 'ztf,r', 'ztf,i']
     elif filt == 'misc':
         filt_list=['nirc1,K', 'nirc1,H', 'ctio_osiris,K', 'ctio_osiris,H',
                        'naco,H', 'naco,Ks']
