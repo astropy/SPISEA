@@ -29,14 +29,21 @@ class IFMR(object):
 
 class IFMR_Spera15(IFMR):
     """
-    This IFMR comes from Spera et. al. 2015 Appendix C
+    This IFMR comes from Spera et. al. 2015 Appendix C (Used for all MZAMS>= 7 M_sun)
     https://ui.adsabs.harvard.edu/abs/2015MNRAS.451.4086S/abstract
+
+    The WD IFMR (used for MZAMS< 7_Msun) comes from 
+    `Kalirai et al. (2008) <https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract>`_
     
     """
 
     #The get_Mco functions come from C11 of Spera
-    def get_Mco_low_metal(self, Z, MZAMS): #C15 of Spera, valid for Z<1.0e-3
-
+    def get_Mco_low_metal(self, Z, MZAMS):
+        """
+        C15 of Spera, valid for Z<1.0e-3
+    
+        """
+        
         B1 = 67.07
         K1 = 46.89
         K2 = 1.138e2
@@ -50,8 +57,12 @@ class IFMR_Spera15(IFMR):
         return -2.0 + (B1 + 2)*g1 + g2 #C11 of Spera
 
 
-    def get_Mco_med_metal(self, Z, MZAMS): #C14 of Spera, valid for Z >= 1.0e-3 and Z<=4.0e-3
+    def get_Mco_med_metal(self, Z, MZAMS):
+        """
+        C14 of Spera, valid for Z >= 1.0e-3 and Z<=4.0e-3
 
+        """
+        
         B1 = 40.98 + 3.415e4*Z - 8.064e6*Z**2
         K1 = 35.17 + 1.548e4*Z - 3.759e6*Z**2
         K2 = 20.36 + 1.162e5*Z - 2.276e7*Z**2
@@ -65,8 +76,12 @@ class IFMR_Spera15(IFMR):
         return -2.0 + (B1 + 2.0)*g1 + g2 #C11 of Spera
 
 
-    def get_Mco_high_metal(self, Z, MZAMS): #C13 of Spera, valid for Z > 4.0e-3
+    def get_Mco_high_metal(self, Z, MZAMS):
+        """
+        C13 of Spera, valid for Z > 4.0e-3
 
+        """
+        
         B1 = 59.63 - 2.969e3*Z + 4.988e4*Z**2
         K1 = 45.04 - 2.176e3*Z + 3.806e4*Z**2
         K2 = 1.389e2 - 4.664e3*Z + 5.106e4*Z**2
@@ -80,16 +95,64 @@ class IFMR_Spera15(IFMR):
         return -2.0 + (B1 + 2)*g1 + g2 #C11 of Spera
 
 
-    def M_rem_very_low_metal_low_mass(self, Z, MZAMS): #C1 of Spera, valid for Z <= 5.0e-4 and MZAMS <= 5.0
+    def get_Mco(self, Z, MZAMS):
+        """
+        This function uses Spera C11-C15 in order to reurn an array of core masses from an array of metallicities
+        and ZAMS masses. It will be the same length as these two arrays with -99 entries where invalid (ie MZAMS< 7 M_sun)
 
-        Mco = self.get_Mco_low_metal(Z, MZAMS)
+        Parameters: 
+        
+        Z: an array with metallicities reported as Z where Z is metal_mass/total_mass
+        MZAMS: an array of ZAMS masses in solar masses. The Spera function are valid for MZAMS> 7 M_sun
+
+        """
+        #intialize an array of core masses with all entries equal to zero
+        core_masses = np.zeroes(len(MZAMS))
+
+        #assign masses outside the range of validity for Spera a value of -99
+        invalid_idx = np.where(MZAMS < 7.0)
+        core_masses[invalid_idx] = -99
+
+        #assign stars with Z < 1.0e-3 a core mass using the low metallicity core mass function get_Mco_low_metal
+        low_metal_idx = np.where( Z < 1.0e-3)
+        core_masses[low_metal_idx] = get_Mco_low_metal(Z, MZAMS)
+
+        #assign stars with 1.0e-3 <= Z <= 4.0e-3 a core mass using the medium metallicity core mass function get_Mco_med_metal
+        med_metal_idx = np.where((Z <= 4.0e-3) & (Z >= 1.0e-3))
+        core_masses[med_metal_idx] = get_Mco_med_metal(Z, MZAMS)
+
+        #assign stars with Z > 4.0e-3 a core mass using the high metallicity core mass function get_Mco_high_metal
+        high_metal_idx = np.where( Z > 4.0e-3)
+        core_masses[high_metal_idx] = get_Mco_high_metal(Z, MZAMS)
+        
+
+
+    def M_rem_very_low_metal_low_mass(self, Z, Mco):
+        """
+        C1 of Spera, valid for Z <= 5.0e-4 and Mco <= 5.0
+        
+        Parameters:
+
+        Z: an array of metallicities reported as metal_mass/total_mass
+        Mco: an arrray of core masses in M_sun
+
+        """
+        
         p = -2.333 + 0.1559*Mco + 0.2700*Mco*Mco #C2 of Spera
 
         return max(p, 1.27)
 
-    def M_rem_very_low_metal_med_mass(self, Z, MZAMS): #C1 of Spera, valid for Z <= 5.0e-4 and 5.0 < MZAMS < 10.0
+    def M_rem_very_low_metal_med_mass(self, Z, Mco):
+        """
+        C1 of Spera, valid for Z <= 5.0e-4 and 5.0 < Mco < 10.0
 
-        Mco = self.get_Mco_low_metal(Z, MZAMS)
+        Parameters:
+
+        Z: an array of metallicities reported as metal_mass/total_mass
+        Mco: an arrray of core masses in M_sun
+
+        """
+
         p = -2.333 + 0.1559*Mco + 0.2700*Mco*Mco #C2 of Spera
 
         return p
