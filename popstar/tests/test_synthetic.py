@@ -296,7 +296,7 @@ def test_UnresolvedCluster():
     print('Made Isochrone: %d seconds' % (time.time() - startTime))
 
     cluster = syn.UnresolvedCluster(iso, imf_in, cluster_mass)
-    print('Constructed unresolved cluster: %d seconds' % (t2 - t1))
+    print('Constructed unresolved cluster: %d seconds' % (time.time() - startTime))
 
     # Plot an integrated spectrum of the whole cluster.
     wave = cluster.wave_trim
