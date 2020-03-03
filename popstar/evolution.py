@@ -1005,7 +1005,7 @@ class MISTv1(StellarEvolution):
 
         # check age and metallicity are within bounds
         if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
-            llogger.error('Requested age {0} is out of bounds.'.format(log_age))
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if ((z_defined < np.min(self.z_list)) or
                 (z_defined > np.max(self.z_list))):
