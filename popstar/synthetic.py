@@ -27,6 +27,7 @@ import time
 import warnings
 import pdb
 from scipy.spatial import cKDTree as KDTree
+import inspect
 
 default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
@@ -253,7 +254,10 @@ class ResolvedCluster(Cluster):
             
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
-            r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(star_systems['mass'][idx_rem], star_systems['metallicity'][idx_rem])
+            if 'metallicity_array' in inspect.getfullargspec(self.ifmr.generate_death_mass).args:
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(star_systems['mass'][idx_rem], star_systems['metallicity'][idx_rem])
+            else:
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(star_systems['mass'][idx_rem])
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
@@ -377,7 +381,10 @@ class ResolvedCluster(Cluster):
             
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
-            r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(companions['mass'][cdx_rem], companions['metallicity'][cdx_rem])
+            if 'metallicity_array' in inspect.getfullargspec(self.ifmr.generate_death_mass).args:
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(star_systems['mass'][cdx_rem], star_systems['metallicity'][cdx_rem])
+            else:
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(star_systems['mass'][cdx_rem])
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)

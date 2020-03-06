@@ -710,7 +710,7 @@ class IFMR_Raithel17(IFMR):
         return 1.6 * np.ones(len(MZAMS))
 
 
-    def generate_death_mass(self, mass_array, metallicity_array):
+    def generate_death_mass(self, mass_array):
         """
         The top-level function that assigns the remnant type 
         and mass based on the stellar initial mass. 
@@ -721,8 +721,6 @@ class IFMR_Raithel17(IFMR):
             Array of initial stellar masses. Units are
             M_sun.
 
-        metallicity_array: array of floats
-            Array of metallicities in terms of Z where Z= metal_mass/total_mass
 
         Notes
         ------
