@@ -60,7 +60,7 @@ class IFMR_Spera15(IFMR):
     #The get_Mco functions come from C11 of Spera
     def get_Mco_low_metal(self, Z, MZAMS):
         """
-        C15 of Spera, valid for Z<1.0e-3
+        C15 of Spera, valid for Z < 1.0e-3
     
         """
         
@@ -74,12 +74,12 @@ class IFMR_Spera15(IFMR):
         g1 = 0.5/(1+10**((K1-MZAMS)*(d1))) #C12 of Spera
         g2 = 0.5/(1+10**((K2-MZAMS)*(d2))) #C12 of Spera
 
-        return -2.0 + (B1 + 2)*g1 + g2 #C11 of Spera
+        return -2.0 + (B1 + 2)*(g1 + g2) #C11 of Spera
 
 
     def get_Mco_med_metal(self, Z, MZAMS):
         """
-        C14 of Spera, valid for Z >= 1.0e-3 and Z<=4.0e-3
+        C14 of Spera, valid for Z >= 1.0e-3 and Z <= 4.0e-3
 
         """
         
@@ -93,7 +93,7 @@ class IFMR_Spera15(IFMR):
         g1 = 0.5/(1+10**((K1-MZAMS)*(d1))) #C12 of Spera
         g2 = 0.5/(1+10**((K2-MZAMS)*(d2))) #C12 of Spera
 
-        return -2.0 + (B1 + 2.0)*g1 + g2 #C11 of Spera
+        return -2.0 + (B1 + 2.0)*(g1 + g2) #C11 of Spera
 
 
     def get_Mco_high_metal(self, Z, MZAMS):
@@ -112,7 +112,7 @@ class IFMR_Spera15(IFMR):
         g2 = 0.5/(1+10**((K2-MZAMS)*(d2))) #C12 of Spera
 
         
-        return -2.0 + (B1 + 2.0)*g1 + g2 #C11 of Spera
+        return -2.0 + (B1 + 2.0)*(g1 + g2) #C11 of Spera
 
 
     def get_Mco(self, Z, MZAMS):
@@ -134,15 +134,15 @@ class IFMR_Spera15(IFMR):
         core_masses[invalid_idx] = -99
 
         #assign stars with Z < 1.0e-3 a core mass using the low metallicity core mass function get_Mco_low_metal
-        low_metal_idx = np.where( Z < 1.0e-3)
+        low_metal_idx = np.where((Z < 1.0e-3) & (MZAMS >= 7.0))
         core_masses[low_metal_idx] = self.get_Mco_low_metal(Z[low_metal_idx], MZAMS[low_metal_idx])
 
         #assign stars with 1.0e-3 <= Z <= 4.0e-3 a core mass using the medium metallicity core mass function get_Mco_med_metal
-        med_metal_idx = np.where((Z <= 4.0e-3) & (Z >= 1.0e-3))
+        med_metal_idx = np.where((Z <= 4.0e-3) & (Z >= 1.0e-3) & (MZAMS >= 7.0))
         core_masses[med_metal_idx] = self.get_Mco_med_metal(Z[med_metal_idx], MZAMS[med_metal_idx])
 
         #assign stars with Z > 4.0e-3 a core mass using the high metallicity core mass function get_Mco_high_metal
-        high_metal_idx = np.where( Z > 4.0e-3)
+        high_metal_idx = np.where((Z > 4.0e-3) & (MZAMS >= 7.0))
         core_masses[high_metal_idx] = self.get_Mco_high_metal(Z[high_metal_idx], MZAMS[high_metal_idx])
 
         return core_masses
@@ -160,7 +160,7 @@ class IFMR_Spera15(IFMR):
 
         """
         
-        p = -2.333 + 0.1559*Mco + 0.2700*Mco*Mco #C2 of Spera
+        p = -2.333 + 0.1559*Mco + 0.2700*Mco**2 #C2 of Spera
 
         #need to return p or 1.27, whichever is greater
         final = np.zeros(len(p))
@@ -185,7 +185,7 @@ class IFMR_Spera15(IFMR):
 
         """
 
-        p = -2.333 + 0.1559*Mco + 0.2700*Mco*Mco #C2 of Spera
+        p = -2.333 + 0.1559*Mco + 0.2700*Mco**2 #C2 of Spera
 
         return p
 
@@ -201,7 +201,7 @@ class IFMR_Spera15(IFMR):
 
         """
 
-        p = -2.333 + 0.1559*Mco + 0.2700*Mco*Mco #C2 of Spera
+        p = -2.333 + 0.1559*Mco + 0.2700*Mco**2 #C2 of Spera
 
         m = -6.476e2*Z + 1.911 #C3 of Spera
         q = 2.300e3*Z + 11.67 #C3 of Spera
