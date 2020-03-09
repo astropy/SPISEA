@@ -946,7 +946,11 @@ class IsochronePhot(Isochrone):
         # Expected filters
         self.filters = filters
 
-        if ((not os.path.exists(self.save_file)) & (not os.path.exists(self.save_file_legacy))) | (recomp==True):
+        # Recalculate isochrone if save_file doesn't exist or recomp == True
+        file_exists = self.check_save_file(evo_model, atm_func, red_law)
+
+        if (not file_exists) | (recomp==True):
+            self.recalc = True
             Isochrone.__init__(self, logAge, AKs, distance,
                                metallicity=metallicity,
                                evo_model=evo_model, atm_func=atm_func,
@@ -958,6 +962,7 @@ class IsochronePhot(Isochrone):
             # Make photometry
             self.make_photometry(rebin=rebin, vega=vega)
         else:
+            self.recalc = False
             try:
                 self.points = Table.read(self.save_file)
             except:
@@ -1019,6 +1024,31 @@ class IsochronePhot(Isochrone):
                 self.points.write(self.save_file, overwrite=True)
 
         return
+
+    def check_save_file(self, evo_model, atm_func, red_law):
+        """
+        Check to see if save_file exists, as saved by the save_file 
+        and save_file_legacy objects. If the filename exists, check the 
+        meta-data as well.
+
+        returns a boolean: True is file exists, false otherwise
+        """
+        out_bool = False
+        
+        if os.path.exists(self.save_file) | os.path.exists(self.save_file_legacy):
+            try:
+                tmp = Table.read(self.save_file)
+            except:
+                tmp = Table.read(self.save_file_legacy)
+            
+        
+            # See if the meta-data matches: evo model, atm_func, redlaw
+            if ( (tmp.meta['EVOMODEL'] == type(evo_model).__name__) &
+                (tmp.meta['ATMFUNC'] == atm_func.__name__) &
+                 (tmp.meta['REDLAW'] == red_law.name) ):
+                out_bool = True
+            
+        return out_bool
 
     def plot_CMD(self, mag1, mag2, savefile=None):
         """
