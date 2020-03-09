@@ -83,11 +83,11 @@ Tips and Tricks: The IsochronePhot Object
     laws.*
     
   * **WARNING**: IsochronePhot does not check existing
-      isochrone tables to see if the photometric filters match
-      those specified by the user. *So, if the user wishes to generate an
-      isochrone with different filters, we recommend either using a
-      different iso_dir path or setting the keyword recomp=True (see
-      docs below).*
+    isochrone tables to see if the photometric filters match
+    those specified by the user. *So, if the user wishes to generate an
+    isochrone with different filters, we recommend either using a
+    different iso_dir path or setting the keyword recomp=True (see
+    docs below).*
 
 Base Isochrone Class
 ----------------------------
