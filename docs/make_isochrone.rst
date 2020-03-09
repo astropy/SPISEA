@@ -4,14 +4,14 @@
 Isochrone Object
 ================
 The isochrone classes are defined in popstar/synthetic.py. The primary
-inputs to a isochrone object is the stellar population age, distance,
+inputs to a isochrone object are the stellar population age, distance,
 total extinction, and metallicity, along with the :ref:`atmo_models`, 
 :ref:`evo_models`, and :ref:`ext_law`. 
 
-If the IsochronePhot sub-class is used, then synthetic photometry
-will be produced. The :ref:`filters` can be defined as inputs.
+If the IsochronePhot sub-class is used then synthetic photometry
+will be produced. The :ref:`filters` are defined as additional inputs.
 
-An example of defining an IsochronePhot object::
+An example of making an IsochronePhot object::
 
   from popstar import synthetic, evolution
   from popstar import atmospheres, reddening
@@ -32,7 +32,7 @@ An example of defining an IsochronePhot object::
   'wfc3,ir,f153m']
 
   # Specify the directory we want the output isochrone
-  # file stored in
+  # table saved in
   iso_dir = './isochrones/'
 
   # Make IsochronePhot object 
@@ -49,16 +49,18 @@ See `Quick Start Example
 for a detailed example for how to interact with the isochrone object.
 
 
-Tips for IsochronePhot Object
------------------------------
+Tips and Tricks: The IsochronePhot Object
+-----------------------------------------
 
 * It takes ~1-3 mins to make an IsochronePhot object for the first
   time. A FITS table is created with the stellar parameters and
-  photometry for each star in the specified iso_dir, with the filename
-  iso_<age>_<aks>_<dist>_<z>.fits.
+  photometry for each star. This table is saved in the specified
+  iso_dir, under the filename iso_<age>_<aks>_<dist>_<z>.fits.
+  By default, iso_dir is set to the current working directory unless
+  otherwise defined. 
 
-  In future calls of IsochronePhot, the code will first check the specified
-  iso_dir to see if the appropriate FITS table already exists. If so,
+  In future calls of IsochronePhot, the code will first check iso_dir
+  to see if the appropriate FITS table already exists. If so,
   then it will simply read the table and be done. This saves
   significant amounts of computation time.
   
