@@ -77,13 +77,14 @@ Tips and Tricks: The IsochronePhot Object
     reddening law have changed, the original file will be overwritten
     by the new isochrone.
 
-    *So, we recommend that users specify different iso_dir paths when
-    making isochrones with different evolution models, atmosphere
-    models, or reddening laws.*
+    *To avoid files from being unintentially overwritten, we recommend
+    that users specify different iso_dir paths when making isochrones
+    with different evolution models, atmosphere models, or reddening laws.*
 
-    * **WARNING**: IsochronePhot does not currently check the
-      isochrone table file to see if the photometric filters match
-      those input by the user. *So, if the user wishes to generate an
+    
+    * **WARNING**: IsochronePhot does not check existing
+      isochrone tables to see if the photometric filters match
+      those specified by the user. *So, if the user wishes to generate an
       isochrone with different filters, we recommend either using a
       different iso_dir path or setting the keyword recomp=True (see
       docs below).*
