@@ -4,11 +4,12 @@
 Cluster Object
 ===============
 The cluster classes are defined in popstar/synthetic.py. The primary
-inputs to a cluster object is the cluster mass,
+inputs to a cluster object are the cluster mass,
 :ref:`isochrone_objects`, and :ref:`imf_objects`.  In addition, an
 :ref:`ifmr_objects` may be defined to produce compact stellar remnants.
 
-An example of making a ResolvedCluster::
+An example of making a ResolvedCluster, assuming the isochrone object
+has already been created::
  
   from popstar import synthetic, ifmr
   from popstar.imf import imf, multiplicity
@@ -16,8 +17,7 @@ An example of making a ResolvedCluster::
 
   # Define stellar multiplicity properties. Here we 
   # use the default multiplicity object.
-  # If no multiplicity desired, set this variable 
-  # to None
+  # This is an input for the IMF object.
   imf_multi = multiplicity.MultiplicityUnresolved()
 
   # Define the IFMR. Here we use the default
@@ -28,8 +28,8 @@ An example of making a ResolvedCluster::
 
   # Define the IMF. Here we'll use a broken
   # power-law with the parameters from 
-  # Kroupa et al. (2001, MNRAS, 322, 231).
-  # Note that multiplicity is an input for the IMF object.
+  # Kroupa et al. (2001, MNRAS, 322, 231),
+  # using the multiplicity we defined previously
   massLimits = np.array([0.08, 0.5, 1, 120]) # mass segments
   powers = np.array([-1.3, -2.3, -2.3]) # power-law exponents 
   my_imf = imf.IMF_broken_powerlaw(massLimits, powers, 
@@ -38,7 +38,8 @@ An example of making a ResolvedCluster::
   # Define the cluster mass
   mass = 10**5 # Units: solar masses
 
-  # Make the cluster  object
+  # Make the cluster object. We will assume that the isochrone object
+  # is already defined as my_iso.
   cluster = synthetic.ResolvedCluster(my_iso, my_imf, mass, 
   ifmr=my_ifmr)
 

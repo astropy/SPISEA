@@ -63,7 +63,30 @@ Tips and Tricks: The IsochronePhot Object
   to see if the appropriate FITS table already exists. If so,
   then it will simply read the table and be done. This saves
   significant amounts of computation time.
-  
+
+  * **WARNING**: When IsochronePhot checks to see if the desired
+    isochrone table already exists, it checks all isochrone properties
+    except for the photometric filters (evolution models, atmosphere
+    models, and reddening law are encoded in the table meta-data).
+    If any of these parameters do not match, then the isochrone will
+    be re-calculated.
+
+    However, to keep the isochrone filenames reasonable, only the
+    age, extinction, distance, and metallicity are encoded in the
+    filename itself. So, if the evolution model, atmosphere model, or
+    reddening law have changed, the original file will be overwritten
+    by the new isochrone.
+
+    *So, we recommend that users specify different iso_dir paths when
+    making isochrones with different evolution models, atmosphere
+    models, or reddening laws.*
+
+    * **WARNING**: IsochronePhot does not currently check the
+      isochrone table file to see if the photometric filters match
+      those input by the user. *So, if the user wishes to generate an
+      isochrone with different filters, we recommend either using a
+      different iso_dir path or setting the keyword recomp=True (see
+      docs below).*
 
 Base Isochrone Class
 ----------------------------
