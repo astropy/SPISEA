@@ -36,6 +36,7 @@ def test_isochrone(plot=False):
 
 def test_IsochronePhot(plot=False):
     from popstar import synthetic as syn
+    from popstar import evolution, atmospheres, reddening
 
     logAge = 6.7
     AKs = 2.7
@@ -44,11 +45,17 @@ def test_IsochronePhot(plot=False):
     mass_sampling=1
     iso_dir = 'iso/'
 
+    evo_model = evolution.MISTv1()
+    atm_func = atmospheres.get_merged_atmosphere
+    redlaw = reddening.RedLawNishiyama09()
+
     startTime = time.time()
-    iso = syn.IsochronePhot(logAge, AKs, distance, filters=filt_list,
+    iso = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo_model,
+                                atm_func=atm_func, red_law=redlaw,
+                                filters=filt_list,
                                 mass_sampling=mass_sampling, iso_dir=iso_dir)
     endTime = time.time()
-    print('Test completed in: %d seconds' % (endTime - startTime))
+    print('IsochronePhot generated in: %d seconds' % (endTime - startTime))
     # Typically takes 120 seconds if file is regenerated.
     # Limited by pysynphot.Icat call in atmospheres.py
 
@@ -65,6 +72,48 @@ def test_IsochronePhot(plot=False):
         
         plt.figure(2)
         iso.plot_mass_magnitude('mag160w')
+
+    # Finally, let's test the isochronePhot file generation
+    assert os.path.exists('{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_p00.fits'.format(iso_dir, logAge,
+                                                                                AKs, str(distance).zfill(5)))
+    
+    # Check 1: If we try to remake the isochrone, does it read the file rather than
+    # making a new one
+    iso_new = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo_model,
+                                atm_func=atm_func, red_law=redlaw,
+                                filters=filt_list,
+                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+
+    assert iso_new.recalc == False
+
+    # Check 2: If we change evo model, atmo model, or redlaw,
+    # does IsochronePhot regenerate the isochrone and overwrite the existing one?
+    evo2 = evolution.MergedBaraffePisaEkstromParsec()
+    mass_sampling=20
+
+    iso_new = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo2,
+                                atm_func=atm_func, red_law=redlaw,
+                                filters=filt_list,
+                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+
+    assert iso_new.recalc == True
+
+    redlaw2 = reddening.RedLawHosek18b()
+    iso_new = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo2,
+                                atm_func=atm_func, red_law=redlaw2,
+                                filters=filt_list,
+                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+
+    assert iso_new.recalc == True
+
+    atm2 = atmospheres.get_castelli_atmosphere
+    iso_new = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo2,
+                                atm_func=atm2, red_law=redlaw2,
+                                filters=filt_list,
+                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+
+    assert iso_new.recalc == True
+
 
     return
 
