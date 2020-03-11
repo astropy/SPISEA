@@ -47,7 +47,7 @@ has already been created::
 See `Quick Start Example
 <https://github.com/astropy/PyPopStar/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb>`_
 for a detailed example for how to make different
-cluster sub-classes and interact with the subsequent output.
+cluster sub-classes and interact with the resulting output.
 
 Base Cluster Class
 ----------------------------
