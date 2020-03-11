@@ -46,7 +46,7 @@ An example of making an IsochronePhot object::
 
 See `Quick Start Example
 <https://github.com/astropy/PyPopStar/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb>`_
-for a detailed example for how to interact with the isochrone object.
+for a detailed example showing how to interact with the isochrone object output.
 
 
 Tips and Tricks: The IsochronePhot Object
