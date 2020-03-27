@@ -15,14 +15,14 @@ class IFMR(object):
     def __init__(self):
         pass
 
-    def get_Z(self, I_H):
+    def get_Z(self, Fe_H):
         """
         This function converts metallicity given as [Fe/H] into Z values.
-        It comes from Bertelli et al. 1994 "Theoretical isochrones from models with new radiative opacities" equation (10) 
-        http://articles.adsabs.harvard.edu/pdf/1994A%26AS..106..275B
+        It comes from Sharma et al. 2011 "Galaxia: A Code To Generate A Synthetic Survey of The Milky Way" equation (15) 
+        https://ui.adsabs.harvard.edu/abs/2011ascl.soft01007S/abstract
 
         """
-        return 10**(0.977*I_H - 1.699)
+        return 10**(Fe_H - 1.72125)
 
     def Kalirai_mass(self, MZAMS):
         """                                                                                                      
