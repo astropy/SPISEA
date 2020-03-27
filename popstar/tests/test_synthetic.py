@@ -1,7 +1,8 @@
 import time
+import numpy as np
 import pylab as plt
 import numpy as np
-from popstar import synthetic, reddening, evolution, atmospheres
+from popstar import synthetic, reddening, evolution, atmospheres, ifmr
 import pysynphot
 import os
 import pdb
@@ -705,5 +706,85 @@ def test_phot_consistency(filt='all'):
     # Remove iso file we just wrote, since it was only a test
     os.remove('iso_6.70_0.00_01000.fits')
     return
+
+
+def test_Spera15_IFMR():
+    Spera = ifmr.IFMR_Spera15()
+
+    def FeH_from_Z(Z):
+        return np.log10(Z/0.019)
+
+    metal = np.array([2.0e-4, 1.0e-3, 2.0e-3, 2.0e-2]) #ensure that all Spera metallicity regimes are represented
+
+    FeH = FeH_from_Z(metal) #generate death mass takes metallicty as [Fe/H]
+    #want to get a good range of masses for Spera, should expect 8 invalids, 8 WDs, 3 NSs, and 9 BHs 
+    ZAMS = np.array([-0.2*np.ones(len(FeH)), 0.2*np.ones(len(FeH)), 4.0*np.ones(len(FeH)), 9.2*np.ones(len(FeH)),
+                    15.0*np.ones(len(FeH)), 30.0*np.ones(len(FeH)), 150.0*np.ones(len(FeH))])
+
+
+    output_array = np.concatenate((Spera.generate_death_mass(ZAMS[0], FeH), Spera.generate_death_mass(ZAMS[1], FeH),
+                                  Spera.generate_death_mass(ZAMS[2], FeH), Spera.generate_death_mass(ZAMS[3], FeH),
+                                  Spera.generate_death_mass(ZAMS[4], FeH), Spera.generate_death_mass(ZAMS[5], FeH),
+                                  Spera.generate_death_mass(ZAMS[6], FeH)), axis=1)
+
+    #count up number of objects formed and ensure it matahces the number of stars input
+    bad_idx = np.where(output_array[1] == -1)
+    WD_idx = np.where(output_array[1] == 101)
+    NS_idx = np.where(output_array[1] == 102)
+    BH_idx = np.where(output_array[1] == 103)
+
+    total = len(WD_idx[0]) + len(NS_idx[0]) + len(BH_idx[0]) + len(bad_idx[0])
+    assert total == len(ZAMS)*len(ZAMS[0]) , "The # of input objects does not match the number of output objects for the Spera15 IFMR"
+
+    #check to make sure no unhandled negative remnant masses (ie without type code -1 assigned)
+    rem_mass = output_array[0]
+    neg_mass_idx = np.where(rem_mass < 0)
+    assert set(bad_idx[0]) == set(neg_mass_idx[0]), "There are unhandled negative remnant masses for the Spera15 IFMR"
+
+    #check to make sure there are no left over zeroes in the remnant mass array
+    pos_rem_mass = np.delete(rem_mass, neg_mass_idx)
+    assert np.all(pos_rem_mass != 0) , "There are left over zeros in the remnant mass array for the Spera15 IFMR"
+
+    #check that the number of expected objects is actually the number that we get
+    assert len(bad_idx[0]) == 8 , "There are not the right number of invalid objects for the Spera15 IFMR"
+    assert len(WD_idx[0]) == 8 , "There are not the right number of WDs for the Spera15 IFMR"
+    assert len(NS_idx[0]) == 3 , "There are not the right number of NSs for the Spera15 IFMR"
+    assert len(BH_idx[0]) == 9 , "There are not the right number of BHs for the Spera15 IFMR"
+
+    return
+
+def test_Raithel17_IFMR():
+    Raithel = ifmr.IFMR_Raithel17()
+    ZAMS = np.array([-0.2, 0.2, 1.0, 7.0, 10.0, 14.0, 16.0, 18.0, 18.6, 22.0, 26.0, 28.0, 50.0, 61.0, 119.0, 121.0]) 
+    #3 invalid indices, 2 WDs, cannot make statements about #of BHs and NSs because the Raithel IFMR has some randomness
+
+    output_array = Raithel.generate_death_mass(ZAMS)
+
+    #count up number of objects formed and ensure it matahces the number of stars input
+    bad_idx = np.where(output_array[1] == -1)
+    WD_idx = np.where(output_array[1] == 101)
+    NS_idx = np.where(output_array[1] == 102)
+    BH_idx = np.where(output_array[1] == 103)
+
+    total = len(WD_idx[0]) + len(NS_idx[0]) + len(BH_idx[0]) + len(bad_idx[0])
+    assert total == len(ZAMS) , "The # of input objects does not match the number of output objects for the Raithel17 IFMR"
+
+    #check to make sure no unhandled negative remnant masses (ie without type code -1 assigned)
+    rem_mass = output_array[0]
+    neg_mass_idx = np.where(rem_mass < 0)
+    assert set(bad_idx[0]) == set(neg_mass_idx[0]) , "There are unhandled negative remnant masses for the Raithel17 IFMR"
+
+    #check to make sure there are no left over zeroes in the remnant mass array
+    pos_rem_mass = np.delete(rem_mass, neg_mass_idx)
+    assert np.all(pos_rem_mass != 0), "There are left over zeros in the remnant mass array for the Raithel17 IFMR"
+
+    #check to make sure there are the correct number of WDs and invalid idxs
+    assert len(bad_idx[0]) == 3 , "There are not the right number of invalid objects for the Raithel17 IFMR"
+    assert len(WD_idx[0]) == 2 , "There are not the right number of WDs for the Raithel17 IFMR"
+
+    return
+
+
+
 
 
