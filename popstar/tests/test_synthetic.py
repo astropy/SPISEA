@@ -707,3 +707,32 @@ def test_phot_consistency(filt='all'):
     return
 
 
+def test_isochrone_siess_mass_current_bug():
+    """
+    Bug found by students in grad stars class. 
+    """
+    # Define isochrone parameters
+    logAges = [6.6, 7.6] # Age in log(years)
+    AKs = 0 # extinction in mags
+    dist = 1000 # distance in parsec
+    metallicity = 0 # Metallicity in [M/H]
+
+    # Define evolution/atmosphere models and extinction law
+    evo_model = evolution.MergedSiessGenevaPadova()
+    evo_model_name = ['MIST', 'Padova']
+    atm_func = atmospheres.get_merged_atmosphere
+    red_law = reddening.RedLawHosek18b()
+
+    # Also specify filters for synthetic photometry (optional). Here we use
+    # the HST WFC3-IR F127M, F139M, and F153M filters
+    filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m']
+
+    # Make Isochrone object. Note that is calculation will take a few minutes, unless the
+    # isochrone has been generated previously.
+
+    for logAge in logAges:
+        my_iso = synthetic.IsochronePhot(logAge, AKs, dist, metallicity=0, evo_model=evo_model, atm_func=atm_func,
+                                         red_law=red_law, filters=filt_list)
+        print(my_iso.save_file)
+
+    return
