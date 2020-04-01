@@ -26,13 +26,6 @@ demonstrating how to use PyPopStar.
 ## Contributions
 We encourage contributions to PyPopStar, particular those that add support for star formation histories, new models, higher spectral resolution, etc. For feature additions, we ask that users fork or branch off of the development repository, make their changes, and then submit merge and pull requests.
 
-## Other Resources
-
-* _Astropy: http://www.astropy.org/
-* _git: http://git-scm.com/
-* _github: http://github.com
-* _Cython: http://cython.org/
-
 ## License 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
 
