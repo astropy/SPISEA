@@ -21,7 +21,7 @@ sys.path.insert(0, os.path.abspath('../'))
 # -- Project information -----------------------------------------------------
 
 project = 'PyPopStar'
-copyright = '2019, Matthew Hosek Jr, Jessica R. Lu, Casey Y. Lam. Logo by Abhimat Gautam.'
+copyright = '2019, Matthew Hosek Jr, Jessica R. Lu, Casey Y. Lam. Logo by Abhimat Gautam'
 author = 'Matthew Hosek Jr, Jessica R. Lu, Casey Y. Lam'
 
 # The short X.Y version
