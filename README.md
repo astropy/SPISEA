@@ -1,4 +1,3 @@
-# PyPopStar
 ![PyPopStar_Logo](docs/images/logo.png)
 
 PyPopStar is an python package that generates single-age, single-metallicity
