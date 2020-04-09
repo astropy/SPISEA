@@ -34,6 +34,75 @@ def test_isochrone(plot=False):
 
     return iso
 
+def test_iso_wave():
+    """
+    Test to make sure isochrones generated have spectra with the proper 
+    wavelength range, and that the user has control over that wavelength
+    range (propagated through IsochronePhot)
+    """
+    # Define isochrone parameters
+    logAge = np.log10(5*10**6.) # Age in log(years)
+    AKs = 0.8 # extinction in mags
+    dist = 4000 # distance in parsec
+
+    # Define evolution/atmosphere models and extinction law (optional)
+    evo_model = evolution.MergedBaraffePisaEkstromParsec() 
+    atm_func = atmospheres.get_merged_atmosphere
+    red_law = reddening.RedLawHosek18b()
+
+    # Also specify filters for synthetic photometry (optional). Here we use 
+    # the HST WFC3-IR F127M, F139M, and F153M filters
+    filt_list = ['wfc3,ir,f127m']
+
+    # First, let's make sure the vega spectrum has the proper limits
+    vega = synthetic.Vega()
+
+    assert np.min(vega.wave) == 995
+    assert np.max(vega.wave) == 100200
+
+    # Make Isochrone object. Will use wave_range = [3000,52000].
+    # Make sure range matches to resolution of atmosphere.
+    wave_range1 = [3000, 52000]
+    my_iso = synthetic.IsochronePhot(logAge, AKs, dist,
+                            evo_model=evo_model, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                            mass_sampling=10, wave_range=wave_range1,
+                            recomp=True)
+
+    test = my_iso.spec_list[0]
+
+    assert np.min(test.wave) == 3010
+    assert np.max(test.wave) == 51900
+
+    # Now let's try changing the wave range. Is it carried through
+    # properly?
+    wave_range2 = [1200, 90000]
+    my_iso = synthetic.IsochronePhot(logAge, AKs, dist,
+                            evo_model=evo_model, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                            mass_sampling=10, wave_range=wave_range2,
+                            recomp=True)
+
+    test2 = my_iso.spec_list[0]
+
+    assert np.min(test2.wave) == 1205
+    assert np.max(test2.wave) == 89800
+
+    # Does the error exception catch the bad wave_range?
+    wave_range3 = [1200, 1000000]
+    try:
+        my_iso = synthetic.IsochronePhot(logAge, AKs, dist,
+                                evo_model=evo_model, atm_func=atm_func,
+                                red_law=red_law, filters=filt_list,
+                                mass_sampling=10, wave_range=wave_range3,
+                                recomp=True)
+        print('WAVE TEST FAILED!!! Should have crashed here, wavelength range out of bounds')
+        pdb.set_trace()
+    except:
+        print('Wavelength out of bound condition passed. Test is good')
+        pass
+    return
+
 def test_IsochronePhot(plot=False):
     from popstar import synthetic as syn
     from popstar import evolution, atmospheres, reddening
