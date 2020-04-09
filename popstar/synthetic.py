@@ -40,7 +40,9 @@ def Vega():
                                      gravity=3.95,
                                      metallicity=-0.5)
 
-    vega = spectrum.trimSpectrum(vega, 2500, 52000)
+    # Following the K93 README, set wavelength range to 0.1 - 10 microns.
+    # This defines the maximum allowed wavelength range in pypopstar
+    vega = spectrum.trimSpectrum(vega, 995, 100200)
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
     # and is used to convert to flux observed at Earth.
@@ -693,6 +695,15 @@ class Isochrone(object):
         
         c = constants
 
+        # Assert that the wavelength ranges are within the limits of the
+        # VEGA model (0.1 - 10 microns)
+        try:
+            assert wave_range[0] > 1000
+            assert wave_range[1] < 100000
+        except:
+            print('Desired wavelength range invalid. Limit to 1000 - 10000 A')
+            return
+        
         # Get solar metallicity models for a population at a specific age.
         # Takes about 0.1 seconds.
         evol = evo_model.isochrone(age=10**logAge,
@@ -896,7 +907,7 @@ class IsochronePhot(Isochrone):
 
     rebin : boolean, optional
         If true, rebins the atmospheres so that they are the same
-        resolution as the Castelli+04 atmospheres. Default is False,
+        resolution as the Castelli+04 atmospheres. Default is True,
         which is often sufficient synthetic photometry in most cases.
 
     recomp : boolean, optional
@@ -912,6 +923,7 @@ class IsochronePhot(Isochrone):
                  metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
+                 wave_range=[3000, 52000],
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
@@ -955,6 +967,7 @@ class IsochronePhot(Isochrone):
                                metallicity=metallicity,
                                evo_model=evo_model, atm_func=atm_func,
                                wd_atm_func=wd_atm_func,
+                               wave_range=wave_range,
                                red_law=red_law, mass_sampling=mass_sampling,
                                min_mass=min_mass, max_mass=max_mass, rebin=rebin)
             self.verbose = True
