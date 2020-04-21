@@ -3,6 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. figure:: images/logo.png
+	    :align: left
+
+		    
 PyPopStar is an python package that generates single-age, single-metallicity
 populations (i.e. star clusters). It gives the user control over many parameters:
 

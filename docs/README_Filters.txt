@@ -144,6 +144,6 @@ Example: 'gaia,dr2_rev,G'
 ZTF
 ==========================
 ZTF Telescope (ttps://www.ztf.caltech.edu/page/technical)
-Filters: G, R, I
+Filters: g, r, i
 
-Example: "ZTF,G"
+Example: "ztf,g"

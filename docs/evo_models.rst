@@ -18,7 +18,6 @@ are:
 * MISTv1 (default)
 * MergedBaraffePisaEkstromParsec
 * MergedPisaEkstromParsec
-* MergedSiessGenevaPadova
 * Baraffe15
 * Ekstrom12
 * Parsec
@@ -41,9 +40,6 @@ Specific Evolution Model Classes
 		  
 .. autoclass:: evolution.MergedPisaEkstromParsec
 	       :show-inheritance:	       
-
-.. autoclass:: evolution.MergedSiessGenevaPadova
-	       :show-inheritance:
 		  
 .. autoclass:: evolution.Baraffe15
 	       :show-inheritance:

@@ -35,8 +35,78 @@ def test_isochrone(plot=False):
 
     return iso
 
+def test_iso_wave():
+    """
+    Test to make sure isochrones generated have spectra with the proper 
+    wavelength range, and that the user has control over that wavelength
+    range (propagated through IsochronePhot)
+    """
+    # Define isochrone parameters
+    logAge = np.log10(5*10**6.) # Age in log(years)
+    AKs = 0.8 # extinction in mags
+    dist = 4000 # distance in parsec
+
+    # Define evolution/atmosphere models and extinction law (optional)
+    evo_model = evolution.MergedBaraffePisaEkstromParsec() 
+    atm_func = atmospheres.get_merged_atmosphere
+    red_law = reddening.RedLawHosek18b()
+
+    # Also specify filters for synthetic photometry (optional). Here we use 
+    # the HST WFC3-IR F127M, F139M, and F153M filters
+    filt_list = ['wfc3,ir,f127m']
+
+    # First, let's make sure the vega spectrum has the proper limits
+    vega = synthetic.Vega()
+
+    assert np.min(vega.wave) == 995
+    assert np.max(vega.wave) == 100200
+
+    # Make Isochrone object. Will use wave_range = [3000,52000].
+    # Make sure range matches to resolution of atmosphere.
+    wave_range1 = [3000, 52000]
+    my_iso = synthetic.IsochronePhot(logAge, AKs, dist,
+                            evo_model=evo_model, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                            mass_sampling=10, wave_range=wave_range1,
+                            recomp=True)
+
+    test = my_iso.spec_list[0]
+
+    assert np.min(test.wave) == 3010
+    assert np.max(test.wave) == 51900
+
+    # Now let's try changing the wave range. Is it carried through
+    # properly?
+    wave_range2 = [1200, 90000]
+    my_iso = synthetic.IsochronePhot(logAge, AKs, dist,
+                            evo_model=evo_model, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                            mass_sampling=10, wave_range=wave_range2,
+                            recomp=True)
+
+    test2 = my_iso.spec_list[0]
+
+    assert np.min(test2.wave) == 1205
+    assert np.max(test2.wave) == 89800
+
+    # Does the error exception catch the bad wave_range?
+    wave_range3 = [1200, 1000000]
+    try:
+        my_iso = synthetic.IsochronePhot(logAge, AKs, dist,
+                                evo_model=evo_model, atm_func=atm_func,
+                                red_law=red_law, filters=filt_list,
+                                mass_sampling=10, wave_range=wave_range3,
+                                recomp=True)
+        print('WAVE TEST FAILED!!! Should have crashed here, wavelength range out of bounds')
+        pdb.set_trace()
+    except:
+        print('Wavelength out of bound condition passed. Test is good')
+        pass
+    return
+
 def test_IsochronePhot(plot=False):
     from popstar import synthetic as syn
+    from popstar import evolution, atmospheres, reddening
 
     logAge = 6.7
     AKs = 2.7
@@ -45,11 +115,17 @@ def test_IsochronePhot(plot=False):
     mass_sampling=1
     iso_dir = 'iso/'
 
+    evo_model = evolution.MISTv1()
+    atm_func = atmospheres.get_merged_atmosphere
+    redlaw = reddening.RedLawNishiyama09()
+
     startTime = time.time()
-    iso = syn.IsochronePhot(logAge, AKs, distance, filters=filt_list,
+    iso = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo_model,
+                                atm_func=atm_func, red_law=redlaw,
+                                filters=filt_list,
                                 mass_sampling=mass_sampling, iso_dir=iso_dir)
     endTime = time.time()
-    print('Test completed in: %d seconds' % (endTime - startTime))
+    print('IsochronePhot generated in: %d seconds' % (endTime - startTime))
     # Typically takes 120 seconds if file is regenerated.
     # Limited by pysynphot.Icat call in atmospheres.py
 
@@ -66,6 +142,48 @@ def test_IsochronePhot(plot=False):
         
         plt.figure(2)
         iso.plot_mass_magnitude('mag160w')
+
+    # Finally, let's test the isochronePhot file generation
+    assert os.path.exists('{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_p00.fits'.format(iso_dir, logAge,
+                                                                                AKs, str(distance).zfill(5)))
+    
+    # Check 1: If we try to remake the isochrone, does it read the file rather than
+    # making a new one
+    iso_new = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo_model,
+                                atm_func=atm_func, red_law=redlaw,
+                                filters=filt_list,
+                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+
+    assert iso_new.recalc == False
+
+    # Check 2: If we change evo model, atmo model, or redlaw,
+    # does IsochronePhot regenerate the isochrone and overwrite the existing one?
+    evo2 = evolution.MergedBaraffePisaEkstromParsec()
+    mass_sampling=20
+
+    iso_new = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo2,
+                                atm_func=atm_func, red_law=redlaw,
+                                filters=filt_list,
+                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+
+    assert iso_new.recalc == True
+
+    redlaw2 = reddening.RedLawHosek18b()
+    iso_new = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo2,
+                                atm_func=atm_func, red_law=redlaw2,
+                                filters=filt_list,
+                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+
+    assert iso_new.recalc == True
+
+    atm2 = atmospheres.get_castelli_atmosphere
+    iso_new = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo2,
+                                atm_func=atm2, red_law=redlaw2,
+                                filters=filt_list,
+                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+
+    assert iso_new.recalc == True
+
 
     return
 
@@ -294,7 +412,7 @@ def test_UnresolvedCluster():
     atm_func = atm.get_merged_atmosphere
     iso = syn.Isochrone(log_age, AKs, distance, metallicity=metallicity,
                             evo_model=evo, atm_func=atm_func, mass_sampling=10)
-    print('Made cluster: %d seconds' % (time.time() - startTime))
+    print('Made Isochrone: %d seconds' % (time.time() - startTime))
 
     cluster = syn.UnresolvedCluster(iso, imf_in, cluster_mass)
     print('Constructed unresolved cluster: %d seconds' % (time.time() - startTime))
@@ -632,7 +750,7 @@ def test_phot_consistency(filt='all'):
                          'nirc2,FeII', 'nirc2,Brgamma',
                          'jg,J', 'jg,H', 'jg,K',
                          'nirc1,K', 'nirc1_H', 'ctio_osiris,K', 'ctio_osiris,H',
-                         'naco,H', 'naco,Ks', 'ztf,G', 'ztf,R', 'ztf,I']
+                         'naco,H', 'naco,Ks', 'ztf,g', 'ztf,r', 'ztf,i']
 
     elif filt == 'decam':
         filt_list = ['decam,y', 'decam,i', 'decam,z',
@@ -662,7 +780,7 @@ def test_phot_consistency(filt='all'):
     elif filt == 'jg':
         filt_list = ['jg,J', 'jg,H', 'jg,K']
     elif filt == 'ztf':
-        filt_list = ['ztf,G', 'ztf,R', 'ztf,I']
+        filt_list = ['ztf,g', 'ztf,r', 'ztf,i']
     elif filt == 'misc':
         filt_list=['nirc1,K', 'nirc1,H', 'ctio_osiris,K', 'ctio_osiris,H',
                        'naco,H', 'naco,Ks']

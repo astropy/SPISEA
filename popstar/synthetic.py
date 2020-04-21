@@ -41,7 +41,9 @@ def Vega():
                                      gravity=3.95,
                                      metallicity=-0.5)
 
-    vega = spectrum.trimSpectrum(vega, 2500, 52000)
+    # Following the K93 README, set wavelength range to 0.1 - 10 microns.
+    # This defines the maximum allowed wavelength range in pypopstar
+    vega = spectrum.trimSpectrum(vega, 995, 100200)
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
     # and is used to convert to flux observed at Earth.
@@ -228,8 +230,8 @@ class ResolvedCluster(Cluster):
         # Note: this only becomes relevant when the cluster is > 10**6 M-sun, this
         # effect is so small
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
-        star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'])
-        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9))
+        star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
+        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
         # Print warning, if desired
         verbose=False
         if verbose:
@@ -339,7 +341,9 @@ class ResolvedCluster(Cluster):
                 # the ones we have definition for, as a result of the interpolation. For these
                 # stars, round phase down to nearest defined phase (e.g., if phase is 71,
                 # then round it down to 5, rather than up to 101).
-                bad = np.where( (companions['phase'] > 5) & (companions['phase'] < 101) & (companions['phase'] != 9))
+                # Convert nan_to_num to avoid errors on greater than, less than comparisons
+                star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
+                bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
                 # Print warning, if desired
                 verbose=False
                 if verbose:
@@ -400,7 +404,9 @@ class ResolvedCluster(Cluster):
 
 
         # Notify if we have a lot of bad ones.
-        idx = np.where(companions['Teff'] > 0)[0]
+        # Convert nan_to_num to avoid errors on greater than, less than comparisons
+        companions_teff_non_nan = np.nan_to_num(companions['Teff'], nan=-99)
+        idx = np.where(companions_teff_non_nan > 0)[0]
         if len(idx) != N_comp_tot and self.verbose:
             print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
 
@@ -422,12 +428,15 @@ class ResolvedCluster(Cluster):
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
+        # Convert nan_to_num to avoid errors on greater than, less than comparisons
+        star_systems_teff_non_nan = np.nan_to_num(star_systems['Teff'], nan=-99)
+        star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
         if self.ifmr == None:
             # Keep only those stars with Teff assigned.
-            idx = np.where(star_systems['Teff'] > 0)[0]
+            idx = np.where(star_systems_teff_non_nan > 0)[0]
         else:
             # Keep stars (with Teff) and any other compact objects (with phase info). 
-            idx = np.where( (star_systems['Teff'] > 0) | (star_systems['phase'] >= 0) )[0]
+            idx = np.where( (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) )[0]
 
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
@@ -693,6 +702,15 @@ class Isochrone(object):
         
         c = constants
 
+        # Assert that the wavelength ranges are within the limits of the
+        # VEGA model (0.1 - 10 microns)
+        try:
+            assert wave_range[0] > 1000
+            assert wave_range[1] < 100000
+        except:
+            print('Desired wavelength range invalid. Limit to 1000 - 10000 A')
+            return
+        
         # Get solar metallicity models for a population at a specific age.
         # Takes about 0.1 seconds.
         evol = evo_model.isochrone(age=10**logAge,
@@ -896,7 +914,7 @@ class IsochronePhot(Isochrone):
 
     rebin : boolean, optional
         If true, rebins the atmospheres so that they are the same
-        resolution as the Castelli+04 atmospheres. Default is False,
+        resolution as the Castelli+04 atmospheres. Default is True,
         which is often sufficient synthetic photometry in most cases.
 
     recomp : boolean, optional
@@ -912,6 +930,7 @@ class IsochronePhot(Isochrone):
                  metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
+                 wave_range=[3000, 52000],
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
@@ -946,11 +965,16 @@ class IsochronePhot(Isochrone):
         # Expected filters
         self.filters = filters
 
-        if ((not os.path.exists(self.save_file)) & (not os.path.exists(self.save_file_legacy))) | (recomp==True):
+        # Recalculate isochrone if save_file doesn't exist or recomp == True
+        file_exists = self.check_save_file(evo_model, atm_func, red_law)
+
+        if (not file_exists) | (recomp==True):
+            self.recalc = True
             Isochrone.__init__(self, logAge, AKs, distance,
                                metallicity=metallicity,
                                evo_model=evo_model, atm_func=atm_func,
                                wd_atm_func=wd_atm_func,
+                               wave_range=wave_range,
                                red_law=red_law, mass_sampling=mass_sampling,
                                min_mass=min_mass, max_mass=max_mass, rebin=rebin)
             self.verbose = True
@@ -958,6 +982,7 @@ class IsochronePhot(Isochrone):
             # Make photometry
             self.make_photometry(rebin=rebin, vega=vega)
         else:
+            self.recalc = False
             try:
                 self.points = Table.read(self.save_file)
             except:
@@ -1019,6 +1044,31 @@ class IsochronePhot(Isochrone):
                 self.points.write(self.save_file, overwrite=True)
 
         return
+
+    def check_save_file(self, evo_model, atm_func, red_law):
+        """
+        Check to see if save_file exists, as saved by the save_file 
+        and save_file_legacy objects. If the filename exists, check the 
+        meta-data as well.
+
+        returns a boolean: True is file exists, false otherwise
+        """
+        out_bool = False
+        
+        if os.path.exists(self.save_file) | os.path.exists(self.save_file_legacy):
+            try:
+                tmp = Table.read(self.save_file)
+            except:
+                tmp = Table.read(self.save_file_legacy)
+            
+        
+            # See if the meta-data matches: evo model, atm_func, redlaw
+            if ( (tmp.meta['EVOMODEL'] == type(evo_model).__name__) &
+                (tmp.meta['ATMFUNC'] == atm_func.__name__) &
+                 (tmp.meta['REDLAW'] == red_law.name) ):
+                out_bool = True
+            
+        return out_bool
 
     def plot_CMD(self, mag1, mag2, savefile=None):
         """
@@ -1481,7 +1531,7 @@ def get_obs_str(col):
                  'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
                  'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K',
                  'nirc1_K':'nirc1,K', 'ctio_osiris_K': 'ctio_osirirs,K',
-                 'ztf_G':'ztf,G', 'ztf_R':'ztf,R', 'ztf_I':'ztf,I'}
+                 'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i'}
 
     obs_str = filt_list[name]
         

@@ -74,11 +74,11 @@ You will need to download 2 files:
 
 * `postar_cdbs.tar.gz <http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs.tar.gz>`_  (142 MB; 248 MB unzipped)
 
-You can also optionally download a third file, which contains high-resolution versions of the atmospheres in ``popstar_cdbs.tar.gz``:
+You can also optionally download a third file, which contains higher-resolution versions of the atmospheres in ``popstar_cdbs.tar.gz``:
 
 * `popstar_cdbs_highres.tar.gz <http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs_highres.tar.gz>`_ (50 GB; 74 GB unzipped)
 
-PyPopStar uses the low-resolution atmospheres in
+PyPopStar uses the low-resolution atmospheres (R = 250) in
 ``popstar_cdbs.tar.gz`` by default, as
 it is then much faster to calculate synthetic photometry and
 is sufficient in most applications. However, the user can change
