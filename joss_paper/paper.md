@@ -33,7 +33,7 @@ affiliations:
  index: 2
   - name: Harvard-Smithsonian Center for Astrophysics, 60 Garden Street, Cambridge, MA 02138, USA
    index: 3
-date: 13 August 2017
+date: 30 April 2020
 bibliography: paper.bib
 
 # Optional fields if submitting to a AAS journal too, see this blog post:
@@ -44,9 +44,51 @@ aas-journal: The Astronomical Journal <- The name of the AAS journal.
 
 # Summary
 
--top level summary and statement of need here
+The ability to simulate stellar populations is an essential tool for
+interpreting observations of star clusters.
+There are a range of codes
+available for this task, each with a different set
+of advantages.
+Examples such as \texttt{Starburst99} \citep{Leitherer:1999xy, Vazquez:2005nr}, 
+\texttt{PEGASE} \citep{Fioc:1997ul, Fioc:2019ix},
+\texttt{GALAXEV} \citep{2003MNRAS.344.1000B}, 
+\texttt{GALICS} \citep{Hatton:2003rp}, 
+\texttt{Flexible Stellar Population Synthesis} \citep[\texttt{FSPS};][]{Conroy:2009le, Conroy:2010cr}, 
+\texttt{CIGALE} \citep{Noll:2009if} 
+and \texttt{Stochastically Lighting Up Galaxies}
+\citep[\texttt{SLUG};][]{da-Silva:2012hb, Krumholz:2015dk}
+specialize in modeling stellar populations on galactic scales,
+with features such as models for photoionization and dust
+attenuation and prescriptions for supernovae yields and 
+chemical evolution.
+Others such as
+\texttt{Binary Population and Spectral Synthesis} \citep[\texttt{BPASS};][]{Eldridge:2017rc, Stanway:2018dn} and 
+\texttt{SYCLIST} \citep{Georgy:2014wj}
+offer advance treatment of binary stellar evolution and stellar
+rotation.
 
--contributions, bugs/feature requests: github page
+However, a common drawback of these codes is that they limit the
+user to fixed set of options when choosing the "ingredients" of the
+stellar population, such as the Initial Mass Function (IMF),
+extinction law, stellar multiplicity properties, and/or the
+Initial-Final Mass Relation (IFMR).
+This hinders the ability to model observations of star
+clusters with enough flexibility to study these properties.
+
+We present \text{ttt}{PyPopStar}, an open-source \texttt{Python}
+package that simulates simple stellar populations (single age and
+metallicity).
+The strength of PyPopStar is its modular interface which offers the
+user control of 13 input properties including (but not limited to) the
+IMF, stellar multiplicity, extinction law, IMFR, and which
+stellar evolution and atmosphere model grids are used.
+These properties are constructed as code objects that are
+straight-forward to manipulate, and allows the user to
+create new sub-classes in order to implement new models and/or
+functionalities that can be integrated with the rest of the code.
+
+PyPopStar can be downloaded through
+[GitHub](https://github.com/astropy/PyPopStar), and has documentation via [ReadtheDocs](https://pypopstar.readthedocs.io/en/latest/). 
 
 # Features
 
@@ -65,9 +107,11 @@ Some of the tasks that PyPopStar can perform include:
 - make a star cluster at any age with an unusual IMF and unresolved multiplicity
 - make a spectrum of a star cluster in integrated light
 
-A more complete description of the code structure, underlying calculations, and available features is provided in Hosek et al. (2020, submitted to AJ).
-Additional details can be found in the [documentation](https://pypopstar.readthedocs.io/en/latest/).
-We also provide jupyter notebooks with a [quick-start tutorial](https://github.com/astropy/PyPopStar/blob/master/docs/Quick_Start_Make_Cluster.ipynb) and additional [user examples](https://github.com/astropy/PyPopStar/tree/master/docs/paper_examples). 
+A more complete description of the code structure, underlying
+calculations, and available features is provided in Hosek et
+al. (2020, submitted to AJ).
+In addition to the [documentation](https://pypopstar.readthedocs.io/en/latest/),
+we also provide jupyter notebooks with a [quick-start tutorial](https://github.com/astropy/PyPopStar/blob/master/docs/Quick_Start_Make_Cluster.ipynb) and additional [user examples](https://github.com/astropy/PyPopStar/tree/master/docs/paper_examples). 
 
 # Research
 
