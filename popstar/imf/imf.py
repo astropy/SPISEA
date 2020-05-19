@@ -364,7 +364,7 @@ class IMF_broken_powerlaw(IMF):
         
         for i in range(len(xi)):
             tmp = gamma_closed(m[i], self._m_limits_low, self._m_limits_high)
-            tmp *= self.coeffs * m[i]**self.powers
+            tmp *= self.coeffs * m[i]**self._powers
             y = tmp.sum()
             z = delta(m[i] - self._m_limits_high).prod()
             xi[i] = self.k * z * y
@@ -384,7 +384,7 @@ class IMF_broken_powerlaw(IMF):
         
         for i in range(len(mxi)):
             tmp = gamma_closed(m[i], self._m_limits_low, self._m_limits_high)
-            tmp *= self.coeffs * m[i]**(self.powers+1)
+            tmp *= self.coeffs * m[i]**(self._powers+1)
             y = tmp.sum()
             z = delta(m[i] - self._m_limits_high).prod()
             mxi[i] = self.k * z * y
