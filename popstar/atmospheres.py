@@ -318,9 +318,9 @@ def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4
     """
     # Set up the proper root directory
     if rebin == True:
-        root_dir = '/g/lu/models/cdbs/grid/cmfgen_rot_rebin'
+        root_dir = '/g/lu/models/cdbs_20/grid/cmfgen_rot_rebin'
     else:
-        root_dir = '/g/lu/models/cdbs/grid/cmfgen_rot'
+        root_dir = '/g/lu/models/cdbs_20/grid/cmfgen_rot'
 
     # Read in catalog, extract atmosphere info
     cat = Table.read('{0}/catalog.fits'.format(root_dir), format='fits')
