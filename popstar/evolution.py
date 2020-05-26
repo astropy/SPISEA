@@ -16,7 +16,7 @@ logger = logging.getLogger('evolution')
 # Fetch root directory of evolution models.
 try:
     models_dir = os.environ['POPSTAR_MODELS']
-    models_dir += '/evolution_20/'
+    models_dir += '/evolution/'
 except KeyError:
     warnings.warn("POPSTAR_MODELS is undefined; functionality "
                   "will be SEVERELY crippled.")
