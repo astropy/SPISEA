@@ -40,7 +40,6 @@ Getting Started
 
 Documentation
 -------------------------
-
 .. toctree::
    :maxdepth: 1
 
@@ -53,8 +52,9 @@ Documentation
    ifmr.rst
    extinction.rst
    filters.rst
+   add_evo_model.rst
 
-  More Detailed Documentation
+Advanced Documentation
 -----------------------------
 .. toctree::
    :maxdepth: 1

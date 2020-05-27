@@ -23,6 +23,9 @@ are:
 * Parsec
 * Pisa
 
+If you need additional evolution models beyond these, or need to
+expand these grids to different ages or metallicities, see the
+:ref:`add_evo_models`
 
 Base Evolution Model Class
 ------------------------------------
