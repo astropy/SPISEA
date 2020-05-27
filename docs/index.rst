@@ -55,7 +55,7 @@ Documentation
    filters.rst
 
   More Detailed Documentation
----------------------------
+-----------------------------
 .. toctree::
    :maxdepth: 1
 	      
