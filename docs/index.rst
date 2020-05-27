@@ -53,7 +53,13 @@ Documentation
    ifmr.rst
    extinction.rst
    filters.rst
-   
+
+  More Detailed Documentation
+---------------------------
+.. toctree::
+   :maxdepth: 1
+	      
+   add_evo_models.rst	    
 
 Contributions
 ---------------
