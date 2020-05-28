@@ -23,9 +23,12 @@ are:
 * Parsec
 * Pisa
 
-If you need additional evolution models beyond these, or need to
-expand these grids to different ages or metallicities, see the
-:ref:`add_evo_models`
+Currently, only the MISTv1 models offer non-solar metallicity options
+(-4 < [Fe/H] <0.5). If you require other evolution models or need to
+expand these grids to different ages or metallicities, please see
+:ref:`add_evo_models` and/or let us know on our Github `issue tracker
+<https://github.com/astropy/PyPopStar/issues>`_. 
+
 
 Base Evolution Model Class
 ------------------------------------
