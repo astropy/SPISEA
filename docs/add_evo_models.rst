@@ -61,27 +61,45 @@ To general steps required to add a new metallicity to an existing
 model grid are:
 
 1. Download the raw isochrones from the evolution model website.
-   Ideally, you want to use same age sampling as is present in the solar
-   metallicity models.
+   Ideally, the user should use same age sampling as is present in the solar
+   metallicity models (see  :ref:`new_ages`).
 2. Reformat the raw isochrones into PyPopStar format. They should be
    saved as FITS tables in the appropriate metallicity sub-directory. 
    There should be one isochrone (i.e., one age) per file.
-3. Edit the evolution object in evolution.py so it knows about the new isochrones and where they live. The following variables in the init function need to be updated:
-     * self.z_list: add the new metallicities (in terms of mass fraction)
-     * self.z_file_map: edit dictionary to map new metallicities with
+3. Edit the evolution object in evolution.py so it knows about the new
+   isochrones and where they live. The following variables in the ``__
+   init__``  function need to be updated:
+     * ``self.z_list``: add the new metallicities (in terms of mass fraction)
+     * ``self.z_file_map``: edit dictionary to map new metallicities with
        new metallicity sub-directory names.
-4. (optional, but recommended if planning to merge local edits into
+4. (optional, but highly recommended if planning to merge local edits into
    PyPopStar development branch for community use)
-   Add a test function to popstar/tests/test_synthetic.py to make sure everything is working properly.
-
+   Add a test function to ``popstar/tests/test_synthetic.py`` to make sure everything is working properly.
 
  
-
-
+.. _new_ages:
 Adding New Ages to An Existing Model Grid
 --------------------------------------------------
+The isochrone ages for a given evolution model are defined in the
+``__init`` function for the evolution model object under the
+``self.age_list`` variable.  The pre-packaged model grids have a typical age sampling of 6.0 <
+logAge < 10.0, in steps of 0.01. Some models don't offer models across
+this entire age range and so the available age range is truncated (the
+``Ekstrom12`` models only go from 6.0 < logAge < 8.0, for example). We
+highly recommend that users use this same age range and sampling when adding
+new models (e.g., new metallicities, etc).
 
+If the user needs to change the available age range for an existing
+model grid, please let us know via the  Github `issue tracker
+<https://github.com/astropy/PyPopStar/issues>`_. 
 
 
 Creating a New Model Grid
 -------------------------
+To create an entirely new model set, the user needs to define a new
+``StellarEvolution`` sub-class corresponding to that object and set up
+the appropriate directory structure in the
+``$POPSTAR_MODELS/evolution`` directory. Detailed documentation on
+this is coming soon. In the meantime, let us know on the  Github `issue tracker
+<https://github.com/astropy/PyPopStar/issues>`_ if you'd like to
+implement a new model set. 
