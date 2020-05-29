@@ -9,8 +9,7 @@ below, you can implement your own evolution models into the PyPopStar
 framework.
 
 If you have questions or run into problems, please raise an issue on
-our Github `issue tracker
-<https://github.com/astropy/PyPopStar/issues>`_. If you are willing to
+our Github `issue tracker <https://github.com/astropy/PyPopStar/issues>`_. If you are willing to
 have the new models you add be added to the PyPopStar package and made
 available to the community, please fork or branch off of the
 development repository and then submit merge requests to add your
@@ -57,7 +56,7 @@ number of digits you want, PyPopStar expects the <logAge> to
 always have two places after the decimal.
 
 The individual ``iso_<logAge>.fits`` files are FITS tables (readable
-by `https://docs.astropy.org/en/stable/table/>`_.), with one isochrone
+by `Astropy Table <https://docs.astropy.org/en/stable/table/>`_.), with one isochrone
 (i.e., one age) per file. The column names must match those expected
 by PyPopStar, which are generic (col1, col2, col3, etc). The mapping
 between these generic names and the detailed names actually used by the
