@@ -1,7 +1,7 @@
 .. _add_evo_models:
 
 ========================================
-How to Add Evolution Models
+Adding Evolution Models
 ========================================
 Need an evolution model not listed among those pre-packaged
 with PyPopStar? No problem! With the additional documentation provided
@@ -16,6 +16,8 @@ available to the community, please fork or branch off of the
 development repository and then submit merge requests to add your
 changes to the package. These contributions will be added to the
 master branch (with attributes given!) in the next code update.
+
+.. _setup:
 
 Setup: Codes, Directories, Files
 --------------------------------
@@ -47,12 +49,23 @@ Each of these sub-directories has a similar structure::
 				                  ---> individual files
 
 The metallicity directories are named ``z<mass_fraction>``, where
-``<mass_fraction>`` is the mass fraction of metals. The individual
+<mass_fraction> is the mass fraction of metals. The individual
 isochrone files saved as FITS tables with the name convention
-``iso_<logAge>.fits``, where ``<logAge>`` is the log(age) of the
+``iso_<logAge>.fits``, where <logAge> is the log(age) of the
 population. While the ``<mass_fraction>`` can be any
-number of digits you want, PyPopStar expects the ``<logAge>`` to
+number of digits you want, PyPopStar expects the <logAge> to
 always have two places after the decimal.
+
+The individual ``iso_<logAge>.fits`` files are FITS tables (readable
+by `https://docs.astropy.org/en/stable/table/>`_.), with one isochrone
+(i.e., one age) per file. The column names must match those expected
+by PyPopStar, which are generic (col1, col2, col3, etc). The mapping
+between these generic names and the detailed names actually used by the
+code is defined in the ``<evolution sub_class>.isochrone()``
+function. Within this function, there is a section renaming these
+generic column names to more descriptive names, such as Z, logAge,
+Teff, etc. If you add new  ``iso_<logAge>.fits``, you must make sure
+this mapping is correct for the new files!
 
 
 Adding New Metallicities to An Existing Model Grid
@@ -61,11 +74,11 @@ To general steps required to add a new metallicity to an existing
 model grid are:
 
 1. Download the raw isochrones from the evolution model website.
-   Ideally, the user should use same age sampling as is present in the solar
-   metallicity models (see  :ref:`new_ages`).
+   Ideally the user would use same age sampling as the solar
+   metallicity model grid (see  :ref:`new_ages`). 
 2. Reformat the raw isochrones into PyPopStar format. They should be
-   saved as FITS tables in the appropriate metallicity sub-directory. 
-   There should be one isochrone (i.e., one age) per file.
+   saved in the appropriate metallicity sub-directory
+   (see :ref:`setup`). 
 3. Edit the evolution object in evolution.py so it knows about the new
    isochrones and where they live. The following variables in the ``__
    init__``  function need to be updated:
@@ -78,10 +91,11 @@ model grid are:
 
  
 .. _new_ages:
+
 Adding New Ages to An Existing Model Grid
 --------------------------------------------------
 The isochrone ages for a given evolution model are defined in the
-``__init`` function for the evolution model object under the
+``__init__`` function for the evolution model object under the
 ``self.age_list`` variable.  The pre-packaged model grids have a typical age sampling of 6.0 <
 logAge < 10.0, in steps of 0.01. Some models don't offer models across
 this entire age range and so the available age range is truncated (the

@@ -27,8 +27,7 @@ Currently, only the MISTv1 grid offers non-solar metallicity models
 (-4 < [Fe/H] <0.5). All other grids have solar metallicity only.
 If you require other evolution models or need to
 expand the existing grids, please see
-:ref:`add_evo_models` and/or let us know on our Github `issue tracker
-<https://github.com/astropy/PyPopStar/issues>`_. 
+:ref:`add_evo_models`. 
 
 
 Base Evolution Model Class
