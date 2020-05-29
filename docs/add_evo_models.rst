@@ -61,17 +61,15 @@ To general steps required to add a new metallicity to an existing
 model grid are:
 
 1. Download the raw isochrones from the evolution model website.
-   Ideally, you would use same age sampling as is present in the solar
+   Ideally, you want to use same age sampling as is present in the solar
    metallicity models.
-2. Reformat the raw isochrones into PyPopStar format, i.e. save as
-   fits files in the appropriate sub-directory corresponding to its
-   metallicity under /iso/.
+2. Reformat the raw isochrones into PyPopStar format. They should be
+   saved as FITS tables in the appropriate metallicity sub-directory. 
    There should be one isochrone (i.e., one age) per file.
 3. Edit the evolution object in evolution.py so it knows about the new isochrones and where they live. The following variables in the init function need to be updated:
-     *self.z_list: add the new metallicities
-     *self.z_file_map: edit dictionary to connect each metallicity in
-     z_list to the name of the appropriate sub-directory in /iso/
-     where the isochrones live
+     * self.z_list: add the new metallicities (in terms of mass fraction)
+     * self.z_file_map: edit dictionary to map new metallicities with
+       new metallicity sub-directory names.
 4. (optional, but recommended if planning to merge local edits into
    PyPopStar development branch for community use)
    Add a test function to popstar/tests/test_synthetic.py to make sure everything is working properly.
