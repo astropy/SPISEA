@@ -61,6 +61,7 @@ Advanced Documentation
 	      
    add_evo_models.rst
    add_atmo_models.rst
+   add_filters.rst
 
 Contributions
 ---------------
