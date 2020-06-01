@@ -59,7 +59,8 @@ Advanced Documentation
 .. toctree::
    :maxdepth: 1
 	      
-   add_evo_models.rst	    
+   add_evo_models.rst
+   add_atmo_models.rst
 
 Contributions
 ---------------
