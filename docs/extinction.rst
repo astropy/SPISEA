@@ -15,8 +15,7 @@ oject.
 The reddening law is reported in terms of A_lambda / A_Ks, and thus is normalized to A_Ks = 1.
 
 The red_law object is passed into the :ref:`isochrone_objects` in order to
-define the extinction for the stars. See the `Quick Start
-<https://github.com/astropy/PyPopStar/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb>_`
+define the extinction for the stars. See the `Quick Start <https://github.com/astropy/PyPopStar/blob/master/docs/Quick_Start_Make_Cluster.ipynb>`_
 for an example.
 
 Available extinction laws:
