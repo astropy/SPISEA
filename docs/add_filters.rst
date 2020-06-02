@@ -3,7 +3,7 @@
 ========================================
 Adding Photometric Filters
 ========================================
- If the user wants to add new photometric filters to PyPopStar, there are 3 main steps:
+If the user wants to add new photometric filters to PyPopStar, there are 3 main steps:
 
   1) Save the filter transmissions as text files in a new sub-directory in the top-level ``filt_func`` directory.
   2) Define a new function in ``filters.py`` that reads a unique filter string the user assigns to the new filters,
