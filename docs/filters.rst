@@ -44,14 +44,6 @@ Available filters:
 * VISTA
 * ZTF
 
- If the user wants to add new filters, there are 3 steps:
-
-1) Save the filter transmissions as text files in a filt_func
-   sub-directory.
-2) Define a new function in filters.py that can read the new filt string
-   input and pull the transmission files from the proper directory.
-3) Edit the synthetic.get_filter_info to call the new filters.py
-   function when the new filt string is used.
   
 Filter Sets
 ------------
