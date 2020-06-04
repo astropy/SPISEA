@@ -374,6 +374,53 @@ class IMF_broken_powerlaw(IMF):
         else:
             return xi
 
+    def xi_new(self, m):
+        """
+        Probability density describing the IMF.
+
+        Input:
+        m - mass of a star
+
+        Output:
+        xi - probability of measuring that mass.
+        """
+        returnFloat = type(m) == float
+        
+        m = np.atleast_1d(m)
+
+        # Temporary arrays
+        y = np.zeros(len(m), dtype=float)
+        z = np.ones(len(m), dtype=float)
+
+        # Loop through the different segments of the power law.
+        for i in range(self.nterms): # For i = 0 --> n, where n is the number of intervals
+            aux = m - self._m_limits_low[i] #---Should this be i - 1?
+
+            # Only continue for those entries that are in later segments
+            idx = np.where(aux >= 0)[0]
+
+            # Maybe we are all done?
+            if len(idx) == 0:
+                break
+            
+            m_tmp = m[idx]
+            aux_tmp = aux[idx]
+
+            y_i = gamma_closed(m_tmp, self._m_limits_low[i], self._m_limits_high[i])
+            y_i *= self.coeffs[i] * m_tmp**self._powers[i]
+
+            # Save results into the y array
+            y[idx] += y_i
+
+            z *= delta(m - self._m_limits_high[i])
+
+        xi = self.k * z * y
+        
+        if returnFloat:
+            return xi[0]
+        else:
+            return xi
+
     def m_xi(self, m):
         """
         Mass-weighted probability m*xi
@@ -381,14 +428,35 @@ class IMF_broken_powerlaw(IMF):
         returnFloat = type(m) == float
         m = np.atleast_1d(m)
         mxi = np.zeros(len(m), dtype=float)
-        
-        for i in range(len(mxi)):
-            tmp = gamma_closed(m[i], self._m_limits_low, self._m_limits_high)
-            tmp *= self.coeffs * m[i]**(self._powers+1)
-            y = tmp.sum()
-            z = delta(m[i] - self._m_limits_high).prod()
-            mxi[i] = self.k * z * y
 
+        # Temporary arrays
+        y = np.zeros(len(m), dtype=float)
+        z = np.ones(len(m), dtype=float)
+
+        # Loop through the different segments of the power law.
+        for i in range(self.nterms): # For i = 0 --> n, where n is the number of intervals
+            aux = m - self._m_limits_low[i] #---Should this be i - 1?
+
+            # Only continue for those entries that are in later segments
+            idx = np.where(aux >= 0)[0]
+
+            # Maybe we are all done?
+            if len(idx) == 0:
+                break
+            
+            m_tmp = m[idx]
+            aux_tmp = aux[idx]
+
+            y_i = gamma_closed(m_tmp, self._m_limits_low[i], self._m_limits_high[i])
+            y_i *= self.coeffs[i] * m_tmp**(self._powers[i] + 1)
+
+            # Save results into the y array
+            y[idx] += y_i
+
+            z *= delta(m - self._m_limits_high[i])
+
+        mxi = self.k * z * y
+        
         if returnFloat:
             return mxi[0]
         else:
@@ -593,7 +661,7 @@ class IMF_broken_powerlaw(IMF):
         z = np.ones(len(r), dtype=float)
 
         # Loop through the different parts of the power law.
-        for i in range(self.nterms): #-----For i = 1 --> n, where n is the number of intervals?
+        for i in range(self.nterms): #-----For i = 0 --> n, where n is the number of intervals
             aux = x - self.lamda[i] #---Should this be i - 1?
             
             # Only continue for those entries that are in later segments
@@ -842,8 +910,7 @@ def theta_closed(x):
     isFloat = type(x) == float
 
     x = np.atleast_1d(x)
-    val = np.ones(len(x), dtype=float)
-    val[x < 0] = 0.0
+    val = (x >= 0).astype('float')
 
     if isFloat:
         return val[0]
@@ -858,8 +925,7 @@ def theta_open(x):
     isFloat = type(x) == float
 
     x = np.atleast_1d(x)
-    val = np.zeros(len(x), dtype=float)
-    val[x > 0] = 1.0
+    val = (x > 0).astype('float')
 
     if isFloat:
         return val[0]

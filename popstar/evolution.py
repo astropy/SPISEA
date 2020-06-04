@@ -1401,7 +1401,6 @@ class MergedSiessGenevaPadova(StellarEvolution):
         iso.rename_column('col4', 'logg')
         iso.rename_column('col5', 'logT_WR')
         iso.rename_column('col6', 'model_ref')
-        pdb.set_trace()
         
         iso.meta['log_age'] = log_age
         iso.meta['metallicity_in'] = metallicity
