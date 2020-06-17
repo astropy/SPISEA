@@ -705,9 +705,10 @@ class IFMR_Raithel17(IFMR):
     def NS_mass(self, MZAMS):
         """                                                                                                      
         Paper: 9 < MZAMS 120                                                                                     
-        Simplify to just return one value                                                                        
+        Drawing the mass from gaussian created using observational data
+        FIXME: Write up in sam's paper? I got the distribution from Emily Ramey
         """
-        return 1.6 * np.ones(len(MZAMS))
+        return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
 
 
     def generate_death_mass(self, mass_array):
