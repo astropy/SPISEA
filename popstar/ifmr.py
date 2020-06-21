@@ -706,7 +706,7 @@ class IFMR_Raithel17(IFMR):
         """                                                                                                      
         Paper: 9 < MZAMS 120                                                                                     
         Drawing the mass from gaussian created using observational data
-        FIXME: Write up in sam's paper? I got the distribution from Emily Ramey
+        FIXME: Write up in sam's paper? I (sam) got the distribution from Emily Ramey
         """
         return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
 
