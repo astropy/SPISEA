@@ -321,33 +321,6 @@ class IMF_broken_powerlaw(IMF):
         returnFloat = type(m) == float
         
         m = np.atleast_1d(m)
-        xi = np.zeros(len(m), dtype=float)
-        
-        for i in range(len(xi)):
-            tmp = gamma_closed(m[i], self._m_limits_low, self._m_limits_high)
-            tmp *= self.coeffs * m[i]**self._powers
-            y = tmp.sum()
-            z = delta(m[i] - self._m_limits_high).prod()
-            xi[i] = self.k * z * y
-
-        if returnFloat:
-            return xi[0]
-        else:
-            return xi
-
-    def xi_new(self, m):
-        """
-        Probability density describing the IMF.
-
-        Input:
-        m - mass of a star
-
-        Output:
-        xi - probability of measuring that mass.
-        """
-        returnFloat = type(m) == float
-        
-        m = np.atleast_1d(m)
 
         # Temporary arrays
         y = np.zeros(len(m), dtype=float)
