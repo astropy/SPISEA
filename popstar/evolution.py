@@ -521,7 +521,7 @@ class Pisa(StellarEvolution):
             
         if ((z_defined < np.min(self.z_list)) or
                 (z_defined > np.max(self.z_list))):
-            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
+            logger.error('Requested metallicity {0} is out of bounds for evolution model. Available z-vals: {1}.'.format(z_defined, self.z_list))
         
         # Find nearest age in grid to input grid
         if log_age != self.age_list[0]:
@@ -1005,7 +1005,7 @@ class MISTv1(StellarEvolution):
 
         # check age and metallicity are within bounds
         if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
-            llogger.error('Requested age {0} is out of bounds.'.format(log_age))
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
             
         if ((z_defined < np.min(self.z_list)) or
                 (z_defined > np.max(self.z_list))):

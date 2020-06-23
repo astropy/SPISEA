@@ -135,7 +135,7 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4):
 
     return sp
 
-def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
+def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=False):
     """
     Return atmospheres from the pysynphot ATLAS9 atlas 
     (`Castelli & Kurucz 2004 <http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html>`_).
@@ -186,7 +186,7 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4):
 
     return sp
 
-def get_nextgen_atmosphere(metallicity=0, temperature=5000, gravity=4):
+def get_nextgen_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=False):
     """
     metallicity = [M/H] (def = 0)
     temperature = Kelvin (def = 5000)
@@ -213,7 +213,7 @@ def get_nextgen_atmosphere(metallicity=0, temperature=5000, gravity=4):
 
     return sp
 
-def get_amesdusty_atmosphere(metallicity=0, temperature=5000, gravity=4):
+def get_amesdusty_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=False):
     """
     metallicity = [M/H] (def = 0)
     temperature = Kelvin (def = 5000)
@@ -231,7 +231,8 @@ def get_amesdusty_atmosphere(metallicity=0, temperature=5000, gravity=4):
 
     return sp
 
-def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4):
+def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
+                               rebin=False):
     """
     Return atmosphere from the pysynphot 
     `PHOENIX atlas <http://www.stsci.edu/hst/observatory/crds/SIfileInfo/pysynphottables/index_phoenix_models_html>`_.

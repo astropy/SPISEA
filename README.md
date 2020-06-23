@@ -1,4 +1,4 @@
-# PyPopStar
+![PyPopStar_Logo](docs/images/logo.png)
 
 PyPopStar is an python package that generates single-age, single-metallicity
 populations (i.e. star clusters). It gives the user control over many parameters:
@@ -26,14 +26,11 @@ demonstrating how to use PyPopStar.
 ## Contributions
 We encourage contributions to PyPopStar, particular those that add support for star formation histories, new models, higher spectral resolution, etc. For feature additions, we ask that users fork or branch off of the development repository, make their changes, and then submit merge and pull requests.
 
-## Other Resources
-
-* _Astropy: http://www.astropy.org/
-* _git: http://git-scm.com/
-* _github: http://github.com
-* _Cython: http://cython.org/
-
 ## License 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+
+
+
+<sup>Logo by Abhimat Gautam

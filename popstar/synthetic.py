@@ -40,7 +40,9 @@ def Vega():
                                      gravity=3.95,
                                      metallicity=-0.5)
 
-    vega = spectrum.trimSpectrum(vega, 2500, 52000)
+    # Following the K93 README, set wavelength range to 0.1 - 10 microns.
+    # This defines the maximum allowed wavelength range in pypopstar
+    vega = spectrum.trimSpectrum(vega, 995, 100200)
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
     # and is used to convert to flux observed at Earth.
@@ -693,6 +695,15 @@ class Isochrone(object):
         
         c = constants
 
+        # Assert that the wavelength ranges are within the limits of the
+        # VEGA model (0.1 - 10 microns)
+        try:
+            assert wave_range[0] > 1000
+            assert wave_range[1] < 100000
+        except:
+            print('Desired wavelength range invalid. Limit to 1000 - 10000 A')
+            return
+        
         # Get solar metallicity models for a population at a specific age.
         # Takes about 0.1 seconds.
         evol = evo_model.isochrone(age=10**logAge,
@@ -896,7 +907,7 @@ class IsochronePhot(Isochrone):
 
     rebin : boolean, optional
         If true, rebins the atmospheres so that they are the same
-        resolution as the Castelli+04 atmospheres. Default is False,
+        resolution as the Castelli+04 atmospheres. Default is True,
         which is often sufficient synthetic photometry in most cases.
 
     recomp : boolean, optional
@@ -912,6 +923,7 @@ class IsochronePhot(Isochrone):
                  metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
+                 wave_range=[3000, 52000],
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
@@ -946,11 +958,16 @@ class IsochronePhot(Isochrone):
         # Expected filters
         self.filters = filters
 
-        if ((not os.path.exists(self.save_file)) & (not os.path.exists(self.save_file_legacy))) | (recomp==True):
+        # Recalculate isochrone if save_file doesn't exist or recomp == True
+        file_exists = self.check_save_file(evo_model, atm_func, red_law)
+
+        if (not file_exists) | (recomp==True):
+            self.recalc = True
             Isochrone.__init__(self, logAge, AKs, distance,
                                metallicity=metallicity,
                                evo_model=evo_model, atm_func=atm_func,
                                wd_atm_func=wd_atm_func,
+                               wave_range=wave_range,
                                red_law=red_law, mass_sampling=mass_sampling,
                                min_mass=min_mass, max_mass=max_mass, rebin=rebin)
             self.verbose = True
@@ -958,6 +975,7 @@ class IsochronePhot(Isochrone):
             # Make photometry
             self.make_photometry(rebin=rebin, vega=vega)
         else:
+            self.recalc = False
             try:
                 self.points = Table.read(self.save_file)
             except:
@@ -1019,6 +1037,31 @@ class IsochronePhot(Isochrone):
                 self.points.write(self.save_file, overwrite=True)
 
         return
+
+    def check_save_file(self, evo_model, atm_func, red_law):
+        """
+        Check to see if save_file exists, as saved by the save_file 
+        and save_file_legacy objects. If the filename exists, check the 
+        meta-data as well.
+
+        returns a boolean: True is file exists, false otherwise
+        """
+        out_bool = False
+        
+        if os.path.exists(self.save_file) | os.path.exists(self.save_file_legacy):
+            try:
+                tmp = Table.read(self.save_file)
+            except:
+                tmp = Table.read(self.save_file_legacy)
+            
+        
+            # See if the meta-data matches: evo model, atm_func, redlaw
+            if ( (tmp.meta['EVOMODEL'] == type(evo_model).__name__) &
+                (tmp.meta['ATMFUNC'] == atm_func.__name__) &
+                 (tmp.meta['REDLAW'] == red_law.name) ):
+                out_bool = True
+            
+        return out_bool
 
     def plot_CMD(self, mag1, mag2, savefile=None):
         """
@@ -1427,7 +1470,11 @@ def get_filter_col_name(obs_str):
     tmp = obs_str.split(',')
 
     if len(tmp) == 3:
-        filt_name = 'hst_{0}'.format(tmp[-1])
+        # Catch Gaia filter cases. Otherwise, it is HST filter
+        if 'dr2_rev' in tmp:
+            filt_name = 'gaiaDR2_{0}'.format(tmp[-1])
+        else:
+            filt_name = 'hst_{0}'.format(tmp[-1])
     else:
         filt_name = '{0}_{1}'.format(tmp[0], tmp[1])
         
@@ -1472,6 +1519,7 @@ def get_obs_str(col):
                  'jwst_F405N': 'jwst,F405N',
                  'jwst_F410M': 'jwst,F410M',
                  'jwst_F430M': 'jwst,F430M',
+                 'jwst_F444W': 'jwst,F444W',
                  'jwst_F440W': 'jwst,F440W',
                  'jwst_F460M': 'jwst,F460M',
                  'jwst_F470N': 'jwst,F470N',
@@ -1479,9 +1527,17 @@ def get_obs_str(col):
                  'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
                  'nirc2_Lp': 'nirc2,Lp', 'nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
                  'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
+                 '2mass_J': '2mass,J', '2mass_H': '2mass,H', '2mass_Ks': '2mass,Ks',
+                 'ubv_U':'ubv,U', 'ubv_B':'ubv,B', 'ubv_V':'ubv,V', 'ubv_R':'ubv,R',
+                 'ubv_I':'ubv,I', 
                  'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K',
-                 'nirc1_K':'nirc1,K', 'ctio_osiris_K': 'ctio_osirirs,K',
-                 'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i'}
+                 'nirc1_K':'nirc1,K', 'nirc1_H':'nirc1,H',
+                 'naco_J':'naco,J', 'naco_H':'naco,H', 'naco_Ks':'naco,Ks',
+                 'ukirt_J':'ukirt,J', 'ukirt_H':'ukirt,H', 'ukirt_K':'ukirt,K',
+                 'ctio_osiris_H': 'ctio_osiris,H', 'ctio_osiris_K': 'ctio_osiris,K',
+                 'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i',
+                 'gaiaDR2_G': 'gaia,dr2_rev,G', 'gaiaDR2_Gbp':'gaia,dr2_rev,Gbp',
+                 'gaiaDR2_Grp':'gaia,dr2_rev,Grp'}
 
     obs_str = filt_list[name]
         

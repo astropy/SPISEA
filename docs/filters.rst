@@ -44,14 +44,6 @@ Available filters:
 * VISTA
 * ZTF
 
- If the user wants to add new filters, there are 3 steps:
-
-1) Save the filter transmissions as text files in a filt_func
-   sub-directory.
-2) Define a new function in filters.py that can read the new filt string
-   input and pull the transmission files from the proper directory.
-3) Edit the synthetic.get_filter_info to call the new filters.py
-   function when the new filt string is used.
   
 Filter Sets
 ------------
@@ -87,10 +79,8 @@ Note that three sets are available: the pre-launch passbands used in DR1
 (`Jordi+10
 <https://ui.adsabs.harvard.edu/abs/2010A%26A...523A..48J/abstract>`_),
 the passbands used for the DR2 published photometry, and
-the *revised* DR2 passbands based on the DR2 data (October 2017). The
-user specifies which one they want by 'dr1', 'dr2', or 'dr2_rev', respectively.
-
-To calculate synthetic fluxes, the dr2_rev passbands are advised.
+the *revised* DR2 passbands based on the DR2 data (October 2017).
+ONLY THE REVISED DR2 PASSBANDS ARE SUPPORTED BY PYPOPSTAR.
 
 Filters: G, Gbp, Grp
 

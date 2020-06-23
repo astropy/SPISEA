@@ -18,11 +18,16 @@ are:
 * MISTv1 (default)
 * MergedBaraffePisaEkstromParsec
 * MergedPisaEkstromParsec
-* MergedSiessGenevaPadova
 * Baraffe15
 * Ekstrom12
 * Parsec
 * Pisa
+
+Currently, only the MISTv1 grid offers non-solar metallicity models
+(-4 < [Fe/H] <0.5). All other grids have solar metallicity only.
+If you require other evolution models or need to
+expand the existing grids, please see
+:ref:`add_evo_models`. 
 
 
 Base Evolution Model Class
@@ -41,9 +46,6 @@ Specific Evolution Model Classes
 		  
 .. autoclass:: evolution.MergedPisaEkstromParsec
 	       :show-inheritance:	       
-
-.. autoclass:: evolution.MergedSiessGenevaPadova
-	       :show-inheritance:
 		  
 .. autoclass:: evolution.Baraffe15
 	       :show-inheritance:

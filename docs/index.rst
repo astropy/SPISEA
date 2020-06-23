@@ -3,6 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+.. figure:: images/logo.png
+	    :align: left
+
+		    
 PyPopStar is an python package that generates single-age, single-metallicity
 populations (i.e. star clusters). It gives the user control over many parameters:
 
@@ -21,7 +25,7 @@ Here is a brief list of things that PyPopStar can do:
   
 * make a spectrum of a star cluster in integrated light
 
-Please cite Hosek et al. (in prep) [MAKE LINK] if you use PyPopStar in
+Please cite `Hosek et al. (2020) <https://ui.adsabs.harvard.edu/abs/2020arXiv200606691H/abstract>`_  if you use PyPopStar in
 your research.
 
 Getting Started
@@ -36,7 +40,6 @@ Getting Started
 
 Documentation
 -------------------------
-
 .. toctree::
    :maxdepth: 1
 
@@ -49,7 +52,16 @@ Documentation
    ifmr.rst
    extinction.rst
    filters.rst
-   
+   add_evo_model.rst
+
+Advanced Documentation
+-----------------------------
+.. toctree::
+   :maxdepth: 1
+	      
+   add_evo_models.rst
+   add_atmo_models.rst
+   add_filters.rst
 
 Contributions
 ---------------
