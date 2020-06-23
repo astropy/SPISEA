@@ -237,7 +237,8 @@ def test_ResolvedCluster():
     assert len(clust1) > 0
 
     # Check that the total mass in stars is less than requested (no compact objects).
-    assert clust1['systemMass'].sum() < cluster_mass
+    cluster_mass_out = clust1['systemMass'].sum()
+    assert cluster_mass_out < cluster_mass
 
     plt.figure(3)
     plt.clf()
@@ -614,8 +615,8 @@ def test_cluster_mass():
 
     # Check that the total mass in stars is less than requested (no compact objects).
     cluster_mass_out = clust1['systemMass'].sum()
-    assert cluster_mass_out < cluster_mass
     assert np.abs(cluster_mass_out - cluster_mass) < 200.0   # within 200 Msun of desired mass.
+    print('Cluster Mass: IN = ', cluster_mass, " OUT = ", cluster_mass_out)
 
     ##########
     # Test with multiplicity
@@ -631,8 +632,8 @@ def test_cluster_mass():
 
     # Check that the total mass in stars is less than requested (no compact objects).
     cluster_mass_out = clust2['systemMass'].sum()
-    assert cluster_mass_out < cluster_mass
     assert np.abs(cluster_mass_out - cluster_mass) < 200.0   # within 200 Msun of desired mass.
+    print('Cluster Mass: IN = ', cluster_mass, " OUT = ", cluster_mass_out)
 
     return
 
