@@ -3,6 +3,30 @@ import nose.tools
 import time
 import pdb
 
+def test_generate_cluster():
+    from .. import imf
+    from .. import multiplicity
+    
+    # Make multiplicity object
+    imf_multi = multiplicity.MultiplicityUnresolved()
+
+    # Make IMF object; we'll use a broken power law with the parameters from Kroupa+01
+    massLimits = np.array([0.08, 0.5, 1, 120]) # Define boundaries of each mass segement
+    powers = np.array([-1.3, -2.3, -2.3]) # Power law slope associated with each mass segment
+    my_imf = imf.IMF_broken_powerlaw(massLimits, powers, imf_multi)
+
+    # Define total cluster mass
+    M_cl = 10**5.
+
+    mass, isMulti, compMass, sysMass = my_imf.generate_cluster(M_cl)
+
+    # Make sure that the total mass is always within the expected
+    # range of the requested mass.
+    assert np.abs(M_cl - sysMass.sum()) < 120.0
+
+    return
+
+
 def test_prim_power():
     from .. import imf
 
