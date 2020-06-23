@@ -125,13 +125,27 @@ def test_filters():
                      'vista,Y', 'vista,Z', 'vista,J',
                      'vista,H',  'vista,Ks', 'ztf,g', 'ztf,r', 'ztf,i']
 
-    # Loop through filters to test that they work
+    # Loop through filters to test that they work: get_filter_info
     for ii in filt_list:
         try:
             filt = synthetic.get_filter_info(ii, rebin=True, vega=vega)
         except:
-            print('TEST FAILED for {0}'.format(ii))
+            print('get_filter_info TEST FAILED for {0}'.format(ii))
 
+    print('get_filter_info pass')
+    
+    # Loop through filters to test that they work: get_obs_str
+    for ii in filt_list:
+        try:
+            # Test going from col_name to obs_str
+            col_name = synthetic.get_filter_col_name(ii)
+            obs_str = synthetic.get_obs_str('m_{0}'.format(col_name))
+            # Does the obs_str work?
+            filt_info = synthetic.get_filter_info(obs_str)
+        except:
+            print('get_obs_str TEST FAILED for {0}'.format(ii)) 
+            
+    print('get_obs_str pass')
     print('Filters done')
 
     return

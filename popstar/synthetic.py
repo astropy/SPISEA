@@ -1470,7 +1470,11 @@ def get_filter_col_name(obs_str):
     tmp = obs_str.split(',')
 
     if len(tmp) == 3:
-        filt_name = 'hst_{0}'.format(tmp[-1])
+        # Catch Gaia filter cases. Otherwise, it is HST filter
+        if 'dr2_rev' in tmp:
+            filt_name = 'gaiaDR2_{0}'.format(tmp[-1])
+        else:
+            filt_name = 'hst_{0}'.format(tmp[-1])
     else:
         filt_name = '{0}_{1}'.format(tmp[0], tmp[1])
         
@@ -1515,6 +1519,7 @@ def get_obs_str(col):
                  'jwst_F405N': 'jwst,F405N',
                  'jwst_F410M': 'jwst,F410M',
                  'jwst_F430M': 'jwst,F430M',
+                 'jwst_F444W': 'jwst,F444W',
                  'jwst_F440W': 'jwst,F440W',
                  'jwst_F460M': 'jwst,F460M',
                  'jwst_F470N': 'jwst,F470N',
@@ -1522,9 +1527,17 @@ def get_obs_str(col):
                  'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
                  'nirc2_Lp': 'nirc2,Lp', 'nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
                  'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
+                 '2mass_J': '2mass,J', '2mass_H': '2mass,H', '2mass_Ks': '2mass,Ks',
+                 'ubv_U':'ubv,U', 'ubv_B':'ubv,B', 'ubv_V':'ubv,V', 'ubv_R':'ubv,R',
+                 'ubv_I':'ubv,I', 
                  'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K',
-                 'nirc1_K':'nirc1,K', 'ctio_osiris_K': 'ctio_osirirs,K',
-                 'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i'}
+                 'nirc1_K':'nirc1,K', 'nirc1_H':'nirc1,H',
+                 'naco_J':'naco,J', 'naco_H':'naco,H', 'naco_Ks':'naco,Ks',
+                 'ukirt_J':'ukirt,J', 'ukirt_H':'ukirt,H', 'ukirt_K':'ukirt,K',
+                 'ctio_osiris_H': 'ctio_osiris,H', 'ctio_osiris_K': 'ctio_osiris,K',
+                 'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i',
+                 'gaiaDR2_G': 'gaia,dr2_rev,G', 'gaiaDR2_Gbp':'gaia,dr2_rev,Gbp',
+                 'gaiaDR2_Grp':'gaia,dr2_rev,Grp'}
 
     obs_str = filt_list[name]
         
