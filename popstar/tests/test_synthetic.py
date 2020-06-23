@@ -595,7 +595,7 @@ def test_cluster_mass():
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
     # Now to create the cluster.
-    imf_mass_limits = np.array([0.07, 0.5, 1, 120.0])
+    imf_mass_limits = np.array([0.2, 0.5, 1, 120.0])
     imf_powers = np.array([-1.3, -2.3, -2.3])
 
     # IFMR
@@ -613,7 +613,7 @@ def test_cluster_mass():
     clust1 = cluster1.star_systems
     print('Constructed cluster: %d seconds' % (time.time() - startTime))
 
-    # Check that the total mass in stars is less than requested (no compact objects).
+    # Check that the total mass is within tolerance of input mass
     cluster_mass_out = clust1['systemMass'].sum()
     assert np.abs(cluster_mass_out - cluster_mass) < 200.0   # within 200 Msun of desired mass.
     print('Cluster Mass: IN = ', cluster_mass, " OUT = ", cluster_mass_out)
@@ -630,7 +630,7 @@ def test_cluster_mass():
     clust2 = cluster2.star_systems
     print('Constructed cluster with multiples: %d seconds' % (time.time() - startTime))
 
-    # Check that the total mass in stars is less than requested (no compact objects).
+    # Check that the total mass is within tolerance of input mass
     cluster_mass_out = clust2['systemMass'].sum()
     assert np.abs(cluster_mass_out - cluster_mass) < 200.0   # within 200 Msun of desired mass.
     print('Cluster Mass: IN = ', cluster_mass, " OUT = ", cluster_mass_out)
