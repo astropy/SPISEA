@@ -139,7 +139,6 @@ class IMF(object):
                 
             # Dealing with multiplicity
             if self._multi_props != None:
-                #compMasses = [[] for newMass in newMasses]
                 compMasses = np.empty((len(newMasses),), dtype=np.object)
                 compMasses.fill([])
                 
@@ -152,52 +151,14 @@ class IMF(object):
                 # Copy over the primary masses. Eventually add the companions.
                 newSystemMasses = newMasses.copy()
 
-                #------New code-------#
-                new = True
-                if new:
-                    # Function to calculate multiple systems more efficiently
-                    #t1 = time.time()
-                    compMasses, newSystemMasses, newIsMultiple = self.calc_multi(newMasses, compMasses,
-                                                                                 newSystemMasses, newIsMultiple,
-                                                                                    CSF, MF)
+                # Function to calculate multiple systems more efficiently
+                compMasses, newSystemMasses, newIsMultiple = self.calc_multi(newMasses, compMasses,
+                                                                             newSystemMasses, newIsMultiple,
+                                                                             CSF, MF)
 
-                    newTotalMassTally = newSystemMasses.sum()
-                    isMultiple = np.append(isMultiple, newIsMultiple)
-                    systemMasses = np.append(systemMasses, newSystemMasses)
-                    #t2 = time.time()
-                    #print('Generate multiples: {0}'.format(t2 - t1))
-                #------Previous code------#
-                old = False
-                if old:
-                    # Calculate number and masses of companions
-                    t1 = time.time()
-                    for ii in range(len(newMasses)):
-                        if newIsMultiple[ii]:
-                            # determine number of companions
-                            n_comp = 1 + np.random.poisson((CSF[ii]/MF[ii]) - 1)
-
-                            # Determine the mass ratios of the companions
-                            q_values = self._multi_props.random_q(np.random.rand(n_comp))
-
-                            # Determine the masses of the companions
-                            m_comp = q_values * newMasses[ii]
-
-                            # Add in seperation information
-
-                            # Only keep companions that are more than the minimum mass
-                            compMasses[ii] = m_comp[m_comp >= self._mass_limits[0]]
-                            newSystemMasses[ii] += compMasses[ii].sum()
-
-                            # Double check for the case when we drop all companions.
-                            # This happens a lot near the minimum allowed mass.
-                            if len(compMasses) == 0:
-                                newIsMultiple[ii] == False
-                #-----------------------------------#
-                    newTotalMassTally = newSystemMasses.sum()
-                    isMultiple = np.append(isMultiple, newIsMultiple)
-                    systemMasses = np.append(systemMasses, newSystemMasses)
-                    t2 = time.time()
-                    print( 'All loop: {0}'.format(t2 - t1))
+                newTotalMassTally = newSystemMasses.sum()
+                isMultiple = np.append(isMultiple, newIsMultiple)
+                systemMasses = np.append(systemMasses, newSystemMasses)
             else:
                 newTotalMassTally = newMasses.sum()
 

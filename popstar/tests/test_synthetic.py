@@ -233,7 +233,11 @@ def test_ResolvedCluster():
     clust1 = cluster1.star_systems
     print('Constructed cluster: %d seconds' % (time.time() - startTime))
 
+    # Check that stars are returned
     assert len(clust1) > 0
+
+    # Check that the total mass in stars is less than requested (no compact objects).
+    assert clust1['systemMass'].sum() < cluster_mass
 
     plt.figure(3)
     plt.clf()
@@ -554,6 +558,82 @@ def test_metallicity():
     assert my_iso.points.meta['METAL_ACT'] == metal_act
     assert os.path.exists('iso_6.70_0.80_04000_m15.fits')
     
+    return
+
+def test_cluster_mass():
+    from popstar import synthetic as syn
+    from popstar import atmospheres as atm
+    from popstar import evolution
+    from popstar import reddening
+    from popstar import ifmr
+    from popstar.imf import imf
+    from popstar.imf import multiplicity
+
+    # Define cluster parameters
+    logAge = 6.7
+    AKs = 2.4
+    distance = 4000
+    cluster_mass = 10**5.
+    mass_sampling = 5
+
+    # Test filters
+    filt_list = ['nirc2,J', 'nirc2,Kp']
+
+    startTime = time.time()
+    
+    # Define evolution/atmosphere models and extinction law
+    evo = evolution.MISTv1() 
+    atm_func = atmospheres.get_merged_atmosphere
+    red_law = reddening.RedLawHosek18b()
+    
+    iso = syn.IsochronePhot(logAge, AKs, distance,
+                            evo_model=evo, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                            mass_sampling=mass_sampling)
+
+    print('Constructed isochrone: %d seconds' % (time.time() - startTime))
+
+    # Now to create the cluster.
+    imf_mass_limits = np.array([0.07, 0.5, 1, 120.0])
+    imf_powers = np.array([-1.3, -2.3, -2.3])
+
+    # IFMR
+    my_ifmr = ifmr.IFMR()
+    
+
+    ##########
+    # Start without multiplicity
+    ##########
+    my_imf1 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
+                                      multiplicity=None)
+    print('Constructed IMF: %d seconds' % (time.time() - startTime))
+    
+    cluster1 = syn.ResolvedCluster(iso, my_imf1, cluster_mass, ifmr=my_ifmr)
+    clust1 = cluster1.star_systems
+    print('Constructed cluster: %d seconds' % (time.time() - startTime))
+
+    # Check that the total mass in stars is less than requested (no compact objects).
+    cluster_mass_out = clust1['systemMass'].sum()
+    assert cluster_mass_out < cluster_mass
+    assert np.abs(cluster_mass_out - cluster_mass) < 200.0   # within 200 Msun of desired mass.
+
+    ##########
+    # Test with multiplicity
+    ##########
+    multi = multiplicity.MultiplicityUnresolved()
+    my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
+                                      multiplicity=multi)
+    print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
+    
+    cluster2 = syn.ResolvedCluster(iso, my_imf2, cluster_mass, ifmr=my_ifmr)
+    clust2 = cluster2.star_systems
+    print('Constructed cluster with multiples: %d seconds' % (time.time() - startTime))
+
+    # Check that the total mass in stars is less than requested (no compact objects).
+    cluster_mass_out = clust2['systemMass'].sum()
+    assert cluster_mass_out < cluster_mass
+    assert np.abs(cluster_mass_out - cluster_mass) < 200.0   # within 200 Msun of desired mass.
+
     return
 
 #=================================#
