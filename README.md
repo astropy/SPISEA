@@ -1,4 +1,4 @@
-![PyPopStar_Logo](docs/images/logo.png)
+![PyPopStar_Logo](docs/images/logo.png) 
 
 PyPopStar is an python package that generates single-age, single-metallicity
 populations (i.e. star clusters). It gives the user control over many parameters:
