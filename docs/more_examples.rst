@@ -32,7 +32,7 @@ Figure 5: Clusters with Different IMFs: Luminosity Function + BH Mass Function
 
 
 Figure 6: Wolf-Rayet Star Populations with Different Evolution Models
---------------------------------------------------------------------
+---------------------------------------------------------------------
 .. figure:: images/WRstars_example.png
 	    :align: center
 		    
