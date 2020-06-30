@@ -16,9 +16,9 @@ import os
 import sys
 import pdb
 sys.path.insert(0, os.path.abspath('../spisea/'))
-sys.path.insert(0, os.path.abspath('../'))
+sys.path.insert(0, os.path.abspath('../data/grid/k93models/'))
+print(sys.path())
 
-pdb.set_trace()
 
 # -- Project information -----------------------------------------------------
 
