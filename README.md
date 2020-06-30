@@ -1,6 +1,4 @@
-![PyPopStar_Logo](docs/images/logo.png)
-
-PyPopStar is an python package that generates single-age, single-metallicity
+SPISEA (Stellar Population Interface for Stellar Evolution and Atmospheres) is an python package that generates single-age, single-metallicity
 populations (i.e. star clusters). It gives the user control over many parameters:
 
 * Cluster characteristics (age, metallicity, mass, distance)
@@ -10,7 +8,7 @@ populations (i.e. star clusters). It gives the user control over many parameters
 * Initial-Final Mass Relation
 * Photometric filters
 
-Here is a brief list of things that PyPopStar can do:
+Here is a brief list of things that SPISEA can do:
 
 * make a cluster isochrone in many filters using different stellar models
 * make a star cluster at any age with an unusual IMF and unresolved multiplicity
@@ -18,19 +16,15 @@ Here is a brief list of things that PyPopStar can do:
 
 See [documentation](https://pypopstar.readthedocs.io/en/latest/) for details on 
 [installing](https://pypopstar.readthedocs.io/en/latest/getting_started.html)
-and running PyPopStar. We also provide jupyter notebooks with a 
-[quick-start tutorial](https://github.com/astropy/PyPopStar/blob/master/docs/Quick_Start_Make_Cluster.ipynb)
-and [additional examples](https://github.com/astropy/PyPopStar/tree/master/docs/paper_examples)
-demonstrating how to use PyPopStar. 
+and running SPISEA. We also provide jupyter notebooks with a 
+[quick-start tutorial](https://github.com/astropy/SPISEA/blob/master/docs/Quick_Start_Make_Cluster.ipynb)
+and [additional examples](https://github.com/astropy/SPISEA/tree/master/docs/paper_examples)
+demonstrating how to use SPISEA. 
 
 ## Contributions
-We encourage contributions to PyPopStar, particular those that add support for star formation histories, new models, higher spectral resolution, etc. For feature additions, we ask that users fork or branch off of the development repository, make their changes, and then submit merge and pull requests.
+We encourage contributions to SPISEA, particularly those that add support for star formation histories, new models, higher spectral resolution, etc. For feature additions, we ask that users fork or branch off of the development repository, make their changes, and then submit merge and pull requests.
 
 ## License 
 This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
 
 This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-
-
-<sup>Logo by Abhimat Gautam
