@@ -4,7 +4,7 @@
 ==========================
 Install From Git
 ==========================
-PyPopStar is hosted on `GitHub <https://github.com/astropy/PyPopStar>`_.
+SPISEA is hosted on `GitHub <https://github.com/astropy/SPISEA>`_.
 To begin, clone the git repository.
 The master branch contains the current release,
 while the development branch is for additional code development.
@@ -31,20 +31,20 @@ Dependencies
 
 Build
 ------
-Once the repository is cloned, you need to add PyPopStar to your
+Once the repository is cloned, you need to add SPISEA to your
 ``PYTHONPATH`` environment variable. For example, if you are using
 BASH, then you need to add the following line to your ``bash_profile``::
   
-   export PYTHONPATH=$PYTHONPATH:<path_to_pypopstar>
+   export PYTHONPATH=$PYTHONPATH:<path_to_SPISEA>
 
-where ``<path_to_pypostar>`` is the location of the PyPopStar
+where ``<path_to_SPISEA>`` is the location of the top-level SPISEA
 directory. 
 
 .. _set-up-cdbs:
 
 Set Up CDBS Directory
 ---------------------------------
-PyPopStar uses the STScI CDBS infrastructure to store
+SPISEA uses the STScI CDBS infrastructure to store
 model atmospheres and HST filter functions. It requires
 a top-level ``cdbs`` directory with 3 sub-directories: ``comp``, ``grid``,
 and ``mtab``. The ``comp`` and ``mtab`` directories are downloaded as
@@ -62,9 +62,9 @@ the ``cdbs/comp``, ``cdbs/grid``, and ``cdbs/mtab`` sub-directories.
 
 Stellar Evolution and Atmosphere Models
 -------------------------------------------------------
-PyPopStar requires grids of stellar evolution and atmosphere models in
+SPISEA requires grids of stellar evolution and atmosphere models in
 order to function. The evolution models are
-stand-alone and specific to PyPopStar. The atmosphere model grids use the
+stand-alone and specific to SPISEA. The atmosphere model grids use the
 STScI CDBS conventions and should be placed in the ``cdbs/grid`` directory.
 
 You will need to download 2 files:
@@ -74,22 +74,22 @@ You will need to download 2 files:
 
 * `postar_cdbs.tar.gz <http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs.tar.gz>`_  (142 MB; 248 MB unzipped)
 
-You can also optionally download a third file, which contains higher-resolution versions of the atmospheres in ``popstar_cdbs.tar.gz``:
+You can also optionally download a third file, which contains higher-resolution versions of the atmospheres in ``spisea_cdbs.tar.gz``:
 
 * `popstar_cdbs_highres.tar.gz <http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs_highres.tar.gz>`_ (50 GB; 74 GB unzipped)
 
-PyPopStar uses the low-resolution atmospheres (R = 250) in
-``popstar_cdbs.tar.gz`` by default, as
+SPISEA uses the low-resolution atmospheres (R = 250) in
+``spisea_cdbs.tar.gz`` by default, as
 it is then much faster to calculate synthetic photometry and
 is sufficient in most applications. However, the user can change
 this default; see  :ref:`atmo_models` for
 more details. 
 
-Once downloaded, ``popstar_cdbs.tar.gz`` (and
-``popstar_cdbs_highres.tar.gz``, if desired) should be
+Once downloaded, ``spisea_cdbs.tar.gz`` (and
+``spisea_cdbs_highres.tar.gz``, if desired) should be
 expanded in  the ``cdbs`` directory. The output directories
 will automatically be placed in the correct locations. 
-The ``popstar_models.tar.gz`` file can be expanded
+The ``spisea_models.tar.gz`` file can be expanded
 anywhere, though we recommend expanding it in the same location as 
 your ``cdbs`` directory. 
 
@@ -98,12 +98,12 @@ then you should put the .gz files in ``/g/lu/models/``
 and then unzip them from there::
 
    cd /g/lu/models/
-   tar xvf popstar_cdbs.tar.gz
-   tar xvf popstar_models.tar.gz
+   tar xvf spisea_cdbs.tar.gz
+   tar xvf spisea_models.tar.gz
 
 
-``popstar_cdbs.tar.gz`` will put the model atmospheres in
-``cdbs/grid``, and ``popstar_models.tar.gz`` will put the evolution
+``spisea_cdbs.tar.gz`` will put the model atmospheres in
+``cdbs/grid``, and ``spisea_models.tar.gz`` will put the evolution
 models in a directory called ``evolution/``
 
 .. _setup-paths:
@@ -113,24 +113,24 @@ Set Paths to Models
 
 You need to notify python where the evolution and atmosphere models
 live. This is done by setting two environment variables, ``PYSYN_CDBS`` and
-``POPSTAR_MODELS``, to point to the ``cdbs`` and ``models``
+``SPISEA_MODELS``, to point to the ``cdbs`` and ``models``
 directories (i.e. the directory where the ``evolution/`` directory
 lives), respectively. For example, in your .bash_profile::
   
   export PYSYN_CDBS=/<path_to_cdbs_directory>
-  export POPSTAR_MODELS=/<path_to_models_directory>
+  export SPISEA_MODELS=/<path_to_models_directory>
 
 
 .. _test-setup:
 
-Testing Your PyPopStar Setup
+Testing Your SPISEA Setup
 ---------------------------------------
 
-If all goes well, you should be able to import any of the PyPopStar
+If all goes well, you should be able to import any of the SPISEA
 functions an import statement like those at the top
 of the Quick Start Guide, such as::
     
-    from popstar import synthetic
+    from spisea import synthetic
 
 You may get warnings that Extinction or thermal files are missing,
 such as::
@@ -139,29 +139,34 @@ such as::
     
     UserWarning: No thermal tables found, no thermal calculations can be performed
     
-However, these can be safely ignored since PyPopstar doesn't use those functionalities.
+However, these can be safely ignored since SPISEA doesn't use those functionalities.
 
-To further test your PyPopstar install, try running the `Quick Start
+To further test your SPISEA install, try running the `Quick Start
 notebook
-<https://github.com/astropy/PyPopStar/blob/master/docs/Quick_Start_Make_Cluster.ipynb>`_.
-It is also located in PyPopStar/docs.
+<https://github.com/astropy/SPISEA/blob/master/docs/Quick_Start_Make_Cluster.ipynb>`_.
+It is also located in SPISEA/docs.
 
 To test the full range of
 evolution models, atmosphere models, and photometric filters,
-run the ``test_evolution_models()``, ``test_atmospheres_models()``, and ``test_filters()`` functions in ``popstar/tests/test_models.py``. 
+run the test functions by going into ``SPISEA/spisea`` and running the
+test functions::
+
+    py.test
+
+If all is well, you shouldn't get any warnings.
 
 TroubleShooting
 -----------------------
-If PyPopStar is not properly in your ``PYTHONPATH``, then when you try
-to import the PyPopStar functions you will get an error message
-reporting ``No module named popstar``.
+If SPISEA is not properly in your ``PYTHONPATH``, then when you try
+to import the SPISEA functions you will get an error message
+reporting ``No module named spisea``.
 
-If the ``POPSTAR_MODELS`` or ``PYSYN_CDBS`` paths are broken, then
-PyPopStar won't know where to get the stellar models.
-When trying to import ``popstar/synthetic.py``, you will You get
+If the ``SPISEA_MODELS`` or ``PYSYN_CDBS`` paths are broken, then
+SPISEA won't know where to get the stellar models.
+When trying to import ``spisea/synthetic.py``, you will get
 either or both of the following warnings::
 
     UserWarning: PYSYN_CDBS is undefined; functionality will be SEVERELY crippled.
     
-    UserWarning: POPSTAR_MODELS is undefined; functionality will be SEVERELY crippled.
+    UserWarning: SPISEA_MODELS is undefined; functionality will be SEVERELY crippled.
     

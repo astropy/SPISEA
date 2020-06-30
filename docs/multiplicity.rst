@@ -5,11 +5,11 @@ Stellar Multiplicity Object
 ===========================
 The properties of multiple systems in the stellar population is
 defined by the stellar multiplicity object. The multiplicity classes
-are defined in popstar/imf/multiplicity.py.
+are defined in spisea/imf/multiplicity.py.
 
 To call a multiplicity class::
 
-  from popstar.imf import multiplicity
+  from spisea.imf import multiplicity
   multi_obj = multiplicity.<class_name>
 
 The multiplicity object is an input for the :ref:`imf_objects`, as it

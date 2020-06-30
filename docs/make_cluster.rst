@@ -3,7 +3,7 @@
 ===============
 Cluster Object
 ===============
-The cluster classes are defined in popstar/synthetic.py. The primary
+The cluster classes are defined in spisea/synthetic.py. The primary
 inputs to a cluster object are the cluster mass,
 :ref:`isochrone_objects`, and :ref:`imf_objects`.  In addition, an
 :ref:`ifmr_objects` may be defined to produce compact stellar remnants.
@@ -11,8 +11,8 @@ inputs to a cluster object are the cluster mass,
 An example of making a ResolvedCluster, assuming the isochrone object
 has already been created::
  
-  from popstar import synthetic, ifmr
-  from popstar.imf import imf, multiplicity
+  from spisea import synthetic, ifmr
+  from spisea.imf import imf, multiplicity
   import numpy as np
 
   # Define stellar multiplicity properties. Here we 
@@ -28,8 +28,14 @@ has already been created::
 
   # Define the IMF. Here we'll use a broken
   # power-law with the parameters from 
-  # Kroupa et al. (2001, MNRAS, 322, 231),
-  # using the multiplicity we defined previously
+  # Kroupa et al. (2001, MNRAS, 322, 231)
+  # and the multiplicity we defined previously.
+  
+  # Note: when defining the power law slope for each segment of
+  #the IMF, we define the entire exponent, including the negative sign.
+  # For example, if dN/dm $\propto$ m^-alpha, then you would use
+  # the value -2.3 to specify an IMF with alpha = 2.3.
+  
   massLimits = np.array([0.08, 0.5, 1, 120]) # mass segments
   powers = np.array([-1.3, -2.3, -2.3]) # power-law exponents 
   my_imf = imf.IMF_broken_powerlaw(massLimits, powers, 
@@ -45,7 +51,7 @@ has already been created::
 
 
 See `Quick Start Example
-<https://github.com/astropy/PyPopStar/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb>`_
+<https://github.com/astropy/SPISEA/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb>`_
 for a detailed example for how to make different
 cluster sub-classes and interact with the resulting output.
 

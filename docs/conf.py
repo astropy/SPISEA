@@ -15,19 +15,19 @@
 import os
 import sys
 import pdb
-sys.path.insert(0, os.path.abspath('../popstar'))
+sys.path.insert(0, os.path.abspath('../spisea'))
 sys.path.insert(0, os.path.abspath('../'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'PyPopStar'
-copyright = '2019, Matthew Hosek Jr, Jessica R. Lu, Casey Y. Lam. Logo by Abhimat Gautam'
+project = 'SPISEA'
+copyright = '2020, Matthew Hosek Jr, Jessica R. Lu, Casey Y. Lam.'
 author = 'Matthew Hosek Jr, Jessica R. Lu, Casey Y. Lam'
 
 # The short X.Y version
-version = '1.0'
+version = '2.0'
 # The full version, including alpha/beta/rc tags
-release = '1.0.0'
+release = '2.0.0'
 
 
 # -- General configuration ---------------------------------------------------
@@ -105,7 +105,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'PyPopStardoc'
+htmlhelp_basename = 'SPISEAdoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -132,7 +132,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'PyPopStar.tex', 'PyPopStar Documentation',
+    (master_doc, 'SPISEA.tex', 'SPISEA Documentation',
      'Matthew Hosek Jr, Jessica R. Lu, Casey Y. Lam', 'manual'),
 ]
 
@@ -142,7 +142,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'pypopstar', 'PyPopStar Documentation',
+    (master_doc, 'spisea', 'SPISEA Documentation',
      [author], 1)
 ]
 
@@ -153,8 +153,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'PyPopStar', 'PyPopStar Documentation',
-     author, 'PyPopStar', 'One line description of project.',
+    (master_doc, 'SPISEA', 'PyPopStar Documentation',
+     author, 'SPISEA', 'One line description of project.',
      'Miscellaneous'),
 ]
 

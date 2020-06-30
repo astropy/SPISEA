@@ -1,7 +1,7 @@
 import time
 import pylab as plt
 import numpy as np
-from spisea import reddening, evolution, atmospheres
+from spisea import reddening, evolution, atmospheres, ifmr
 from spisea import synthetic as syn
 from spisea.imf import imf
 from spisea.imf import multiplicity
@@ -56,7 +56,7 @@ def test_iso_wave():
     filt_list = ['wfc3,ir,f127m']
 
     # First, let's make sure the vega spectrum has the proper limits
-    vega = synthetic.Vega()
+    vega = syn.Vega()
 
     assert np.min(vega.wave) == 995
     assert np.max(vega.wave) == 100200
@@ -64,7 +64,7 @@ def test_iso_wave():
     # Make Isochrone object. Will use wave_range = [3000,52000].
     # Make sure range matches to resolution of atmosphere.
     wave_range1 = [3000, 52000]
-    my_iso = synthetic.IsochronePhot(logAge, AKs, dist,
+    my_iso = syn.IsochronePhot(logAge, AKs, dist,
                             evo_model=evo_model, atm_func=atm_func,
                             red_law=red_law, filters=filt_list,
                             mass_sampling=10, wave_range=wave_range1,
@@ -78,7 +78,7 @@ def test_iso_wave():
     # Now let's try changing the wave range. Is it carried through
     # properly?
     wave_range2 = [1200, 90000]
-    my_iso = synthetic.IsochronePhot(logAge, AKs, dist,
+    my_iso = syn.IsochronePhot(logAge, AKs, dist,
                             evo_model=evo_model, atm_func=atm_func,
                             red_law=red_law, filters=filt_list,
                             mass_sampling=10, wave_range=wave_range2,
@@ -92,7 +92,7 @@ def test_iso_wave():
     # Does the error exception catch the bad wave_range?
     wave_range3 = [1200, 1000000]
     try:
-        my_iso = synthetic.IsochronePhot(logAge, AKs, dist,
+        my_iso = syn.IsochronePhot(logAge, AKs, dist,
                                 evo_model=evo_model, atm_func=atm_func,
                                 red_law=red_law, filters=filt_list,
                                 mass_sampling=10, wave_range=wave_range3,
@@ -504,7 +504,7 @@ def test_metallicity():
     metallicity= 0.0
 
     # Make Isochrone object, with high mass_sampling to decrease compute time
-    my_iso = synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
+    my_iso = syn.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
                             evo_model=evo_model, atm_func=atm_func,
                             red_law=red_law, filters=filt_list,
                             mass_sampling=10)
@@ -517,7 +517,7 @@ def test_metallicity():
     metallicity= -1.5
 
     # Make Isochrone object, with high mass_sampling to decrease compute time
-    my_iso = synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
+    my_iso = syn.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
                             evo_model=evo_model, atm_func=atm_func,
                             red_law=red_law, filters=filt_list,
                             mass_sampling=10)
