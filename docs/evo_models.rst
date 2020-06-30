@@ -5,7 +5,7 @@ Evolution Model Object
 ========================================
 
 Stellar evolution models are defined as classes in
-spisea/evolution.py. These can be called by::
+``spisea/evolution.py``. These can be called by::
 
   from spisea import evolution
   evo = evolution.<model_name>()

@@ -6,7 +6,7 @@ IFMR Object
 The Initial-Final Mass Relation (IFMR) maps a star’s initial zero-age main sequence (ZAMS)
 mass to the type and mass of the compact object it will form. The
 SPISEA IFMR class supports white dwarfs (WD), neutron stars (NS),
-and black holes (BH). The associated code is found in spisea/ifmr.py.
+and black holes (BH). The associated code is found in ``spisea/ifmr.py``.
 
 To define an IFMR object::
 

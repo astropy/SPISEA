@@ -3,7 +3,7 @@
 ================
 Isochrone Object
 ================
-The isochrone classes are defined in spisea/synthetic.py. The primary
+The isochrone classes are defined in ``spisea/synthetic.py``. The primary
 inputs to a isochrone object are the stellar population age, distance,
 total extinction, and metallicity, along with the :ref:`atmo_models`, 
 :ref:`evo_models`, and :ref:`ext_law`. 

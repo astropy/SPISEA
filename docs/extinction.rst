@@ -3,7 +3,7 @@
 ===============================
 Extinction Law Object
 ===============================
-The extinction law can be defined using the classes in spisea/reddening.py. These can be called by::
+The extinction law can be defined using the classes in ``spisea/reddening.py``. These can be called by::
 
   from spisea import reddening
   red_law = reddening.<redlaw_name>()

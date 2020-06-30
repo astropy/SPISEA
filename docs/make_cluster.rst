@@ -3,7 +3,7 @@
 ===============
 Cluster Object
 ===============
-The cluster classes are defined in spisea/synthetic.py. The primary
+The cluster classes are defined in ``spisea/synthetic.py``. The primary
 inputs to a cluster object are the cluster mass,
 :ref:`isochrone_objects`, and :ref:`imf_objects`.  In addition, an
 :ref:`ifmr_objects` may be defined to produce compact stellar remnants.

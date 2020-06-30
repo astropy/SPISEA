@@ -148,12 +148,12 @@ It is also located in SPISEA/docs.
 
 To test the full range of
 evolution models, atmosphere models, and photometric filters,
-run the test functions by going into ``SPISEA/spisea`` and running the
-test functions::
+run the test functions by going into the ``SPISEA/spisea`` directory and running::
 
     py.test
 
-If all is well, you shouldn't get any warnings.
+This will trigger the test functions we have implemented. If all is
+well, you shouldn't get any errors. Warnings are (generally) fine.
 
 TroubleShooting
 -----------------------

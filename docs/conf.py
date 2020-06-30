@@ -15,7 +15,7 @@
 import os
 import sys
 import pdb
-sys.path.insert(0, os.path.abspath('../spisea'))
+sys.path.insert(0, os.path.abspath('../spisea/'))
 sys.path.insert(0, os.path.abspath('../'))
 
 # -- Project information -----------------------------------------------------
@@ -153,7 +153,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'SPISEA', 'PyPopStar Documentation',
+    (master_doc, 'SPISEA', 'SPISEA Documentation',
      author, 'SPISEA', 'One line description of project.',
      'Miscellaneous'),
 ]

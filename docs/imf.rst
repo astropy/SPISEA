@@ -4,7 +4,7 @@
 IMF Object
 ==========
 Initial Mass Functions (IMFs) are defined as classes in
-spisea/imf/imf.py. These can be defined by::
+``spisea/imf/imf.py``. These can be defined by::
 
   from spisea.imf import imf
   imf_obj = imf.<class_name>
