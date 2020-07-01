@@ -33,7 +33,6 @@ Getting Started
    :maxdepth: 1
 
    getting_started.rst
-   version_switch.rst
    quick_start.rst
    more_examples.rst
 
