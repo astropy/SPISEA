@@ -10,7 +10,7 @@ v1.0.0 or v1.0.1, the steps required to upgrade to v2.0.0 are described below.
 
 
 Step 1: Get Updated Package from Github
--------------------------------------
+---------------------------------------
 To get the updated package from Github, you need to pull down the updated code respository.
 In your PyPopStar directory, run the following command from the terminal::
   git pull
@@ -18,11 +18,13 @@ In your PyPopStar directory, run the following command from the terminal::
 [ADD INSTRUCTIONS: git checkout main]
 
 
-
-Step 2: Change PYTHONPATH To Point to New Directory Name
+Step 2: Make Sure PYTHONPATH Points to Top-Level Directory
 ----------------------------------------------------------
-
-
+Make sure your PYTHONPATH points to the top-level SPISEA directory. This is
+the directory that contains the ``spisea`` sub-directory with all of the code files (e.g. ``synthetic.py``, ``evolution.py``, etc).
+Note that the top-level directory might still be named "PyPopStar", as a left-over when you cloned
+version 1 of the repository. You can manually
+change this to "SPISEA", but make sure that change gets reflected in your PYTHONPATH. 
 
 
 Step 3: Change Environment Variable Name
