@@ -17,12 +17,12 @@ while the ``dev`` branch is for code development.
 
 Dependencies
 ----------------
-* python (preferably via AstroConda, as it includes some necessary
+* python (>=3.7; preferably via AstroConda, as it includes some necessary
   packages, like astropy and pysynphot)
 * astropy
 * pysynphot
 * scipy
-* numpy
+* numpy (>= v1.17)
 * matplotlib
 * STScI CDBS data package (Download from the `website
   <http://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools/synphot-throughput-tables.html>`_
@@ -148,7 +148,7 @@ However, these can be safely ignored since SPISEA doesn't use those functionalit
 To further test your SPISEA install, try running the `Quick Start
 notebook
 <https://github.com/astropy/SPISEA/blob/master/docs/Quick_Start_Make_Cluster.ipynb>`_.
-It is also located in SPISEA/docs.
+It is also located in ``SPISEA/docs``.
 
 To test the full range of
 evolution models, atmosphere models, and photometric filters,
