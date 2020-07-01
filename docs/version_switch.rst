@@ -45,11 +45,7 @@ Step 5: Change Import Statements in Subsequent Code
 In all code that calls SPISEA functions (e.g. synthetic.py), you will need to
 change the import statements from::
   from popstar import synthetic
-  
+
 to::
   from spisea import synthetic
-
-
-
-
 
