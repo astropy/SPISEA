@@ -4,10 +4,14 @@
 ==========================
 Install From Git
 ==========================
+If you are downloading the code from scratch, please follow the
+instructions below. If you had already downloaded version 1 of the
+code and are switching to version 2, please see :ref:`version`. 
+
 SPISEA is hosted on `GitHub <https://github.com/astropy/SPISEA>`_.
 To begin, clone the git repository.
-The master branch contains the current release,
-while the development branch is for additional code development.
+The ``main`` branch contains the current release,
+while the ``dev`` branch is for code development.
 
 .. _Dependencies:
 
