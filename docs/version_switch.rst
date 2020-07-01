@@ -3,11 +3,10 @@
 ==========================================================
 Switching from version 1 (PyPopStar) to version 2 (SPISEA)
 ==========================================================
-Version 1 of this software package was called "PyPopStar", but due to a naming conflict
-we needed to change the name. We have renamed the package SPISEA in version 2.
-In terms of functionality, v2.0.0 has the same functionality as v1.0.1. If you already downloaded
-v1.0.0 or v1.0.1, below describes the steps required to upgrade to v2.0.0.
-
+Version 1 of this software package was called PyPopStar. Due to a naming conflict,
+we have renamed the package of SPISEA for version 2. 
+For reference, v2.0.0 has the same functionality as v1.0.1. If you already downloaded
+v1.0.0 or v1.0.1, the steps required to upgrade to v2.0.0 are described below. 
 
 
 Step 1: Get Updated Package from Github
@@ -37,7 +36,7 @@ the new name ``SPISEA_MODELS``. If you are using bash, this line in your
 Step 4: Test the Package to Make Sure It Is Working
 ---------------------------------------------------
 To make sure everything is working, go through the instructions on
-:ref:`test_setup`. 
+:ref:`test-setup`. 
 
 
 
@@ -46,7 +45,7 @@ Step 5: Change Import Statements in Subsequent Code
 In all code that calls SPISEA functions (e.g. synthetic.py), you will need to
 change the import statements from::
   from popstar import synthetic
- to::
+to::
    from spisea import synthetic
 
 
