@@ -23,6 +23,14 @@ and running SPISEA. We also provide jupyter notebooks with a
 and [additional examples](https://github.com/astropy/SPISEA/tree/main/docs/paper_examples)
 demonstrating how to use SPISEA. 
 
+## Version Update
+Version 1 of this software package was called PyPopStar. Due to a naming conflict,
+we have renamed the package of SPISEA for version 2 and beyond.
+For reference, v2.0.0 has the same functionality as v1.0.1.
+
+Instructions for updating from version 1 to version 2 are provided in
+the documentation [here](https://pypopstar.readthedocs.io/en/main/version_switch.html#version).
+
 ## Contributions
 We encourage contributions to SPISEA, particularly those that add support for star formation histories, new models, higher spectral resolution, etc. For feature additions, we ask that users fork or branch off of the development repository, make their changes, and then submit merge and pull requests.
 
