@@ -32,22 +32,11 @@ from importlib import import_module
 sys.path.insert(0, os.path.abspath('../spisea/'))
 sys.path.insert(0, os.path.abspath('../'))
 
-# Add any Sphinx extension module names here, as strings. They can be
-# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
-# ones.
-extensions = [
-    'sphinx.ext.autodoc',
-    'sphinx.ext.mathjax',
-    'numpydoc'
-    'sphinx-astropy'
-]
-
-
-try:
-    from sphinx_astropy.conf.v1 import *  # noqa
-except ImportError:
-    print('ERROR: the documentation requires the sphinx-astropy package to be installed')
-    sys.exit(1)
+#try:
+#    from sphinx_astropy.conf.v1 import *  # noqa
+#except ImportError:
+#    print('ERROR: the documentation requires the sphinx-astropy package to be installed')
+#    sys.exit(1)
 
 # Get configuration information from setup.cfg
 from configparser import ConfigParser
@@ -61,6 +50,14 @@ setup_cfg = dict(conf.items('metadata'))
 # By default, highlight as Python 3.
 highlight_language = 'python3'
 
+# Add any Sphinx extension module names here, as strings. They can be
+# extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
+# ones.
+extensions = [
+    'sphinx.ext.autodoc',
+    'sphinx.ext.mathjax',
+    'numpydoc'
+]
 
 # If your documentation needs a minimal Sphinx version, state it here.
 #needs_sphinx = '1.2'
