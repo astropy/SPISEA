@@ -34,7 +34,12 @@ the documentation [here](https://pypopstar.readthedocs.io/en/main/version_switch
 ## Contributions
 We encourage contributions to SPISEA, particularly those that add support for star formation histories, new models, higher spectral resolution, etc. For feature additions, we ask that users fork or branch off of the development repository, make their changes, and then submit merge and pull requests.
 
-## License 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
-
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
+## License
+This project is Copyright (c) Matthew Hosek Jr., Jessica Lu, Casey
+Lam, Abhimat Gautam, Kelly Lockhart, Dongwon Kim, and Siyao Jia and licensed under
+the terms of the GNU GPL v3+ license. This package is based upon
+the `Astropy package template <https://github.com/astropy/package-template>`_
+which is licensed under the BSD 3-clause license. See the licenses folder for
+more information. This program is distributed in the hope that it will
+be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
