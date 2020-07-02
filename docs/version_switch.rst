@@ -15,7 +15,10 @@ To get the updated package from Github, you need to pull down the updated code r
 In your PyPopStar directory, run the following command from the terminal::
   git pull
 
-[ADD INSTRUCTIONS: git checkout main]
+The correct branch to be on is "main". You can check which branch you are on by
+running ``git status`` in the terminal. If necessary, you can change to the main branch
+by::
+  git checkout main
 
 
 Step 2: Make Sure PYTHONPATH Points to Top-Level Directory
