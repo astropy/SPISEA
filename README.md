@@ -38,7 +38,7 @@ We encourage contributions to SPISEA, particularly those that add support for st
 This project is Copyright (c) Matthew Hosek Jr., Jessica Lu, Casey
 Lam, Abhimat Gautam, Kelly Lockhart, Dongwon Kim, and Siyao Jia and licensed under
 the terms of the GNU GPL v3+ license. This package is based upon
-the `Astropy package template <https://github.com/astropy/package-template>`_
+the [Astropy package template](https://github.com/astropy/package-template)
 which is licensed under the BSD 3-clause license. See the licenses folder for
 more information. This program is distributed in the hope that it will
 be useful, but WITHOUT ANY WARRANTY;
