@@ -142,7 +142,7 @@ def test_resolvedmult():
     iso_merged = synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
                                  evo_model=evo_merged, atm_func=atm_func,
                                  filters=filt_list, red_law=redlaw,
-                                 iso_dir=iso_dir, mass_sampling=3)
+                                 mass_sampling=3)
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
     
     # Now we can make the cluster. 
