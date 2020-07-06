@@ -1,5 +1,6 @@
 import numpy as np
 import astropy.modeling
+from random import choice
 
 defaultMF_amp = 0.44
 defaultMF_power = 0.51
