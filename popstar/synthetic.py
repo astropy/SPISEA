@@ -27,7 +27,6 @@ import time
 import warnings
 import pdb
 from scipy.spatial import cKDTree as KDTree
-import astropy.modeling
 
 default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
