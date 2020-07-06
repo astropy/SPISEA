@@ -123,6 +123,9 @@ def test_resolvedmult():
     Test creating a MultiplicityResolvedDK object 
     and that the parameters it's populated with are correct.
     """
+    from popstar import synthetic, evolution, atmospheres, reddening, ifmr
+    from popstar.imf import imf, multiplicity
+    
     # Fetch isochrone
     logAge = 6.70 # Age in log(years)
     AKs = 1.0 # Ks filter extinction in mags
