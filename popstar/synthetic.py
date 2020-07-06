@@ -534,6 +534,58 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         #print 'Diff redden: {0}'.format(t2 - t1)
         return
     
+class ResolvedCluster_ResolvedMult(ResolvedCluster):
+    """
+    Sub-class of ResolvedCluster that adds semimajor axis info to the companions table
+    
+    Parameters
+    -----------
+    iso: isochrone object
+        PyPopStar isochrone object
+    
+    imf: imf object
+        PyPopStar IMF object
+
+    cluster_mass: float
+        Total initial mass of the cluster, in M_sun
+
+    ifmr: ifmr object or None
+        If ifmr object is defined, will create compact remnants
+        produced by the cluster at the given isochrone age. Otherwise,
+        no compact remnants are produced.
+
+    seed: int
+        If set to non-None, all random sampling will be seeded with the
+        specified seed, forcing identical output.
+        Default None
+
+    vebose: boolean
+        True for verbose output.
+    """
+    
+    def __init__(self, iso, imf, cluster_mass,
+                 ifmr=None, verbose=False, seed=None):
+
+        ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
+                                     seed=seed)        
+        if self.imf.make_multiples:
+            N_comp_tot = self.star_systems['N_companions'].sum()
+            
+            self.companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='log_a', description = 'degrees') )
+            self.companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='e') )
+            self.companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='i') )
+            self.companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Omega') )
+            self.companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='omega') )
+        
+            for ii in range(len(self.companions)):
+                self.companions['log_a'][ii] = self.imf._multi_props.log_semimajoraxis(self.star_systems['mass'][self.companions['system_idx'][ii]])
+            
+            self.companions['e'] = self.imf._multi_props.random_e(np.random.rand(N_comp_tot))
+            self.companions['i'], self.companions['Omega'], self.companions['omega'] = self.imf._multi_props.random_keplarian_parameters(np.random.rand(N_comp_tot),np.random.rand(N_comp_tot),np.random.rand(N_comp_tot))
+
+            
+        return
+    
 class UnresolvedCluster(Cluster):
     """
     Cluster sub-class that produces an *unresolved* stellar cluster.
