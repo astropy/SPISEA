@@ -147,13 +147,13 @@ def test_resolvedmult():
     
     # Now we can make the cluster. 
     clust_mtot = 10**4.
-    clust_multiplicity = MultiplicityResolvedDK()
+    clust_multiplicity = multiplicity.MultiplicityResolvedDK()
 
     # Multiplicity is defined in the IMF object
     clust_imf_Mult = imf.Kroupa_2001(multiplicity=clust_multiplicity)
     
     # Make clusters
-    clust_Mult = ResolvedCluster_ResolvedMult(iso_merged, clust_imf_Mult, clust_mtot)
+    clust_Mult = synthetic.ResolvedCluster_ResolvedMult(iso_merged, clust_imf_Mult, clust_mtot)
 
     clust_Mult_ss = clust_Mult.star_systems
     
