@@ -185,6 +185,7 @@ def test_resolvedmult():
     n, bins = np.histogram(clust_Mult.companions['i'])
     bin_centers = 0.5*(bins[1:] + bins[:-1])
     sin_diff = n/max(n) - np.sin(np.pi*bin_centers/180)
+    print(sin_diff)
     assert all(np.abs(i) < 0.1 for i in sin_diff.tolist())
     
     return
