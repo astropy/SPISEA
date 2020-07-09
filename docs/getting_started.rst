@@ -78,7 +78,7 @@ You will need to download 2 files:
 
 * `spisea_cdbs.tar.gz <http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs.tar.gz>`_  (142 MB; 248 MB unzipped)
 
-You can also optionally download a third file, which contains higher-resolution versions of the atmospheres in ``spisea_cdbs_highres.tar.gz``:
+You can also optionally download a third file, which contains higher-resolution versions of the atmospheres in ``spisea_cdbs.tar.gz``:
 
 * `spisea_cdbs_highres.tar.gz <http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs_highres.tar.gz>`_ (50 GB; 74 GB unzipped)
 
