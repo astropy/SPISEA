@@ -4,7 +4,7 @@
 Atmosphere Model Object
 ========================================
 Stellar atmosphere models are defined as functions in
-popstar/atmospheres.py. These can be called by::
+``popstar/atmospheres.py``. These can be called by::
 
  from popstar import atmospheres
  atmo = atmospheres.<function_name>

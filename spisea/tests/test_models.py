@@ -5,7 +5,7 @@ def test_evolution_models():
     """
     Test to make sure the different evolution models work
     """
-    from popstar import evolution
+    from spisea import evolution
 
     # Age ranges to test
     age_young_arr = [6.7, 7.9]
@@ -39,8 +39,8 @@ def test_evolution_models():
                 try:
                     test = evo.isochrone(age=10**kk, metallicity=jj)
                 except:
-                    print('TEST FAILED: {0}, age = {1}, metal = {2}'.format(evo, kk, jj))
-                    pdb.set_trace()
+                    raise Exception('EVO TEST FAILED: {0}, age = {1}, metal = {2}'.format(evo, kk, jj))
+
         print('Done {0}'.format(evo))
         
     return
@@ -49,7 +49,7 @@ def test_atmosphere_models():
     """
     Test the rebinned atmosphere models used for synthetic photometry
     """
-    from popstar import atmospheres as atm
+    from spisea import atmospheres as atm
 
     # Array of atmospheres
     atm_arr = [atm.get_merged_atmosphere, atm.get_castelli_atmosphere, atm.get_phoenixv16_atmosphere, atm.get_BTSettl_2015_atmosphere,
@@ -71,8 +71,7 @@ def test_atmosphere_models():
             try:
                 test = atm_func(metallicity=jj)
             except:
-                print('TEST FAILED: {0}, metal = {1}'.format(atm_func, jj))
-                pdb.set_trace()
+                raise Exception('ATM TEST FAILED: {0}, metal = {1}'.format(atm_func, jj))
                 
         print('Done {0}'.format(atm_func))
         
@@ -84,8 +83,8 @@ def test_atmosphere_models():
             try:
                 test = atm_func(metallicity=ii, temperature=jj, verbose=True)
             except:
-                print('TEST FAILED: {0}, metal = {1}, temp = {2}'.format(atm_func, ii, jj))
-                pdb.set_trace()
+                raise Exception('ATM TEST FAILED: {0}, metal = {1}, temp = {2}'.format(atm_func, ii, jj))
+
 
     print('get_merged_atmosphere: all temps/metallicities passed')
 
@@ -95,7 +94,7 @@ def test_filters():
     """
     Test to make sure all of the filters work as expected
     """
-    from popstar import synthetic
+    from spisea import synthetic
 
     # Define vega spectrum
     vega = synthetic.Vega()
@@ -130,7 +129,7 @@ def test_filters():
         try:
             filt = synthetic.get_filter_info(ii, rebin=True, vega=vega)
         except:
-            print('get_filter_info TEST FAILED for {0}'.format(ii))
+            raise Exception('get_filter_info TEST FAILED for {0}'.format(ii))
 
     print('get_filter_info pass')
     
@@ -143,7 +142,7 @@ def test_filters():
             # Does the obs_str work?
             filt_info = synthetic.get_filter_info(obs_str)
         except:
-            print('get_obs_str TEST FAILED for {0}'.format(ii)) 
+            raise Exception('get_obs_str TEST FAILED for {0}'.format(ii)) 
             
     print('get_obs_str pass')
     print('Filters done')

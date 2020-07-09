@@ -986,6 +986,7 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
     0.8 and 3 microns where :math:`\alpha = 2.21`, 
     where :math:`A_{\lambda} / A_{Ks} = 1` at 2.12 microns:
 
+    >>> from spisea import reddening
     >>> red_law = reddening.RedLawPowerLaw(2.21, 2.12, wave_min=0.8, wave_max=3.0)
 
     Parameters

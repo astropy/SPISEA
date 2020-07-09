@@ -5,14 +5,14 @@ Evolution Model Object
 ========================================
 
 Stellar evolution models are defined as classes in
-popstar/evolution.py. These can be called by::
+``spisea/evolution.py``. These can be called by::
 
-  from popstar import evolution
+  from spisea import evolution
   evo = evolution.<model_name>()
 
 The evolution object is an input for the :ref:`isochrone_objects`. 
   
-The stellar evolution model classes currently supported by PyPopStar
+The stellar evolution model classes currently supported by SPISEA
 are:
 
 * MISTv1 (default)

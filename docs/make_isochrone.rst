@@ -3,7 +3,7 @@
 ================
 Isochrone Object
 ================
-The isochrone classes are defined in popstar/synthetic.py. The primary
+The isochrone classes are defined in ``spisea/synthetic.py``. The primary
 inputs to a isochrone object are the stellar population age, distance,
 total extinction, and metallicity, along with the :ref:`atmo_models`, 
 :ref:`evo_models`, and :ref:`ext_law`. 
@@ -13,8 +13,8 @@ will be produced. The :ref:`filters` are defined as additional inputs.
 
 An example of making an IsochronePhot object::
 
-  from popstar import synthetic, evolution
-  from popstar import atmospheres, reddening
+  from spisea import synthetic, evolution
+  from spisea import atmospheres, reddening
   import numpy as np
 
   # Define isochrone input parameters
@@ -45,7 +45,7 @@ An example of making an IsochronePhot object::
 			    iso_dir=iso_dir)
 
 See `Quick Start Example
-<https://github.com/astropy/PyPopStar/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb>`_
+<https://github.com/astropy/SPISEA/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb>`_
 for a detailed example showing how to interact with the isochrone object output.
 
 

@@ -59,7 +59,7 @@ def test_xi():
     from .. import imf
 
     import cProfile, pstats, io
-    from pstats import SortKey
+    #from pstats import SortKey
     pr = cProfile.Profile()
 
     mass_limits = np.array([0.1, 1.0, 10.0, 100.0])
@@ -113,7 +113,7 @@ def test_mxi():
     from .. import imf
 
     import cProfile, pstats, io
-    from pstats import SortKey
+    #from pstats import SortKey
     pr = cProfile.Profile()
 
     mass_limits = np.array([0.1, 1.0, 10.0, 100.0])
@@ -168,7 +168,7 @@ def test_theta_closed():
     from .. import imf
 
     import cProfile, pstats, io
-    from pstats import SortKey
+    #from pstats import SortKey
     
     mass_limits = np.array([0.1, 1.0, 10.0, 100.0])
     powers = np.array([-0.3, -1.5, -2.3])
