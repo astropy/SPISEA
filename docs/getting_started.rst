@@ -73,14 +73,14 @@ STScI CDBS conventions and should be placed in the ``cdbs/grid`` directory.
 
 You will need to download 2 files:
 
-* `popstar_models.tar.gz
-  <http://astro.berkeley.edu/~jlu/popstar/popstar_models.tar.gz>`_. (2.6 GB; 18 GB unzipped)
+* `spisea_models.tar.gz
+  <http://astro.berkeley.edu/~jlu/spisea/popstar_models.tar.gz>`_. (3.4 GB; 18 GB unzipped)
 
-* `postar_cdbs.tar.gz <http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs.tar.gz>`_  (142 MB; 248 MB unzipped)
+* `spisea_cdbs.tar.gz <http://astro.berkeley.edu/~jlu/spisea/popstar_cdbs.tar.gz>`_  (142 MB; 248 MB unzipped)
 
-You can also optionally download a third file, which contains higher-resolution versions of the atmospheres in ``spisea_cdbs.tar.gz``:
+You can also optionally download a third file, which contains higher-resolution versions of the atmospheres in ``spisea_cdbs_highres.tar.gz``:
 
-* `popstar_cdbs_highres.tar.gz <http://astro.berkeley.edu/~jlu/popstar/popstar_cdbs_highres.tar.gz>`_ (50 GB; 74 GB unzipped)
+* `spisea_cdbs_highres.tar.gz <http://astro.berkeley.edu/~jlu/spisea/popstar_cdbs_highres.tar.gz>`_ (50 GB; 74 GB unzipped)
 
 SPISEA uses the low-resolution atmospheres (R = 250) in
 ``spisea_cdbs.tar.gz`` by default, as
