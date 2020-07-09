@@ -147,7 +147,7 @@ However, these can be safely ignored since SPISEA doesn't use those functionalit
 
 To further test your SPISEA install, try running the `Quick Start
 notebook
-<https://github.com/astropy/SPISEA/blob/master/docs/Quick_Start_Make_Cluster.ipynb>`_.
+<https://github.com/astropy/SPISEA/blob/main/docs/Quick_Start_Make_Cluster.ipynb>`_.
 It is also located in ``SPISEA/docs``.
 
 To test the full range of
