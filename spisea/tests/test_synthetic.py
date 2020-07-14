@@ -1,15 +1,16 @@
 import time
 import pylab as plt
 import numpy as np
-from popstar import synthetic, reddening, evolution, atmospheres
+from spisea import reddening, evolution, atmospheres, ifmr
+from spisea import synthetic as syn
+from spisea.imf import imf
+from spisea.imf import multiplicity
 import pysynphot
 import os
 import pdb
 from scipy.spatial import cKDTree as KDTree
 
 def test_isochrone(plot=False):
-    from popstar import synthetic as syn
-
     logAge = 6.7
     AKs = 2.7
     distance = 4000
@@ -55,7 +56,7 @@ def test_iso_wave():
     filt_list = ['wfc3,ir,f127m']
 
     # First, let's make sure the vega spectrum has the proper limits
-    vega = synthetic.Vega()
+    vega = syn.Vega()
 
     assert np.min(vega.wave) == 995
     assert np.max(vega.wave) == 100200
@@ -63,7 +64,7 @@ def test_iso_wave():
     # Make Isochrone object. Will use wave_range = [3000,52000].
     # Make sure range matches to resolution of atmosphere.
     wave_range1 = [3000, 52000]
-    my_iso = synthetic.IsochronePhot(logAge, AKs, dist,
+    my_iso = syn.IsochronePhot(logAge, AKs, dist,
                             evo_model=evo_model, atm_func=atm_func,
                             red_law=red_law, filters=filt_list,
                             mass_sampling=10, wave_range=wave_range1,
@@ -77,7 +78,7 @@ def test_iso_wave():
     # Now let's try changing the wave range. Is it carried through
     # properly?
     wave_range2 = [1200, 90000]
-    my_iso = synthetic.IsochronePhot(logAge, AKs, dist,
+    my_iso = syn.IsochronePhot(logAge, AKs, dist,
                             evo_model=evo_model, atm_func=atm_func,
                             red_law=red_law, filters=filt_list,
                             mass_sampling=10, wave_range=wave_range2,
@@ -91,22 +92,19 @@ def test_iso_wave():
     # Does the error exception catch the bad wave_range?
     wave_range3 = [1200, 1000000]
     try:
-        my_iso = synthetic.IsochronePhot(logAge, AKs, dist,
+        my_iso = syn.IsochronePhot(logAge, AKs, dist,
                                 evo_model=evo_model, atm_func=atm_func,
                                 red_law=red_law, filters=filt_list,
                                 mass_sampling=10, wave_range=wave_range3,
                                 recomp=True)
         print('WAVE TEST FAILED!!! Should have crashed here, wavelength range out of bounds')
-        pdb.set_trace()
+        raise ValueError() 
     except:
         print('Wavelength out of bound condition passed. Test is good')
         pass
     return
 
 def test_IsochronePhot(plot=False):
-    from popstar import synthetic as syn
-    from popstar import evolution, atmospheres, reddening
-
     logAge = 6.7
     AKs = 2.7
     distance = 4000
@@ -187,13 +185,6 @@ def test_IsochronePhot(plot=False):
     return
 
 def test_ResolvedCluster():
-    from popstar import synthetic as syn
-    from popstar import atmospheres as atm
-    from popstar import evolution
-    from popstar import reddening
-    from popstar.imf import imf
-    from popstar.imf import multiplicity
-
     # Define cluster parameters
     logAge = 6.7
     AKs = 2.4
@@ -207,7 +198,7 @@ def test_ResolvedCluster():
     startTime = time.time()
     
     evo = evolution.MergedBaraffePisaEkstromParsec()
-    atm_func = atm.get_merged_atmosphere
+    atm_func = atmospheres.get_merged_atmosphere
 
     red_law = reddening.RedLawNishiyama09()
     
@@ -300,13 +291,6 @@ def test_ResolvedCluster():
     return
 
 def test_ResolvedClusterDiffRedden():
-    from popstar import synthetic as syn
-    from popstar import atmospheres as atm
-    from popstar import evolution
-    from popstar import reddening
-    from popstar.imf import imf
-    from popstar.imf import multiplicity
-
     logAge = 6.7
     AKs = 2.4
     distance = 4000
@@ -320,7 +304,7 @@ def test_ResolvedClusterDiffRedden():
     startTime = time.time()
     
     evo = evolution.MergedBaraffePisaEkstromParsec()
-    atm_func = atm.get_merged_atmosphere
+    atm_func = atmospheres.get_merged_atmosphere
 
     red_law = reddening.RedLawNishiyama09()
     
@@ -397,12 +381,6 @@ def test_ResolvedClusterDiffRedden():
     return
     
 def test_UnresolvedCluster():
-    from popstar import synthetic as syn
-    from popstar import atmospheres as atm
-    from popstar import evolution
-    from popstar.imf import imf
-    from popstar.imf import multiplicity
-    
     log_age = 6.7
     AKs = 0.0
     distance = 4000
@@ -413,7 +391,7 @@ def test_UnresolvedCluster():
     multi = multiplicity.MultiplicityUnresolved()
     imf_in = imf.Kroupa_2001(multiplicity=multi)
     evo = evolution.MergedBaraffePisaEkstromParsec()
-    atm_func = atm.get_merged_atmosphere
+    atm_func = atmospheres.get_merged_atmosphere
     iso = syn.Isochrone(log_age, AKs, distance, metallicity=metallicity,
                             evo_model=evo, atm_func=atm_func, mass_sampling=10)
     print('Made Isochrone: %d seconds' % (time.time() - startTime))
@@ -430,14 +408,6 @@ def test_UnresolvedCluster():
     return
 
 def test_ifmr_multiplicity():
-    from popstar import synthetic as syn
-    from popstar import atmospheres as atm
-    from popstar import evolution
-    from popstar import reddening
-    from popstar import ifmr
-    from popstar.imf import imf
-    from popstar.imf import multiplicity
-
     # Define cluster parameters
     logAge = 9.7
     AKs = 0.0
@@ -451,7 +421,7 @@ def test_ifmr_multiplicity():
     startTime = time.time()
     
     evo = evolution.MISTv1()
-    atm_func = atm.get_merged_atmosphere
+    atm_func = atmospheres.get_merged_atmosphere
     ifmr_obj = ifmr.IFMR()
 
     red_law = reddening.RedLawNishiyama09()
@@ -534,7 +504,7 @@ def test_metallicity():
     metallicity= 0.0
 
     # Make Isochrone object, with high mass_sampling to decrease compute time
-    my_iso = synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
+    my_iso = syn.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
                             evo_model=evo_model, atm_func=atm_func,
                             red_law=red_law, filters=filt_list,
                             mass_sampling=10)
@@ -547,7 +517,7 @@ def test_metallicity():
     metallicity= -1.5
 
     # Make Isochrone object, with high mass_sampling to decrease compute time
-    my_iso = synthetic.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
+    my_iso = syn.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
                             evo_model=evo_model, atm_func=atm_func,
                             red_law=red_law, filters=filt_list,
                             mass_sampling=10)
@@ -562,14 +532,6 @@ def test_metallicity():
     return
 
 def test_cluster_mass():
-    from popstar import synthetic as syn
-    from popstar import atmospheres as atm
-    from popstar import evolution
-    from popstar import reddening
-    from popstar import ifmr
-    from popstar.imf import imf
-    from popstar.imf import multiplicity
-
     # Define cluster parameters
     logAge = 6.7
     AKs = 2.4
@@ -642,13 +604,6 @@ def test_cluster_mass():
 #=================================#
 
 def time_test_cluster():
-    from popstar import synthetic as syn
-    from popstar import atmospheres as atm
-    from popstar import evolution
-    from popstar import reddening
-    from popstar.imf import imf
-    from popstar.imf import multiplicity
-
     logAge = 6.7
     AKs = 2.7
     distance = 4000
@@ -657,7 +612,7 @@ def time_test_cluster():
     startTime = time.time()
     
     evo = evolution.MergedBaraffePisaEkstromParsec()
-    atm_func = atm.get_merged_atmosphere
+    atm_func = atmospheres.get_merged_atmosphere
     red_law = reddening.RedLawNishiyama09()
     filt_list = ['nirc2,J', 'nirc2,Kp']
     
@@ -678,12 +633,6 @@ def time_test_cluster():
     return
     
 def model_young_cluster_object(resolved=False):
-    from popstar import synthetic as syn
-    from popstar import atmospheres as atm
-    from popstar import evolution
-    from popstar.imf import imf
-    from popstar.imf import multiplicity
-
     log_age = 6.5
     AKs = 0.1
     distance = 8000.0
@@ -692,7 +641,7 @@ def model_young_cluster_object(resolved=False):
     multi = multiplicity.MultiplicityUnresolved()
     imf_in = imf.Kroupa_2001(multiplicity=multi)
     evo = evolution.MergedPisaEkstromParsec()
-    atm_func = atm.get_merged_atmosphere
+    atm_func = atmospheres.get_merged_atmosphere
     iso = syn.Isochrone(log_age, AKs, distance, evo, mass_sampling=10)
 
     if resolved:
@@ -717,12 +666,6 @@ def model_young_cluster_object(resolved=False):
     return
     
 def time_test_mass_match():
-    from popstar import synthetic as syn
-    from popstar import atmospheres as atm
-    from popstar import evolution
-    from popstar.imf import imf
-    from popstar.imf import multiplicity
-
     log_age = 6.7
     AKs = 2.7
     distance = 4000
@@ -787,123 +730,124 @@ def time_test_mass_match():
     return
 
 
-def test_phot_consistency(filt='all'):
-    """
-    Test photometric consistency of generated isochrone (IsochronePhot)
-    against pre-generated isochrone with native filter sampling. Requires
-    consistency to within 0.005 mag.
+# Not required test anymore: largely superceded by test_models.py
 
-    Base isochrone is at 5 Myr, AKs = 0, 1000 pc, mass_sampling=10 
-
-    Paramters:
-    ----------
-    filt: 'all', 'hst', 'vista', 'decam', 'ps1', 'jwst'
-        Specify what filter set you want to test
-
-    """
-    from astropy.table import Table
-    import os
-    
-    # Load pre-generated isochrone, located in popstar tests directory
-    direct = os.path.dirname(__file__)
-    orig = Table.read(direct+'/iso_6.70_0.00_01000.fits', format='fits')
-
-    # Generate new isochrone with popstar code
-    if filt == 'all':
-        filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m',
-                         'acs,wfc1,f814w', 'wfc3,ir,f125w', 'wfc3,ir,f160w',
-                         'decam,y', 'decam,i', 'decam,z',
-                         'decam,u', 'decam,g', 'decam,r',
-                         'vista,Y', 'vista,Z', 'vista,J',
-                         'vista,H',  'vista,Ks',
-                         'ps1,z', 'ps1,g', 'ps1,r',
-                         'ps1,i', 'ps1,y',
-                         'jwst,F070W', 'jwst,F090W', 'jwst,F115W', 'jwst,F140M',
-                         'jwst,F150W', 'jwst,F150W2', 'jwst,F162M', 'jwst,F164N',
-                         'jwst,F182M', 'jwst,F187N', 'jwst,F200W', 'jwst,F212N',
-                         'jwst,F210M','jwst,F250M', 'jwst,F277W', 'jwst,F300M',
-                         'jwst,F322W2', 'jwst,F323N', 'jwst,F335M', 'jwst,F356W',
-                         'jwst,F360M', 'jwst,F405N', 'jwst,F410M', 'jwst,F430M',
-                         'jwst,F444W', 'jwst,F460M', 'jwst,F466N', 'jwst,F470N',
-                         'jwst,F480M', 'nirc2,J', 'nirc2,H', 'nirc2,Kp', 'nirc2,K',
-                         'nirc2,Lp', 'nirc2,Hcont',
-                         'nirc2,FeII', 'nirc2,Brgamma',
-                         'jg,J', 'jg,H', 'jg,K',
-                         'nirc1,K', 'nirc1_H', 'ctio_osiris,K', 'ctio_osiris,H',
-                         'naco,H', 'naco,Ks', 'ztf,g', 'ztf,r', 'ztf,i']
-
-    elif filt == 'decam':
-        filt_list = ['decam,y', 'decam,i', 'decam,z',
-                         'decam,u', 'decam,g', 'decam,r']
-    elif filt == 'vista':
-        filt_list = ['vista,Y', 'vista,Z', 'vista,J',
-                         'vista,H', 'vista,Ks']
-    elif filt == 'ps1':
-        filt_list = ['ps1,z', 'ps1,g', 'ps1,r',  'ps1,i',
-                         'ps1,y']
-    elif filt == 'jwst':
-        filt_list = ['jwst,F070W', 'jwst,F090W', 'jwst,F115W', 'jwst,F140M',
-                         'jwst,F150W', 'jwst,F150W2', 'jwst,F162M', 'jwst,F164N',
-                         'jwst,F182M', 'jwst,F187N', 'jwst,F200W', 'jwst,F212N',
-                         'jwst,F210M','jwst,F250M', 'jwst,F277W', 'jwst,F300M',
-                         'jwst,F322W2', 'jwst,F323N', 'jwst,F335M', 'jwst,F356W',
-                         'jwst,F360M', 'jwst,F405N', 'jwst,F410M', 'jwst,F430M',
-                         'jwst,F444W', 'jwst,F460M', 'jwst,F466N', 'jwst,F470N',
-                         'jwst,F480M']
-    elif filt == 'hst':
-        filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m',
-                         'acs,wfc1,f814w', 'wfc3,ir,f125w', 'wfc3,ir,f160w']
-    elif filt == 'nirc2':
-        filt_list = ['nirc2,J', 'nirc2,H','nirc2,Kp', 'nirc2,K',
-                         'nirc2,Lp', 'nirc2,Ms', 'nirc2,Hcont',
-                         'nirc2,FeII', 'nirc2,Brgamma']
-    elif filt == 'jg':
-        filt_list = ['jg,J', 'jg,H', 'jg,K']
-    elif filt == 'ztf':
-        filt_list = ['ztf,g', 'ztf,r', 'ztf,i']
-    elif filt == 'misc':
-        filt_list=['nirc1,K', 'nirc1,H', 'ctio_osiris,K', 'ctio_osiris,H',
-                       'naco,H', 'naco,Ks']
-        
-            
-    print('Making isochrone')
-    iso = synthetic.IsochronePhot(6.7, 0, 1000, mass_sampling=10, filters=filt_list, rebin=True)
-    iso = iso.points
-
-    # First find masses that are the same
-    foo = []
-    for ii in iso['mass']:
-        tmp = np.where( orig['mass'] == ii)[0][0]
-        foo.append(tmp)
-        
-    assert len(foo) == len(iso)
-    orig = orig[foo]
-
-    # Identify the photometry columns
-    cols = list(iso.keys())
-    idx = []
-    for ii in range(len(cols)):
-        if cols[ii].startswith('mag'):
-            idx.append(ii)
-    mag_cols = np.array(cols)[idx]
-
-    # Test the consistency of each column with the original isochrone
-    for ii in mag_cols:
-        orig_mag = orig[ii]
-        new_mag = iso[ii]
-
-        np.testing.assert_allclose(orig_mag, new_mag, rtol=0.01, err_msg="{0} failed".format(ii))
-
-        # Also report median abs difference
-        diff = abs(orig_mag - new_mag)
-        print(('{0} median abs diff: {1}'.format(ii, np.median(diff))))
-
-
-    print(('Phot consistency test successful for {0}'.format(filt)))
-
-    # Remove iso file we just wrote, since it was only a test
-    os.remove('iso_6.70_0.00_01000.fits')
-    return
+#def test_phot_consistency(filt='all'):
+#    """
+#    Test photometric consistency of generated isochrone (IsochronePhot)
+#    against pre-generated isochrone with native filter sampling. Requires
+#    consistency to within 0.005 mag.
+#
+#    Base isochrone is at 5 Myr, AKs = 0, 1000 pc, mass_sampling=10 
+#
+#    Paramters:
+#    ----------
+#    filt: 'all', 'hst', 'vista', 'decam', 'ps1', 'jwst'
+#        Specify what filter set you want to test
+#
+#    """
+#    from astropy.table import Table
+#    import os
+#    
+#    # Load pre-generated isochrone, located in popstar tests directory
+#    direct = os.path.dirname(__file__)
+#    orig = Table.read(direct+'/iso_6.70_0.00_01000.fits', format='fits')
+#
+#    # Generate new isochrone with popstar code
+#    if filt == 'all':
+#        filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m',
+#                         'acs,wfc1,f814w', 'wfc3,ir,f125w', 'wfc3,ir,f160w',
+#                         'decam,y', 'decam,i', 'decam,z',
+#                         'decam,u', 'decam,g', 'decam,r',
+#                         'vista,Y', 'vista,Z', 'vista,J',
+#                         'vista,H',  'vista,Ks',
+#                         'ps1,z', 'ps1,g', 'ps1,r',
+#                         'ps1,i', 'ps1,y',
+#                         'jwst,F070W', 'jwst,F090W', 'jwst,F115W', 'jwst,F140M',
+#                         'jwst,F150W', 'jwst,F150W2', 'jwst,F162M', 'jwst,F164N',
+#                         'jwst,F182M', 'jwst,F187N', 'jwst,F200W', 'jwst,F212N',
+#                         'jwst,F210M','jwst,F250M', 'jwst,F277W', 'jwst,F300M',
+#                         'jwst,F322W2', 'jwst,F323N', 'jwst,F335M', 'jwst,F356W',
+#                         'jwst,F360M', 'jwst,F405N', 'jwst,F410M', 'jwst,F430M',
+#                         'jwst,F444W', 'jwst,F460M', 'jwst,F466N', 'jwst,F470N',
+#                         'jwst,F480M', 'nirc2,J', 'nirc2,H', 'nirc2,Kp', 'nirc2,K',
+#                         'nirc2,Lp', 'nirc2,Hcont',
+#                         'nirc2,FeII', 'nirc2,Brgamma',
+#                         'jg,J', 'jg,H', 'jg,K',
+#                         'nirc1,K', 'nirc1_H', 'ctio_osiris,K', 'ctio_osiris,H',
+#                         'naco,H', 'naco,Ks', 'ztf,g', 'ztf,r', 'ztf,i']
+#
+#    elif filt == 'decam':
+#        filt_list = ['decam,y', 'decam,i', 'decam,z',
+#                         'decam,u', 'decam,g', 'decam,r']
+#    elif filt == 'vista':
+#        filt_list = ['vista,Y', 'vista,Z', 'vista,J',
+#                         'vista,H', 'vista,Ks']
+#    elif filt == 'ps1':
+#        filt_list = ['ps1,z', 'ps1,g', 'ps1,r',  'ps1,i',
+#                         'ps1,y']
+#    elif filt == 'jwst':
+#        filt_list = ['jwst,F070W', 'jwst,F090W', 'jwst,F115W', 'jwst,F140M',
+#                         'jwst,F150W', 'jwst,F150W2', 'jwst,F162M', 'jwst,F164N',
+#                         'jwst,F182M', 'jwst,F187N', 'jwst,F200W', 'jwst,F212N',
+#                         'jwst,F210M','jwst,F250M', 'jwst,F277W', 'jwst,F300M',
+#                         'jwst,F322W2', 'jwst,F323N', 'jwst,F335M', 'jwst,F356W',
+#                         'jwst,F360M', 'jwst,F405N', 'jwst,F410M', 'jwst,F430M',
+#                         'jwst,F444W', 'jwst,F460M', 'jwst,F466N', 'jwst,F470N',
+#                         'jwst,F480M']
+#    elif filt == 'hst':
+#        filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m',
+#                         'acs,wfc1,f814w', 'wfc3,ir,f125w', 'wfc3,ir,f160w']
+#    elif filt == 'nirc2':
+#        filt_list = ['nirc2,J', 'nirc2,H','nirc2,Kp', 'nirc2,K',
+#                         'nirc2,Lp', 'nirc2,Ms', 'nirc2,Hcont',
+#                         'nirc2,FeII', 'nirc2,Brgamma']
+#    elif filt == 'jg':
+#        filt_list = ['jg,J', 'jg,H', 'jg,K']
+#    elif filt == 'ztf':
+#        filt_list = ['ztf,g', 'ztf,r', 'ztf,i']
+#    elif filt == 'misc':
+#        filt_list=['nirc1,K', 'nirc1,H', 'ctio_osiris,K', 'ctio_osiris,H',
+#                       'naco,H', 'naco,Ks']
+#        
+#            
+#    print('Making isochrone')
+#    iso = synthetic.IsochronePhot(6.7, 0, 1000, mass_sampling=10, filters=filt_list, rebin=True)
+#    iso = iso.points
+#
+#    # First find masses that are the same
+#    foo = []
+#    for ii in iso['mass']:
+#        tmp = np.where( orig['mass'] == ii)[0][0]
+#        foo.append(tmp)
+#        
+#    assert len(foo) == len(iso)
+#    orig = orig[foo]
+#
+#    # Identify the photometry columns
+#    cols = list(iso.keys())
+#    idx = []
+#    for ii in range(len(cols)):
+#        if cols[ii].startswith('mag'):
+#            idx.append(ii)
+#    mag_cols = np.array(cols)[idx]
+#
+#    # Test the consistency of each column with the original isochrone
+#    for ii in mag_cols:
+#        orig_mag = orig[ii]
+#        new_mag = iso[ii]
+#
+#        np.testing.assert_allclose(orig_mag, new_mag, rtol=0.01, err_msg="{0} failed".format(ii))
+#
+#        # Also report median abs difference
+#        diff = abs(orig_mag - new_mag)
+#        print(('{0} median abs diff: {1}'.format(ii, np.median(diff))))
+#
+#    print(('Phot consistency test successful for {0}'.format(filt)))
+#
+#    # Remove iso file we just wrote, since it was only a test
+#    os.remove('iso_6.70_0.00_01000.fits')
+#    return
 
 
 # Siess not supported anymore.

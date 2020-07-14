@@ -7,7 +7,7 @@ import pdb
 
 # Set path to filter functions
 code_dir = os.path.dirname(__file__)
-filters_dir = code_dir[:-8]+'/filt_func/'
+filters_dir = code_dir[:-7]+'/filt_func/'
 
 def get_nirc2_filt(name):
     """
@@ -17,6 +17,7 @@ def get_nirc2_filt(name):
     try:
         t = Table.read('{0}/nirc2/{1}.dat'.format(filters_dir, name), format='ascii')
     except:
+        pdb.set_trace()
         raise ValueError('Could not find NIRC2 filter file {0}/nirc2/{1}.dat'.format(filters_dir, name))
 
     wavelength = t[t.keys()[0]]

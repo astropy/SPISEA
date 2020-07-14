@@ -4,9 +4,9 @@
 IMF Object
 ==========
 Initial Mass Functions (IMFs) are defined as classes in
-popstar/imf/imf.py. These can be defined by::
+``spisea/imf/imf.py``. These can be defined by::
 
-  from popstar.imf import imf
+  from spisea.imf import imf
   imf_obj = imf.<class_name>
 
 The IMF object is an input for the :ref:`cluster_objects`, and will
