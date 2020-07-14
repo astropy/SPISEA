@@ -9,16 +9,16 @@ import warnings
 from astropy.table import Table, vstack, Column
 from scipy import interpolate
 import pylab as py
-from popstar.utils import objects
+from spisea.utils import objects
 
 logger = logging.getLogger('evolution')
 
 # Fetch root directory of evolution models.
 try:
-    models_dir = os.environ['POPSTAR_MODELS']
+    models_dir = os.environ['SPISEA_MODELS']
     models_dir += '/evolution/'
 except KeyError:
-    warnings.warn("POPSTAR_MODELS is undefined; functionality "
+    warnings.warn("SPISEA_MODELS is undefined; functionality "
                   "will be SEVERELY crippled.")
     models_dir = ''
     

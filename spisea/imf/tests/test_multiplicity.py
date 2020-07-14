@@ -39,7 +39,7 @@ def test_multiplicity_fraction():
     Test creating a MultiplicityUnresolved object and getting
     the multiplicity fraction out.
     """    
-    from popstar.imf import multiplicity
+    from spisea.imf import multiplicity
     
     # First set of multiplicity parameters
     mu1 = multiplicity.MultiplicityUnresolved()
@@ -73,7 +73,7 @@ def test_multiplicity_fraction_array():
     Test multiplicity_fraction() on the MultiplicityUnresolved object
     where the inputs and outputs are in array form.
     """
-    from popstar.imf import multiplicity
+    from spisea.imf import multiplicity
     
     # First set of multiplicity parameters
     mu1 = multiplicity.MultiplicityUnresolved()
@@ -90,7 +90,7 @@ def test_companion_star_fraction():
     """
     Test the companion_star fraction on the MultiplicityUnresolved object.
     """
-    from popstar.imf import multiplicity
+    from spisea.imf import multiplicity
 
     # First set of multiplicity parameters
     mu1 = multiplicity.MultiplicityUnresolved()
