@@ -301,6 +301,7 @@ class ResolvedCluster(Cluster):
             companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
             
         if isinstance(self.imf._multi_props, multiplicity.MultiplicityResolvedDK):
+            print("test")
             companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='log_a', description = 'degrees') )
             companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='e') )
             companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='i') )
