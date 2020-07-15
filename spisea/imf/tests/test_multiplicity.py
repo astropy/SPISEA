@@ -153,7 +153,7 @@ def test_resolvedmult():
     clust_imf_Mult = imf.Kroupa_2001(multiplicity=clust_multiplicity)
     
     # Make clusters
-    clust_Mult = synthetic.ResolvedCluster_ResolvedMult(iso_merged, clust_imf_Mult, clust_mtot)
+    clust_Mult = synthetic.ResolvedCluster(iso_merged, clust_imf_Mult, clust_mtot)
 
     clust_Mult_ss = clust_Mult.star_systems
     
