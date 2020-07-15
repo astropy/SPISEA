@@ -199,7 +199,28 @@ class MultiplicityUnresolved(object):
     
 class MultiplicityResolvedDK(MultiplicityUnresolved):
     """
-    Sub-class of MultiplicityUnresolved that adds semimajor axis and eccentricity information for multiple objects
+    Sub-class of MultiplicityUnresolved that adds semimajor axis and eccentricity information 
+    for multiple objects from distributions described in Duchene and Krauss 2013
+    
+    Parameters
+    --------------
+    a_amp - float, optional
+        Ampltiude of the broken power law describing the log_semimajoraxis
+        
+    a_break - float, optional
+        Break location on the x-axis of the broken power law describing the log_semimajoraxis
+    
+    a_slope1 - float, optional
+        Slope of the left side of the broken power law describing the log_semimajoraxis
+        
+    a_slope2 - float, optional
+        Slope of the right side of the broken power law describing the log_semimajoraxis
+        
+    a_std_slope - float, optional
+        Slope of the line that fit sigma_log_semimajoraxis vs log_mass
+    
+    a_std_intercept - float, optional
+        Intercept of the line that fit sigma_log_semimajoraxis vs log_mass        
     """
     def __init__(self, a_amp = 379.79953034, a_break = 4.90441533, a_slope1 = -1.80171539, 
                  a_slope2 = 4.23325571, a_std_slope = 1.19713084, a_std_intercept = 1.28974264, **kwargs):
