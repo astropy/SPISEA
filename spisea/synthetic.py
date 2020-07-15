@@ -299,6 +299,20 @@ class ResolvedCluster(Cluster):
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='phase') )
         for filt in self.filt_names:
             companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
+            
+        if isinstance(self.imf._multi_props, multiplicity.MultiplicityResolvedDK):
+            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='log_a', description = 'degrees') )
+            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='e') )
+            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='i') )
+            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Omega') )
+            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='omega') )
+            
+            for ii in range(len(companions)):
+                companions['log_a'][ii] = self.imf._multi_props.log_semimajoraxis(self.star_systems['mass'][self.companions['system_idx'][ii]])
+            
+            companions['e'] = self.imf._multi_props.random_e(np.random.rand(N_comp_tot))
+            companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(np.random.rand(N_comp_tot),np.random.rand(N_comp_tot),np.random.rand(N_comp_tot))
+
 
         # Make an array that maps system index (ii), companion index (cc) to
         # the place in the 1D companions array.
