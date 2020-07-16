@@ -72,3 +72,18 @@ request to the "dev" branch.
 
 All contributions will be acknowledged on the :ref:`contributors` page. Contributors with features used in code
 releases will be co-authors in future SPISEA software papers.
+
+
+Change Log
+----------
+
+2.0.0 (2020-0709)
+* Top-level software name change from PyPopStar to SPISEA (see
+  :ref:`version` for instructions to do this)
+
+1.0.1 (2020-06-24)
+* Bug fix for photometric column headers for some filters, added new tests regarding total cluster mass, small documentation edits
+
+1.0.0 (2019-12-01)
+* First Release
+
