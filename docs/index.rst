@@ -66,6 +66,10 @@ Contributions
 We encourage contributions to SPISEA, particular
 those that add support for star formation histories,
 new models, higher spectral resolution, etc.
-For feature additions, we ask that users fork or
-branch off of the development repository, make their changes,
-and then submit merge and pull requests.
+For feature additions, we ask that users make their
+own fork of the repository, make their changes, and then submit a pull
+request to the "dev" branch.
+
+All contributions will be acknowledged in the
+ :ref:`contributors` file. Contributors with features used in future code
+releases will be co-authors in future SPISEA software papers.
