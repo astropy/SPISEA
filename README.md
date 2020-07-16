@@ -21,7 +21,9 @@ See [documentation](https://spisea.readthedocs.io/en/latest/) for details on
 and running SPISEA. We also provide jupyter notebooks with a 
 [quick-start tutorial](https://github.com/astropy/SPISEA/blob/main/docs/Quick_Start_Make_Cluster.ipynb)
 and [additional examples](https://github.com/astropy/SPISEA/tree/main/docs/paper_examples)
-demonstrating how to use SPISEA. 
+demonstrating how to use SPISEA.
+
+If you use SPISEA in your research, please cite [Hosek et al. (2020)](https://ui.adsabs.harvard.edu/abs/2020arXiv200606691H/abstract).
 
 ## Version Update
 Version 1 of this software package was called PyPopStar. Due to a naming conflict,
@@ -39,7 +41,7 @@ own fork of the repository, make their changes, and then submit a pull
 request to the "dev" branch.
 
 All contributions will be acknowledged in the
-contributors file. Contributors with features used in future code
+[contributors page](). Contributors with features used in future code
 releases will be co-authors in future SPISEA software papers.
 
 ## License
