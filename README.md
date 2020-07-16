@@ -40,8 +40,9 @@ resolution, etc. For feature additions, we ask that users make their
 own fork of the repository, make their changes, and then submit a pull
 request to the "dev" branch.
 
-All contributions will be acknowledged in the [contributors page](https://spisea.readthedocs.io/en/dev/contributors.html#contributors). Contributors with features used in future code
-releases will be co-authors in future SPISEA software papers.
+All contributions will be acknowledged in the
+[contributors page](https://spisea.readthedocs.io/en/dev/contributors.html#contributors). Contributors
+with features used in code releases will be co-authors in future SPISEA software papers.
 
 ## License
 This project is Copyright (c) Matthew Hosek Jr., Jessica Lu, Casey
