@@ -13,7 +13,17 @@ To call a multiplicity class::
   multi_obj = multiplicity.<class_name>
 
 The multiplicity object is an input for the :ref:`imf_objects`, as it
-impacts how the stellar masses are drawn.  
+impacts how the stellar masses are drawn.
+
+The user can choose either
+an unresolved or a resolved multiplicity object. If a resolved
+multiplicity object is selected, then orbital parameters are
+assigned to each companion star (e.g semi-major axis, eccentricity,
+inclination). These values are added as additional columns in the ``companions``
+table off of the cluster object. Note that the synthetic photometry
+for the system is unchanged, i.e., the photometry reported in the
+``star_systems`` table off the cluster object still reports the combined photometry of the entire
+system. 
 
 
 
