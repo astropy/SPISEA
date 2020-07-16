@@ -17,8 +17,14 @@ impacts how the stellar masses are drawn.
 
 
 
-Stellar Multiplicity Classes
+Unresolved Multiplicity Classes
 ------------------------------------------
 .. autoclass:: imf.multiplicity.MultiplicityUnresolved
 	       :members: companion_star_fraction,
 			 multiplicity_fraction, random_q
+
+
+Resolved Multiplicity Classes
+------------------------------------------
+.. autoclass:: imf.multiplicity.MultiplicityResolvedDK
+	       :show-inheritance:
