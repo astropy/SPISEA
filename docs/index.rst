@@ -77,7 +77,7 @@ releases will be co-authors in future SPISEA software papers.
 Change Log
 ----------
 
-2.0.0 (2020-0709)
+2.0.0 (2020-07-09)
 
   * Top-level software name change from PyPopStar to SPISEA (see :ref:`version` for instructions to do this)
 
