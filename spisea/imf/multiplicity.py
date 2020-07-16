@@ -200,26 +200,26 @@ class MultiplicityUnresolved(object):
 class MultiplicityResolvedDK(MultiplicityUnresolved):
     """
     Sub-class of MultiplicityUnresolved that adds semimajor axis and eccentricity information 
-    for multiple objects from distributions described in Duchene and Krauss 2013
+    for multiple objects from distributions described in Duchene and Kraus 2013
     
     Parameters
     --------------
-    a_amp - float, optional
+    a_amp: float, optional
         Ampltiude of the broken power law describing the log_semimajoraxis
         
-    a_break - float, optional
+    a_break: float, optional
         Break location on the x-axis of the broken power law describing the log_semimajoraxis
     
-    a_slope1 - float, optional
+    a_slope1: float, optional
         Slope of the left side of the broken power law describing the log_semimajoraxis
         
-    a_slope2 - float, optional
+    a_slope2: float, optional
         Slope of the right side of the broken power law describing the log_semimajoraxis
         
-    a_std_slope - float, optional
+    a_std_slope: float, optional
         Slope of the line that fit sigma_log_semimajoraxis vs log_mass
     
-    a_std_intercept - float, optional
+    a_std_intercept: float, optional
         Intercept of the line that fit sigma_log_semimajoraxis vs log_mass        
     """
     def __init__(self, a_amp = 379.79953034, a_break = 4.90441533, a_slope1 = -1.80171539, 
@@ -235,7 +235,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
     def log_semimajoraxis(self, mass):
         """
         Generate the semimajor axis for a given mass. The mean and standard deviation of a given mass are determined 
-        by fitting the data from fitting the semimajor axis data as a function of mass in table 1 of Duchene and Krauss 2013.
+        by fitting the data from fitting the semimajor axis data as a function of mass in table 1 of Duchene and Kraus 2013.
         Then a random semimajor axis is drawn from a log normal distribution with that mean and standard deviation.
         
         Parameters
@@ -263,7 +263,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
     
     def random_e(self, x):
         """
-        Generate random eccentricity from the inverse of the CDF where the PDF is f(e) = 2e from Duchene and Krauss 2013
+        Generate random eccentricity from the inverse of the CDF where the PDF is f(e) = 2e from Duchene and Kraus 2013
         
         Parameters
         ----------
