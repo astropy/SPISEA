@@ -70,6 +70,5 @@ For feature additions, we ask that users make their
 own fork of the repository, make their changes, and then submit a pull
 request to the "dev" branch.
 
-All contributions will be acknowledged in the
- :ref:`contributors` file. Contributors with features used in future code
+All contributions will be acknowledged on the :ref:`contributors` page. Contributors with features used in future code
 releases will be co-authors in future SPISEA software papers.
