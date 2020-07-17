@@ -9,16 +9,16 @@ import warnings
 from astropy.table import Table, vstack, Column
 from scipy import interpolate
 import pylab as py
-from popstar.utils import objects
+from spisea.utils import objects
 
 logger = logging.getLogger('evolution')
 
 # Fetch root directory of evolution models.
 try:
-    models_dir = os.environ['POPSTAR_MODELS']
+    models_dir = os.environ['SPISEA_MODELS']
     models_dir += '/evolution/'
 except KeyError:
-    warnings.warn("POPSTAR_MODELS is undefined; functionality "
+    warnings.warn("SPISEA_MODELS is undefined; functionality "
                   "will be SEVERELY crippled.")
     models_dir = ''
     
@@ -1401,7 +1401,7 @@ class MergedSiessGenevaPadova(StellarEvolution):
         iso.rename_column('col4', 'logg')
         iso.rename_column('col5', 'logT_WR')
         iso.rename_column('col6', 'model_ref')
-
+        
         iso.meta['log_age'] = log_age
         iso.meta['metallicity_in'] = metallicity
         iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)

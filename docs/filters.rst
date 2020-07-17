@@ -21,7 +21,7 @@ These strings follow the format ``<telescope/filter_set>,<filter>``.
 Note that there is no space after the comma, and case matters.
 
 Filter transmissions are stored in specific sub-directories
-in PyPopStar/filt_func. The functions in popstar/filters.py tell
+in ``SPISEA/filt_func``. The functions in ``spisea/filters.py`` tell
 the :ref:`isochrone_objects` how to interpret the filter strings
 and pull the corresponding transmission functions from the filt_func
 directories.
@@ -79,10 +79,8 @@ Note that three sets are available: the pre-launch passbands used in DR1
 (`Jordi+10
 <https://ui.adsabs.harvard.edu/abs/2010A%26A...523A..48J/abstract>`_),
 the passbands used for the DR2 published photometry, and
-the *revised* DR2 passbands based on the DR2 data (October 2017). The
-user specifies which one they want by 'dr1', 'dr2', or 'dr2_rev', respectively.
-
-To calculate synthetic fluxes, the dr2_rev passbands are advised.
+the *revised* DR2 passbands based on the DR2 data (October 2017).
+ONLY THE REVISED DR2 PASSBANDS ARE SUPPORTED BY SPISEA.
 
 Filters: G, Gbp, Grp
 

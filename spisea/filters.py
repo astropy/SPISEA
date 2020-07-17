@@ -7,7 +7,7 @@ import pdb
 
 # Set path to filter functions
 code_dir = os.path.dirname(__file__)
-filters_dir = code_dir[:-8]+'/filt_func/'
+filters_dir = code_dir[:-7]+'/filt_func/'
 
 def get_nirc2_filt(name):
     """
@@ -17,6 +17,7 @@ def get_nirc2_filt(name):
     try:
         t = Table.read('{0}/nirc2/{1}.dat'.format(filters_dir, name), format='ascii')
     except:
+        pdb.set_trace()
         raise ValueError('Could not find NIRC2 filter file {0}/nirc2/{1}.dat'.format(filters_dir, name))
 
     wavelength = t[t.keys()[0]]
@@ -334,11 +335,19 @@ def get_keck_osiris_filt(name):
 
 def get_gaia_filt(version, name):
     """
-    Define Gaia filters as pysynphot object
+    Define Gaia filters as pysynphot object.
+    To avoid confusion, we will only support 
+    the revised DR2 zeropoints from 
+    Evans+18.
 
     version: specify dr1, dr2, or dr2_rev
     name: filter name
     """
+    # Assert that we are using the revised DR2 zeropoints
+    if version != 'dr2_rev':
+        msg = 'Gaia version {0} not supported, use dr2_rev instead'.format(version)
+        raise ValueError(msg)
+
     # Set the filter directory
     if version == 'dr1':
         path = '{0}/gaia/dr1/'.format(filters_dir)

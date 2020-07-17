@@ -38,7 +38,7 @@ def test_multiplicity_fraction():
     Test creating a MultiplicityUnresolved object and getting
     the multiplicity fraction out.
     """    
-    from popstar.imf import multiplicity
+    from spisea.imf import multiplicity
     
     # First set of multiplicity parameters
     mu1 = multiplicity.MultiplicityUnresolved()
@@ -58,13 +58,13 @@ def test_multiplicity_fraction():
                                              q_power=0.4, q_min=0.04)
 
     mf2_1 = mu1.multiplicity_fraction(1.0)
-    nose.tools.assert_almost_equal(mf2_1, 0.4, places=2)
+    nose.tools.assert_almost_equal(mf2_1, 0.44, places=2)
 
     mf2_2 = mu1.multiplicity_fraction(10.0)
     nose.tools.assert_almost_equal(mf2_2, 1.0, places=2)
 
     mf2_3 = mu1.multiplicity_fraction(0.1)
-    nose.tools.assert_almost_equal(mf2_3, 0.159, places=2)
+    nose.tools.assert_almost_equal(mf2_3, 0.136, places=2)
 
 
 def test_multiplicity_fraction_array():
@@ -72,7 +72,7 @@ def test_multiplicity_fraction_array():
     Test multiplicity_fraction() on the MultiplicityUnresolved object
     where the inputs and outputs are in array form.
     """
-    from popstar.imf import multiplicity
+    from spisea.imf import multiplicity
     
     # First set of multiplicity parameters
     mu1 = multiplicity.MultiplicityUnresolved()
@@ -89,7 +89,7 @@ def test_companion_star_fraction():
     """
     Test the companion_star fraction on the MultiplicityUnresolved object.
     """
-    from popstar.imf import multiplicity
+    from spisea.imf import multiplicity
 
     # First set of multiplicity parameters
     mu1 = multiplicity.MultiplicityUnresolved()

@@ -4,13 +4,13 @@
 Adding Evolution Models
 ========================================
 Need an evolution model not listed among those pre-packaged
-with PyPopStar? No problem! With the additional documentation provided
-below, you can implement your own evolution models into the PyPopStar
+with SPISEA? No problem! With the additional documentation provided
+below, you can implement your own evolution models into the SPISEA
 framework.
 
 If you have questions or run into problems, please raise an issue on
-our Github `issue tracker <https://github.com/astropy/PyPopStar/issues>`_. If you are willing to
-have the new models you add be added to the PyPopStar package and made
+our Github `issue tracker <https://github.com/astropy/SPISEA/issues>`_. If you are willing to
+have the new models you add be added to the SPISEA package and made
 available to the community, please fork or branch off of the
 development repository and then submit merge requests to add your
 changes to the package. These contributions will be added to the
@@ -29,15 +29,15 @@ sub-class. If you want to add a brand new model grid, you will need to
 create a new sub-class for that model.
 
 The evolution model grids are packaged as individual isochrone files
-in PyPopStar. These files are originally downloaded from the website
-for the given evolution model, modified to match the required PyPopStar
+in SPISEA. These files are originally downloaded from the website
+for the given evolution model, modified to match the required SPISEA
 formatting, and then saved in the proper location in the model
 directory tree.
 
 The isochrone files are stored in the
-``$POPSTAR_MODELS/evolution/`` directory. Each evolution model grid is contained
+``$SPISEA_MODELS/evolution/`` directory. Each evolution model grid is contained
 in its own sub-directory; for example,
-``$POPSTAR_MODELS/evolution/PARSECV1.2s`` contains the PARSEC
+``$SPISEA_MODELS/evolution/PARSECV1.2s`` contains the PARSEC
 isochrones.
 Each of these sub-directories has a similar structure::
 
@@ -52,13 +52,13 @@ The metallicity directories are named ``z<mass_fraction>``, where
 isochrone files saved as FITS tables with the name convention
 ``iso_<logAge>.fits``, where <logAge> is the log(age) of the
 population. While the ``<mass_fraction>`` can be any
-number of digits you want, PyPopStar expects the <logAge> to
+number of digits you want, SPISEA expects the <logAge> to
 always have two places after the decimal.
 
 The individual ``iso_<logAge>.fits`` files are FITS tables (readable
 by `Astropy Table <https://docs.astropy.org/en/stable/table/>`_.), with one isochrone
 (i.e., one age) per file. The column names must match those expected
-by PyPopStar, which are generic (col1, col2, col3, etc). The mapping
+by SPISEA, which are generic (col1, col2, col3, etc). The mapping
 between these generic names and the detailed names actually used by the
 code is defined in the ``<evolution sub_class>.isochrone()``
 function. Within this function, there is a section renaming these
@@ -75,7 +75,7 @@ model grid are:
 1. Download the raw isochrones from the evolution model website.
    Ideally the user would use same age sampling as the solar
    metallicity model grid (see  :ref:`new_ages`). 
-2. Reformat the raw isochrones into PyPopStar format. They should be
+2. Reformat the raw isochrones into SPISEA format. They should be
    saved in the appropriate metallicity sub-directory
    (see :ref:`setup`). 
 3. Edit the evolution object in evolution.py so it knows about the new
@@ -85,8 +85,8 @@ model grid are:
      * ``self.z_file_map``: edit dictionary to map new metallicities with
        new metallicity sub-directory names.
 4. (optional, but highly recommended if planning to merge local edits into
-   PyPopStar development branch for community use)
-   Add a test function to ``popstar/tests/test_synthetic.py`` to make sure everything is working properly.
+   SPISEA development branch for community use)
+   Add a test function to ``spisea/tests/test_synthetic.py`` to make sure everything is working properly.
 
  
 .. _new_ages:
@@ -104,7 +104,7 @@ new models (e.g., new metallicities, etc).
 
 If the user needs to change the available age range for an existing
 model grid, please let us know via the  Github `issue tracker
-<https://github.com/astropy/PyPopStar/issues>`_. 
+<https://github.com/astropy/SPISEA/issues>`_. 
 
 
 Creating a New Model Grid
@@ -112,7 +112,7 @@ Creating a New Model Grid
 To create an entirely new model set, the user needs to define a new
 ``StellarEvolution`` sub-class corresponding to that object and set up
 the appropriate directory structure in the
-``$POPSTAR_MODELS/evolution`` directory. Detailed documentation on
+``$SPISEA_MODELS/evolution`` directory. Detailed documentation on
 this is coming soon. In the meantime, let us know on the  Github `issue tracker
-<https://github.com/astropy/PyPopStar/issues>`_ if you'd like to
+<https://github.com/astropy/SPISEA/issues>`_ if you'd like to
 implement a new model set. 

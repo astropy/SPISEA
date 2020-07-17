@@ -1,9 +1,10 @@
 import numpy as np
 import pylab as plt
-from popstar import reddening
-from popstar import evolution
-from popstar import atmospheres as atm
-from popstar import filters 
+from spisea import reddening
+from spisea import evolution
+from spisea import atmospheres as atm
+from spisea import filters
+from spisea.imf import imf, multiplicity
 from scipy import interpolate
 from scipy import stats
 from scipy.special import erf
@@ -13,8 +14,6 @@ from pysynphot import observation as obs
 import pysynphot
 from astropy import constants, units
 from astropy.table import Table, Column, MaskedColumn
-from popstar.imf import imf, multiplicity
-from popstar.utils import objects
 import pickle
 import time, datetime
 import math
@@ -42,7 +41,7 @@ def Vega():
                                      metallicity=-0.5)
 
     # Following the K93 README, set wavelength range to 0.1 - 10 microns.
-    # This defines the maximum allowed wavelength range in pypopstar
+    # This defines the maximum allowed wavelength range in SPISEA
     vega = spectrum.trimSpectrum(vega, 995, 100200)
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
@@ -61,10 +60,10 @@ class Cluster(object):
     Parameters
     -----------
     iso: isochrone object
-        PyPopStar isochrone object
+        SPISEA isochrone object
     
     imf: imf object
-        PyPopStar IMF object
+        SPISEA IMF object
 
     cluster_mass: float
         Total initial mass of the cluster, in M_sun
@@ -107,10 +106,10 @@ class ResolvedCluster(Cluster):
     Parameters
     -----------
     iso: isochrone object
-        PyPopStar isochrone object
+        SPISEA isochrone object
     
     imf: imf object
-        PyPopStar IMF object
+        SPISEA IMF object
 
     cluster_mass: float
         Total initial mass of the cluster, in M_sun
@@ -463,10 +462,10 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
     Parameters
     -----------
     iso: isochrone object
-        PyPopStar isochrone object
+        SPISEA isochrone object
     
     imf: imf object
-        PyPopStar IMF object
+        SPISEA IMF object
 
     cluster_mass: float
         Total initial mass of the cluster, in M_sun
@@ -554,10 +553,10 @@ class UnresolvedCluster(Cluster):
     Parameters
     -----------
     iso: isochrone object
-        PyPopStar isochrone object
+        SPISEA isochrone object
     
     imf: imf object
-        PyPopStar IMF object
+        SPISEA IMF object
 
     cluster_mass: float
         Total initial mass of the cluster, in M_sun
@@ -1159,9 +1158,9 @@ class iso_table(object):
             The log of the age of the isochrone.
         distance : float
             The distance in pc.
-        evo_model : PopStar evolution object
+        evo_model : SPISEA evolution object
             Stellar evolution models used
-        atm_func: PopStar atmosphere object
+        atm_func: SPISEA atmosphere object
             Atmospheric models used
         mass_sampling - Sample the raw isochrone every ## steps. The default
                        is mass_sampling = 10, which takes every 10th point.
@@ -1279,7 +1278,7 @@ class iso_table(object):
         AKs: float
             Total extinction in AKs
             
-        extinction_law: popstar extinction object
+        extinction_law: SPISEA extinction object
             Extinction law to be used on the spectra
 
         dAks: float (default = 0)
@@ -1384,7 +1383,7 @@ class iso_table(object):
 def get_filter_info(name, vega=vega, rebin=True):
     """ 
     Define filter functions, setting ZP according to
-    Vega spectrum. Input name is the popstar
+    Vega spectrum. Input name is the SPISEA
     obs_string
     """
     tmp = name.split(',')
@@ -1475,7 +1474,7 @@ def get_filter_col_name(obs_str):
     """
     Get standard column name for synthetic photometry based on 
     the input string. The input string is expected to be an
-    appropriate popstar obs_string
+    appropriate SPISEA obs_string
     """
     # How we deal with obs_string is slightly different depending
     # if it is an hst filter (and thus pysynphot syntax) or our
@@ -1483,7 +1482,11 @@ def get_filter_col_name(obs_str):
     tmp = obs_str.split(',')
 
     if len(tmp) == 3:
-        filt_name = 'hst_{0}'.format(tmp[-1])
+        # Catch Gaia filter cases. Otherwise, it is HST filter
+        if 'dr2_rev' in tmp:
+            filt_name = 'gaiaDR2_{0}'.format(tmp[-1])
+        else:
+            filt_name = 'hst_{0}'.format(tmp[-1])
     else:
         filt_name = '{0}_{1}'.format(tmp[0], tmp[1])
         
@@ -1491,7 +1494,7 @@ def get_filter_col_name(obs_str):
 
 def get_obs_str(col):
     """
-    Helper function to get the associated popstar obs_str given
+    Helper function to get the associated SPISEA obs_str given
     a column name
     """
     # Remove the trailing m_
@@ -1528,6 +1531,7 @@ def get_obs_str(col):
                  'jwst_F405N': 'jwst,F405N',
                  'jwst_F410M': 'jwst,F410M',
                  'jwst_F430M': 'jwst,F430M',
+                 'jwst_F444W': 'jwst,F444W',
                  'jwst_F440W': 'jwst,F440W',
                  'jwst_F460M': 'jwst,F460M',
                  'jwst_F470N': 'jwst,F470N',
@@ -1535,9 +1539,17 @@ def get_obs_str(col):
                  'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
                  'nirc2_Lp': 'nirc2,Lp', 'nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
                  'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
+                 '2mass_J': '2mass,J', '2mass_H': '2mass,H', '2mass_Ks': '2mass,Ks',
+                 'ubv_U':'ubv,U', 'ubv_B':'ubv,B', 'ubv_V':'ubv,V', 'ubv_R':'ubv,R',
+                 'ubv_I':'ubv,I', 
                  'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K',
-                 'nirc1_K':'nirc1,K', 'ctio_osiris_K': 'ctio_osirirs,K',
-                 'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i'}
+                 'nirc1_K':'nirc1,K', 'nirc1_H':'nirc1,H',
+                 'naco_J':'naco,J', 'naco_H':'naco,H', 'naco_Ks':'naco,Ks',
+                 'ukirt_J':'ukirt,J', 'ukirt_H':'ukirt,H', 'ukirt_K':'ukirt,K',
+                 'ctio_osiris_H': 'ctio_osiris,H', 'ctio_osiris_K': 'ctio_osiris,K',
+                 'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i',
+                 'gaiaDR2_G': 'gaia,dr2_rev,G', 'gaiaDR2_Gbp':'gaia,dr2_rev,Gbp',
+                 'gaiaDR2_Grp':'gaia,dr2_rev,Grp'}
 
     obs_str = filt_list[name]
         
@@ -1577,13 +1589,13 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
     dist_arr: array
         Array of distances to loop over (pc)
  
-    evo_models: popstar evolution object
+    evo_models: SPISEA evolution object
         Which evolution models to use
 
-    atm_models: popstar atmospheres object
+    atm_models: SPISEA atmospheres object
         Which atmosphere models to use
 
-    redlaw: popstar reddening object
+    redlaw: SPISEA reddening object
         Which reddening law to use
 
     iso_dir: str
@@ -1619,7 +1631,7 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
 
     # Also, save a README file in iso directory documenting the params used
     _out = open(iso_dir+'README.txt', 'w')
-    _out.write('Popstar parameters used to generate isochrone grid:\n')
+    _out.write('SPISEA parameters used to generate isochrone grid:\n')
     _out.write('Evolutionary Models: {0}\n'.format(evo_model))
     _out.write('Atmospheric Models: {0}\n'.format(atm_func))
     _out.write('Reddening Law: {0}\n'.format(redlaw))

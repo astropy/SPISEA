@@ -17,6 +17,8 @@ class MultiplicityUnresolved(object):
     The properties of stellar companions (see notes below). 
     The default parameters are as described in 
     `Lu et al. 2013 <https://ui.adsabs.harvard.edu/abs/2013ApJ...764..155L/abstract>`_.
+    These parameters are most appropriate for stellar populations
+    with ages <10 Myr.
 
     Notes
     -----

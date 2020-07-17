@@ -139,7 +139,6 @@ class IMF(object):
                 
             # Dealing with multiplicity
             if self._multi_props != None:
-                #compMasses = [[] for newMass in newMasses]
                 compMasses = np.empty((len(newMasses),), dtype=np.object)
                 compMasses.fill([])
                 
@@ -152,52 +151,14 @@ class IMF(object):
                 # Copy over the primary masses. Eventually add the companions.
                 newSystemMasses = newMasses.copy()
 
-                #------New code-------#
-                new = True
-                if new:
-                    # Function to calculate multiple systems more efficiently
-                    #t1 = time.time()
-                    compMasses, newSystemMasses, newIsMultiple = self.calc_multi(newMasses, compMasses,
-                                                                                 newSystemMasses, newIsMultiple,
-                                                                                    CSF, MF)
+                # Function to calculate multiple systems more efficiently
+                compMasses, newSystemMasses, newIsMultiple = self.calc_multi(newMasses, compMasses,
+                                                                             newSystemMasses, newIsMultiple,
+                                                                             CSF, MF)
 
-                    newTotalMassTally = newSystemMasses.sum()
-                    isMultiple = np.append(isMultiple, newIsMultiple)
-                    systemMasses = np.append(systemMasses, newSystemMasses)
-                    #t2 = time.time()
-                    #print('Generate multiples: {0}'.format(t2 - t1))
-                #------Previous code------#
-                old = False
-                if old:
-                    # Calculate number and masses of companions
-                    t1 = time.time()
-                    for ii in range(len(newMasses)):
-                        if newIsMultiple[ii]:
-                            # determine number of companions
-                            n_comp = 1 + np.random.poisson((CSF[ii]/MF[ii]) - 1)
-
-                            # Determine the mass ratios of the companions
-                            q_values = self._multi_props.random_q(np.random.rand(n_comp))
-
-                            # Determine the masses of the companions
-                            m_comp = q_values * newMasses[ii]
-
-                            # Add in seperation information
-
-                            # Only keep companions that are more than the minimum mass
-                            compMasses[ii] = m_comp[m_comp >= self._mass_limits[0]]
-                            newSystemMasses[ii] += compMasses[ii].sum()
-
-                            # Double check for the case when we drop all companions.
-                            # This happens a lot near the minimum allowed mass.
-                            if len(compMasses) == 0:
-                                newIsMultiple[ii] == False
-                #-----------------------------------#
-                    newTotalMassTally = newSystemMasses.sum()
-                    isMultiple = np.append(isMultiple, newIsMultiple)
-                    systemMasses = np.append(systemMasses, newSystemMasses)
-                    t2 = time.time()
-                    print( 'All loop: {0}'.format(t2 - t1))
+                newTotalMassTally = newSystemMasses.sum()
+                isMultiple = np.append(isMultiple, newIsMultiple)
+                systemMasses = np.append(systemMasses, newSystemMasses)
             else:
                 newTotalMassTally = newMasses.sum()
 
@@ -360,15 +321,35 @@ class IMF_broken_powerlaw(IMF):
         returnFloat = type(m) == float
         
         m = np.atleast_1d(m)
-        xi = np.zeros(len(m), dtype=float)
-        
-        for i in range(len(xi)):
-            tmp = gamma_closed(m[i], self._m_limits_low, self._m_limits_high)
-            tmp *= self.coeffs * m[i]**self.powers
-            y = tmp.sum()
-            z = delta(m[i] - self._m_limits_high).prod()
-            xi[i] = self.k * z * y
 
+        # Temporary arrays
+        y = np.zeros(len(m), dtype=float)
+        z = np.ones(len(m), dtype=float)
+
+        # Loop through the different segments of the power law.
+        for i in range(self.nterms): # For i = 0 --> n, where n is the number of intervals
+            aux = m - self._m_limits_low[i] #---Should this be i - 1?
+
+            # Only continue for those entries that are in later segments
+            idx = np.where(aux >= 0)[0]
+
+            # Maybe we are all done?
+            if len(idx) == 0:
+                break
+            
+            m_tmp = m[idx]
+            aux_tmp = aux[idx]
+
+            y_i = gamma_closed(m_tmp, self._m_limits_low[i], self._m_limits_high[i])
+            y_i *= self.coeffs[i] * m_tmp**self._powers[i]
+
+            # Save results into the y array
+            y[idx] += y_i
+
+            z *= delta(m - self._m_limits_high[i])
+
+        xi = self.k * z * y
+        
         if returnFloat:
             return xi[0]
         else:
@@ -381,14 +362,35 @@ class IMF_broken_powerlaw(IMF):
         returnFloat = type(m) == float
         m = np.atleast_1d(m)
         mxi = np.zeros(len(m), dtype=float)
-        
-        for i in range(len(mxi)):
-            tmp = gamma_closed(m[i], self._m_limits_low, self._m_limits_high)
-            tmp *= self.coeffs * m[i]**(self.powers+1)
-            y = tmp.sum()
-            z = delta(m[i] - self._m_limits_high).prod()
-            mxi[i] = self.k * z * y
 
+        # Temporary arrays
+        y = np.zeros(len(m), dtype=float)
+        z = np.ones(len(m), dtype=float)
+
+        # Loop through the different segments of the power law.
+        for i in range(self.nterms): # For i = 0 --> n, where n is the number of intervals
+            aux = m - self._m_limits_low[i] #---Should this be i - 1?
+
+            # Only continue for those entries that are in later segments
+            idx = np.where(aux >= 0)[0]
+
+            # Maybe we are all done?
+            if len(idx) == 0:
+                break
+            
+            m_tmp = m[idx]
+            aux_tmp = aux[idx]
+
+            y_i = gamma_closed(m_tmp, self._m_limits_low[i], self._m_limits_high[i])
+            y_i *= self.coeffs[i] * m_tmp**(self._powers[i] + 1)
+
+            # Save results into the y array
+            y[idx] += y_i
+
+            z *= delta(m - self._m_limits_high[i])
+
+        mxi = self.k * z * y
+        
         if returnFloat:
             return mxi[0]
         else:
@@ -593,7 +595,7 @@ class IMF_broken_powerlaw(IMF):
         z = np.ones(len(r), dtype=float)
 
         # Loop through the different parts of the power law.
-        for i in range(self.nterms): #-----For i = 1 --> n, where n is the number of intervals?
+        for i in range(self.nterms): #-----For i = 0 --> n, where n is the number of intervals
             aux = x - self.lamda[i] #---Should this be i - 1?
             
             # Only continue for those entries that are in later segments
@@ -842,8 +844,7 @@ def theta_closed(x):
     isFloat = type(x) == float
 
     x = np.atleast_1d(x)
-    val = np.ones(len(x), dtype=float)
-    val[x < 0] = 0.0
+    val = (x >= 0).astype('float')
 
     if isFloat:
         return val[0]
@@ -858,8 +859,7 @@ def theta_open(x):
     isFloat = type(x) == float
 
     x = np.atleast_1d(x)
-    val = np.zeros(len(x), dtype=float)
-    val[x > 0] = 1.0
+    val = (x > 0).astype('float')
 
     if isFloat:
         return val[0]
