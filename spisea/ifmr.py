@@ -710,7 +710,6 @@ class IFMR_Raithel17(IFMR):
         """
         return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
 
-
     def generate_death_mass(self, mass_array):
         """
         The top-level function that assigns the remnant type 
