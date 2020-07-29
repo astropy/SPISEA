@@ -113,7 +113,7 @@ class IMF(object):
         # Generate output arrays.
         masses = np.array([], dtype=float)
         isMultiple = np.array([], dtype=bool)
-        compMasses = []
+        compMasses = np.array([], dtype=np.object)
         systemMasses = np.array([], dtype=float)
 
         # Loop through and add stars to the cluster until we get to
@@ -139,8 +139,8 @@ class IMF(object):
                 
             # Dealing with multiplicity
             if self._multi_props != None:
-                compMasses = np.empty((len(newMasses),), dtype=np.object)
-                compMasses.fill([])
+                newCompMasses = np.empty((len(newMasses),), dtype=np.object)
+                newCompMasses.fill([])
                 
                 # Determine the multiplicity of every star
                 MF = self._multi_props.multiplicity_fraction(newMasses)
@@ -152,13 +152,14 @@ class IMF(object):
                 newSystemMasses = newMasses.copy()
 
                 # Function to calculate multiple systems more efficiently
-                compMasses, newSystemMasses, newIsMultiple = self.calc_multi(newMasses, compMasses,
-                                                                             newSystemMasses, newIsMultiple,
-                                                                             CSF, MF)
+                newCompMasses, newSystemMasses, newIsMultiple = self.calc_multi(newMasses, newCompMasses,
+                                                                                newSystemMasses, newIsMultiple,
+                                                                                CSF, MF)
 
                 newTotalMassTally = newSystemMasses.sum()
                 isMultiple = np.append(isMultiple, newIsMultiple)
                 systemMasses = np.append(systemMasses, newSystemMasses)
+                compMasses = np.append(compMasses, newCompMasses)
             else:
                 newTotalMassTally = newMasses.sum()
 
