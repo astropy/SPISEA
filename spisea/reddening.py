@@ -1100,12 +1100,14 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
 
     Note: lambda_limits must be continuous in wavelength and K_wave must be 
     within one of the section defined by the lambda_limits array.
+    
+    Units of lambda_limits array is microns.
 
     Parameters
     ----------
     lambda_limits : numpy array
         Array of length (N + 1) with lower and upper wavelength limits of 
-        the power-law segments.
+        the power-law segments. Units are microns.
 
     alpha_vals : numpy array
         Array of length N that contains the powers for each
@@ -1114,13 +1116,19 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
     K_wave : float
         Extinction law is normalized such that AKs = 1 at `K_wave`.
     """
-    def __init__(self, lamba_limits, alpha_vals, K_wave):
+    def __init__(self, lambda_limits, alpha_vals, K_wave):
         # Fetch the extinction curve, pre-interpolate across defined wavelength range
-        wave = np.arange(np.min(lambda_limits, np.max(lambda_limits), 0.001)
-        
+        wave = np.arange(np.min(lambda_limits), np.max(lambda_limits), 0.001)
+
+        # Assert that K_wave is within lambda_limits
+        try:
+            assert (K_wave >= np.min(lambda_limits)) & (K_wave <= np.max(lambda_limits))
+        except:
+            raise Exception('K_wave not within lambda_limits bounds')
+
         # This will eventually be scaled by AK when you
         # call reddening(). Right now, calc for AKs=1
-        Alambda_scaled = RedLawPowerLaw._derive_broken_powerlaw(wave, lambda_limits, alpha_vals, K_wave)
+        Alambda_scaled = RedLawBrokenPowerLaw._derive_broken_powerlaw(wave, lambda_limits, alpha_vals, K_wave)
 
         # Convert wavelength to angstrom
         wave *= 10 ** 4
@@ -1152,25 +1160,43 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
         K_wave: float
             Desired K-band wavelength, in microns
         """
-        # Find the lambda segment K_wave is a part of
-        tmp_K = np.where(K_wave > lambda_limits)[0]
-        assert len(tmp_K) > 0 # Make sure K_wave is above the lowest wavelength segment in array
-        assert len(tmp_K) < len(alpha) # Make sure K_wave is below the highest wavelenght segment in array
-        idx_K = tmp_K[-1] # alpha segment K_wave belongs too
+        # Create extinction law in segments
+        law = np.ones(len(wave)) * np.nan
+        for ii in range(len(alpha_vals)):
+            wave_max = lambda_limits[ii]
+            wave_min = lambda_limits[ii+1]
+            alpha = alpha_vals[ii]
 
-        pdb.set_trace()
+            # Find elements of wavelength array in this segment
+            idx = np.where( (wave >= wave_min) & (wave < wave_max))
 
+            # Calculate coefficient for this segment to ensure
+            # law is continuous
+            coeff = 1
+            if ii > 0:
+                for jj in range(ii):
+                    wave_connect = lambda_limits[jj+1]
+                    val = (wave_connect ** alpha_vals[jj]) / (wave_connect ** alpha_vals[jj+1])
+
+                    #print('ii = {0}'.format(ii))
+                    #print('wave_connect = {0}'.format(wave_connect))
+                    #print('alph_num = {0}'.format(alpha_vals[jj]))
+                    #print('alpha_den = {0}'.format(alpha_vals[jj+1]))
         
-        # Create extinction law
-        law = wavelength**(-1.0 * alpha)
+                    coeff *= val
+                    
+            law[idx] = coeff * (wave[idx]**(-1.0 * alpha))
 
+        # Let's make sure we didn't miss updating any parts of the law
+        assert np.sum(np.isnan(law)) == 0
+        
         # We'll identify K-band as 2.14 microns
         idx = np.where(abs(wavelength - K_wave) == min(abs(wavelength - K_wave)))
         A_AKs_at_wave = law / law[idx]
 
         return A_AKs_at_wave
 
-    def powerlaw(self, wavelength, AKs):
+    def broken_powerlaw(self, wavelength, AKs):
         """ 
         Return the extinction at a given wavelength assuming the 
         extinction law and an overall `AKs` value.
