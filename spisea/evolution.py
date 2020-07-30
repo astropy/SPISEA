@@ -1677,12 +1677,14 @@ class BPASS (StellarEvolution):
         iso.add_column(colP)
         for x in iso:
             x['age']=math.log10(x['age'])
+            #Would like to confirm whether M1 is the current mass of the stellar model at the given time. Just to be very very very sure.
             x['mass_current']=x['M1']
             #Using Stanway and Elridge Criterion for calculating whether a star is a WR star or not. 
+            #That means hydrogen mass fraction is less than 0.4 and T>10000 Kelvin
             x['isWR']=(x['X']<0.40 and x['log(T1)']>4.0)
             #Calculated logg=log10(Mass*G/(Radius of the star)^2)
             x['logg']=math.log10(((6.67*10**-11)*x["M1"]*1.9891*10**30)/(((695508*10**3)*10**x['log(R1)'])**2))
-        #Making sure that names of the columns are consistent with general format of isochrone.
+        #Making sure that names of the columns are consistent with general format of isochrone. This is just so that the Synthetic.py works and can access necessary columns.
         iso.rename_column('log(T1)', 'logT')
         iso.rename_column('log(L1)', 'logL')
         iso.rename_column('M1', 'mass')
