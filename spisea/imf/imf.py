@@ -264,7 +264,7 @@ class IMF_broken_powerlaw(IMF):
         Array of length (N + 1) with lower and upper limits of 
         the power-law segments.
 
-    coefficients : numpy array
+    powers : numpy array
         Array of length N that contains the powers for each
         power-law segment.
 
