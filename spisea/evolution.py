@@ -1615,6 +1615,89 @@ def get_orig_pisa_isochrones(metallicity=0.015):
 
     return data
 
+
+#==============================#
+# BPASS v2.2 models
+#==============================#
+#These models were published by Stanway and Elridge et. al in 2018
+#The code is based from the Merged Evolution model methods outlined in the . After all, I want some degree of consistency with regards to
+#Our original isochrone files are the stellar models (single, binary, and secondary) listed in the BPASS input files from one of the stellar models for ages 10**6.0, 10**6.1, ... , 10**11.0 years.
+
+class BPASS (StellarEvolution):
+    def __init__(self):
+        #Note: All of the possible mass list items include possible mass for single star, binary primary and secondary.
+        self.age_list=[round(6.0+x*0.1,1) for x in range(0, 51)]
+        #Possible metallicities for BPASS models
+        self.z_list=[10**-5, 10**-4,10**-3, 0.002, 0.003, 0.004, 0.006, 0.008, 0.010, 0.014, 0.020, 0.030, 0.040]
+        self.models_dir='/g/lu/models/evolution/BPASS/v2.2/'
+        #Possible masses
+        self.mass_list=[round(0.1, 1)]+[round(0.12+x*0.02, 2) for x in range(95)]+[round(2.05+x*0.05, 2) for x in range(20)]+[round(3.1+0.1*x,1) for x in range(70)]
+        self.mass_list=self.mass_list+[11+x for x in range(90)]+[125+25*x for x in range(8)]+[400]+[500]
+        self.z_solar=0.02
+        self.z_file_map={10**-5: 'zem5/', 10**-4: 'zem4/', 0.003:'z003/',0.002: 'z002/', 0.003: 'z003/', 0.004: 'z004/', 0.006:
+                         'z006/',0.008: 'z008/', 0.010:'z010/',0.014:'z014/', 0.020: 'z020/', 0.030: 'z030/',0.040:'z040/' }
+    def isochrone(self, filePath="", age=1*10**8, metallicity=0.0, binary=True):
+        oldmetallicity=metallicity
+        #Convert log metallicity to metallicity with respect to solar masses
+        metallicity=self.z_solar*10**metallicity
+        log_age=math.log10(age)
+        if (log_age<np.min(self.age_list)) or (log_age>np.max(self.age_list)):
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
+        if (metallicity<np.min(self.z_list) or metallicity>np.max(self.z_list)):
+            logger.error('Requested metallicity {0} is out of bounds.'.format(metallicity))
+        #Borrow from matt hosek's code: Look for the closest valid age to the input age
+        if log_age != self.age_list[0]:
+            age_idx = searchsorted(self.age_list, log_age, side='right')
+        else:
+            age_idx = searchsorted(self.age_list, log_age, side='left')
+        iso_file = "iso"+str(round(self.age_list[age_idx], 1))+".fits"
+        #Find the closest valid age to the given age
+        zindex=searchsorted(self.z_list, metallicity, side='left')
+        if (zindex==len(self.z_list)):
+            zindex=zindex-1
+        z_dir=self.z_file_map[self.z_list[zindex]]
+        #Use the full path to the desired isochrone file.
+        full_iso_file=self.models_dir+'iso/'+z_dir+iso_file
+        print(z_dir)
+        print(full_iso_file)
+        if (filePath):
+            iso=Table.read(filePath, format='ascii')
+        else:
+            iso=Table.read(full_iso_file, format='ascii')
+        #Create columns for isWR, logg, Phase then fill it in with appropriate values.
+        isWR=Column([False]*len(iso), name='isWR')
+        colG=Column([0.0]*len(iso), name='logg')
+        currentMass=Column([0.0]*len(iso), name='mass_current')
+        colZ=Column([self.z_list[zindex]]*len(iso), name='Z')
+        colP=Column([-1]*len(iso), name='phase')
+        iso.add_column(colG)
+        iso.add_column(colZ)
+        iso.add_column(isWR)
+        iso.add_column(currentMass)
+        iso.add_column(colP)
+        for x in iso:
+            x['age']=math.log10(x['age'])
+            x['mass_current']=x['M1']
+            #Using Stanway and Elridge Criterion for calculating whether a star is a WR star or not. 
+            x['isWR']=(x['X']<0.40 and x['log(T1)']>4.0)
+            #Calculated logg=log10(Mass*G/(Radius of the star)^2)
+            x['logg']=math.log10(((6.67*10**-11)*x["M1"]*1.9891*10**30)/(((695508*10**3)*10**x['log(R1)'])**2))
+        #Making sure that names of the columns are consistent with general format of isochrone.
+        iso.rename_column('log(T1)', 'logT')
+        iso.rename_column('log(L1)', 'logL')
+        iso.rename_column('M1', 'mass')
+        
+        iso.rename_column('age', 'logAge')
+        iso.meta['log_age'] = age
+        iso.meta['metallicity_in'] = oldmetallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[zindex] / self.z_solar)
+        return iso
+        
+        
+       
+
+
+
 class Isochrone(object):
     def __init__(self, log_age):
         self.log_age = log_age
