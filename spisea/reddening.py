@@ -1141,7 +1141,7 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
-        self.name = 'broken_pl,{0},{1},{2},{3}'.format(alpha,K_wave,lambda_limits,alpha_vals)
+        self.name = 'broken_pl,{0},{1},{2}'.format(lambda_limits,alpha_vals, K_wave)
 
     @staticmethod
     def _derive_broken_powerlaw(wave, lambda_limits, alpha_vals, K_wave):
@@ -1191,7 +1191,7 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
         assert np.sum(np.isnan(law)) == 0
         
         # We'll identify K-band as 2.14 microns
-        idx = np.where(abs(wavelength - K_wave) == min(abs(wavelength - K_wave)))
+        idx = np.where(abs(wave - K_wave) == min(abs(wave - K_wave)))
         A_AKs_at_wave = law / law[idx]
 
         return A_AKs_at_wave
