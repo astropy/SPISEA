@@ -1099,7 +1099,8 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
     for :math: `\lambda_{limits}[n] < \lambda <= \lambda_{limits}[n+1]`
 
     Note: lambda_limits must be continuous in wavelength and K_wave must be 
-    within one of the section defined by the lambda_limits array.
+    within one of the section defined by the lambda_limits array. 
+    Extinction law is only defined over lambda_limits
     
     Units of lambda_limits array is microns.
 
@@ -1118,7 +1119,11 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self, lambda_limits, alpha_vals, K_wave):
         # Fetch the extinction curve, pre-interpolate across defined wavelength range
-        wave = np.arange(np.min(lambda_limits), np.max(lambda_limits), 0.001)
+        wave = np.arange(np.min(lambda_limits), np.max(lambda_limits), 0.01)
+
+        # Deal with pesky floating point issues that can artificially push the upper
+        # value of wave above the max(lambda_limit)
+        wave[-1] = np.max(lambda_limits)
 
         # Assert that K_wave is within lambda_limits
         try:
@@ -1168,7 +1173,7 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
             alpha = alpha_vals[ii]
 
             # Find elements of wavelength array in this segment
-            idx = np.where( (wave >= wave_min) & (wave < wave_max))
+            idx = np.where( (wave >= wave_min) & (wave <= wave_max))
 
             # Calculate coefficient for this segment to ensure
             # law is continuous
@@ -1176,7 +1181,7 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
             if ii > 0:
                 for jj in range(ii):
                     wave_connect = lambda_limits[jj+1]
-                    val = (wave_connect ** alpha_vals[jj]) / (wave_connect ** alpha_vals[jj+1])
+                    val = (wave_connect ** (-1*alpha_vals[jj])) / (wave_connect ** (-1*alpha_vals[jj+1]))
 
                     #print('ii = {0}'.format(ii))
                     #print('wave_connect = {0}'.format(wave_connect))
