@@ -201,7 +201,6 @@ class MultiplicityUnresolved(object):
         n_comp = 1 + np.random.poisson((CSF / MF) - 1)
         
         if self.companion_max == True:
-            print(n_comp)
             while n_comp > self.CSF_max:
                 n_comp = 1 + np.random.poisson((CSF / MF) - 1)
             
