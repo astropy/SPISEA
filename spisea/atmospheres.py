@@ -33,7 +33,7 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
 
     # Filter by metallicity. Will chose the closest metallicity to desired input
     metal_list = np.unique(np.array(z_arr))
-    metal_idx = np.where( (abs(metal_list - metallicity)) == min(abs(metal_list - metallicity)))
+    metal_idx = np.argmin(np.abs(metal_list - metallicity))
     
     z_filt = np.where(z_arr == metal_list[metal_idx])
     teff_arr = teff_arr[z_filt]
