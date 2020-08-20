@@ -1,11 +1,14 @@
 ##########################################################
 #
 #
-#IFMR_Raithel17 comes from Raithel et al. 2017 and has no metallicity dependence
+#IFMR_Raithel18 comes from Raithel et al. 2018 and has no metallicity dependence
 #https://arxiv.org/pdf/1712.00021.pdf
 #
 #IFMR_Spera15 comes from Spera et al. 2015 appendix C and includes metallicity dependence
 #https://arxiv.org/pdf/1505.05201.pdf
+#
+#Both IFMRs rely on Kalirai et al. 2007 WD IFMR on the low mass end < 9 M_sun for Raitehl18, and < 7 M_sun for Spera15
+#https://arxiv.org/pdf/0705.0977.pdf
 #
 #########################################################
 
@@ -26,10 +29,10 @@ class IFMR(object):
 
     def Kalirai_mass(self, MZAMS):
         """                                                                                                      
-        From Kalirai+07                                                                                          
-        1.16 < MZAMS < 6.5 
+        From Kalirai+07 https://arxiv.org/pdf/0705.0977.pdf
+        1.16 < MZAMS < 6.5
         But we use this function for anything between 0.5 and 9 depending on the IFMR.
-        FIXME: need to extend these ranges... explain extension somewhere? Paper maybe?                                                                   
+        FIXME: need to extend these ranges... explain extension somewhere? Paper maybe?
         """
 
         result = 0.109*MZAMS + 0.394
@@ -657,9 +660,9 @@ class IFMR_Spera15(IFMR):
         
 
 
-class IFMR_Raithel17(IFMR):
+class IFMR_Raithel18(IFMR):
     """
-    This IFMR comes from Raithel et al. 2017
+    This IFMR comes from Raithel et al. 2018
     https://arxiv.org/pdf/1712.00021.pd
     The IFMR is a combination of the 
     WD IFMR from 

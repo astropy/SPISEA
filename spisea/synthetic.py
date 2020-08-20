@@ -428,7 +428,7 @@ class ResolvedCluster(Cluster):
         a Teff = 0, as set up by _make_star_systems_table_interp.
         If self.ifmr == None, then both high and low-mass bad systems are 
         removed. If self.ifmr != None, then we will save the high mass systems 
-        since they will be pluggedd into an ifmr later.
+        since they will be plugged into an ifmr later.
         """
         N_systems = len(star_systems)
 
