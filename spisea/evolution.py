@@ -7,6 +7,8 @@ import glob
 import pdb
 import warnings
 from astropy.table import Table, vstack, Column
+import astropy.constants as cs
+import astropy.units as un
 from scipy import interpolate
 import pylab as py
 from spisea.utils import objects
@@ -1697,6 +1699,9 @@ class BPASS(StellarEvolution):
         as follows:
         White dwarf -> 101
         All other stars (no neutron stars or black holes) -> -1
+        Just to make sure, I do have word that neutron stars
+        and black holes are NOT INCLUDED in the BPASS
+        evolution grids.
         If you are REALLY curious about black holes, try using TUI
         with BPASS.
         """
@@ -1739,10 +1744,8 @@ class BPASS(StellarEvolution):
         isWR = Column([False] * len(iso), name='isWR')
         isWR2 = Column([False] * len(iso), name='isWR2')
         colG = Column([0.0] * len(iso), name='logg')
-        currentMass = Column([0.0] * len(iso), name='mass_current')
         colP = Column([-1] * len(iso), name='phase')
         colP2 = Column([-1] * len(iso), name='phase2')
-        colTWR= Column([np.nan]*len(iso), name='logT_WR')
         iso.add_column(colG)
         iso.add_column(isWR)
         iso.add_column(currentMass)
@@ -1752,11 +1755,11 @@ class BPASS(StellarEvolution):
         # We may as well delete a for loop here
         
         iso['age']=np.log10(iso['age'])
-        iso['logg'] = np.log10(( iso['M1'] * cs.GM_sun / ((cs.R_sun) ** 2))*un.s*un.s/un.m)
-        iso['logg2'] = np.log10(( iso['M2'] * cs.GM_sun / ((cs.R_sun) ** 2))*un.s*un.s/un.m)
+        iso['logg'] = np.log10(( iso['M1'] * cs.GM_sun / ((10**iso['log(R1)']*cs.R_sun) ** 2))*un.s*un.s/un.m)
+        iso['logg2'] = np.log10(( iso['M2'] * cs.GM_sun / ((10**iso['log(R2)']*cs.R_sun) ** 2))*un.s*un.s/un.m)
+        iso.rename_column('M1', 'mass_current')
         for x in iso:
             x['age'] = np.log10(x['age'])
-            x['mass_current'] = x['M1']
 
             # Using Stanway and Elridge Criterion for calculating whether
             # a star is a WR star or not for using the PotsDam Atmospheres
@@ -1764,8 +1767,6 @@ class BPASS(StellarEvolution):
             x['isWR'] = x['X'] < 0.40 and x['log(T1)'] > 4.45
             x['isWR']=x['isWR'] and x['secondary']
             x['isWR2']=x['isWR']
-            if x['isWR']:
-                x['logT_WR']=x['log(T1)']
                 
             # Calculated logg=log10(Mass*G/(Radius of the star)^2)
             # I made one solar radius equal to 695508 * 10 ** 3 meters

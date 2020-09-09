@@ -24,8 +24,13 @@ def test_generate_cluster():
     # range of the requested mass.
     assert np.abs(M_cl - sysMass.sum()) < 120.0
 
-    return
+    # Check that enough companions were generated.
+    # Should be greater than 25% of the stars with companions.
+    mdx = np.where(isMulti)[0]
+    for mm in mdx:
+        assert len(compMass[mm]) > 0
 
+    return
 
 def test_prim_power():
     from .. import imf

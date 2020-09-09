@@ -867,51 +867,41 @@ class Isochrone_Binary(Isochrone):
     ----------
     logAge : float
         The age of the isochrone, in log(years)
-
     AKs : float
         The total extinction in Ks filter, in magnitudes
-
     distance : float
         The distance of the isochrone, in pc
-
     metallicity : float, optional
         The metallicity of the isochrone, in [M/H].
         Default is 0.
-
     evo_model: model evolution class, optional
         Set the stellar evolution model class. 
         Default is evolution.MISTv1().
-
     atm_func: model atmosphere function, optional
         Set the stellar atmosphere models for the stars. 
         Default is get_merged_atmosphere.
-
     wd_atm_func: white dwarf model atmosphere function, optional
         Set the stellar atmosphere models for the white dwafs. 
         Default is get_wd_atmosphere   
-
     mass_sampling : int, optional
         Sample the raw isochrone every `mass_sampling` steps. The default
         is mass_sampling = 0, which is the native isochrone mass sampling 
         of the evolution model.
-
     wave_range : list, optional
         length=2 list with the wavelength min/max of the final spectra.
         Units are Angstroms. Default is [3000, 52000].
-
     min_mass : float or None, optional
         If float, defines the minimum mass in the isochrone.
         Unit is solar masses. Default is None
-
     max_mass : float or None, optional
         If float, defines the maxmimum mass in the isochrone.
         Units is solar masses. Default is None.
-
     rebin : boolean, optional
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
         which is often sufficient synthetic photometry in most cases.
     """
+
     def __init__(self, logAge, AKs, distance, metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
@@ -931,6 +921,7 @@ class Isochrone_Binary(Isochrone):
         self.wave_range=wave_range
         self.AKs=AKs
         self.red_law=red_law
+        self.filters=filters
         # Assert that the wavelength ranges are within the limits of the
         # VEGA model (0.1 - 10 microns)
         try:
@@ -971,119 +962,121 @@ class Isochrone_Binary(Isochrone):
         logg_all = evol['logg'] # in cgs
         mass_curr_all = evol['mass_current'] * units.Msun
         phase_all = evol['phase']
+        phase_all = evol['phase2']
         isWR_all = evol['isWR']
         isWR2=evol['isWR2]
         Tef2 = 10**evol['log(T2)'] * units.K
         R2 = 10**evol['log(R2)']*c.R_sun
         L2 = 10**evol['log(L2)'] * c.L_sun
-        tab = Table([mass_all, evol['mass2']*units.Msun,np.log10(c.R_sun*10**evol['log(a)']*1/c.au),L_all, T_all, R_all, logg_all, isWR_all, mass_curr_all, phase_all,
-                        evol['secondary'], evol['mass_current2'],
-                         Tef2, R2, L2, evol['logg2'], evol['single']],
-            names=['mass','mass2','log_a','L', 'Teff', 'R', 'logg', 'isWR', 'mass_current', 'phase', 'secondary','mass_current2', 'Teff2', 'R2', 'L2', 'logg2', 'single'])
-        primaries = Table([mass_all, L_all, T_all, R_all, logg_all, isWR_all, mass_curr_all, phase_all, evol['single'], evol['secondary']],
-            names=['mass', 'L', 'Teff', 'R', 'logg', 'isWR', 'mass_current', 'phase',  'single', 'secondary'])
-        primaries=primaries[np.where(~primaries['secondary'])[0]]
-        primaries.remove_column('secondary')
+       singles = Table([mass_all, L_all, T_all, R_all, logg_all, isWR_all, 
+                        mass_curr_all, phase_all, evol['single']],
+            names=['mass','log_a','L', 'Teff', 'R', 'gravity',
+                   'isWR', 'mass_current', 'phase', 'single'])
+        primaries = Table([mass_all, np.log10(c.R_sun*10**evol['log(a)']*1/
+                                              c.au), 
+                           L_all, T_all, R_all, logg_all, isWR_all,
+                           mass_curr_all, phase_all2, evol['single']],
+            names=['mass', 'log_a_', 'L', 'Teff', 'R', 'gravity', 
+                   'isWR', 'mass_current', 'phase',  'single'])
                    
-        secondaries=Table([evol['mass2']*units.Msun,np.log10(c.R_sun*10**evol['log(a)']*1/c.au),
-                        evol['secondary'], evol['mass_current2'],
-                         Tef2, R2, L2, evol['logg2'], isWR2, evol['single']],
-            names=['mass2','log_a', 'secondary','mass_current2', 'Teff2', 'R2', 'L2', 'logg2', 'isWR2', 'single'])
+        secondaries=Table([evol['mass2']*units.Msun,np.log10(c.R_sun*10**evol['log(a)']*1/c.au)
+                           , evol['mass_current2'],
+                         Tef2, R2, L2, evol['logg2'], isWR2, evol['single'], evol['mergered']],
+            names=['mass','log_a', 'mass_current2', 'Teff', 'R', 'L', 'gravity', 'isWR', 'single'])
         secondaries=secondaries[np.where(~secondaries['single'])[0]]
         secondaries.remove_column('single')
+        singles=singles[np.where(singles['single'])[0]]
+        singles.remove_column('single')
+        primaries=primaries[np.where(~primaries['single'])[0]]
+        primaries.remove_column('single')
              
 
-        # Initialize output for stellar spectra
-        self.spec_list = []
-        row_blacklist=[]
+        # I try to make sure that we have a queue of atm_function results to process
+        # If we have null values
+        self.spec_list_si = [] # For single Stars
+        self.spec_list2_pri=[] # For primary stars
+        self.spec_list3_sec=[] # For secondary stars
+        # Turns into an attribute since we will access this in another function
+        self.pairings2={"Singles": self.spec_list_si, "Primaries": self.spec_list2_pri
+                 , "Secondaries": self.spec_list3_sec}
+        pairings={"Singles": singles, "Primaries": primaries
+                 , "Secondaries": secondaries}
+        self.pairings=pairings
+        self.pairings2=pairings2
         # For each temperature extract the synthetic photometry.
-        for ii in range(len(tab['Teff'])):
-            # Loop is currently taking about 0.11 s per iteration
-            gravity = float( logg_all[ii] )
-            L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
-            T = float( T_all[ii] / units.K)               # in Kelvin
-            R = float( R_all[ii].to('pc') / units.pc)              # in pc
-            phase = phase_all[ii]
+        for x in pairings
+            tab=pairings[x]
+            atm_list=pairings2[x]
+            L_all=tab['L']
+            T_all=tab['Teff']
+            R_all=tab['R']
+            logg_all=tab['gravity']
+            gravity=tab['gravity']
+        # For each temperature extract the synthetic photometry.
+            for ii in range(len(tab['Teff'])):
+               # Loop is currently taking about 0.11 s per iteration
 
-            # Get the atmosphere model now. Wavelength is in Angstroms
-            # This is the time-intensive call... everything else is negligable.
-            # If source is a star, pull from star atmospheres. If it is a WD,
-            # pull from WD atmospheres
-            if (np.isfinite(gravity) and np.isfinite(L) and np.isfinite(T)
-                and np.isfinite(R)):
-                if phase == 101:
-                    star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
-                                       verbose=False)
-                else:
-                    star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
-                                    rebin=rebin)
+               # Get the atmosphere model now. Wavelength is in Angstroms
+               # This is the time-intensive call... everything else is negligable.
+               # If source is a star, pull from star atmospheres. If it is a WD,
+               # pull from WD atmospheres
+                   
+               if (tab[ii]['mergered?']==True and 'Secondaries'==x):
+                   #For merged models, I make sure that if I end up reading the secondary
+                   # of a model that has already been merged
+                   # TO DO: Add info regarding this to the spec
+                   tab[ii]['mass_current2']=np.nan #The star is all gobbled up
+                   tab[ii]['Teff']=np.nan
+                   tab[ii]['R']=np.nan # No more secondary star left
+                   tab[ii]['L']=np.nan # No more secondary star left
+                   tab[ii]['gravity']=np.nan
+                   tab[ii]['isWR']=False # Star no longer exits
+               gravity = float( logg_all[ii] )
+               L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
+               T = float( T_all[ii] / units.K)               # in Kelvin
+               R = float( R_all[ii].to('pc') / units.pc)              # in pc
+               # phase = phase_all[ii] (Make sure phase can be added in)
+               if (np.isfinite(gravity) and np.isfinite(L) and np.isfinite(T) and
+                   np.isfinite(R)):
+                   if phase == 101:
+                       star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                                          verbose=False)
+                   else:
+                       star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                                       rebin=rebin)
 
-                # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
-                star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
+                   # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
+                   star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
 
-                # Convert into flux observed at Earth (unreddened)
-                star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
+                   # Convert into flux observed at Earth (unreddened)
+                   star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
 
-                # Redden the spectrum. This doesn't take much time at all.
-                red = red_law.reddening(AKs).resample(star.wave) 
-                star *= red
+                   # Redden the spectrum. This doesn't take much time at all.
+                   red = red_law.reddening(AKs).resample(star.wave)
+                   star *= red
             
-                # Save the final spectrum to our spec_list for later use.            
-                self.spec_list.append(star)
-            else:
-                row_blacklist.append(ii)
-        row_blacklist2=[]
-        for ii in range(len(primaries['Teff'])):
-            # Loop is currently taking about 0.11 s per iteration
-            gravity = float( logg_all[ii] )
-            L = float( primaires['L'][ii].cgs / (units.erg / units.s)) # in erg/s
-            T = float( primaries['Teff'][ii] / units.K)               # in Kelvin
-            R = float( primaries['R'][ii].to('pc') / units.pc)              # in pc
+                   # Save the final spectrum to our spec_list for later use.            
+                   atm_list.append(star)
+              else:
+                   atm_list.append(None)            
 
-            # Get the atmosphere model now. Wavelength is in Angstroms
-            # This is the time-intensive call... everything else is negligable.
-            # If source is a star, pull from star atmospheres. If it is a WD,
-            # pull from WD atmospheres
-            if not (np.isfinite(gravity) and np.isfinite(L) and np.isfinite(T)
-                and np.isfinite(R)):
-                row_blacklist2.append(ii)
-        row_blacklist3=[]
-        for ii in range(len(primaries['Teff'])):
-            # Loop is currently taking about 0.11 s per iteration
-            gravity = float( logg_all[ii] )
-            L = float( secondaries['L2'][ii].cgs / (units.erg / units.s)) # in erg/s
-            T = float( secondaries['Teff2'][ii] / units.K)               # in Kelvin
-            R = float( secondaries['R2'][ii].to('pc') / units.pc)              # in pc
-
-            # Get the atmosphere model now. Wavelength is in Angstroms
-            # This is the time-intensive call... everything else is negligable.
-            # If source is a star, pull from star atmospheres. If it is a WD,
-            # pull from WD atmospheres
-            if not (np.isfinite(gravity) and np.isfinite(L) and np.isfinite(T)
-                and np.isfinite(R)):
-                row_blacklist3.append(ii)
-        
-            
-        tab.remove_rows(row_blacklist)
-        primaries.remove_rows(row_blacklist2)
-        secondaries.remove_rows(row_blacklist3)
-        self.points = tab
+        self.singles = singles
         self.primaries=primaries
-        self.secondaries=secondaries
+        self.secondaries = secondaries
                    
         self.make_photometry()
         # Append all the meta data to the summary table.
-        tab.meta['REDLAW'] = red_law.name
-        tab.meta['ATMFUNC'] = atm_func.__name__
-        tab.meta['EVOMODEL'] = type(evo_model).__name__
-        tab.meta['LOGAGE'] = logAge
-        tab.meta['AKS'] = AKs
-        tab.meta['DISTANCE'] = distance
-        print(evol.meta)
-        tab.meta['METAL_IN'] = evol.meta['metallicity_in']
-        tab.meta['METAL_ACT'] = evol.meta['metallicity_act']
-        tab.meta['WAVEMIN'] = wave_range[0]
-        tab.meta['WAVEMAX'] = wave_range[1]
+        for tab in (singles, primaries, secondaries):
+            tab.meta['REDLAW'] = red_law.name
+            tab.meta['ATMFUNC'] = atm_func.__name__
+            tab.meta['EVOMODEL'] = 'BPASS v2.2'
+            tab.meta['LOGAGE'] = logAge
+            tab.meta['AKS'] = AKs
+            tab.meta['DISTANCE'] = distance
+            tab.meta['METAL_IN'] = evol.meta['metallicity_in']
+            tab.meta['METAL_ACT'] = evol.meta['metallicity_act']
+            tab.meta['WAVEMIN'] = wave_range[0]
+            tab.meta['WAVEMAX'] = wave_range[1]
         
 
         t2 = time.time()
@@ -1098,13 +1091,13 @@ class Isochrone_Binary(Isochrone):
         """
         startTime = time.time()
 
-        meta = self.points.meta
+        meta = self.singles.meta
 
         print( 'Making photometry for isochrone: log(t) = %.2f  AKs = %.2f  dist = %d' % \
             (meta['LOGAGE'], meta['AKS'], meta['DISTANCE']))
         print( '     Starting at: ', datetime.datetime.now(), '  Usually takes ~5 minutes')
 
-        npoints = len(self.points)
+        # npoints = len(self.points)
         verbose_fmt = 'M = {0:7.3f} Msun  T = {1:5.0f} K  m_{2:s} = {3:4.2f}'
 
         # Loop through the filters, get filter info, make photometry for
@@ -1118,30 +1111,36 @@ class Isochrone_Binary(Isochrone):
 
             # Make the column to hold magnitudes in this filter. Add to points table.
             col_name = 'm_' + filt_name
-            mag_col = Column(np.zeros(npoints, dtype=float), name=col_name)
-            self.points.add_column(mag_col)
+            mag_col = Column(np.zeros(len(self.singles), dtype=float), name=col_name)
+            self.singles.add_column(mag_col)
+            mag_col = Column(np.zeros(len(self.secondaries), dtype=float), name=col_name)
+            self.secondaries.add_column(mag_col)
+            mag_col = Column(np.zeros(len(self.primaries), dtype=float), name=col_name)
+            self.primaries.add_column(mag_col)
             
             # Loop through each star in the isochrone and do the filter integration
             print('Starting synthetic photometry')
-            for ss in range(npoints):
-                star = self.spec_list[ss]  # These are already extincted, observed spectra.
-                star_mag = mag_in_filter(star, filt)
+            for x in self.pairings:
+                listofStars=self.pairings2[x]
+                table=self.pairings[x]
+                length_of_list=len(listofStars)
+                for ss in range(listofStars):
+                    star = listofStars[ss]
+                    if (star!=None):
+                   # These are already extincted, observed spectra.
+                        star_mag = mag_in_filter(star, filt)
+                    else:
+                        star_mag = np.nan
                 
-                self.points[col_name][ss] = star_mag
+                    table[col_name][ss] = star_mag
         
-                if (self.verbose and (ss % 100) == 0):
-                    print( verbose_fmt.format(self.points['mass'][ss], self.points['Teff'][ss],
-                                             filt_name, star_mag))
-            self.primaries[col_name]=self.points[np.where(~self.points['secondary'])[0]][col_name]
-            self.secondaries[col_name]=self.points[np.where(~self.points['single'])[0]][col_name]
+                    if (self.verbose and (ss % 100) == 0):
+                        print( verbose_fmt.format(self.points['mass'][ss],
+                                                  self.points['Teff'][ss],
+                                                  filt_name, star_mag))
 
         endTime = time.time()
         print( '      Time taken: {0:.2f} seconds'.format(endTime - startTime))
-
-        if self.save_file != None:
-            with warnings.catch_warnings():
-                warnings.simplefilter('ignore')
-                self.points.write(self.save_file, overwrite=True)
         return
 
 
@@ -1157,7 +1156,6 @@ class IsochronePhot(Isochrone):
 
     AKs : float
         The total extinction in Ks filter, in magnitudes
-
     distance : float
         The distance of the isochrone, in pc
 
