@@ -17,8 +17,9 @@ addons:
         packages:
             - graphviz
 
-
-stages:
+script:
+- echo "skipping tests. This is a draft of code I want Professor Lu and Matt to take a look at.
+ stages:
    # Do the style check and a single test job, don't proceed if it fails
    - name: Initial tests
    # Test docs, astropy dev, and without optional dependencies

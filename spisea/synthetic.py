@@ -910,8 +910,6 @@ class Isochrone_Binary(Isochrone):
                  filters=['ubv,U', 'ubv,V', 'ubv,B', 'ubv,R', 'ubv,I'],
                  rebin=True):
 
-
-        t1 = time.time()
         
         c = constants
         # Changes by Ryota: make atm_func and wd_atm_func instance vars
@@ -953,8 +951,8 @@ class Isochrone_Binary(Isochrone):
         evol = evol[::mass_sampling]
 
         # Give luminosity, temperature, mass, radius units (astropy units).
-        L_all = 10**evol['logL'] * c.L_sun # luminsoity in W
-        T_all = 10**evol['logT'] * units.K
+        L_all = 10 ** evol['logL'] * c.L_sun # luminsoity in W
+        T_all = 10 ** evol['logT'] * units.K
         # TO DO: Conditionals to make sure I am using valid values
         
         R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * T_all**4))
@@ -962,61 +960,73 @@ class Isochrone_Binary(Isochrone):
         logg_all = evol['logg'] # in cgs
         mass_curr_all = evol['mass_current'] * units.Msun
         phase_all = evol['phase']
-        phase_all = evol['phase2']
+        phase_all2 = evol['phase2']
         isWR_all = evol['isWR']
         isWR2=evol['isWR2]
-        Tef2 = 10**evol['log(T2)'] * units.K
-        R2 = 10**evol['log(R2)']*c.R_sun
-        L2 = 10**evol['log(L2)'] * c.L_sun
+        Tef2 = 10 ** evol['log(T2)'] * units.K
+        R2 = 10 ** evol['log(R2)'] * c.R_sun
+        L2 = 10 ** evol['log(L2)'] * c.L_sun
        singles = Table([mass_all, L_all, T_all, R_all, logg_all, isWR_all, 
                         mass_curr_all, phase_all, evol['single']],
-            names=['mass','log_a','L', 'Teff', 'R', 'gravity',
+            names = ['mass','log_a','L', 'Teff', 'R', 'gravity',
                    'isWR', 'mass_current', 'phase', 'single'])
-        primaries = Table([mass_all, np.log10(c.R_sun*10**evol['log(a)']*1/
-                                              c.au), 
+        primaries = Table([mass_all, np.log10(c.R_sun * 10 ** evol['log(a)'] *
+                                              1 / c.au), 
                            L_all, T_all, R_all, logg_all, isWR_all,
                            mass_curr_all, phase_all2, evol['single']],
-            names=['mass', 'log_a_', 'L', 'Teff', 'R', 'gravity', 
+            names = ['mass', 'log_a', 'L', 'Teff', 'R', 'gravity', 
                    'isWR', 'mass_current', 'phase',  'single'])
                    
-        secondaries=Table([evol['mass2']*units.Msun,np.log10(c.R_sun*10**evol['log(a)']*1/c.au)
-                           , evol['mass_current2'],
-                         Tef2, R2, L2, evol['logg2'], isWR2, evol['single'], evol['mergered']],
-            names=['mass','log_a', 'mass_current2', 'Teff', 'R', 'L', 'gravity', 'isWR', 'single'])
-        secondaries=secondaries[np.where(~secondaries['single'])[0]]
+        secondaries = Table([evol['mass2'] * units.Msun,
+                             np.log10(c.R_sun *
+                                      10 ** evol['log(a)'] *
+                                      1 / c.au),
+                           L2, Tef2, R2, 
+                           evol['logg2'], isWR2,
+                           evol['mass_current2'],
+                           phase_all2,
+                           evol['single'], 
+                           evol['mergered']],
+            names = ['mass','log_a', 'L', 'Teff', 'R',
+                     'gravity', 'isWR', 'mass_current2',
+                     'phase','single', 'merged'])
+        secondaries = secondaries[np.where(~secondaries['single'])[0]]
         secondaries.remove_column('single')
-        singles=singles[np.where(singles['single'])[0]]
+        singles = singles[np.where(singles['single'])[0]]
         singles.remove_column('single')
-        primaries=primaries[np.where(~primaries['single'])[0]]
+        primaries = p rimaries[np.where(~primaries['single'])[0]]
         primaries.remove_column('single')
              
 
-        # I try to make sure that we have a queue of atm_function results to process
+        # I try to make sure that we have a queue 
+        # of atm_function results to process
         # If we have null values
         self.spec_list_si = [] # For single Stars
-        self.spec_list2_pri=[] # For primary stars
-        self.spec_list3_sec=[] # For secondary stars
+        self.spec_list2_pri = [] # For primary stars
+        self.spec_list3_sec = [] # For secondary stars
         # Turns into an attribute since we will access this in another function
-        self.pairings2={"Singles": self.spec_list_si, "Primaries": self.spec_list2_pri
-                 , "Secondaries": self.spec_list3_sec}
+        self.pairings2 = {"Singles": self.spec_list_si, 
+                          "Primaries": self.spec_list2_pri,
+                          "Secondaries": self.spec_list3_sec}
         pairings={"Singles": singles, "Primaries": primaries
                  , "Secondaries": secondaries}
         self.pairings=pairings
         self.pairings2=pairings2
         # For each temperature extract the synthetic photometry.
         for x in pairings
-            tab=pairings[x]
-            atm_list=pairings2[x]
-            L_all=tab['L']
-            T_all=tab['Teff']
-            R_all=tab['R']
-            logg_all=tab['gravity']
-            gravity=tab['gravity']
+            tab = pairings[x]
+            atm_list = pairings2[x]
+            L_all = tab['L']
+            T_all = tab['Teff']
+            R_all = tab['R']
+            logg_all = tab['gravity']
+            gravity = tab['gravity']
         # For each temperature extract the synthetic photometry.
             for ii in range(len(tab['Teff'])):
                # Loop is currently taking about 0.11 s per iteration
 
-               # Get the atmosphere model now. Wavelength is in Angstroms
+               # Get the atmosphere model now. 
+               # Wavelength is in Angstroms
                # This is the time-intensive call... everything else is negligable.
                # If source is a star, pull from star atmospheres. If it is a WD,
                # pull from WD atmospheres
@@ -1025,28 +1035,32 @@ class Isochrone_Binary(Isochrone):
                    #For merged models, I make sure that if I end up reading the secondary
                    # of a model that has already been merged
                    # TO DO: Add info regarding this to the spec
-                   tab[ii]['mass_current2']=np.nan #The star is all gobbled up
-                   tab[ii]['Teff']=np.nan
-                   tab[ii]['R']=np.nan # No more secondary star left
-                   tab[ii]['L']=np.nan # No more secondary star left
+                   tab[ii]['mass_current2'] = np.nan #The star is all gobbled up
+                   tab[ii]['Teff'] = np.nan
+                   tab[ii]['R'] = np.nan # No more secondary star with atm left
+                   tab[ii]['L'] = np.nan # No more secondary star with atm left
                    tab[ii]['gravity']=np.nan
                    tab[ii]['isWR']=False # Star no longer exits
                gravity = float( logg_all[ii] )
                L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
-               T = float( T_all[ii] / units.K)               # in Kelvin
-               R = float( R_all[ii].to('pc') / units.pc)              # in pc
-               # phase = phase_all[ii] (Make sure phase can be added in)
-               if (np.isfinite(gravity) and np.isfinite(L) and np.isfinite(T) and
+               T = float( T_all[ii] / units.K) # in Kelvin
+               R = float( R_all[ii].to('pc') / units.pc) # in pc
+               phase = tab['phase']
+               if (np.isfinite(gravity) and np.isfinite(L) and
+                   np.isfinite(T) and
                    np.isfinite(R)):
                    if phase == 101:
-                       star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                       star = wd_atm_func(temperature=T, gravity=gravity,
+                                          metallicity=metallicity,
                                           verbose=False)
                    else:
-                       star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                       star = atm_func(temperature=T, gravity=gravity,
+                                       metallicity=metallicity,
                                        rebin=rebin)
 
                    # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
-                   star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
+                   star = spectrum.trimSpectrum(star, wave_range[0],
+                                                wave_range[1])
 
                    # Convert into flux observed at Earth (unreddened)
                    star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
