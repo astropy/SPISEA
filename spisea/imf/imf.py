@@ -206,8 +206,8 @@ class IMF(object):
         idx = np.where(newIsMultiple == True)[0]
         n_comp_arr = 1 + np.random.poisson((CSF[idx] / MF[idx]) - 1)
         if self._multi_props.companion_max == True:
-            too_many = np.where(n_comp_arr > self._multi_props.companion_max)[0]
-            n_comp_arr[too_many] = self._multi_props.companion_max
+            too_many = np.where(n_comp_arr > self._multi_props.CSF_max)[0]
+            n_comp_arr[too_many] = self._multi_props.CSF_max
         primary = newMasses[idx]
 
         # We will deal with each number of multiple system independently. This is
