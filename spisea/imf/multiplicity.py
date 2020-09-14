@@ -92,11 +92,15 @@ class MultiplicityUnresolved(object):
         The minimum allowed Q value for the probability
         density function of the mass ratio.
     
+    companion_max : bool, optional
+        Sets CSF_max is the max as the max number of companions.
+        Default False.
+    
     """
     def __init__(self, 
                  MF_amp=0.44, MF_power=0.51,
                  CSF_amp=0.50, CSF_power=0.45, CSF_max=3,
-                 q_power=-0.4, q_min=0.01):
+                 q_power=-0.4, q_min=0.01, companion_max = False):
          
         self.MF_amp = MF_amp
         self.MF_pow = MF_power
@@ -105,6 +109,7 @@ class MultiplicityUnresolved(object):
         self.CSF_max = CSF_max
         self.q_pow = q_power
         self.q_min = q_min
+        self.companion_max = companion_max
 
     def multiplicity_fraction(self, mass):
         """
@@ -194,7 +199,11 @@ class MultiplicityUnresolved(object):
         Helper function: calculate number of companions.
         """
         n_comp = 1 + np.random.poisson((CSF / MF) - 1)
-
+        
+        if self.companion_max == True:
+            if n_comp > self.CSF_max:
+                n_comp = self.CSF_max
+            
         return n_comp
     
 class MultiplicityResolvedDK(MultiplicityUnresolved):

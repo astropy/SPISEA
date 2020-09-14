@@ -167,7 +167,7 @@ def test_resolvedmult():
     assert 'omega' in clust_Mult.companions.colnames
     
     #check values are in correct range
-    assert all(10**i<= 2000 and 10**i>= 0 for i in clust_Mult.companions['log_a']) #max separation is 1500 AU
+    assert all(10**i<= 2000 and 10**i>= 0 for i in clust_Mult.companions['log_a']) #max separation is 2000 AU
     assert all(i<= 1 and i>= 0 for i in clust_Mult.companions['e'])
     assert all(i<= 180 and i>= 0 for i in clust_Mult.companions['i'])
     assert all(i<= 360 and i>= 0 for i in clust_Mult.companions['omega'])
