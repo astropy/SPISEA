@@ -941,7 +941,7 @@ class IsochronePhot(Isochrone):
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
                           'ubv,R', 'ubv,I']):
 
-        self.metallicity = metallicity #FIXME
+        self.metallicity = metallicity
 
         # Make the iso_dir, if it doesn't already exist
         if not os.path.exists(iso_dir):
