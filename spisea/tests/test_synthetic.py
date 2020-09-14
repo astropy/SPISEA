@@ -423,7 +423,7 @@ def test_ifmr_multiplicity():
     
     evo = evolution.MISTv1()
     atm_func = atmospheres.get_merged_atmosphere
-    ifmr_obj = ifmr.IFMR()
+    ifmr_obj = ifmr.IFMR_Raithel18()
 
     red_law = reddening.RedLawNishiyama09()
     
@@ -562,7 +562,7 @@ def test_cluster_mass():
     imf_powers = np.array([-1.3, -2.3, -2.3])
 
     # IFMR
-    my_ifmr = ifmr.IFMR()
+    my_ifmr = ifmr.IFMR_Raithel18()
     
 
     ##########
@@ -1003,14 +1003,14 @@ def test_Spera15_IFMR_7():
 
     return
     
-def generate_Raithel17_IFMR():
+def generate_Raithel18_IFMR():
     """
-    Make a set of objects using the Raithel17 IFMR for the purposes of testing
+    Make a set of objects using the Raithel18 IFMR for the purposes of testing
     Will make a total of 16 objects
     Will have 3 invalid objects and 2 WDs
     """
 
-    Raithel = ifmr.IFMR_Raithel17()
+    Raithel = ifmr.IFMR_Raithel18()
     ZAMS = np.array([-0.2, 0.2, 1.0, 7.0, 10.0, 14.0, 16.0, 18.0, 18.6, 22.0, 26.0, 28.0, 50.0, 61.0, 119.0, 121.0]) 
     #3 invalid indices, 2 WDs, cannot make statements about #of BHs and NSs because the Raithel IFMR has some randomness
 
@@ -1026,209 +1026,56 @@ def generate_Raithel17_IFMR():
 
     return bad_idx[0], WD_idx[0], NS_idx[0], BH_idx[0], rem_mass
 
-def test_Raithel17_IFMR_1():
+def test_Raithel18_IFMR_1():
     """
     Check to make sure that the number of input objects matches the number of output objects
     """
     bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Raithel17_IFMR()
 
     total = len(WD_idx) + len(NS_idx) + len(BH_idx) + len(bad_idx)
-    assert total == 16 , "The # of input objects does not match the number of output objects for the Raithel17 IFMR"
+    assert total == 16 , "The # of input objects does not match the number of output objects for the Raithel18 IFMR"
 
     return
 
-def test_Raithel17_IFMR_2():
+def test_Raithel18_IFMR_2():
     """
     Check that all negative remnant masses have the type code -1
     """
-    bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Raithel17_IFMR()
+    bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Raithel18_IFMR()
 
     #check to make sure no unhandled negative remnant masses (ie without type code -1 assigned)
     neg_mass_idx = np.where(rem_mass < 0)
-    assert set(bad_idx) == set(neg_mass_idx[0]) , "There are unhandled negative remnant masses for the Raithel17 IFMR"
+    assert set(bad_idx) == set(neg_mass_idx[0]) , "There are unhandled negative remnant masses for the Raithel18 IFMR"
 
     return
 
-def test_Raithel17_IFMR_3():
+def test_Raithel18_IFMR_3():
     """
     Check that there are no left over zeros in the remnant mass array
     """
-    bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Raithel17_IFMR()
+    bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Raithel18_IFMR()
 
     #check to make sure there are no left over zeroes in the remnant mass array
-    assert np.all(rem_mass != 0), "There are left over zeros in the remnant mass array for the Raithel17 IFMR"
+    assert np.all(rem_mass != 0), "There are left over zeros in the remnant mass array for the Raithel18 IFMR"
 
     return
 
-def test_Raithel17_IFMR_4():
+def test_Raithel18_IFMR_4():
     """
     Check that the right number of invalid objects are returned (3)
     """
-    bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Raithel17_IFMR()
+    bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Raithel18_IFMR()
 
-    assert len(bad_idx) == 3 , "There are not the right number of invalid objects for the Raithel17 IFMR"
+    assert len(bad_idx) == 3 , "There are not the right number of invalid objects for the Raithel18 IFMR"
 
     return
 
-def test_Raithel17_IFMR_5():
+def test_Raithel18_IFMR_5():
     """
     Check that the right number of WDs are returned (2)
     """
-    bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Raithel17_IFMR()
+    bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Raithel18_IFMR()
 
-    assert len(WD_idx) == 2 , "There are not the right number of WDs for the Raithel17 IFMR"
+    assert len(WD_idx) == 2 , "There are not the right number of WDs for the Raithel18 IFMR"
 
     return
-=======
-# Not required test anymore: largely superceded by test_models.py
-
-#def test_phot_consistency(filt='all'):
-#    """
-#    Test photometric consistency of generated isochrone (IsochronePhot)
-#    against pre-generated isochrone with native filter sampling. Requires
-#    consistency to within 0.005 mag.
-#
-#    Base isochrone is at 5 Myr, AKs = 0, 1000 pc, mass_sampling=10 
-#
-#    Paramters:
-#    ----------
-#    filt: 'all', 'hst', 'vista', 'decam', 'ps1', 'jwst'
-#        Specify what filter set you want to test
-#
-#    """
-#    from astropy.table import Table
-#    import os
-#    
-#    # Load pre-generated isochrone, located in popstar tests directory
-#    direct = os.path.dirname(__file__)
-#    orig = Table.read(direct+'/iso_6.70_0.00_01000.fits', format='fits')
-#
-#    # Generate new isochrone with popstar code
-#    if filt == 'all':
-#        filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m',
-#                         'acs,wfc1,f814w', 'wfc3,ir,f125w', 'wfc3,ir,f160w',
-#                         'decam,y', 'decam,i', 'decam,z',
-#                         'decam,u', 'decam,g', 'decam,r',
-#                         'vista,Y', 'vista,Z', 'vista,J',
-#                         'vista,H',  'vista,Ks',
-#                         'ps1,z', 'ps1,g', 'ps1,r',
-#                         'ps1,i', 'ps1,y',
-#                         'jwst,F070W', 'jwst,F090W', 'jwst,F115W', 'jwst,F140M',
-#                         'jwst,F150W', 'jwst,F150W2', 'jwst,F162M', 'jwst,F164N',
-#                         'jwst,F182M', 'jwst,F187N', 'jwst,F200W', 'jwst,F212N',
-#                         'jwst,F210M','jwst,F250M', 'jwst,F277W', 'jwst,F300M',
-#                         'jwst,F322W2', 'jwst,F323N', 'jwst,F335M', 'jwst,F356W',
-#                         'jwst,F360M', 'jwst,F405N', 'jwst,F410M', 'jwst,F430M',
-#                         'jwst,F444W', 'jwst,F460M', 'jwst,F466N', 'jwst,F470N',
-#                         'jwst,F480M', 'nirc2,J', 'nirc2,H', 'nirc2,Kp', 'nirc2,K',
-#                         'nirc2,Lp', 'nirc2,Hcont',
-#                         'nirc2,FeII', 'nirc2,Brgamma',
-#                         'jg,J', 'jg,H', 'jg,K',
-#                         'nirc1,K', 'nirc1_H', 'ctio_osiris,K', 'ctio_osiris,H',
-#                         'naco,H', 'naco,Ks', 'ztf,g', 'ztf,r', 'ztf,i']
-#
-#    elif filt == 'decam':
-#        filt_list = ['decam,y', 'decam,i', 'decam,z',
-#                         'decam,u', 'decam,g', 'decam,r']
-#    elif filt == 'vista':
-#        filt_list = ['vista,Y', 'vista,Z', 'vista,J',
-#                         'vista,H', 'vista,Ks']
-#    elif filt == 'ps1':
-#        filt_list = ['ps1,z', 'ps1,g', 'ps1,r',  'ps1,i',
-#                         'ps1,y']
-#    elif filt == 'jwst':
-#        filt_list = ['jwst,F070W', 'jwst,F090W', 'jwst,F115W', 'jwst,F140M',
-#                         'jwst,F150W', 'jwst,F150W2', 'jwst,F162M', 'jwst,F164N',
-#                         'jwst,F182M', 'jwst,F187N', 'jwst,F200W', 'jwst,F212N',
-#                         'jwst,F210M','jwst,F250M', 'jwst,F277W', 'jwst,F300M',
-#                         'jwst,F322W2', 'jwst,F323N', 'jwst,F335M', 'jwst,F356W',
-#                         'jwst,F360M', 'jwst,F405N', 'jwst,F410M', 'jwst,F430M',
-#                         'jwst,F444W', 'jwst,F460M', 'jwst,F466N', 'jwst,F470N',
-#                         'jwst,F480M']
-#    elif filt == 'hst':
-#        filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m',
-#                         'acs,wfc1,f814w', 'wfc3,ir,f125w', 'wfc3,ir,f160w']
-#    elif filt == 'nirc2':
-#        filt_list = ['nirc2,J', 'nirc2,H','nirc2,Kp', 'nirc2,K',
-#                         'nirc2,Lp', 'nirc2,Ms', 'nirc2,Hcont',
-#                         'nirc2,FeII', 'nirc2,Brgamma']
-#    elif filt == 'jg':
-#        filt_list = ['jg,J', 'jg,H', 'jg,K']
-#    elif filt == 'ztf':
-#        filt_list = ['ztf,g', 'ztf,r', 'ztf,i']
-#    elif filt == 'misc':
-#        filt_list=['nirc1,K', 'nirc1,H', 'ctio_osiris,K', 'ctio_osiris,H',
-#                       'naco,H', 'naco,Ks']
-#        
-#            
-#    print('Making isochrone')
-#    iso = synthetic.IsochronePhot(6.7, 0, 1000, mass_sampling=10, filters=filt_list, rebin=True)
-#    iso = iso.points
-#
-#    # First find masses that are the same
-#    foo = []
-#    for ii in iso['mass']:
-#        tmp = np.where( orig['mass'] == ii)[0][0]
-#        foo.append(tmp)
-#        
-#    assert len(foo) == len(iso)
-#    orig = orig[foo]
-#
-#    # Identify the photometry columns
-#    cols = list(iso.keys())
-#    idx = []
-#    for ii in range(len(cols)):
-#        if cols[ii].startswith('mag'):
-#            idx.append(ii)
-#    mag_cols = np.array(cols)[idx]
-#
-#    # Test the consistency of each column with the original isochrone
-#    for ii in mag_cols:
-#        orig_mag = orig[ii]
-#        new_mag = iso[ii]
-#
-#        np.testing.assert_allclose(orig_mag, new_mag, rtol=0.01, err_msg="{0} failed".format(ii))
-#
-#        # Also report median abs difference
-#        diff = abs(orig_mag - new_mag)
-#        print(('{0} median abs diff: {1}'.format(ii, np.median(diff))))
-#
-#    print(('Phot consistency test successful for {0}'.format(filt)))
-#
-#    # Remove iso file we just wrote, since it was only a test
-#    os.remove('iso_6.70_0.00_01000.fits')
-#    return
-
-
-# Siess not supported anymore.
-# 
-# def test_isochrone_siess_mass_current_bug():
-#     """
-#     Bug found by students in grad stars class. 
-#     """
-#     # Define isochrone parameters
-#     logAges = [6.6, 7.6] # Age in log(years)
-#     AKs = 0 # extinction in mags
-#     dist = 1000 # distance in parsec
-#     metallicity = 0 # Metallicity in [M/H]
-
-#     # Define evolution/atmosphere models and extinction law
-#     evo_model = evolution.MergedSiessGenevaPadova()
-#     evo_model_name = ['MIST', 'Padova']
-#     atm_func = atmospheres.get_merged_atmosphere
-#     red_law = reddening.RedLawHosek18b()
-
-#     # Also specify filters for synthetic photometry (optional). Here we use
-#     # the HST WFC3-IR F127M, F139M, and F153M filters
-#     filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m']
-
-#     # Make Isochrone object. Note that is calculation will take a few minutes, unless the
-#     # isochrone has been generated previously.
-
-#     for logAge in logAges:
-#         my_iso = synthetic.IsochronePhot(logAge, AKs, dist, metallicity=0, evo_model=evo_model, atm_func=atm_func,
-#                                          red_law=red_law, filters=filt_list)
-#         print(my_iso.save_file)
-
-#     return
->>>>>>> main:spisea/tests/test_synthetic.py
