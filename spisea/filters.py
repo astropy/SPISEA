@@ -406,3 +406,25 @@ def get_ztf_filt(name):
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='ztf_{0}'.format(name))
 
     return spectrum
+
+def get_hawki_filt(name):
+    """
+    Define the HAWK-I filters as a pysynphot spectrum object
+    """
+    # Read in filter info
+    try:
+        t = Table.read('{0}/hawki/{1}.dat'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find HAWK-I filter file {0}/hawki/{1}.dat'.format(filters_dir, name))
+    #pdb.set_trace()
+    wavelength = t[t.keys()[0]]
+    transmission = t[t.keys()[1]]
+
+    # Convert wavelength to Angstroms
+    wavelength = wavelength * 10
+
+    # Make spectrum object
+    spectrum = pysynphot.ArrayBandpass(wavelength, transmission, waveunits='angstrom',
+                                       name='hawki_{0}'.format(name))
+
+    return spectrum

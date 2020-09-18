@@ -1436,6 +1436,9 @@ def get_filter_info(name, vega=vega, rebin=True):
     elif name.startswith('gaia'):
         version = tmp[1]
         filt = filters.get_gaia_filt(version, filterName)
+
+    elif name.startswith('hawki'):
+        filt = filters.get_hawki_filt(filterName)
         
     else:
         filt = ObsBandpass(name)
@@ -1551,7 +1554,10 @@ def get_obs_str(col):
                  'ctio_osiris_H': 'ctio_osiris,H', 'ctio_osiris_K': 'ctio_osiris,K',
                  'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i',
                  'gaiaDR2_G': 'gaia,dr2_rev,G', 'gaiaDR2_Gbp':'gaia,dr2_rev,Gbp',
-                 'gaiaDR2_Grp':'gaia,dr2_rev,Grp'}
+                 'gaiaDR2_Grp':'gaia,dr2_rev,Grp',
+                 'hawki_J': 'hawki,J',
+                 'hawki_H': 'hawki,H',
+                 'hawki_Ks': 'hawki,Ks'}
 
     obs_str = filt_list[name]
         
