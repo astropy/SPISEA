@@ -707,7 +707,14 @@ class IFMR_Raithel18(IFMR):
         """                                                                                                      
         Paper: 9 < MZAMS 120                                                                                     
         Drawing the mass from gaussian created using observational data
-        FIXME: Write up in sam's paper? I (sam) got the distribution from Emily Ramey
+         Done by Emily Ramey and Sergiy Vasylyev at University of Caifornia, Berkeley
+        sample oF NS from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020), 
+        J2302+4442 Kirichenko et al. (2018), J2215+5135 Linares et al. (2018), 
+        J1913+1102 Ferdman & Collaboration (2017), J1411+2551 Martinez et al. (2017), 
+        J1757+1854 Cameron et al. (2018), J0030+0451 Riley et al. (2019), J1301+0833 Romani et al. (2016)
+        The gaussian distribution was created using this data and a Bayesian MCMC method adapted from
+        Kiziltan et al. (2010)
+        
         """
         return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
 
