@@ -87,7 +87,7 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     
     return (temperature_new, gravity_new)
 
-def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin = False):
+def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=False):
     """
     Return atmosphere from the Kurucz pysnphot grid 
     (`Kurucz 1993 <http://www.stsci.edu/hst/observatory/crds/k93models.html>`_).
@@ -110,12 +110,7 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin = F
         The stellar gravity, in cgs units
         
     rebin: boolean
-        If true, rebins the atmospheres so that they are the same
-        resolution as the Castelli+04 atmospheres. Default is False,
-        which is often sufficient synthetic photometry in most cases. 
-        NOTE: rebin does not rebin the atmospheres for this atmosphere function; 
-        it is present to allow for the function to be called when initializing an
-        Isochrone object (see synthetic.py for details on Isochrone class)
+        Always false for this particular function
     """
     try:
         sp = pysynphot.Icat('k93models', temperature, metallicity, gravity)
