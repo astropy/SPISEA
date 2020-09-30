@@ -731,7 +731,6 @@ def time_test_mass_match():
     return
 
 
-<<<<<<< HEAD:popstar/tests/test_synthetic.py
 def test_phot_consistency(filt='all'):
     """
     Test photometric consistency of generated isochrone (IsochronePhot)
