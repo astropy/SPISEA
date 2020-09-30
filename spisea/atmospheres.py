@@ -33,7 +33,7 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
 
     # Filter by metallicity. Will chose the closest metallicity to desired input
     metal_list = np.unique(np.array(z_arr))
-    metal_idx = np.where( (abs(metal_list - metallicity)) == min(abs(metal_list - metallicity)))
+    metal_idx = np.argmin(np.abs(metal_list - metallicity))
     
     z_filt = np.where(z_arr == metal_list[metal_idx])
     teff_arr = teff_arr[z_filt]
@@ -318,9 +318,9 @@ def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4
     """
     # Set up the proper root directory
     if rebin == True:
-        root_dir = '/g/lu/models/cdbs/grid/cmfgen_rot_rebin'
+        root_dir = os.environ['PYSYN_CDBS'] + '/cmfgen_rot_rebin/'
     else:
-        root_dir = '/g/lu/models/cdbs/grid/cmfgen_rot'
+        root_dir = os.environ['PYSYN_CDBS'] + '/cmfgen_rot/'
 
     # Read in catalog, extract atmosphere info
     cat = Table.read('{0}/catalog.fits'.format(root_dir), format='fits')
@@ -1584,7 +1584,7 @@ def organize_BTSettl_2015_atmospheres(path_to_dir):
     path_to_dir is the path to the directory containing all of the downloaded
     files
 
-    Saves cdbs-ready atmospheres into /g/lu/models/cdbs/grid/BTSettl_2015
+    Saves cdbs-ready atmospheres into os.environ['PYSYN_CDBS']/grid/BTSettl_2015
     (assumes this directory exists)
     """
     # Save current directory for return later, move into working dir
@@ -1627,7 +1627,7 @@ def organize_BTSettl_2015_atmospheres(path_to_dir):
         hdu_new = fits.HDUList([prihdu, tbhdu])
         
         # Write new fits table in cdbs directory
-        hdu_new.writeto('/g/lu/models/cdbs/grid/BTSettl_2015/'+i, overwrite=True)
+        hdu_new.writeto(os.environ['PYSYN_CDBS']+'grid/BTSettl_2015/'+i, overwrite=True)
 
         hdu.close()
         hdu_new.close()
@@ -1676,7 +1676,7 @@ def make_BTSettl_2015_catalog(path_to_dir):
     
     return
 
-def rebin_BTSettl_2015(cdbs_path='/g/lu/models/cdbs/'):
+def rebin_BTSettl_2015(cdbs_path=os.environ['PYSYN_CDBS']):
     """
     Rebin BTSettle_CIFITS2011_2015 models to atlas ck04 resolution; this makes
     spectrophotometry MUCH faster
@@ -1986,7 +1986,7 @@ def organize_WDKoester_atmospheres(path_to_dir):
     path_to_dir is the path to the directory containing all of the downloaded
     files
 
-    Saves cdbs-ready atmospheres into /g/lu/models/cdbs/grid/wdKoeseter
+    Saves cdbs-ready atmospheres into os.environ['PYSYN_CDBS']/wdKoeseter
     (assumes this directory exists)
     """
     # Save current directory for return later, move into working dir
@@ -2017,7 +2017,7 @@ def organize_WDKoester_atmospheres(path_to_dir):
         hdu_new = fits.HDUList([prihdu, tbhdu])
         
         # Write new fits table in cdbs directory
-        hdu_new.writeto('/g/lu/models/cdbs/grid/wdKoester/'+i.replace('.txt', '.fits'), overwrite=True)
+        hdu_new.writeto(os.environ['PYSYN_CDBS']+'/grid/wdKoester/'+i.replace('.txt', '.fits'), overwrite=True)
 
         hdu_new.close()
     
@@ -2066,7 +2066,7 @@ def make_WDKoester_catalog(path_to_dir):
     
     return
 
-def rebin_WDKoester(cdbs_path='/g/lu/models/cdbs/'):
+def rebin_WDKoester(cdbs_path=os.environ['PYSYN_CDBS']):
     """
     Rebin wdKoester models to atlas ck04 resolution; this makes
     spectrophotometry MUCH faster

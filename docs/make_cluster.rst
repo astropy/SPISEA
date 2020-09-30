@@ -20,11 +20,11 @@ has already been created::
   # This is an input for the IMF object.
   imf_multi = multiplicity.MultiplicityUnresolved()
 
-  # Define the IFMR. Here we use the default
-  # IFMR object. 
+  # Define the IFMR. Here we use the IFMR object
+  # IFMR_Raithel18. 
   # If no IFMR is desired, set this variable 
   # to None
-  my_ifmr = ifmr.IFMR()
+  my_ifmr = ifmr.IFMR_Raithel18()
 
   # Define the IMF. Here we'll use a broken
   # power-law with the parameters from 
