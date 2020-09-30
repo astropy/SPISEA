@@ -1094,9 +1094,10 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
 class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
     """
     Extinction object that is a broken power-law extinction law: 
-    :math:`A_{\lambda} \propto \lambda^{\alpha_vals[n]}`
+    :math:`A_{\lambda} \propto \lambda^{\alpha[n]}`
 
-    for :math: `\lambda_{limits}[n] < \lambda <= \lambda_{limits}[n+1]`
+    for: 
+    :math: `\lambda_{limits}[n] < \lambda <= \lambda_{limits}[n+1]`
 
     Note: lambda_limits must be continuous in wavelength and K_wave must be 
     within one of the section defined by the lambda_limits array. 
