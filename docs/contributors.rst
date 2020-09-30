@@ -23,7 +23,7 @@ Natasha Adams -- developed resolved multiplicity capabilities
 Michael Medford -- developed resolved multiplicity capabilities
 (ResolvedMultiplicityDK class)
 
-Sam Rose -- Added metallicity-dependent IFMR (IFMR_Spera15)
+Sam Rose -- developed metallicity-dependent IFMR (IFMR_Spera15)
 
-Rebecca Lewis -- Added HAWK-I filter support, code testing/debugging
+Rebecca Lewis -- added HAWK-I filter support, code testing/debugging
 
