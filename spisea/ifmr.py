@@ -7,7 +7,7 @@
 #IFMR_Spera15 comes from Spera et al. 2015 appendix C and includes metallicity dependence
 #https://ui.adsabs.harvard.edu/abs/2015MNRAS.451.4086S/abstract
 #
-#Both IFMRs rely on Kalirai et al. 2007 WD IFMR on the low mass end < 9 M_sun for Raitehl18, and < 7 M_sun for Spera15
+#Both IFMRs rely on Kalirai et al. 2008 WD IFMR on the low mass end < 9 M_sun for Raitehl18, and < 7 M_sun for Spera15
 #https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
 #
 #########################################################
