@@ -96,7 +96,7 @@ located on the ESO VLT (Unit Telescope 4).
 
 Filters: J, H, Ks
 
-Example: ``hawki,J``
+Example: ``'hawki,J'``
 
 **Hubble Space Telescope**
 
