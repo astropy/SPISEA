@@ -32,6 +32,7 @@ Available filters:
 * CTIO_OSIRIS
 * DeCam
 * GAIA
+* HAWK-I
 * Hubble Space Telescope
 * Johnson-Cousins
 * Johnson-Glass
@@ -84,7 +85,18 @@ ONLY THE REVISED DR2 PASSBANDS ARE SUPPORTED BY SPISEA.
 
 Filters: G, Gbp, Grp
 
-Example (gaia G filter from revised DR2 passbands): ``'gaia,dr2_rev,G'``
+Example (gaia G filter from revised DR2 passbands):
+``'gaia,dr2_rev,G'``
+
+**HAWK-I**
+
+The `High Acuity Wide Field K-band Imager
+<https://www.eso.org/sci/facilities/paranal/instruments/hawki.html>`_
+located on the ESO VLT (Unit Telescope 4).
+
+Filters: J, H, Ks
+
+Example: ``'hawki,J'``
 
 **Hubble Space Telescope**
 
