@@ -89,6 +89,7 @@ Example (gaia G filter from revised DR2 passbands):
 ``'gaia,dr2_rev,G'``
 
 **HAWK-I**
+
 The `High Acuity Wide Field K-band Imager
 <https://www.eso.org/sci/facilities/paranal/instruments/hawki.html>`_
 located on the ESO VLT (Unit Telescope 4).
