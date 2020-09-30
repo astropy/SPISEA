@@ -899,7 +899,7 @@ def generate_Spera15_IFMR():
     """
     Make a set of objects based on the Spera15 IFMR for the purposes of testing
     Expect 28 total objects
-    8 invalids, 8 WDs, 3 NSs, and 9 BHs
+    8 invalids, 8 WDs, 2 NSs, and 10 BHs
     """
     Spera = ifmr.IFMR_Spera15()
 
@@ -988,7 +988,7 @@ def test_Spera15_IFMR_6():
     """
     bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Spera15_IFMR()
 
-    assert len(NS_idx) == 3 , "There are not the right number of NSs for the Spera15 IFMR"
+    assert len(NS_idx) == 2 , "There are not the right number of NSs for the Spera15 IFMR"
 
     return
 
@@ -998,7 +998,7 @@ def test_Spera15_IFMR_7():
     """
     bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Spera15_IFMR()
 
-    assert len(BH_idx) == 9 , "There are not the right number of BHs for the Spera15 IFMR"
+    assert len(BH_idx) == 10 , "There are not the right number of BHs for the Spera15 IFMR"
 
     return
     
@@ -1029,7 +1029,7 @@ def test_Raithel18_IFMR_1():
     """
     Check to make sure that the number of input objects matches the number of output objects
     """
-    bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Raithel17_IFMR()
+    bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Raithel18_IFMR()
 
     total = len(WD_idx) + len(NS_idx) + len(BH_idx) + len(bad_idx)
     assert total == 16 , "The # of input objects does not match the number of output objects for the Raithel18 IFMR"
