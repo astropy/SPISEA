@@ -122,7 +122,8 @@ def test_filters():
                      'ps1,g', 'ps1,r','ps1,i', 'ps1,y',
                      'ukirt,J', 'ukirt,H', 'ukirt,K',
                      'vista,Y', 'vista,Z', 'vista,J',
-                     'vista,H',  'vista,Ks', 'ztf,g', 'ztf,r', 'ztf,i']
+                     'vista,H',  'vista,Ks', 'ztf,g', 'ztf,r', 'ztf,i',
+                     'hawki,J', 'hawki,H', 'hawki,Ks']
 
     # Loop through filters to test that they work: get_filter_info
     for ii in filt_list:
