@@ -7,14 +7,23 @@ Jessica Lu -- Lead Developer; developed initial package framework; collaborative
 
 Matthew Hosek Jr -- Lead Developer; collaboratively developed all aspects of code
 
-Casey Lam -- implemented IFMR module
+Casey Lam -- implemented first IFMR module (IFMR_Raithel18)
 
 Abhimat Gautam -- implemented non-solar metallicity evolution model support for MIST models
 
 Kelly Lockhart -- helped develop UnresolvedCluster class
 
-Dongwon Kim -- code performance testing/debugging
+Dongwon Kim -- code testing/debugging
 
 Siyao Jia -- helped with early code and documentation development
 
-Natasha Adams -- developed resolved multiplicity capabilities (ResolvedMultiplicityDK class)
+Natasha Adams -- developed resolved multiplicity capabilities
+(ResolvedMultiplicityDK class)
+
+Michael Medford -- developed resolved multiplicity capabilities
+(ResolvedMultiplicityDK class)
+
+Sam Rose -- developed metallicity-dependent IFMR (IFMR_Spera15)
+
+Rebecca Lewis -- added HAWK-I filter support, code testing/debugging
+
