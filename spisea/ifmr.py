@@ -27,7 +27,7 @@ class IFMR(object):
 
     def Kalirai_mass(self, MZAMS):
         """                                                                                                      
-        From Kalirai+07 https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
+        From Kalirai+08 https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
         1.16 < MZAMS < 6.5
         But we use this function for anything between 0.5 and 9 depending on the IFMR.
         FIXME: need to extend these ranges... explain extension somewhere? Paper maybe?
