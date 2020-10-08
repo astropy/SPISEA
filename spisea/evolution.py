@@ -1615,6 +1615,215 @@ def get_orig_pisa_isochrones(metallicity=0.015):
 
     return data
 
+#==============================#
+# BPASS v2.2 models
+#==============================#
+#These models were published by Stanway and Elridge et. al in 2018
+#The code is based from the Merged Evolution model methods outlined in the . After all, I want some degree of consistency with regards to
+#Our original isochrone files are the stellar models (single, binary, and secondary) listed in the BPASS input files from one of the stellar models for ages 10**6.0, 10**6.1, ... , 10**11.0 years.
+
+class BPASS(StellarEvolution):
+    
+    """ These models were published by Stanway and Elridge et. al in 2018
+    Some of the code is based from the Merged Evolution model methods
+    by Hosek et. al. After all, I want some degree of consistency with
+    regards to how isochrones are made.Also, I do not want to reinvent
+    the wheel twice. 
+    If one has not checked the IsochroneMakerReformatted.py file, each
+    isochrone file is made of star from stellar model that are closest
+    to specified input age and are within the specified margin of error
+    for log(Age in years). This is to be doubly sure that I am getting
+    the same age.
+    
+    Brief description: Creates a BPASS evolution object and specifies valid primary masses,
+    secondary masses,  metallicities, ages.
+    """
+
+    def __init__(self):
+        
+        """
+        Note: All of the possible mass list items include possible mass for
+        single star, binary primary and secondary. Recall that BPASS age bins 
+        are 10**6.0, 10**6.1, ... , 10**11.0 yrs """
+
+        
+        self.age_list = [round(6.0 + x * 0.1, 1) for x in range(0, 51)]
+        self.z_list = [
+            10 ** -5,
+            10 ** -4,
+            10 ** -3,
+            0.002,
+            0.003,
+            0.004,
+            0.006,
+            0.008,
+            0.010,
+            0.014,
+            0.020,
+            0.030,
+            0.040,
+            ]
+        self.models_dir = models_dir + "/BPASS/v2.2/"
+        self.mass_list = [round(0.1, 1)] + [round(0.12 + x * 0.020, 2)
+                                            for x in range(95)]
+        self.mass_list = self.mass_list + [round(2.05 + x * 0.05, 2)
+                                           for x in range(20)]
+        self.mass_list = self.mass_list + [round(3.1 + 0.1 * x, 1)
+                                           for x in range(70)]
+        self.mass_list = self.mass_list + [11 + x for x in range(90)] \
+            + [125 + 25 * x for x in range(8)] + [400] + [500]
+        self.z_solar = 0.020
+        #The possible Metallicities of a BPASS Stellar model
+        self.z_file_map = {
+            10 ** -5: 'zem5/',
+            10 ** -4: 'zem4/',
+            0.00300: 'z003/',
+            0.00200: 'z002/',
+            0.00300: 'z003/',
+            0.00400: 'z004/',
+            0.00600: 'z006/',
+            0.00800: 'z008/',
+            0.01000: 'z010/',
+            0.01400: 'z014/',
+            0.02000: 'z020/',
+            0.03000: 'z030/',
+            0.04000: 'z040/',
+            }
+
+    def isochrone(self, age=1 * 10 ** 8.0, metallicity=0.0):
+        """
+        This function adds several necessary columns (e.g. isWR, logg, and
+        whether a star is WR) to the existing isochrone files' tables.
+        
+        Important note on convention: I will specify the phase of the star
+        as follows:
+        White dwarf -> 101
+        All other stars (no neutron stars or black holes) -> -1
+        Just to make sure, I do have word that neutron stars
+        and black holes are NOT INCLUDED in the BPASS
+        evolution grids.
+        If you are REALLY curious about black holes, try using TUI
+        with BPASS.
+        
+        parameters
+        ----------
+        age: float or double
+        The age of the isochrone in years
+        metallicity: float or double
+        The log10(age in metallicity) of the star
+        (HERE THIS IS IN terms of Z which is the initial
+        metallicity mass fraction from the formula introduced
+        in Grevesse & Noels 1993)
+        
+        Output
+        ------
+        A more informative version of the preprocessed isochrone.
+        New Columns:
+        isWR: Boolean
+            whether a single or primary is a WR star
+        isWR2: Boolean
+        phase: Integer (101 if white dwarf, 12 otherwise)
+              indicates whether a star is a white dwarf
+        logg: float or double 
+             the log10(surface gravity of the primary/single in m/s^2)
+        logg2: float or double 
+             the log10(surface gravity of the secondary in m/s^2)
+             set to N.A. when the system is nonbinary
+        log_ai: float or double
+             the log10(separation of the primary and secondary in AU)
+             set to N.A. if the system is not a binary system
+        More clearly named are the columns for the current masses of both stars.
+        'mass_current' column stands for the current mass of the primary star
+        'mass_current2' column stands for the current mass of the secondary star
+        """
+        
+        oldmetallicity = metallicity
+        metallicity = self.z_solar * 10 ** metallicity
+        log_age = math.log10(age)
+        if log_age < np.min(self.age_list) or log_age > np.max(self.age_list):
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
+        if (metallicity < np.min(self.z_list) or
+                metallicity > np.max(self.z_list)):
+            logger.error('Requested metallicity {0} is out of bounds.'.
+                         format(metallicity))
+
+        # Borrow from matt hosek's code:
+        # Look for the closest valid age to the input age
+
+        iso_file = 'iso' + str(round(log_age, 1)) + binary\
+            + '.fits'
+        # Find the closest valid metallicity to the given metallicity
+        closest_metallicity=min([x for x in self.z_file_map], key=lambda x: abs(metallicity-x))
+        z_dir=self.z_file_map[closest_metallicity]
+        print(z_dir)
+
+        # Use the full path to the desired isochrone file.
+
+        full_iso_file = self.models_dir + 'iso/' + z_dir + iso_file
+        iso = Table.read(full_iso_file, format='fits')
+        # Create columns for isWR, logg,
+        # Phase. I will need to find how
+        # phase for individual stars will be added
+        # then I will fill it in with appropriate values.
+        
+        isWR = Column(np.repeat(False, len(iso)), name='isWR')
+        isWR2 = Column(np.repeat(False, len(iso)), name='isWR2')
+        colG = Column(np.nan(np.nan, len(iso)), name='logg')
+        colP = Column(np.nan(np,nan, len(iso)), name='phase')
+        colP2 = Column(np.nan(np.nan, len(iso)), name='phase2')
+        iso.add_column(colG)
+        iso.add_column(isWR)
+        iso.add_column(currentMass)
+        iso.add_column(colP)
+        iso.add_column(colTWR)
+        iso.add_column(isWR2)
+        # We may as well delete a for loop here
+        
+        iso['age'] = np.log10(iso['age'])
+        iso['logg'] = np.log10(( iso['M1'] * cs.GM_sun / ((10**iso['log(R1)']*cs.R_sun) ** 2))*un.s*un.s/un.m)
+        iso['logg2'] = np.log10(( iso['M2'] * cs.GM_sun / ((10**iso['log(R2)']*cs.R_sun) ** 2))*un.s*un.s/un.m)
+        iso['log_ai'] = np.log10(((cs.GM_sun * (un.s ** 2) / (un.m ** 3)) *
+                                 (iso['mass'] + iso['mass2'])*((10 ** iso['log_P']) ** 2) / 
+                                 (4 * (cs.pi) ** 2) * (1/cs.AU))**(1/3))
+        iso.rename_column('M1', 'mass_current')
+        for x in iso:
+            x['age'] = np.log10(x['age'])
+
+            # Using Stanway and Elridge Criterion for calculating whether
+            # a star is a WR star or not for using the PotsDam Atmospheres
+
+            x['isWR'] = x['X'] < 0.40 and x['log(T1)'] > 4.45
+            x['isWR'] = x['isWR'] and x['secondary']
+            x['isWR2'] = x['X'] < 0.40 and x['log(T2)'] > 4.45
+                
+            # Calculated logg=log10(Mass*G/(Radius of the star)^2)
+            # I made one solar radius equal to 695508 * 10 ** 3 meters
+            # Source: 
+            # I also make sure that the computer understands whether a star is a
+            #white dwarf is not a white dwarf. This may help when running the
+            #atmosphere models for the photometry.
+            if (x['logg']>6.9 and x['log(L1)'] < -1 and x['log(T1)']<1.5):
+                x['phase']=101
+            if (x['logg2']>6.9 and x['log(L2)'] < -1 and x['log(T2)']<1.5):
+                x['phase2']=101
+
+        #Changing column name to
+        #Making sure that names of the columns are consistent with
+        # general format of isochrone.
+        
+        iso.rename_column('log(T1)', 'logT')
+        iso.rename_column('M2', 'mass_current2')
+        iso.rename_column('log(L1)', 'logL')
+        iso.rename_column('age', 'logAge')
+        iso.meta['log_age'] = age
+        iso.meta['metallicity_in'] = oldmetallicity
+        iso.meta['metallicity_act'] = np.log10(closest_metallicity /
+                                               self.z_solar)
+        return iso
+
+class Isochrone(object):
+    def __init__(self, log_age):
+        self.log_age = log_age
 class Isochrone(object):
     def __init__(self, log_age):
         self.log_age = log_age

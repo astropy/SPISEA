@@ -912,6 +912,47 @@ class Isochrone_Binary(Isochrone):
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
         which is often sufficient synthetic photometry in most cases.
+        
+        
+    Important Attributes:
+    
+    Primaries-- AstroPy Table containing the following columns:
+    -----------------------------------------------------------
+    mass = in units of Solar Masses. Contains the initial mass of the primary star
+    log_a = the log10(separation of the star with the secondary in AU)
+    mass_current = in units of solar masses. Contains the initial mass of the primary star
+    L = Luminosity of the primary star in Watts
+    Teff -- in Kelvin. Effective temperature of the primary star
+    R -- in units of solar radii. Radius of the primary star.
+    phase -- integer indicating whether a primary star is a white dwarf (101) or not (12)
+    gravity -- log10(acceleration of gravity at the primary star's surface in m/s^2)
+    isWR -- boolean indicating whether a primary star is a WR Star
+    ------------------------------------------------------------
+    singles-- AstroPy Table containing the following columns:
+    -----------------------------------------------------------
+    mass = in units of Solar Masses. Contains the initial mass of the single star
+    mass_current = in units of solar masses. Contains the initial mass of the single star
+    L = Luminosity of the single star in Watts
+    Teff -- in Kelvin. Effective temperature of the single star
+    R -- in units of solar radii. Radius of the single star.
+    phase -- integer indicating whether a single star is a white dwarf (101) or not (12)
+    gravity -- log10(acceleration of gravity at the single star's surface in m/s^2)
+    isWR -- boolean indicating whether a single star is a WR Star
+    ------------------------------------------------------------
+    secondaries -- AstroPy Table containing the following columns:
+    -----------------------------------------------------------
+    mass = in units of Solar Masses. Contains the initial mass of the secondary star
+    mass_current = in units of solar masses. Contains the initial mass of the secondary star
+    L = Luminosity of the secondary star in Watts
+    Teff -- in Kelvin. Effective temperature of the single star
+    R -- in units of solar radii. Radius of the secondary star.
+    phase -- integer indicating whether a secondary star is a white dwarf (101) or not (12)
+    gravity -- log10(acceleration of gravity at the secondary star's surface in m/s^2)
+    isWR -- boolean indicating whether a secondary star is a WR Star
+    merged -- whether the corresponding primary star (WHICH IS AT THE 
+    SAME INDEX in the primaries table as is the secondary star), has actually incorporated the secondary.
+    If merged is true, the L, T_eff, gravity, mass_current will be set to np.nan along with any magnitudes.
+    ------------------------------------------------------------
     """
 
     def __init__(self, logAge, AKs, distance, metallicity,
@@ -982,7 +1023,7 @@ class Isochrone_Binary(Isochrone):
                         mass_curr_all, phase_all, evol['single']],
             names = ['mass','L', 'Teff', 'R', 'gravity',
                      'isWR', 'mass_current', 'phase', 'single'])
-        primaries = Table([mass_all, evol['log(a)'], 
+        primaries = Table([mass_all, evol['log_ai'], 
                            L_all, T_all, R_all, logg_all, isWR_all,
                            mass_curr_all, phase_all2, evol['single']],
             names = ['mass', 'log_a', 'L', 'Teff', 'R', 'gravity', 
@@ -999,7 +1040,7 @@ class Isochrone_Binary(Isochrone):
                             evol['single'], 
                             evol['mergered?']],
             names = ['mass','log_a', 'L', 'Teff', 'R',
-                     'gravity', 'isWR', 'mass_current2',
+                     'gravity', 'isWR', 'mass_current',
                      'phase','single', 'merged'])
         secondaries = secondaries[np.where(~secondaries['single'])[0]]
         secondaries.remove_column('single')
