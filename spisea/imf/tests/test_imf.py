@@ -114,6 +114,69 @@ def test_xi():
 
     return
 
+def test_xi2():
+    """
+    Test that xi() produces the correct probability for
+    a given slope.
+    """
+    from .. import imf
+
+    import cProfile, pstats, io
+    #from pstats import SortKey
+    pr = cProfile.Profile()
+
+    # Negative slope
+    mass_limits = np.array([1.0, 10.0])
+    powers = np.array([-2.0])
+    imf_tmp = imf.IMF_broken_powerlaw(mass_limits, powers)
+    imf_tmp.normalize(1e4)
+
+    tmp = np.random.rand(100)
+    masses = imf_tmp.dice_star_cl(tmp)
+
+    pdf = imf_tmp.xi(masses)
+
+    sdx = masses.argsort()
+
+    pdf_sorted = pdf[sdx]
+
+    print('Testing negative slope')
+    assert pdf_sorted[0] > pdf_sorted[-1]
+    assert pdf_sorted[0] > pdf_sorted[1]
+    assert pdf.max() == pdf_sorted[0]
+
+    # Positive slope
+    mass_limits2 = np.array([1.0, 10.0])
+    powers2 = np.array([2.0])
+    imf_tmp2 = imf.IMF_broken_powerlaw(mass_limits2, powers2)
+    imf_tmp2.normalize(1e4)
+
+    tmp2 = np.random.rand(100)
+    masses2 = imf_tmp2.dice_star_cl(tmp2)
+
+    pdf2 = imf_tmp2.xi(masses2)
+
+    sdx2 = masses2.argsort()
+
+    pdf_sorted2 = pdf2[sdx2]
+
+    print('Testing positive slope')
+    assert pdf_sorted2[0] < pdf_sorted2[-1]
+    assert pdf_sorted2[0] < pdf_sorted2[1]
+    assert pdf2.min() == pdf_sorted2[0]
+
+
+    import pylab as plt
+    plt.clf()
+    plt.loglog(masses[sdx], pdf_sorted, 'k.')
+    plt.axis('equal')
+    # pdb.set_trace()
+
+    return
+
+    
+
+
 def test_mxi():
     from .. import imf
 
