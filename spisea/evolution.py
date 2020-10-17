@@ -7,6 +7,8 @@ import glob
 import pdb
 import warnings
 from astropy.table import Table, vstack, Column
+from astropy import constants as cs
+from astropy import units as un
 from scipy import interpolate
 import pylab as py
 from spisea.utils import objects
@@ -1690,7 +1692,7 @@ class BPASS(StellarEvolution):
             0.04000: 'z040/',
             }
 
-    def isochrone(self, age=1 * 10 ** 8.0, metallicity=0.0):
+    def isochrone(self, dir_in='', age=1 * 10 ** 8.0, metallicity=0.0):
         """
         This function adds several necessary columns (e.g. isWR, logg, and
         whether a star is WR) to the existing isochrone files' tables.
@@ -1750,13 +1752,12 @@ class BPASS(StellarEvolution):
         # Borrow from matt hosek's code:
         # Look for the closest valid age to the input age
 
-        iso_file = 'iso' + str(round(log_age, 1)) + binary\
-            + '.fits'
+        iso_file = 'iso' + str(round(log_age, 1)) + '.fits'
         # Find the closest valid metallicity to the given metallicity
         closest_metallicity=min([x for x in self.z_file_map], key=lambda x: abs(metallicity-x))
         z_dir=self.z_file_map[closest_metallicity]
-        print(z_dir)
-
+        if dir_in:
+            self.models_dir = dir_in
         # Use the full path to the desired isochrone file.
 
         full_iso_file = self.models_dir + 'iso/' + z_dir + iso_file
@@ -1768,23 +1769,21 @@ class BPASS(StellarEvolution):
         
         isWR = Column(np.repeat(False, len(iso)), name='isWR')
         isWR2 = Column(np.repeat(False, len(iso)), name='isWR2')
-        colG = Column(np.nan(np.nan, len(iso)), name='logg')
-        colP = Column(np.nan(np,nan, len(iso)), name='phase')
-        colP2 = Column(np.nan(np.nan, len(iso)), name='phase2')
+        colG = Column(np.repeat(np.nan, len(iso)), name='logg')
+        colP = Column(np.repeat(np.nan, len(iso)), name='phase')
+        colP2 = Column(np.repeat(np.nan, len(iso)), name='phase2')
         iso.add_column(colG)
         iso.add_column(isWR)
-        iso.add_column(currentMass)
         iso.add_column(colP)
-        iso.add_column(colTWR)
+        iso.add_column(colP2)
         iso.add_column(isWR2)
         # We may as well delete a for loop here
         
         iso['age'] = np.log10(iso['age'])
         iso['logg'] = np.log10(( iso['M1'] * cs.GM_sun / ((10**iso['log(R1)']*cs.R_sun) ** 2))*un.s*un.s/un.m)
         iso['logg2'] = np.log10(( iso['M2'] * cs.GM_sun / ((10**iso['log(R2)']*cs.R_sun) ** 2))*un.s*un.s/un.m)
-        iso['log_ai'] = np.log10(((cs.GM_sun * (un.s ** 2) / (un.m ** 3)) *
-                                 (iso['mass'] + iso['mass2'])*((10 ** iso['log_P']) ** 2) / 
-                                 (4 * (cs.pi) ** 2) * (1/cs.AU))**(1/3))
+        iso['log_ai'] = np.log10(((cs.GM_sun * (un.s ** 2) / (un.m ** 3)) * (iso['mass'] + iso['mass2'])*((24*(60**2)*10 ** iso['initl_logP']) ** 2) / 
+                                 (4 * (np.pi) ** 2))**(1/3)*(1/cs.au) * un.m)
         iso.rename_column('M1', 'mass_current')
         for x in iso:
             x['age'] = np.log10(x['age'])
@@ -1793,7 +1792,6 @@ class BPASS(StellarEvolution):
             # a star is a WR star or not for using the PotsDam Atmospheres
 
             x['isWR'] = x['X'] < 0.40 and x['log(T1)'] > 4.45
-            x['isWR'] = x['isWR'] and x['secondary']
             x['isWR2'] = x['X'] < 0.40 and x['log(T2)'] > 4.45
                 
             # Calculated logg=log10(Mass*G/(Radius of the star)^2)
@@ -1804,8 +1802,12 @@ class BPASS(StellarEvolution):
             #atmosphere models for the photometry.
             if (x['logg']>6.9 and x['log(L1)'] < -1 and x['log(T1)']<1.5):
                 x['phase']=101
+            else:
+                x['phase']=12
             if (x['logg2']>6.9 and x['log(L2)'] < -1 and x['log(T2)']<1.5):
                 x['phase2']=101
+            else:
+                x['phase2']=12
 
         #Changing column name to
         #Making sure that names of the columns are consistent with
