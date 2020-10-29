@@ -45,8 +45,18 @@ class IFMR(object):
 
         return final
         
-        
 
+class IFMR_N20_Sukhbold(IFMR):
+    """
+    BH/NS IFMR comes from Tuguldur Sukhbold
+    Based on Sukhbold & Woosley 2014:
+    https://ui.adsabs.harvard.edu/abs/2014ApJ...783...10S/abstract
+    PPISN based on Woosley 2017: 
+    https://ui.adsabs.harvard.edu/abs/2017ApJ...836..244W/abstract
+    WD IFMR from Kalirai et al. 2008:
+    https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
+    """
+    pass
 
 class IFMR_Spera15(IFMR):
     """
