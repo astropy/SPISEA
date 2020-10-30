@@ -56,7 +56,118 @@ class IFMR_N20_Sukhbold(IFMR):
     WD IFMR from Kalirai et al. 2008:
     https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
     """
-    pass
+    # Comes from fit (needs a function)
+    zero_coeff = [ 1.73877791e-06, -2.29152875e-04,  1.20555396e-02,  1.35831935e-01,  2.31381928e-01]
+    solar_coeff = [ 7.22032444e-03, -1.07320209e+00,  4.61793972e+01]
+    zfrac_cut = 0.3
+    Zsun = 0.014 # Following what Sam has
+
+    def BH_mass_1(self, MZAMS):
+        """
+        9 < MZAMS < 40 Msun
+        """
+        BH_mass = np.poly1d(solar_coeff)
+        mBH = BH_mass(MZAMS)
+
+        return mBH
+
+
+    def BH_mass_2(self, MZAMS, Z):
+        """
+        40 Msun < MZAMS < ...
+        """
+        solar_BH_mass = np.poly1d(solar_coeff)
+        zero_BH_mass = np.poly1d(zero_coeff)
+
+        zfrac = Z/Zsun
+
+        # super-solar Z gives identical results as solar Z
+        if zfrac > 1:
+            zfrac = 1
+
+        # Linearly interpolate
+        mBH = solar_BH_mass(MZAMS) - zfrac * zero_BH_mass(MZAMS)
+
+        return mBH
+
+
+    def BH_mass_PPISN_1(self, MZAMS):
+        """
+        For 70 < MZAMS < 120 at Z = 0
+        """
+        return 0.4 * MZAMS + 4
+
+
+    def BH_mass_PPISN_2(self, MZAMS):
+        """
+        For 120 < MZAMS < 140 at Z = 0
+        """
+        return -0.75 * MZAMS + 142
+
+
+    def generate_death_mass(self, mass_array, metallicity array):
+        """
+        The top-level function that assigns the remnant type 
+        and mass based on the stellar initial mass. 
+        
+        Parameters
+        ----------
+        mass_array: array of floats
+            Array of initial stellar masses. Units are
+            M_sun.
+        metallicity_array: array of floats
+            Array of metallicities in terms of [Fe/H]
+        Notes
+        ------
+        The output typecode tells what compact object formed:
+        
+        * WD: typecode = 101
+        * NS: typecode = 102
+        * BH: typecode = 103
+        A typecode of value -1 means you're outside the range of 
+        validity for applying the ifmr formula. 
+        A remnant mass of -99 means you're outside the range of 
+        validity for applying the ifmr formula.
+        Range of validity: MZAMS > 0.5 
+        
+        Returns
+        -------
+        output_arr: 2-element array
+            output_array[0] contains the remnant mass, and 
+            output_array[1] contains the typecode
+        """
+        #output_array[0] holds the remnant mass
+        #output_array[1] holds the remnant type
+        output_array = np.zeros((2, len(mass_array)))
+
+        codes = {'WD': 101, 'NS': 102, 'BH': 103}
+
+        # Array to store the remnant masses
+        rem_mass_array = np.zeros(len(mass_array))
+
+        # Convert from [Fe/H] to Z
+        # FIXME: if have Fe/H = nan that makes Z = 0. Is that the behavior we want?
+        Z_array = np.zeros((len(metallicity_array)))
+        metal_idx = np.where(metallicity_array != np.nan)
+        Z_array[metal_idx] = self.get_Z(metallicity_array[metal_idx])
+
+        # Random array to get probabilities for what type of object will form
+        random_array = np.random.randint(1, 1001, size = len(mass_array))
+
+        id_array0 = np.where(...) # FIXME
+        output_array[0][id_array0] = -99 * np.ones(len(id_array0))
+        output_array[1][id_array0]  = -1 * np.ones(len(id_array0))
+
+        id_array1 = np.where((mass_array >= 0.5) & (mass_array < 9))
+        output_array[0][id_array1] = self.Kalirai_mass(mass_array[id_array1])
+        output_array[1][id_array1]= codes['WD']
+
+        id_array2 = np.where((mass_array >= 9) & (mass_array < 15))
+        output_array[0][id_array2] = self.NS_mass(mass_array[id_array2])
+        output_array[1][id_array2] = codes['NS']
+
+        # Need probabilities...
+        
 
 class IFMR_Spera15(IFMR):
     """
