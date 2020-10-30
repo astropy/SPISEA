@@ -1707,15 +1707,18 @@ class BPASS(StellarEvolution):
         If you are REALLY curious about black holes, try using TUI
         with BPASS.
         
-        parameters
+        Parameters
         ----------
+        dir_in: string
+        The string representation of the absolute path to the directory
+        of preprocessed isochrones.This is for customization/Testing purposes.
         age: float or double
         The age of the isochrone in years
         metallicity: float or double
-        The log10(age in metallicity) of the star
+        The log10(metallicity) of the star
         (HERE THIS IS IN terms of Z which is the initial
         metallicity mass fraction from the formula introduced
-        in Grevesse & Noels 1993)
+        in Grevesse & Noels 1993 not necessarily [M/H])
         
         Output
         ------
@@ -1740,7 +1743,7 @@ class BPASS(StellarEvolution):
         """
         
         oldmetallicity = metallicity
-        metallicity = self.z_solar * 10 ** metallicity
+        metallicity = self.z_solar * 10 ** metallicity # This time metallicity fraction as how BPASS is organized.
         log_age = math.log10(age)
         if log_age < np.min(self.age_list) or log_age > np.max(self.age_list):
             logger.error('Requested age {0} is out of bounds.'.format(log_age))
@@ -1766,7 +1769,6 @@ class BPASS(StellarEvolution):
         # Phase. I will need to find how
         # phase for individual stars will be added
         # then I will fill it in with appropriate values.
-        
         isWR = Column(np.repeat(False, len(iso)), name='isWR')
         isWR2 = Column(np.repeat(False, len(iso)), name='isWR2')
         colG = Column(np.repeat(np.nan, len(iso)), name='logg')
@@ -1780,10 +1782,20 @@ class BPASS(StellarEvolution):
         # We may as well delete a for loop here
         
         iso['age'] = np.log10(iso['age'])
-        iso['logg'] = np.log10(( iso['M1'] * cs.GM_sun / ((10**iso['log(R1)']*cs.R_sun) ** 2))*un.s*un.s/un.m)
-        iso['logg2'] = np.log10(( iso['M2'] * cs.GM_sun / ((10**iso['log(R2)']*cs.R_sun) ** 2))*un.s*un.s/un.m)
-        iso['log_ai'] = np.log10(((cs.GM_sun * (un.s ** 2) / (un.m ** 3)) * (iso['mass'] + iso['mass2'])*((24*(60**2)*10 ** iso['initl_logP']) ** 2) / 
-                                 (4 * (np.pi) ** 2))**(1/3)*(1/cs.au) * un.m)
+        # Convert to CGS in the next two lines.
+        iso['logg'] = np.log10(( iso['M1'] * cs.GM_sun / (((10 ** iso['log(R1)'])
+                                                           * cs.R_sun) ** 2)) * 
+                               un.s * un.s/un.cm) 
+        iso['logg2'] = np.log10(( iso['M2'] * cs.GM_sun / (((10 ** iso['log(R2)']) * 
+                                                            cs.R_sun) ** 2)) * 
+                                un.s * un.s/un.cm)
+        # Apply Kepler's Third law to find the log of initial separation of the
+        # binary system.
+        iso['log_ai'] = np.log10(((cs.GM_sun * (un.s ** 2) / (un.m ** 3)) * 
+                                  (iso['mass'] + iso['mass2']) * 
+                                  ((24 * (60 ** 2) *
+                                    (10 ** iso['initl_logP'])) ** 2) / 
+                                  (4 * (np.pi) ** 2)) ** (1 / 3) * (1 / cs.au) * un.m)
         iso.rename_column('M1', 'mass_current')
         for x in iso:
             x['age'] = np.log10(x['age'])
@@ -1794,25 +1806,21 @@ class BPASS(StellarEvolution):
             x['isWR'] = x['X'] < 0.40 and x['log(T1)'] > 4.45
             x['isWR2'] = x['X'] < 0.40 and x['log(T2)'] > 4.45
                 
-            # Calculated logg=log10(Mass*G/(Radius of the star)^2)
-            # I made one solar radius equal to 695508 * 10 ** 3 meters
-            # Source: 
             # I also make sure that the computer understands whether a star is a
             #white dwarf is not a white dwarf. This may help when running the
             #atmosphere models for the photometry.
-            if (x['logg']>6.9 and x['log(L1)'] < -1 and x['log(T1)']<1.5):
-                x['phase']=101
+            # Credits to Heloise Stevance's HOKI for the criterion for finding the white dwarves.
+            if (x['logg'] > 6.9 and x['log(L1)'] < -1 and x['log(T1)'] < 1.5):
+                x['phase'] = 101
             else:
-                x['phase']=12
-            if (x['logg2']>6.9 and x['log(L2)'] < -1 and x['log(T2)']<1.5):
-                x['phase2']=101
+                x['phase'] = 12
+            if (x['logg2'] > 6.9 and x['log(L2)'] < -1 and x['log(T2)'] < 1.5):
+                x['phase2'] = 101
             else:
-                x['phase2']=12
-
+                x['phase2'] = 5 # Just to not make the phase checker mad in my cluster constructor.
         #Changing column name to
         #Making sure that names of the columns are consistent with
         # general format of isochrone.
-        
         iso.rename_column('log(T1)', 'logT')
         iso.rename_column('M2', 'mass_current2')
         iso.rename_column('log(L1)', 'logL')
