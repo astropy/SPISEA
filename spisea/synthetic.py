@@ -1486,6 +1486,7 @@ class Isochrone_Binary(Isochrone):
         self.red_law = red_law
         self.filters = filters
         self.filt_names_table = []
+        self.verbose=True
 
         # Assert that the wavelength ranges are within the limits of the
         # VEGA model (0.1 - 10 microns)
@@ -1513,9 +1514,6 @@ class Isochrone_Binary(Isochrone):
             idx = np.where(evol['mass'] <= max_mass)
             evol = evol[idx] 
 
-        # Trim down the table by selecting every Nth point where
-        # N = mass sampling factor.
-        evol = evol[::mass_sampling]
 
         # Give luminosity, temperature, mass, radius units (astropy units).
         L_all = 10 ** evol['logL'] * constants.L_sun # luminsoity in W
@@ -1564,7 +1562,11 @@ class Isochrone_Binary(Isochrone):
         singles.remove_column('single')
         primaries = primaries[np.where(~primaries['single'])[0]]
         primaries.remove_column('single')
-        
+        # Trim down the table by selecting every Nth point where
+        # N = mass sampling factor.
+        singles = singles[::mass_sampling]
+        primaries = primaries[::mass_sampling]
+        secondaries = secondaries[::mass_sampling]
         # Inserting before I forget
         # I try to make sure that we have a queue 
         # of atm_function results to process
@@ -1617,7 +1619,7 @@ class Isochrone_Binary(Isochrone):
                     tab[ii]['L'] = np.nan # No more secondary star with atm left
                     tab[ii]['gravity'] = np.nan # No more secondary star with gravity
                     tab[ii]['isWR'] = False # Star no longer exits
-                    tab['phase'] = -99 # Stands for nonexistent
+                    tab[ii]['phase'] = -99 # Stands for nonexistent
                     atm_list.append("Nada")
                     continue
                 if (np.isfinite(gravity) and gravity!=0.0 and
