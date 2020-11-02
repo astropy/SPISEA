@@ -41,12 +41,19 @@ def assign_props(dicionario, input_str, y):
 # Source: https://stackoverflow.com/questions/44369504/
 # how-to-convert-entire-dataframe-values-to-float-in-pandas
 vals=hoki.dummy_dict.values()
-cols_to_keep=["col"+str(v+1) for v in vals if v<=48]
+cols_to_keep=["col"+str(v+1) for v in vals if v <= 48]
+# According to the BPASS v2.2.1 manual, much of 
+# columns 50 and onward
+# are basically spectra and atmosphere related models.
+# They will be calculated later.
 # Source: https://stackoverflow.com/questions/483666/
 # reverse-invert-a-dictionary-mapping
 # I create a mapping from column NUMBER to 
 # column name
 invmap = {u: v for v, u in hoki.dummy_dict.items()}
+# Accounting for zero indexing, write out a list
+# of column names to assign to each BPASS dat file 
+# column name.
 lisnp=[invmap[int(x[3:])-1] for x in cols_to_keep]
 
 
@@ -217,15 +224,17 @@ def reformatter(destination, metallicity):
                 continue
                 # Models that count as secondary star with compact remnants
                 # go into the <metallicity>/bin subdirectory of the destination.
-            print(x[len(hoki.MODELS_PATH)+1:len(hoki.MODELS_PATH)+1+len("NEWBINMODS/XXXXXXXXXX")])
-            if x[len(hoki.MODELS_PATH)+1:len(hoki.MODELS_PATH)+1+len("NEWBINMODS/XXXXXXXXXX")]=="NEWBINMODS/NEWSECMODS":
+            print(x[len(hoki.MODELS_PATH) + 1:len(hoki.MODELS_PATH) + 1 +
+                    len("NEWBINMODS/XXXXXXXXXX")])
+            if x[len(hoki.MODELS_PATH) + 1:len(hoki.MODELS_PATH) + 1 + 
+                 len("NEWBINMODS/XXXXXXXXXX")] == "NEWBINMODS/NEWSECMODS":
                 print(destination + 
                                  "/" + x[new_sec_to_met:
-                                        (new_sec_and_met)-2] +
+                                        (new_sec_and_met) - 2] +
                                  "/FitsModels{}sec.fits".format(x[new_sec_and_met+1:]))
                 astroTable.write(destination + 
                                  "/" + x[new_sec_to_met:
-                                        (new_sec_and_met)-2] +
+                                        (new_sec_and_met) - 2] +
                                  "/FitsModels{}sec.fits".
                              format(x[new_sec_and_met+1:]),
                              format='fits', overwrite=True)
@@ -322,7 +331,6 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
         caught_no=caught_no.union(sec_files)
         [assign_props(names_to_prop, name, (x,)) for name in sec_files]
     len_of_heading = len("{}/{}/FitsModelssneplot_2-{}-".format(input_dir, metallicity, metallicity))
-    stopLen = 4
     bigOne = None;
     initial = True
     initlMass = np.nan
@@ -333,13 +341,19 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
         # x is the name of the reformatted stellar evolution file.
         # Rest carries the initial mass of the system and for NEWBINMODS systems carries the secondary and log_P in days
         rest=names_to_prop[x]
-        if True: # Really would have been that x is a path to a file, but this seems to be always true as I am getting the entries from globs and prior checks as to whether they are existing files.
-            # We only want to consider the 
+        # The following conditional would have been that x is a path to a file, 
+        # but this seems to be always true.
+        # as I am getting the entries from globs and prior checks as to whether they are existing files.
+        # We only want to consider the 
+        if True: 
             org = Table.read(x, format = 'fits')
             indicesOfInterest = np.where(np.abs(np.log10(org['age'])-age) <= margin)[0]
             f = org[indicesOfInterest] # f stands for frame in DataFrame
             indicesOfInterest = np.array(indicesOfInterest)
+            # If no stars have a log10(age) within margin of the given lage in log-10 years, we
+            # must skip over to the next model.
             if (len(f) != 0):
+                # Find the star with age closest to the input log(Age of the star)
                 filterDown = np.where(np.abs(f['age'] - 10 ** age) == np.min(np.abs(f['age'] - 10 ** age)))[0]
                 f = f[filterDown]
                 indicesOfInterest=indicesOfInterest[filterDown]              
@@ -359,22 +373,30 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                         # one big star or still two stars
                         # will still keep initial parameters for the sake of working
                         # with the Duchene-Krauss distributions
-                    elif (x[-8:-5]=='sec'):
+                    elif (x[-8:-5] == 'sec'):
                         # Recall that the ending of the file is going to be XXX.fits
                         # The XXX can be sec, hmg, bin, sin.
+                        # I will explot the pattern that the log_P is
+                        # going to be either 9 characters, 8 characters, or 7 characters
+                        # long.
                         f['single'] = np.repeat(False, indexlen)
                         initlMass = float(rest[0])
-                        # See if the number would begin right after a dash in index -18
-                        if (x[-10-8]=="-"):
+                        # See if the number would begin right after a dash in index -18.
+                        # 8 characters given for the xxx.fits
+                        # 9 spaces for the decimal number.
+                        # We want the dash before that as our cue.
+                        if (x[-10-8] == "-"):
                             #Here the decimal is number is 9 characters long and 
                             # xxx.fits has length of 8
                             log_P_in_days = float(x[-17:-8])
                             initlMass2 = float(x[len_of_heading+len(str(rest[0])+"-"):-18])
                         else:
                             # See if the number begins right after a dash in index -17
-                            if (x[-9-8]=="-"): 
-                                #Here the decimal is number is 8 characters long and 
-                                # xxx.fits has length of 8
+                            # 8 for the xxx.fits and 8 for the log_P and we want
+                            # the preceding dash.
+                            if (x[-9-8] == "-"): 
+                                # Here the decimal is number is 8 characters long and 
+                                # xxx.fits has length of 8.
                                 log_P_in_days = float(x[-16:-8]) # 8 is the 
                                 initlMass2 = float(x[len_of_heading+len(str(rest[0])+"-"):-17])
                             # Assume that the number would begin at index -16. (From my observation, we only
@@ -388,20 +410,20 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                         f['mass2'] = np.repeat(initlMass2, indexlen)
                         f['initl_logP'] = np.repeat(log_P_in_days, indexlen)
                         f['mergered?'] = np.repeat(False, indexlen)
-                    elif (x[-8:-5]=='hmg'):
+                    elif (x[-8:-5] == 'hmg'):
                         f['single'] = np.repeat(False, indexlen)
-                        print(org['age'][0])
-                        initlMass = org['M1'][0] # To be consistent with obtaining initial mass 
+                        initlMass = org['M1'][0]
+                        # To be consistent with obtaining initial mass 
                         # (or whichever value is closest) for the HMG Model).
                         initlMass2 = org['M2'][0]
-                        P_in_days = org['P_bin'][0]*365.25 # Using Julian Years (No Astropy const for that)
+                        P_in_days = org['P_bin'][0] * 365.25 # Using Julian Years (No Astropy const for that)
                         f['mass'] = np.repeat(initlMass, indexlen)
                         f['mass2'] = np.repeat(initlMass2, indexlen)
                         f['initl_logP'] = np.repeat(np.log10(P_in_days), indexlen)
-                        f['mergered?'] = np.repeat(False, indexlen)
-                        # Question for BPASS creators, how do I do this for 
+                        f['mergered?'] = np.repeat(False, indexlen) 
                     else:
                         f['single'] = np.repeat(True, indexlen)
+                        # Single stars do not have companions.
                         initlMass = rest[0]
                         initlMass2 = np.nan
                         P_in_days = np.nan
@@ -410,8 +432,8 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                         f['initl_logP'] = np.repeat(np.nan, indexlen)
                         f['mergered?'] = np.repeat(False, indexlen)
                     if initial:
-                        initial=False
-                        bigOne=f.to_pandas()
+                        initial = False
+                        bigOne = f.to_pandas()
                     else:
                         bigOne=pd.concat([f.to_pandas(), bigOne])
     if not isinstance(bigOne, type(None)) and not (bigOne['age'].empty):
