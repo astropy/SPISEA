@@ -1636,10 +1636,10 @@ class Isochrone_Binary(Isochrone):
                     continue
                 # Check if the star is building up the 
                 if (np.isfinite(gravity) and gravity!=0.0 and
-                    np.isfinite(L) and L>0.0 and
-                    np.isfinite(T) and T>0.0 and
-                    np.isfinite(R) and R>0.0):
-                    if (T==np.nan or T==0):
+                    np.isfinite(L) and L > 0.0 and
+                    np.isfinite(T) and T > 0.0 and
+                    np.isfinite(R) and R > 0.0):
+                    if (T == np.nan or T == 0):
                         print("Temp in kelvin: ", T)
                     if phase[ii] == 101:
                         
@@ -1738,7 +1738,9 @@ class Isochrone_Binary(Isochrone):
                    # These are already extincted, observed spectra.
                         star_mag = mag_in_filter(star, filt)
                     else:
-                        # List of Valid stars
+                        # We want nan to stand in place
+                        # for stars that do not have valid T
+                        # or radius or L.
                         star_mag = np.nan
                 
                     table[col_name][ss] = star_mag
