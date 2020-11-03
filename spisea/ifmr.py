@@ -56,13 +56,32 @@ class IFMR_N20_Sukhbold(IFMR):
     WD IFMR from Kalirai et al. 2008:
     https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
     """
-    # Comes from fit (needs a function)
-    zero_coeff = [ 1.73877791e-06, -2.29152875e-04,  1.20555396e-02,  1.35831935e-01,  2.31381928e-01]
-    solar_coeff = [ 7.22032444e-03, -1.07320209e+00,  4.61793972e+01]
-    zfrac_cut = 0.3
-    Zsun = 0.014 # Following what Sam has
+    # Comes from fit (needs a function here)
+    zero_coeff = [0.46522639, -3.29170817]
+    solar_coeff = [-0.27079245, 24.74320755]
+    
+    zero_BH_mass = np.poly1d(zero_coeff)
+    solar_BH_mass = np.poly1d(solar_coeff)
 
-    def BH_mass_1(self, MZAMS):
+    Zsun = 0.014 # What sam is using
+
+    def NS_mass(self, MZAMS):
+        """                                                                                                      
+        Paper: 9 < MZAMS 120                                                                                     
+        Drawing the mass from gaussian created using observational data
+         Done by Emily Ramey and Sergiy Vasylyev at University of Caifornia, Berkeley
+        sample oF NS from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020), 
+        J2302+4442 Kirichenko et al. (2018), J2215+5135 Linares et al. (2018), 
+        J1913+1102 Ferdman & Collaboration (2017), J1411+2551 Martinez et al. (2017), 
+        J1757+1854 Cameron et al. (2018), J0030+0451 Riley et al. (2019), J1301+0833 Romani et al. (2016)
+        The gaussian distribution was created using this data and a Bayesian MCMC method adapted from
+        Kiziltan et al. (2010)
+        
+        """
+        return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
+
+
+    def BH_mass_low(self, MZAMS):
         """
         9 < MZAMS < 40 Msun
         """
@@ -72,9 +91,9 @@ class IFMR_N20_Sukhbold(IFMR):
         return mBH
 
 
-    def BH_mass_2(self, MZAMS, Z):
+    def BH_mass_high(self, MZAMS, Z):
         """
-        40 Msun < MZAMS < ...
+        39.6 Msun < MZAMS < 120 Msun
         """
         solar_BH_mass = np.poly1d(solar_coeff)
         zero_BH_mass = np.poly1d(zero_coeff)
@@ -85,25 +104,30 @@ class IFMR_N20_Sukhbold(IFMR):
         if zfrac > 1:
             zfrac = 1
 
+        if zfrac < 0:
+            raise ValueError('Z must be non-negative.')
+
         # Linearly interpolate
-        mBH = solar_BH_mass(MZAMS) - zfrac * zero_BH_mass(MZAMS)
+        # CHECK
+        mBH = zfrac*solar_BH_mass(MZAMS) + (1 - zfrac) * zero_BH_mass(MZAMS)
 
         return mBH
 
+    def prob_BH_high(self, Z):
+        zfrac = Z/Zsun
 
-    def BH_mass_PPISN_1(self, MZAMS):
-        """
-        For 70 < MZAMS < 120 at Z = 0
-        """
-        return 0.4 * MZAMS + 4
+        if Zfrac > 1:
+            Zfrac = 1
 
+        if zfrac < 0:
+            raise ValueError('Z must be non-negative.')
 
-    def BH_mass_PPISN_2(self, MZAMS):
-        """
-        For 120 < MZAMS < 140 at Z = 0
-        """
-        return -0.75 * MZAMS + 142
+        pBH_sun = 0.8
+        pBH_zero = 1.0
 
+    pBH = zfrac*pBH_sun + (1-zfrac)*pBH_zero
+
+    return pBH
 
     def generate_death_mass(self, mass_array, metallicity array):
         """
@@ -154,7 +178,7 @@ class IFMR_N20_Sukhbold(IFMR):
         # Random array to get probabilities for what type of object will form
         random_array = np.random.randint(1, 1001, size = len(mass_array))
 
-        id_array0 = np.where(...) # FIXME
+        id_array0 = np.where((mass_array < 0.5) | (mass_array >= 120)) # FIXME
         output_array[0][id_array0] = -99 * np.ones(len(id_array0))
         output_array[1][id_array0]  = -1 * np.ones(len(id_array0))
 
@@ -166,8 +190,41 @@ class IFMR_N20_Sukhbold(IFMR):
         output_array[0][id_array2] = self.NS_mass(mass_array[id_array2])
         output_array[1][id_array2] = codes['NS']
 
-        # Need probabilities...
-        
+        id_array3_BH = np.where((mass_array >= 15) & (mass_array < 21.8) & (random_array > 750))
+        output_array[0][id_array3_BH] = self.BH_mass_low(mass_array[id_array3_BH])
+        output_array[1][id_array3_BH] = codes['BH']
+
+        id_array3_NS = np.where((mass_array >= 15) & (mass_array < 21.8) & (random_array <= 750))
+        output_array[0][id_array3_NS] = self.NS_mass(mass_array[id_array3_NS])
+        output_array[1][id_array3_NS] = codes['NS']
+
+        id_array4 = np.where((mass_array >= 21.8) & (mass_array < 25.2))
+        output_array[0][id_array4] = self.BH_mass_low(mass_array[id_array4])
+        output_array[1][id_array4] = codes['BH']
+
+        id_array5 = np.where((mass_array >= 25.2) & (mass_array < 27.4))
+        output_array[0][id_array5] = self.NS_mass(mass_array[id_array5])
+        output_array[1][id_array5] = codes['NS']
+
+        id_array6 = np.where((mass_array >= 27.4) & (mass_array < 39.6))
+        output_array[0][id_array6] = self.BH_mass_low(mass_array[id_array6])
+        output_array[1][id_array6] = codes['BH']
+
+        id_array7 = np.where((mass_array >= 39.6) & (mass_array < 60))
+        output_array[0][id_array7] = self.BH_mass_high(mass_array[id_array7],
+                                                       Z_array[id_array7])
+        output_array[1][id_array7] = codes['BH']
+
+        id_array8 = np.where((mass_array >= 60) & (mass_array < 120))
+        for idx in id_array8:
+            pBH = prob_BH_high(Z_array[id_array8][idx])
+            if random_array[id_array8][idx] > 1000*pBH:
+                output_array[0][id_array8][idx] = self.BH_mass_high(mass_array[id_array8][idx],
+                                                                    Z_array[id_array8][idx])
+                output_array[1][id_array8][idx] = codes['BH']
+            else:
+                output_array[0][id_array8][idx] = self.NS_mass(mass_array[id_array8][idx])
+                output_array[1][id_array8][idx] = codes['NS']
 
 class IFMR_Spera15(IFMR):
     """
