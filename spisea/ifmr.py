@@ -49,11 +49,13 @@ class IFMR(object):
 class IFMR_N20_Sukhbold(IFMR):
     """
     BH/NS IFMR comes from Tuguldur Sukhbold
-    Based on Sukhbold & Woosley 2014:
+    Based on Sukhbold & Woosley 2014 for zero-Z models:
     https://ui.adsabs.harvard.edu/abs/2014ApJ...783...10S/abstract
-    PPISN based on Woosley 2017: 
+    Based on Sukhbold et al. 2016 for solar-Z models::
+    https://ui.adsabs.harvard.edu/abs/2016ApJ...821...38S/abstract
+    PPISN based on Woosley 2017 for PPISN: 
     https://ui.adsabs.harvard.edu/abs/2017ApJ...836..244W/abstract
-    WD IFMR from Kalirai et al. 2008:
+    WD IFMR from Kalirai et al. 2008 for white dwarfs:
     https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
     """
     # Linear fits to Sukhbold simulations.
