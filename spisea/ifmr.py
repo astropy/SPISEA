@@ -113,6 +113,7 @@ class IFMR_N20_Sukhbold(IFMR):
 
         return mBH
 
+
     def prob_BH_high(self, Z):
         zfrac = Z/Zsun
 
@@ -128,6 +129,7 @@ class IFMR_N20_Sukhbold(IFMR):
     pBH = zfrac*pBH_sun + (1-zfrac)*pBH_zero
 
     return pBH
+
 
     def generate_death_mass(self, mass_array, metallicity array):
         """
@@ -225,6 +227,9 @@ class IFMR_N20_Sukhbold(IFMR):
             else:
                 output_array[0][id_array8][idx] = self.NS_mass(mass_array[id_array8][idx])
                 output_array[1][id_array8][idx] = codes['NS']
+
+        return(output_array)
+
 
 class IFMR_Spera15(IFMR):
     """
