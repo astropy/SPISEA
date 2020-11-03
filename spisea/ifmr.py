@@ -48,15 +48,14 @@ class IFMR(object):
 
 class IFMR_N20_Sukhbold(IFMR):
     """
-    BH/NS IFMR comes from Tuguldur Sukhbold
-    Based on Sukhbold & Woosley 2014 for zero-Z models:
-    https://ui.adsabs.harvard.edu/abs/2014ApJ...783...10S/abstract
-    Based on Sukhbold et al. 2016 for solar-Z models::
-    https://ui.adsabs.harvard.edu/abs/2016ApJ...821...38S/abstract
-    PPISN based on Woosley 2017 for PPISN: 
-    https://ui.adsabs.harvard.edu/abs/2017ApJ...836..244W/abstract
-    WD IFMR from Kalirai et al. 2008 for white dwarfs:
-    https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
+    BH/NS IFMR based on Sukhbold & Woosley 2014 for zero-Z models:
+        https://ui.adsabs.harvard.edu/abs/2014ApJ...783...10S/abstract
+    BH/NS IFMR based on Sukhbold et al. 2016 for solar-Z models::
+        https://ui.adsabs.harvard.edu/abs/2016ApJ...821...38S/abstract
+    PPISN based on Woosley 2017: 
+        https://ui.adsabs.harvard.edu/abs/2017ApJ...836..244W/abstract
+    WD IFMR from Kalirai et al. 2008:
+        https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
     """
     # Linear fits to Sukhbold simulations.
     zero_coeff = [0.46522639, -3.29170817]
@@ -124,9 +123,9 @@ class IFMR_N20_Sukhbold(IFMR):
         if zfrac < 0:
             raise ValueError('Z must be non-negative.')
 
-    pBH = 1 - 0.8*zfrac
+        pBH = 1 - 0.8*zfrac
 
-    return pBH
+        return pBH
 
 
     def generate_death_mass(self, mass_array, metallicity array):
