@@ -56,14 +56,15 @@ class IFMR_N20_Sukhbold(IFMR):
     WD IFMR from Kalirai et al. 2008:
     https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
     """
-    # Comes from fit (needs a function here)
+    # Linear fits to Sukhbold simulations.
     zero_coeff = [0.46522639, -3.29170817]
     solar_coeff = [-0.27079245, 24.74320755]
     
     zero_BH_mass = np.poly1d(zero_coeff)
     solar_BH_mass = np.poly1d(solar_coeff)
 
-    Zsun = 0.014 # What sam is using
+    # Solar metallicity (what Sam is using)
+    Zsun = 0.014
 
     def NS_mass(self, MZAMS):
         """                                                                                                      
@@ -85,8 +86,7 @@ class IFMR_N20_Sukhbold(IFMR):
         """
         9 < MZAMS < 40 Msun
         """
-        BH_mass = np.poly1d(solar_coeff)
-        mBH = BH_mass(MZAMS)
+        mBH = zero_BH_mass(MZAMS)
 
         return mBH
 
@@ -95,9 +95,6 @@ class IFMR_N20_Sukhbold(IFMR):
         """
         39.6 Msun < MZAMS < 120 Msun
         """
-        solar_BH_mass = np.poly1d(solar_coeff)
-        zero_BH_mass = np.poly1d(zero_coeff)
-
         zfrac = Z/Zsun
 
         # super-solar Z gives identical results as solar Z
@@ -108,13 +105,15 @@ class IFMR_N20_Sukhbold(IFMR):
             raise ValueError('Z must be non-negative.')
 
         # Linearly interpolate
-        # CHECK
-        mBH = zfrac*solar_BH_mass(MZAMS) + (1 - zfrac) * zero_BH_mass(MZAMS)
+        mBH = (1 - zfrac) * zero_BH_mass(MZAMS) + zfrac*solar_BH_mass(MZAMS)
 
         return mBH
 
 
     def prob_BH_high(self, Z):
+        """
+        Probability of BH formation for 60 < Mzams < 120 Msun
+        """
         zfrac = Z/Zsun
 
         if Zfrac > 1:
@@ -123,10 +122,7 @@ class IFMR_N20_Sukhbold(IFMR):
         if zfrac < 0:
             raise ValueError('Z must be non-negative.')
 
-        pBH_sun = 0.8
-        pBH_zero = 1.0
-
-    pBH = zfrac*pBH_sun + (1-zfrac)*pBH_zero
+    pBH = 1 - 0.8*zfrac
 
     return pBH
 
@@ -178,9 +174,9 @@ class IFMR_N20_Sukhbold(IFMR):
         Z_array[metal_idx] = self.get_Z(metallicity_array[metal_idx])
 
         # Random array to get probabilities for what type of object will form
-        random_array = np.random.randint(1, 1001, size = len(mass_array))
+        random_array = np.random.randint(1, 101, size = len(mass_array))
 
-        id_array0 = np.where((mass_array < 0.5) | (mass_array >= 120)) # FIXME
+        id_array0 = np.where((mass_array < 0.5) | (mass_array >= 120))
         output_array[0][id_array0] = -99 * np.ones(len(id_array0))
         output_array[1][id_array0]  = -1 * np.ones(len(id_array0))
 
@@ -192,11 +188,11 @@ class IFMR_N20_Sukhbold(IFMR):
         output_array[0][id_array2] = self.NS_mass(mass_array[id_array2])
         output_array[1][id_array2] = codes['NS']
 
-        id_array3_BH = np.where((mass_array >= 15) & (mass_array < 21.8) & (random_array > 750))
+        id_array3_BH = np.where((mass_array >= 15) & (mass_array < 21.8) & (random_array > 75))
         output_array[0][id_array3_BH] = self.BH_mass_low(mass_array[id_array3_BH])
         output_array[1][id_array3_BH] = codes['BH']
 
-        id_array3_NS = np.where((mass_array >= 15) & (mass_array < 21.8) & (random_array <= 750))
+        id_array3_NS = np.where((mass_array >= 15) & (mass_array < 21.8) & (random_array <= 75))
         output_array[0][id_array3_NS] = self.NS_mass(mass_array[id_array3_NS])
         output_array[1][id_array3_NS] = codes['NS']
 
@@ -220,7 +216,7 @@ class IFMR_N20_Sukhbold(IFMR):
         id_array8 = np.where((mass_array >= 60) & (mass_array < 120))
         for idx in id_array8:
             pBH = prob_BH_high(Z_array[id_array8][idx])
-            if random_array[id_array8][idx] > 1000*pBH:
+            if random_array[id_array8][idx] > 100*pBH:
                 output_array[0][id_array8][idx] = self.BH_mass_high(mass_array[id_array8][idx],
                                                                     Z_array[id_array8][idx])
                 output_array[1][id_array8][idx] = codes['BH']
