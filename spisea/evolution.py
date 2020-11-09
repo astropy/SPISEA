@@ -1712,6 +1712,7 @@ class BPASS(StellarEvolution):
         dir_in: string
         The string representation of the absolute path to the directory
         of preprocessed isochrones.This is for customization/Testing purposes.
+        For folks do not want to store in the models directory.
         age: float or double
         The age of the isochrone in years
         metallicity: float or double
@@ -1797,24 +1798,22 @@ class BPASS(StellarEvolution):
                                     (10 ** iso['initl_logP'])) ** 2) / 
                                   (4 * (np.pi) ** 2)) ** (1 / 3) * (1 / cs.au) * un.m)
         iso.rename_column('M1', 'mass_current')
+        iso['age'] = np.log10(iso['age'])
+
+        # Using Stanway and Elridge Criterion for calculating whether
+        # a star is a WR star or not for using the PotsDam Atmospheres
+        iso['isWR'] = (iso['X'] < 0.40) & (iso['log(T1)'] >= 4.45)
+        iso['isWR2'] = (iso['X'] < 0.40) & (iso['log(T2)'] >= 4.45)
         for x in iso:
-            x['age'] = np.log10(x['age'])
-
-            # Using Stanway and Elridge Criterion for calculating whether
-            # a star is a WR star or not for using the PotsDam Atmospheres
-
-            x['isWR'] = x['X'] < 0.40 and x['log(T1)'] > 4.45
-            x['isWR2'] = x['X'] < 0.40 and x['log(T2)'] > 4.45
-                
             # I also make sure that the computer understands whether a star is a
-            #white dwarf is not a white dwarf. This may help when running the
-            #atmosphere models for the photometry.
+            # white dwarf is not a white dwarf. This may help when running the
+            # atmosphere models for the photometry.
             # Credits to Heloise Stevance's HOKI for the criterion for finding the white dwarves.
-            if (x['logg'] > 6.9 and x['log(L1)'] < -1 and x['log(T1)'] < 1.5):
+            if (x['logg'] > 6.9 and x['log(L1)'] < -1 and x['mass_current'] < 1.5):
                 x['phase'] = 101
             else:
-                x['phase'] = 12
-            if (x['logg2'] > 6.9 and x['log(L2)'] < -1 and x['log(T2)'] < 1.5):
+                x['phase'] = 5
+            if (x['logg2'] > 6.9 and x['log(L2)'] < -1 and x['M2'] < 1.5):
                 x['phase2'] = 101
             else:
                 x['phase2'] = 5 # Just to not make the phase checker mad in my cluster constructor.

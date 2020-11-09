@@ -7,7 +7,7 @@ import hoki
 from hoki import load
 import glob
 import re
-possible_secondary_q=['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9']
+possible_secondary_q = ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9']
 # The list encompassing possible primary mass for primary and secondary. Trying to encompass
 # all possible cases, even if there is a bit of redundancy and excess.
 mass_list = [round(0.1, 1)] + [round(0.12 + x * 0.020, 2)
@@ -16,14 +16,14 @@ mass_list = mass_list + [round(2.05 + x * 0.05, 2)
                                            for x in range(20)]
 mass_list = mass_list + [round(3.1 + 0.1 * x, 1)
                                            for x in range(70)]
-mass_list = mass_list + [11 + x for x in range(90)] +[120, 400, 500]+ [125 + 25 * x for x in range(8)]
+mass_list = mass_list + [11 + x for x in range(90)] + [120, 400, 500] + [125 + 25 * x for x in range(8)]
 def convert(x):
     """
     Helper function to use for possible mass list. If the number can be represented by an integer,
     it turns into an integer.
     This is to make sure that I am really matching masses.
     """
-    if (x%1==0.0):
+    if (x % 1 == 0.0):
          return int(x)
     else:
          return x
@@ -41,7 +41,7 @@ def assign_props(dicionario, input_str, y):
 # Source: https://stackoverflow.com/questions/44369504/
 # how-to-convert-entire-dataframe-values-to-float-in-pandas
 vals=hoki.dummy_dict.values()
-cols_to_keep=["col"+str(v+1) for v in vals if v <= 48]
+cols_to_keep=["col" + str(v + 1) for v in vals if v <= 48]
 # According to the BPASS v2.2.1 manual, much of 
 # columns 50 and onward
 # are basically spectra and atmosphere related models.
@@ -69,7 +69,7 @@ def find_mergers(star_table, initial_mass):
     in a table). This is to ensure that all rows corresponding to positions after the returned index of the
     star_table are merger.
     """
-    if (star_table['M1'][0]>initial_mass+0.01):
+    if (star_table['M1'][0] > initial_mass + 0.01):
         return 0
     # returns index where the merger is completed
     # assuming that f is a merger model.
@@ -77,9 +77,9 @@ def find_mergers(star_table, initial_mass):
     # I make sure that age is actually increasing and that the mass of the primary 
     # is increasing by at least 0.01 solar masses.
     # Per Dr. Jan Edlridge, the increase in mass is supposed to be an indicator of a merger happening
-    val= np.where((np.diff(star_table['M1'])>0.01) & (np.diff(star_table['age'])>=0))[0]
+    val= np.where((np.diff(star_table['M1']) > 0.01) & (np.diff(star_table['age']) >= 0))[0]
     if (len(val)):
-        return val[-1]+1
+        return val[-1] + 1
     return len(star_table)
 
 
@@ -144,7 +144,6 @@ def reformatter(destination, metallicity):
  
     # The list of possible BPASS metallicities.
     # HMG stands for Qasi-Chemically Homogeneous Evolution Models.
-
     # Real Deal metallicities=["zem5", "zem4", "z001", "z002", "z003", "z004", "z006", "z008",
                  #"z010", "z014","z020","z030", "z040", "zem5_hmg",
                   # "zem4_hmg", "z001_hmg", "z002_hmg", "z003_hmg", "z004_hmg"]
@@ -239,8 +238,6 @@ def reformatter(destination, metallicity):
                              format(x[new_sec_and_met+1:]),
                              format='fits', overwrite=True)
             else:
-                
-                
                 # Models that count as secondary star with compact remnants
                 # go into the <metallicity>/ subdirectory of the destinatuion.
                 
@@ -304,31 +301,31 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
     ‘Merged?’ - Whether the binary star has been merged.
 
     """
-    caught_no=set()
-    caught=0
-    names_to_prop={}  
+    caught_no = set()
+    caught = 0
+    names_to_prop = {}  
     for x in mass_list:
         # Find all NEWBINMODS systems of the specified metallicity
         for y in combos:
-            st="{}/{}/FitsModelssneplot-{}-{}-{}-{}bin.fits".format(input_dir, metallicity, metallicity, str(x), y[0], y[1])
-            names_to_prop[st]=(str(x), y[0], y[1])
+            st = "{}/{}/FitsModelssneplot-{}-{}-{}-{}bin.fits".format(input_dir, metallicity, metallicity, str(x), y[0], y[1])
+            names_to_prop[st] = (str(x), y[0], y[1])
             if (os.path.isfile(st)):
                 caught_no.add(st)
         # Find all single star systems of the specified metallicity
         st="{}/{}/FitsModelssneplot-{}-{}sin.fits".format(input_dir, metallicity, metallicity, str(x))
-        names_to_prop[st]=(str(x), )
+        names_to_prop[st] = (str(x), )
         if (os.path.isfile(st)):
             caught_no.add(st)
         # Find all Binary QHE systems of the specified metallicity
         st="{}/{}/FitsModelssneplot-{}-{}hmg.fits".format(input_dir, metallicity, metallicity, str(x))
-        names_to_prop[st]=(str(x), )
+        names_to_prop[st] = (str(x), )
         if (os.path.isfile(st)):
             caught_no.add(st)
         # Find all NEWSINMODS systems of the specified metallicity
         st = "{}/{}/FitsModelssneplot_2-{}-{}-*sec.fits".format(input_dir, metallicity, metallicity, str(x))
         li = glob.glob(str(st))
-        sec_files= set(li)
-        caught_no=caught_no.union(sec_files)
+        sec_files = set(li)
+        caught_no = caught_no.union(sec_files)
         [assign_props(names_to_prop, name, (x,)) for name in sec_files]
     len_of_heading = len("{}/{}/FitsModelssneplot_2-{}-".format(input_dir, metallicity, metallicity))
     bigOne = None;
@@ -337,6 +334,7 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
     initlMass2 = np.nan
     indicesOfInterest = None
     entries = glob.glob(str("{}/{}/*".format(input_dir, metallicity)))
+    suffix_len = len("xxx.fits")
     for x in entries:
         # x is the name of the reformatted stellar evolution file.
         # Rest carries the initial mass of the system and for NEWBINMODS systems carries the secondary and log_P in days
@@ -347,7 +345,7 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
         # We only want to consider the 
         if True: 
             org = Table.read(x, format = 'fits')
-            indicesOfInterest = np.where(np.abs(np.log10(org['age'])-age) <= margin)[0]
+            indicesOfInterest = np.where(np.abs(np.log10(org['age']) - age) <= margin)[0]
             f = org[indicesOfInterest] # f stands for frame in DataFrame
             indicesOfInterest = np.array(indicesOfInterest)
             # If no stars have a log10(age) within margin of the given lage in log-10 years, we
@@ -359,7 +357,6 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                 indicesOfInterest=indicesOfInterest[filterDown]              
                 if len(f) != 0:
                     indexlen = len(f)
-                    
                     if (x[-8:-5] =='bin'):
                         f['single'] = np.repeat(False, indexlen)
                         initlMass = float(rest[0])
@@ -369,10 +366,11 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                         # Now, for binaries, I check whether a model is a merger model
                         # is the same for all rows of the model
                         merge_pt = find_mergers(org[['age','M1']], initlMass)
-                        f['mergered?'] = indicesOfInterest >= merge_pt # Find whether we should treat our model as
+                        # Find whether we should treat our model as
                         # one big star or still two stars
                         # will still keep initial parameters for the sake of working
                         # with the Duchene-Krauss distributions
+                        f['mergered?'] = indicesOfInterest >= merge_pt
                     elif (x[-8:-5] == 'sec'):
                         # Recall that the ending of the file is going to be XXX.fits
                         # The XXX can be sec, hmg, bin, sin.
@@ -388,29 +386,29 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                         if (x[-10-8] == "-"):
                             #Here the decimal is number is 9 characters long and 
                             # xxx.fits has length of 8
-                            log_P_in_days = float(x[-17:-8])
-                            initlMass2 = float(x[len_of_heading+len(str(rest[0])+"-"):-18])
+                            log_P_in_days = float(x[-17: -8])
+                            initlMass2 = float(x[len_of_heading + len(str(rest[0]) + "-"):-18])
                         else:
                             # See if the number begins right after a dash in index -17
                             # 8 for the xxx.fits and 8 for the log_P and we want
                             # the preceding dash.
-                            if (x[-9-8] == "-"): 
+                            if (x[-9 - 1*suffix_len] == "-"): 
                                 # Here the decimal is number is 8 characters long and 
                                 # xxx.fits has length of 8.
-                                log_P_in_days = float(x[-16:-8]) # 8 is the 
-                                initlMass2 = float(x[len_of_heading+len(str(rest[0])+"-"):-17])
+                                log_P_in_days = float(x[-8 - 1 * suffix_len: -1 * suffix_len]) # 8 is the 
+                                initlMass2 = float(x[len_of_heading + len(str(rest[0]) + "-"): -17])
                             # Assume that the number would begin at index -16. (From my observation, we only
                             # have a few choices for number of digits of the log_period
                             else:
                                 #Here the decimal is number is 7 characters long and 
                                 # xxx.fits has length of 8
-                                log_P_in_days = float(x[-15:-8])
-                                initlMass2 = float(x[len_of_heading+len(str(rest[0])+"-"):-16])
+                                log_P_in_days = float(x[-7 - 1 * suffix_len: -1 * suffix_len])
+                                initlMass2 = float(x[len_of_heading + len(str(rest[0]) + "-"): -16])
                         f['mass'] = np.repeat(initlMass, indexlen)
                         f['mass2'] = np.repeat(initlMass2, indexlen)
                         f['initl_logP'] = np.repeat(log_P_in_days, indexlen)
                         f['mergered?'] = np.repeat(False, indexlen)
-                    elif (x[-8:-5] == 'hmg'):
+                    elif (x[-1 * suffix_len: -5] == 'hmg'):
                         f['single'] = np.repeat(False, indexlen)
                         initlMass = org['M1'][0]
                         # To be consistent with obtaining initial mass 
