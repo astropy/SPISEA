@@ -128,7 +128,7 @@ class IFMR_N20_Sukhbold(IFMR):
         return pBH
 
 
-    def generate_death_mass(self, mass_array, metallicity array):
+    def generate_death_mass(self, mass_array, metallicity_array):
         """
         The top-level function that assigns the remnant type 
         and mass based on the stellar initial mass. 
