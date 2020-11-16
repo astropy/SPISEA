@@ -1782,7 +1782,6 @@ class BPASS(StellarEvolution):
         iso.add_column(isWR2)
         # We may as well delete a for loop here
         
-        iso['age'] = np.log10(iso['age'])
         # Convert to CGS in the next two lines.
         iso['logg'] = np.log10(( iso['M1'] * cs.GM_sun / (((10 ** iso['log(R1)'])
                                                            * cs.R_sun) ** 2)) * 
@@ -1802,21 +1801,14 @@ class BPASS(StellarEvolution):
 
         # Using Stanway and Elridge Criterion for calculating whether
         # a star is a WR star or not for using the PotsDam Atmospheres
+        # Decided to get rid of loops in order to take fuller advantage
+        # of the C-based numpy!
         iso['isWR'] = (iso['X'] < 0.40) & (iso['log(T1)'] >= 4.45)
         iso['isWR2'] = (iso['X'] < 0.40) & (iso['log(T2)'] >= 4.45)
-        for x in iso:
-            # I also make sure that the computer understands whether a star is a
-            # white dwarf is not a white dwarf. This may help when running the
-            # atmosphere models for the photometry.
-            # Credits to Heloise Stevance's HOKI for the criterion for finding the white dwarves.
-            if (x['logg'] > 6.9 and x['log(L1)'] < -1 and x['mass_current'] < 1.5):
-                x['phase'] = 101
-            else:
-                x['phase'] = 5
-            if (x['logg2'] > 6.9 and x['log(L2)'] < -1 and x['M2'] < 1.5):
-                x['phase2'] = 101
-            else:
-                x['phase2'] = 5 # Just to not make the phase checker mad in my cluster constructor.
+        iso['phase'][np.where((iso['logg'] > 6.9) & (iso['log(L1)'] < -1) & (iso['mass_current'] < 1.5))[0]] = 101
+        iso['phase2'][np.where((iso['logg2'] > 6.9) & (iso['log(L2)'] < -1) & (iso['M2'] < 1.5))[0]] = 101
+        iso['phase'][np.where(((iso['logg'] <= 6.9) | (iso['log(L1)'] >= -1) | (iso['mass_current'] >= 1.5)))[0]] = 5
+        iso['phase2'][np.where(((iso['logg2'] <= 6.9) | (iso['log(L2)'] >= -1) | (iso['M2'] >= 1.5)))[0]] = 5
         #Changing column name to
         #Making sure that names of the columns are consistent with
         # general format of isochrone.
