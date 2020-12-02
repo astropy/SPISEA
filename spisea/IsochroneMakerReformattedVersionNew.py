@@ -63,6 +63,8 @@ lisnp=[invmap[int(x[3:])-1] for x in cols_to_keep]
 
     
 def find_mergers(star_table, initial_mass):
+    
+    
     """
     given star_table, an Astropy Table of primary masses of a NEWBINMODS stellar model
     and age, and given the initial mass of the stellar model, sorts the star_table by age and
@@ -73,6 +75,8 @@ def find_mergers(star_table, initial_mass):
     in a table). This is to ensure that all rows corresponding to positions after the returned index of the
     star_table are merger.
     """
+    
+    
     if (star_table['M1'][0] > initial_mass + 0.01):
         return 0
     # returns index where the merger is completed
@@ -88,6 +92,8 @@ def find_mergers(star_table, initial_mass):
 
 
 def reformatter(destination, metallicity):
+    
+    
     """I will expedite the process of writing and saving files by
     making the BPASS stellar input files binary fits tables.
     This function reads every stellar model of the specified metallicities
@@ -257,6 +263,7 @@ def reformatter(destination, metallicity):
 def extractor(age, metallicity, input_dir, bpass_evo_dir,
               margin):
     
+    
     """
     The following extracts the preprocessed BPASS isochrone file 
     from the pool of listed files. From the <metallicity> subdirectory
@@ -305,6 +312,8 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
     ‘Merged?’ - Whether the binary star has been merged.
 
     """
+    
+    
     # Set of files that exist and have been caught by the looping.
     caught_no = set()
     # Mapping of file name to a tuple of properties 
@@ -362,9 +371,10 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
             # Find the star with age closest to the input log(Age of the star)
             filterDown = np.where(np.abs(f['age'] - 10 ** age) == np.min(np.abs(f['age'] - 10 ** age)))[0]
             f = f[filterDown]
-            indicesOfInterest=indicesOfInterest[filterDown]              
+            indicesOfInterest=np.array([indicesOfInterest[filterDown][0]])              
             if len(f) != 0:
-                indexlen = len(f)
+                f =f[[0]]
+                indexlen = 1
                 f['source'] = np.repeat(x, indexlen)
                 if (x[-8:-5] =='bin'):
                     f['single'] = np.repeat(False, indexlen)
