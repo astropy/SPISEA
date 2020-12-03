@@ -7,8 +7,11 @@ import hoki
 from hoki import load
 import glob
 import re
-possible_secondary_q = ['0.1', '0.2', '0.3', '0.4', '0.5', '0.6', '0.7', '0.8', '0.9']
-# The list encompassing possible primary mass for primary and secondary. Trying to encompass
+possible_secondary_q = ['0.1', '0.2', '0.3',\
+                        '0.4', '0.5',\
+                        '0.6', '0.7', '0.8', '0.9']
+# The list encompassing possible primary 
+# mass for primary and secondary. Trying to encompass
 # all possible cases, even if there is a bit of redundancy and excess.
 mass_list = [round(0.1, 1)] + [round(0.12 + x * 0.020, 2)
                                             for x in range(95)]
