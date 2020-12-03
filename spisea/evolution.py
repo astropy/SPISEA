@@ -7,8 +7,6 @@ import glob
 import pdb
 import warnings
 from astropy.table import Table, vstack, Column
-from astropy import constants as cs
-from astropy import units as un
 from scipy import interpolate
 import pylab as py
 from spisea.utils import objects
@@ -27,18 +25,14 @@ except KeyError:
 class StellarEvolution(object):
     """
     Base Stellar evolution class.
-
     Parameters
     ----------
     model_dir: path
         Directory path to evolution model files
-
     age_list: list
         List of ages
-
     mass_list: list
         List of masses
-
     z_list: list
         List of metallicities
     """
@@ -114,9 +108,7 @@ class Ekstrom12(StellarEvolution):
     """
     Evolution models from 
     `Ekstrom et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012A%26A...537A.146E/abstract>`_.
-
     Downloaded from `website <http://obswww.unige.ch/Recherche/evoldb/index/Isochrone/>`_.
-
     Parameters
     ----------
     rot: boolean, optional
@@ -203,11 +195,9 @@ class Ekstrom12(StellarEvolution):
         r"""
         Parse iso.fits (filename hardcoded) file downloaded from Ekstrom+12
         models, create individual isochrone files for the different ages.
-
         input_iso_directory should lead to 
             Ekstrom2012/iso/<metallicity> 
         directory, where iso.fits file should be located.
-
         Creates two new directories, rot and norot, which contain their 
         respective isochrones.
         """
@@ -262,7 +252,6 @@ class Ekstrom12(StellarEvolution):
         Given a set of isochrone files downloaded from
         the server, put in correct
         iso.fits format for parse_iso code.
-
         fileList: list of downloaded isochrone files (could be one)
     
         ageList: list of lists of ages associated with each file in filelist.
@@ -327,13 +316,10 @@ class Parsec(StellarEvolution):
     Evolution models from 
     `Bressan et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012MNRAS.427..127B/abstract>`_,
     version 1.2s.
-
     Downloaded from `here <http://stev.oapd.inaf.it/cgi-bin/cmd>_`
-
     Notes
     -----
     Evolution model parameters used in download:
-
     * n_Reimers parameter (mass loss on RGB) = 0.2
     * photometric system: HST/WFC3 IR channel
     * bolometric corrections OBC from Girardi+08, based on ATLAS9 ODFNEW models
@@ -428,7 +414,6 @@ class Parsec(StellarEvolution):
         input_iso_dir: points to ParsecV1.2s/iso directory. Assumes metallicity
         subdirectories already exist with isochrone files downloaded in them
         (isochrones files expected to start with "output*")
-
         metallicity_list format: absolute (vs. relative to solar),
         z + <digits after decimal>: e.g. Z = 0.014 --> z014
         """
@@ -480,11 +465,9 @@ class Pisa(StellarEvolution):
     `Tognelli et al. 2011 <https://ui.adsabs.harvard.edu/abs/2011A%26A...533A.109T/abstract>`_.
     
     Downloaded `online <http://astro.df.unipi.it/stellar-models/index.php?m=1>`_
-
     Notes
     ------
     Parameters used in download:
-
     * Y = middle value of 3 provided (changes for different metallicities)
     * mixing length = 1.68
     * Deuterium fraction: 2*10^-5 for Z = 0.015, 0.03; 4*10^-4 for 0.005
@@ -565,14 +548,12 @@ class Pisa(StellarEvolution):
         r"""
         Rename the isochrone files extracted from Pisa (Tognelli+11) to fit
         naming/directory scheme
-
         input_iso_dir: points to Pisa2011/iso directory. Individual
         metallicity directories with the downloaded isochrones are
         expected to already exist there
         
         metallicity_list is the list of metallicities on which function
         is to be run.
-
         format for metallicity_list : absolute (vs. relative to sun)
         'z' + <digits after decimal>, e.g Z = 0.015 --> z015.
         """
@@ -619,7 +600,6 @@ class Pisa(StellarEvolution):
         Create isochrone grid of given metallicity with time sampling = 0.01
         in logAge (hardcoded). This interpolates the downloaded isochrones
         when necessary. Builds upon the online iscohrone grid.
-
         Note: format of metallicity is important. After decimal point, must match
         the format of the metallcity directory (i.e., 0.015 matches directory z015,
         while 0.0150 would not)
@@ -644,7 +624,6 @@ class Baraffe15(StellarEvolution):
     """
     Evolution models published in 
     `Baraffe et al. 2015 <https://ui.adsabs.harvard.edu/abs/2015A%26A...577A..42B/abstract>`_.
-
     Downloaded from `BHAC15 site <http://perso.ens-lyon.fr/isabelle.baraffe/BHAC15dir/BHAC15_tracks>`_.
     """
     def __init__(self):
@@ -720,7 +699,6 @@ class Baraffe15(StellarEvolution):
         Create isochrones at desired age sampling (6.0 < logAge < 8.0,
         steps of 0.01; hardcoded) from the Baraffe+15 tracks downloaded
         online. 
-
         tracksFile: tracks.dat file downloaded from Baraffe+15, with format
         modified to be read in python
         
@@ -932,9 +910,7 @@ class MISTv1(StellarEvolution):
     """
     Define intrinsic properties for the MIST v1 stellar
     models. 
-
     Models originally downloaded from `online server <http://waps.cfa.harvard.edu/MIST/interp_isos.html>`_.
-
     Parameters
     ----------
     version: '1.0' or '1.2', optional
@@ -1072,15 +1048,12 @@ class MISTv1(StellarEvolution):
         Parse isochrone file downloaded from MIST web server,
         create individual isochrone files for the different ages.
         Assumes all files start with MIST_iso*
-
         Parameters:
         -----------
         input_iso_dir: path
             Points to MISTv1/<version>/iso directory.
-
         metallicity_list: array
             List of metallicity directories to check (i.e. z015 is solar)
-
         """
         # Store current directory for later
         start_dir = os.getcwd()
@@ -1132,25 +1105,19 @@ class MISTv1(StellarEvolution):
 class MergedBaraffePisaEkstromParsec(StellarEvolution):
     """
     This is a combination of several different evolution models:
-
     * Baraffe (`Baraffe et al. 2015 <https://ui.adsabs.harvard.edu/abs/2015A%26A...577A..42B/abstract>`_)
     * Pisa (`Tognelli et al. 2011 <https://ui.adsabs.harvard.edu/abs/2011A%26A...533A.109T/abstract>`_)
     * Geneva (`Ekstrom et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012A%26A...537A.146E/abstract>`_)
     * Parsec (version 1.2s, `Bressan+12 <https://ui.adsabs.harvard.edu/abs/2012MNRAS.427..127B/abstract>`_)
-
     The model used depends on the age of the population and what stellar masses
     are being modeled:
     
-
     For logAge < 7.4:
-
     * Baraffe: 0.08 - 0.4 M_sun
     * Baraffe/Pisa transition: 0.4 - 0.5 M_sun 
     * Pisa: 0.5 M_sun to the highest mass in Pisa isochrone (typically 5 - 7 Msun)
     * Geneva: Highest mass of Pisa models to 120 M_sun
-
     For logAge > 7.4:
-
     * Parsec v1.2s: full mass range
     
     Parameters
@@ -1237,7 +1204,6 @@ class MergedPisaEkstromParsec(StellarEvolution):
     """
     Same as MergedBaraffePisaEkstromParsec, but without
     the Baraffe models. 
-
     Parameters
     ----------
     rot: boolean, optional
@@ -1310,20 +1276,16 @@ class MergedPisaEkstromParsec(StellarEvolution):
 class MergedSiessGenevaPadova(StellarEvolution):
     """
     This is a combination of several different evolution models.
-
     The model used depends on the age of the population and what stellar masses
     are being modeled:
-
     * Siess (`Siess et al. 2000 <https://ui.adsabs.harvard.edu/abs/2000A%26A...358..593S/abstractt>`_)
     * Geneva (`Meynet & Maeder 2003 <https://ui.adsabs.harvard.edu/abs/2003A%26A...404..975M/abstract>`_)
     * Padova (`Marigo et al. 2008 <https://ui.adsabs.harvard.edu/abs/2008A%26A...482..883M/abstract>`_)
-
     For logAge < 7.4:
     
     * Siess: 0.1 - 7 M_sun
     * Siess/Geneva transition: 7 - 9 M_sun
     * Geneva: > 9 M_sun
-
     For logAge > 7.4:
     
     * Padova: full mass range
@@ -1417,7 +1379,6 @@ def make_isochrone_pisa_interp(log_age, metallicity=0.015,
     """
     Read in a set of isochrones and generate an isochrone at log_age
     that is well sampled at the full range of masses.
-
     Puts isochrones is Pisa2011/iso/<metal>/
     """
     # If logage > 8.0, quit immediately...grid doesn't go that high
@@ -1617,38 +1578,39 @@ def get_orig_pisa_isochrones(metallicity=0.015):
 
     return data
 
-#==============================#
+# ============================== #
 # BPASS v2.2 models
-#==============================#
-#These models were published by Stanway and Elridge et. al in 2018
-#The code is based from the Merged Evolution model methods outlined in the . After all, I want some degree of consistency with regards to
-#Our original isochrone files are the stellar models (single, binary, and secondary) listed in the BPASS input files from one of the stellar models for ages 10**6.0, 10**6.1, ... , 10**11.0 years.
+# ============================== #
+# These models were published by Stanway and Elridge et. al in 2018
+# The code is based from the Merged Evolution model methods outlined in the
+# existing code.
+# After all, I want some degree of consistency with regards to
+# Our original isochrone files are the stellar models (single, binary, and
+# secondary) listed in the BPASS input files from one of the stellar models
+# for ages 10**6.0, 10**6.1, ... , 10**11.0 years.
+
 
 class BPASS(StellarEvolution):
-    
     """ These models were published by Stanway and Elridge et. al in 2018
     Some of the code is based from the Merged Evolution model methods
     by Hosek et. al. After all, I want some degree of consistency with
     regards to how isochrones are made.Also, I do not want to reinvent
-    the wheel twice. 
+    the wheel twice.
     If one has not checked the IsochroneMakerReformatted.py file, each
     isochrone file is made of star from stellar model that are closest
     to specified input age and are within the specified margin of error
     for log(Age in years). This is to be doubly sure that I am getting
     the same age.
-    
-    Brief description: Creates a BPASS evolution object and specifies valid primary masses,
+    Brief description: Creates a BPASS evolution object and
+    specifies valid primary masses,
     secondary masses,  metallicities, ages.
     """
-
     def __init__(self):
-        
         """
         Note: All of the possible mass list items include possible mass for
-        single star, binary primary and secondary. Recall that BPASS age bins 
+        single star, binary primary and secondary.
+        Recall that BPASS age bins
         are 10**6.0, 10**6.1, ... , 10**11.0 yrs """
-
-        
         self.age_list = [round(6.0 + x * 0.1, 1) for x in range(0, 51)]
         self.z_list = [
             10 ** -5,
@@ -1675,7 +1637,7 @@ class BPASS(StellarEvolution):
         self.mass_list = self.mass_list + [11 + x for x in range(90)] \
             + [125 + 25 * x for x in range(8)] + [400] + [500]
         self.z_solar = 0.020
-        #The possible Metallicities of a BPASS Stellar model
+        # The possible Metallicities of a BPASS Stellar model
         self.z_file_map = {
             10 ** -5: 'zem5/',
             10 ** -4: 'zem4/',
@@ -1694,11 +1656,12 @@ class BPASS(StellarEvolution):
 
     def isochrone(self, dir_in='', age=1 * 10 ** 8.0, metallicity=0.0):
         """
-        This function adds several necessary columns (e.g. isWR, logg, and
-        whether a star is WR) to the existing isochrone files' tables.
-        
-        Important note on convention: I will specify the phase of the star
-        as follows:
+        This function adds several necessary
+        columns (e.g. isWR, logg, and
+        whether a star is WR) to the existing
+        isochrone files' tables.
+        Important note on convention: I will specify
+        the phase of the star as follows:
         White dwarf -> 101
         All other stars (no neutron stars or black holes) -> -1
         Just to make sure, I do have word that neutron stars
@@ -1706,7 +1669,7 @@ class BPASS(StellarEvolution):
         evolution grids.
         If you are REALLY curious about black holes, try using TUI
         with BPASS.
-        
+
         Parameters
         ----------
         dir_in: string
@@ -1716,11 +1679,11 @@ class BPASS(StellarEvolution):
         age: float or double
         The age of the isochrone in years
         metallicity: float or double
-        The log10(metallicity) of the star
+        The log10(Z/Z_solar) of the star
         (HERE THIS IS IN terms of Z which is the initial
         metallicity mass fraction from the formula introduced
-        in Grevesse & Noels 1993 not necessarily [M/H])
-        
+        in Grevesse & Noels 1993.)
+        Z_solar = 0.020
         Output
         ------
         A more informative version of the preprocessed isochrone.
@@ -1730,21 +1693,24 @@ class BPASS(StellarEvolution):
         isWR2: Boolean
         phase: Integer (101 if white dwarf, 12 otherwise)
               indicates whether a star is a white dwarf
-        logg: float or double 
+        logg: float or double
              the log10(surface gravity of the primary/single in m/s^2)
-        logg2: float or double 
+        logg2: float or double
              the log10(surface gravity of the secondary in m/s^2)
              set to N.A. when the system is nonbinary
         log_ai: float or double
              the log10(separation of the primary and secondary in AU)
              set to N.A. if the system is not a binary system
-        More clearly named are the columns for the current masses of both stars.
-        'mass_current' column stands for the current mass of the primary star
-        'mass_current2' column stands for the current mass of the secondary star
+        More clearly named are the columns for the
+        current masses of both stars.
+        'mass_current' column stands for the current
+        mass of the primary star
+        'mass_current2' column stands for the current
+        mass of the secondary star
         """
-        
         oldmetallicity = metallicity
-        metallicity = self.z_solar * 10 ** metallicity # This time metallicity fraction as how BPASS is organized.
+        # The following metallicity fraction as how BPASS is organized.
+        metallicity = self.z_solar * 10 ** metallicity
         log_age = math.log10(age)
         if log_age < np.min(self.age_list) or log_age > np.max(self.age_list):
             logger.error('Requested age {0} is out of bounds.'.format(log_age))
@@ -1752,14 +1718,13 @@ class BPASS(StellarEvolution):
                 metallicity > np.max(self.z_list)):
             logger.error('Requested metallicity {0} is out of bounds.'.
                          format(metallicity))
-
         # Borrow from matt hosek's code:
         # Look for the closest valid age to the input age
-
         iso_file = 'iso' + str(round(log_age, 1)) + '.fits'
         # Find the closest valid metallicity to the given metallicity
-        closest_metallicity=min([x for x in self.z_file_map], key=lambda x: abs(metallicity-x))
-        z_dir=self.z_file_map[closest_metallicity]
+        closest_metallicity = min([x for x in self.z_file_map],
+                                  key=lambda x: abs(metallicity - x))
+        z_dir = self.z_file_map[closest_metallicity]
         if dir_in:
             self.models_dir = dir_in
         # Use the full path to the desired isochrone file.
@@ -1781,21 +1746,23 @@ class BPASS(StellarEvolution):
         iso.add_column(colP2)
         iso.add_column(isWR2)
         # We may as well delete a for loop here
-        
         # Convert to CGS in the next two lines.
-        iso['logg'] = np.log10(( iso['M1'] * cs.GM_sun / (((10 ** iso['log(R1)'])
-                                                           * cs.R_sun) ** 2)) * 
-                               un.s * un.s/un.cm) 
-        iso['logg2'] = np.log10(( iso['M2'] * cs.GM_sun / (((10 ** iso['log(R2)']) * 
-                                                            cs.R_sun) ** 2)) * 
+        iso['logg'] = np.log10((iso['M1'] * cs.GM_sun /
+                                (((10 ** iso['log(R1)']) *
+                                  cs.R_sun) ** 2)) *
+                               un.s * un.s/un.cm)
+        iso['logg2'] = np.log10((iso['M2'] * cs.GM_sun /
+                                (((10 ** iso['log(R2)']) *
+                                  cs.R_sun) ** 2)) *
                                 un.s * un.s/un.cm)
         # Apply Kepler's Third law to find the log of initial separation of the
         # binary system.
-        iso['log_ai'] = np.log10(((cs.GM_sun * (un.s ** 2) / (un.m ** 3)) * 
-                                  (iso['mass'] + iso['mass2']) * 
-                                  ((24 * (60 ** 2) *
-                                    (10 ** iso['initl_logP'])) ** 2) / 
-                                  (4 * (np.pi) ** 2)) ** (1 / 3) * (1 / cs.au) * un.m)
+        iso['log_ai'] = np.log10(((cs.GM_sun * (un.s ** 2) / (un.m ** 3)) *
+                                  (iso['mass'] + iso['mass2']) *
+                                  ((24 * (60 ** 2) * (10 **
+                                                      iso['initl_logP'])) **
+                                   2) / (4 * (np.pi) ** 2)) ** (1 / 3) *
+                                 (1 / cs.au) * un.m)
         iso.rename_column('M1', 'mass_current')
         iso['age'] = np.log10(iso['age'])
 
@@ -1805,12 +1772,18 @@ class BPASS(StellarEvolution):
         # of the C-based numpy!
         iso['isWR'] = (iso['X'] < 0.40) & (iso['log(T1)'] >= 4.45)
         iso['isWR2'] = (iso['X'] < 0.40) & (iso['log(T2)'] >= 4.45)
-        iso['phase'][np.where((iso['logg'] > 6.9) & (iso['log(L1)'] < -1) & (iso['mass_current'] < 1.5))[0]] = 101
-        iso['phase2'][np.where((iso['logg2'] > 6.9) & (iso['log(L2)'] < -1) & (iso['M2'] < 1.5))[0]] = 101
-        iso['phase'][np.where(((iso['logg'] <= 6.9) | (iso['log(L1)'] >= -1) | (iso['mass_current'] >= 1.5)))[0]] = 5
-        iso['phase2'][np.where(((iso['logg2'] <= 6.9) | (iso['log(L2)'] >= -1) | (iso['M2'] >= 1.5)))[0]] = 5
-        #Changing column name to
-        #Making sure that names of the columns are consistent with
+        iso['phase'][np.where((iso['logg'] > 6.9) & (iso['log(L1)'] < -1) &
+                              (iso['mass_current'] < 1.5))[0]] = 101
+        iso['phase2'][np.where((iso['logg2'] > 6.9) &
+                               (iso['log(L2)'] < -1) &
+                               (iso['M2'] < 1.5))[0]] = 101
+        iso['phase'][np.where(((iso['logg'] <= 6.9) | (iso['log(L1)'] >= -1) |
+                               (iso['mass_current'] >= 1.5)))[0]] = 5
+        iso['phase2'][np.where(((iso['logg2'] <= 6.9) |
+                                (iso['log(L2)'] >= -1) |
+                                (iso['M2'] >= 1.5)))[0]] = 5
+        # Changing column name to
+        # Making sure that names of the columns are consistent with
         # general format of isochrone.
         iso.rename_column('log(T1)', 'logT')
         iso.rename_column('M2', 'mass_current2')
@@ -1822,9 +1795,7 @@ class BPASS(StellarEvolution):
                                                self.z_solar)
         return iso
 
-class Isochrone(object):
-    def __init__(self, log_age):
-        self.log_age = log_age
+
 class Isochrone(object):
     def __init__(self, log_age):
         self.log_age = log_age
