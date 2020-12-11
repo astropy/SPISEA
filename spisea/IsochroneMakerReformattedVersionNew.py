@@ -6,6 +6,7 @@ import os
 import hoki
 from hoki import load
 import glob
+import pdb
 possible_secondary_q = ['0.1', '0.2', '0.3',
                         '0.4', '0.5',
                         '0.6', '0.7', '0.8', '0.9']
@@ -13,10 +14,10 @@ possible_secondary_q = ['0.1', '0.2', '0.3',
 # mass for primary and secondary. Trying to encompass
 # all possible cases, even if there is a bit of redundancy and excess.
 mass_list = [round(0.1, 1)] + [round(0.12 + x * 0.020, 2) for x in range(95)]
-mass_list = mass_list + [round(2.05 + x * 0.05, 2) or x in range(20)]
+mass_list = mass_list + [round(2.05 + x * 0.05, 2) for x in range(20)]
 mass_list = mass_list + [round(3.1 + 0.1 * x, 1) for x in range(70)]
-mass_list = mass_list + [11 + x for x in range(90)] +
-[120, 400, 500] + [125 + 25 * x for x in range(8)]
+mass_list = (mass_list + [11 + x for x in range(90)] +
+             [120, 400, 500] + [125 + 25 * x for x in range(8)])
 
 
 def convert(x):
@@ -205,12 +206,12 @@ def reformatter(destination, metallicity):
     new_hmg_and_met = len(hoki.MODELS_PATH) + len("/NEWSINMODS/zxxxhmg/")
     new_bin_to_met = len(hoki.MODELS_PATH) + len("/NEBINMODS/NEWBINMODS/")
     new_sec_to_met = len(hoki.MODELS_PATH) + len("/NEBINMODS/NEWSECMODS/")
-    new_bin_and_met = len(hoki.MODELS_PATH) +
+    new_bin_and_met = len(hoki.MODELS_PATH) + \
     len("/NEBINMODS/NEWBINMODS/zxxx/")
-    new_sec_and_met = len(hoki.MODELS_PATH) +
+    new_sec_and_met = len(hoki.MODELS_PATH) + \
     len("/NEBINMODS/NEWBINMODS/zxxx_2/")
     for x in setofAll:
-        print(x)
+        pdb.set_trace()
         astroTable = Table.read(x, format='ascii')
         # Drop all of the columns that are not defined by the
         # HOKI package provided mapping of column name to
@@ -228,10 +229,9 @@ def reformatter(destination, metallicity):
         # a model with a merger in it.
         # Checking if the model is a single star model.
         sin_segment = x[new_sin_to_met:new_sin_to_met + 4]
-        print(sin_segment)
         # SEE IF THE FILE IS IN THE NEWSINMODS directory
         if (x[len(hoki.MODELS_PATH) + 1:len(hoki.MODELS_PATH) +
-                len("NEWSINMODS")] == "NEWSINMODS" and x[new_sin_to_met +
+                len("NEWSINMODS") + 1] == "NEWSINMODS" and x[new_sin_to_met +
                                                          4:new_sin_to_met +
                                                          7] != "hmg"):
             print(destination +
@@ -273,7 +273,7 @@ def reformatter(destination, metallicity):
                                  "/" + x[new_sec_to_met:
                                          (new_sec_and_met) - 2] +
                                  "/FitsModels{}sec.fits".
-                                 format(x[new_sec_and_met+1:]),
+                                 format(x[new_sec_and_met + 1:]),
                                  format='fits', overwrite=True)
             else:
                 # Models that count as secondary star with compact remnants
@@ -285,7 +285,7 @@ def reformatter(destination, metallicity):
                 astroTable.write(destination + '/' +
                                  x[new_bin_to_met: new_bin_and_met] +
                                  "/FitsModels{}bin.fits".
-                                 format(x[new_bin_and_met+1:]),
+                                 format(x[new_bin_and_met + 1:]),
                                  format='fits', overwrite=True)
 
 
@@ -353,45 +353,38 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
     for x in mass_list:
         # Find all NEWBINMODS systems of the specified metallicity
         for y in combos:
-            st = "{}/{}/FitsModelssneplot-{}-" +
-            "{}-{}-{}bin.fits".format(input_dir,
-                                      metallicity,
-                                      metallicity,
-                                      str(x), y[0],
-                                      y[1])
+            st = "{}/{}/FitsModelssneplot-{}-{}-{}-{}bin.fits"
+            st = st.format(input_dir,metallicity,
+                           metallicity,
+                           str(x), y[0],
+                           y[1])
             names_to_prop[st] = (str(x), y[0], y[1])
             if (os.path.isfile(st)):
                 caught_no.add(st)
         # Find all single star systems of the specified metallicity
-        st = "{}/{}/FitsModelssneplot-" +
-        "{}-{}sin.fits".format(input_dir, metallicity,
-                               metallicity, str(x))
+        st = "{}/{}/FitsModelssneplot-{}-{}sin.fits"
+        st = st.format(input_dir, metallicity,
+                       metallicity, str(x))
         names_to_prop[st] = (str(x), )
         if (os.path.isfile(st)):
             caught_no.add(st)
         # Find all Binary QHE systems of the specified metallicity
-        st = "{}/{}/FitsModelssneplot-" +
-        "{}-{}hmg.fits".format(input_dir,
-                               metallicity,
-                               metallicity,
-                               str(x))
+        st = "{}/{}/FitsModelssneplot-{}-{}hmg.fits"
+        st = st.format(input_dir, metallicity,
+                       metallicity, str(x))
         names_to_prop[st] = (str(x), )
         if (os.path.isfile(st)):
             caught_no.add(st)
         # Find all NEWSINMODS systems of the specified metallicity
-        st = "{}/{}/FitsModelssneplot_2-" +
-        "{}-{}-*sec.fits".format(input_dir,
-                                 metallicity,
-                                 metallicity,
-                                 str(x))
+        st = "{}/{}/FitsModelssneplot_2-{}-{}-*sec.fits"
+        st = st.format(input_dir, metallicity,
+                       metallicity,
+                       str(x))
         li = glob.glob(str(st))
         sec_files = set(li)
         caught_no = caught_no.union(sec_files)
         [assign_props(names_to_prop, name, (x,)) for name in sec_files]
-    len_of_heading = len("{}/{}/" +
-                         "FitsModelssneplot_2-{}-".format(input_dir,
-                                                          metallicity,
-                                                          metallicity))
+    len_of_heading = len("{}/{}/FitsModelssneplot_2-{}-".format(input_dir, metallicity, metallicity))
     bigOne = None
     initial = True
     initlMass = np.nan
@@ -427,8 +420,8 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
             indicesOfInterest = np.array([indicesOfInterest[filterDown][0]])
             if len(f) != 0:
                 f = f[[0]]
+                f['source'] = 0
                 indexlen = 1
-                f['source'] = np.repeat(x, indexlen)
                 if (x[-8:-5] == 'bin'):
                     f['single'] = np.repeat(False, indexlen)
                     initlMass = float(rest[0])
@@ -446,7 +439,7 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                     # for the sake of working
                     # with the Duchene-Krauss distributions
                     f['mergered?'] = indicesOfInterest >= merge_pt
-                    src = 0
+                    f['source'] = 1
                 elif (x[-8:-5] == 'sec'):
                     # Recall that the ending of the file
                     # is going to be XXX.fits
@@ -457,7 +450,6 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                     # long.
                     f['single'] = np.repeat(False, indexlen)
                     initlMass = float(rest[0])
-                    src = 1
                     # See if the number would begin
                     # right after a dash in index -18.
                     # 8 characters given for the xxx.fits
@@ -467,64 +459,80 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                         # Here the decimal is number is 9
                         # characters long and
                         # xxx.fits has length of 8
-                        log_P_in_days = float(x[-9 - suffix_len: -1 *
-                                                suffix_len])
+                        log_P_in_days = float(x[-9 - suffix_len:
+                                                -1 * suffix_len])
                         # Accounting for the dashes, find the
                         # sandwiched initial
                         # mass of the "remnant primary"
                         # sandwiched between initial secondary star mass
                         # and the initial logP
-                        initlMass2 = float(x[len_of_heading +
-                                             len(str(rest[0]) + "-"): -10 -
-                                             suffix_len])
+                        initlMass2 = float(x[(len_of_heading +
+                                              len(str(rest[0]) + "-")):
+                                             -10 - 1 * suffix_len])
+                        f['source'] = 2
                     else:
                         # See if the number begins right
                         # after a dash in index -17
                         # 8 for the xxx.fits and 8 for
                         # the log_P and we want
                         # the preceding dash.
+                              
                         if (x[-9 - 1 * suffix_len] == "-"):
+                            
                             # Here the decimal is number is 8
                             # characters long and
                             # xxx.fits has length of 8.
-                            log_P_in_days = float(x[-8 -
-                                                    suffix_len: -1 *
-                                                    suffix_len])
+                            log_P_in_days = float(x[-8 - suffix_len:
+                                                    -1 * suffix_len])
                             # Accounting for the dashes, find
                             # the sandwiched initial mass of the
                             # "remnant primary"
                             # sandwiched between initial secondary star
                             # mass and the initial logP
-                            initlMass2 = float(x[len_of_heading +
-                                                 len(str(rest[0]) +
-                                                     "-"): -9 -
-                                                 suffix_len])
+                            initlMass2 = float(x[(len_of_heading +
+                                                  len(str(rest[0]) +
+                                                      "-")):
+                                                 -9 - 1 * suffix_len])
                             # Assume that the number would begin
                             # at index -16. (From my observation, we only
                             # have a few choices for number of digits of
                             # the log_period
+                            f['source'] = 3
+                            print(f['source'][0])
                         else:
                             # Here the decimal is number is 7
                             # characters long and
                             # xxx.fits has length of 8
-                            log_P_in_days = float(x[-7 -
-                                                    suffix_len: -1 *
-                                                    suffix_len])
+                            log_P_in_days = float(x[-7 - suffix_len: 
+                                                    -1 * suffix_len])
                             # Accounting for the dashes on both
                             # ends of the "remnant primary" mass, find the
                             # sandwiched initial mass of the remnant primary
                             # sandwiched between initial secondary star mass
                             # and the initial logP
-                            initlMass2 = float(x[len_of_heading +
-                                                 len(str(rest[0]) +
-                                                     "-"): -8 -
-                                                 suffix_len])
-                    f['mass'] = np.repeat(initlMass, indexlen)
-                    f['mass2'] = np.repeat(initlMass2, indexlen)
+                            initlMass2 = float(x[(len_of_heading +
+                                                  len(str(rest[0]) +
+                                                      "-")):
+                                                 -8 - 1 * suffix_len])
+                            f['source'] = 4
+                    
+                    f['mass'] = np.repeat(initlMass2, indexlen)
+                    f['mass2'] = np.repeat(initlMass, indexlen)
+                    temp1 = f['M2']
+                    temp2 = f['log(T2)']
+                    temp3 = f['log(R2)']
+                    temp4 = f['log(L2)']
+                    f['M2'] = f['M1']
+                    f['log(R2)'] = f['log(R1)']
+                    f['log(T2)'] = f['log(T1)']
+                    f['log(L2)'] = f['log(L1)']
+                    f['M1'] = temp1
+                    f['log(R1)'] = temp3
+                    f['log(T1)'] = temp2
+                    f['log(L1)'] = temp4
                     f['initl_logP'] = np.repeat(log_P_in_days, indexlen)
                     f['mergered?'] = np.repeat(False, indexlen)
                 elif (x[-1 * suffix_len: -5] == 'hmg'):
-                    src = 2
                     f['single'] = np.repeat(True, indexlen)
                     initlMass = float(rest[0])
                     # To be consistent with obtaining initial mass
@@ -536,8 +544,9 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                     f['mass2'] = np.repeat(initlMass2, indexlen)
                     f['initl_logP'] = np.repeat(P_in_days, indexlen)
                     f['mergered?'] = np.repeat(False, indexlen)
+                    f['source'] = 5
+                    print(f['source'][0])
                 else:
-                    src = 3
                     f['single'] = np.repeat(True, indexlen)
                     # Single stars do not have companions.
                     initlMass = rest[0]
@@ -547,7 +556,8 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                     f['mass2'] = np.repeat(initlMass2, indexlen)
                     f['initl_logP'] = np.repeat(np.nan, indexlen)
                     f['mergered?'] = np.repeat(False, indexlen)
-                f['source'] = np.repeat(src, indexlen)
+                    f['source'] = 6
+                    print(f['source'][0])
                 if initial:
                     initial = False
                     bigOne = f.to_pandas()
