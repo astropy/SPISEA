@@ -10,6 +10,9 @@ from astropy.table import Table, vstack, Column
 from scipy import interpolate
 import pylab as py
 from spisea.utils import objects
+from astropy import constants as cs
+from astropy import units
+un = units
 
 logger = logging.getLogger('evolution')
 
@@ -1740,11 +1743,13 @@ class BPASS(StellarEvolution):
         colG = Column(np.repeat(np.nan, len(iso)), name='logg')
         colP = Column(np.repeat(np.nan, len(iso)), name='phase')
         colP2 = Column(np.repeat(np.nan, len(iso)), name='phase2')
+        collog_a = Column(np.repeat(np.nan, len(iso)), name='log_ai')
         iso.add_column(colG)
         iso.add_column(isWR)
         iso.add_column(colP)
         iso.add_column(colP2)
         iso.add_column(isWR2)
+        iso.add_column(collog_a)
         # We may as well delete a for loop here
         # Convert to CGS in the next two lines.
         iso['logg'] = np.log10((iso['M1'] * cs.GM_sun /
@@ -1757,8 +1762,9 @@ class BPASS(StellarEvolution):
                                 un.s * un.s/un.cm)
         # Apply Kepler's Third law to find the log of initial separation of the
         # binary system.
-        iso['log_ai'] = np.log10(((cs.GM_sun * (un.s ** 2) / (un.m ** 3)) *
-                                  (iso['mass'] + iso['mass2']) *
+        iso['log_ai'] = np.log10((cs.GM_sun * (un.s ** 2) / (un.m ** 3)) **
+                                 (1 / 3) *
+                                 ((iso['mass'] + iso['mass2']) *
                                   ((24 * (60 ** 2) * (10 **
                                                       iso['initl_logP'])) **
                                    2) / (4 * (np.pi) ** 2)) ** (1 / 3) *
