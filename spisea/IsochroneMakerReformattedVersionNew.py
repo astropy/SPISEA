@@ -6,7 +6,6 @@ import os
 import hoki
 from hoki import load
 import glob
-import pdb
 possible_secondary_q = ['0.1', '0.2', '0.3',
                         '0.4', '0.5',
                         '0.6', '0.7', '0.8', '0.9']
@@ -43,8 +42,8 @@ for y in period_list:
         combos.append((z, y))
 
 
-def assign_props(dicionario, input_str, y):
-    dicionario[input_str] = y
+def assign_props(dictionary, input_str, y):
+    dictionary[input_str] = y
     return input_str
 
 
@@ -190,8 +189,10 @@ def reformatter(destination, metallicity):
         b = set(glob.glob(("{}/NEWBINMODS/" +
                            "NEWBINMODS/{}/*").format(hoki.MODELS_PATH, x)))
         # Get a set of all models where the primary is a compact remnant.
-        c = set(glob.glob("{}/NEWBINMODS/" +
-                          "NEWSECMODS/{}_2/*".format(hoki.MODELS_PATH, x)))
+        c = set(glob.glob(("{}/NEWBINMODS/" +
+                          "NEWSECMODS/{}_2/*").format(hoki.MODELS_PATH, x)))
+        print(("{}/NEWBINMODS/"+"NEWSECMODS/{}_2/*").format(hoki.MODELS_PATH, x))
+        print(len(c))
         setofAll = setofAll.union(a, b, c, d)
         if not os.path.isdir("{}/{}/".format(destination, x)):
             os.makedirs("{}/{}/".format(destination, x))
@@ -211,7 +212,6 @@ def reformatter(destination, metallicity):
     new_sec_and_met = len(hoki.MODELS_PATH) + \
     len("/NEBINMODS/NEWBINMODS/zxxx_2/")
     for x in setofAll:
-        pdb.set_trace()
         astroTable = Table.read(x, format='ascii')
         # Drop all of the columns that are not defined by the
         # HOKI package provided mapping of column name to
@@ -235,8 +235,9 @@ def reformatter(destination, metallicity):
                                                          4:new_sin_to_met +
                                                          7] != "hmg"):
             print(destination +
-                  "/" + sin_segment + "/Fits" +
-                  "Models{}sin.fits".format(x[new_sin_and_met:]))
+                             "/" + sin_segment + "/Fits" +
+                             "Models{}sin.fits".format(
+                                    x[new_sin_and_met:]))
             astroTable.write(destination +
                              "/" + sin_segment + "/Fits" +
                              "Models{}sin.fits".format(
@@ -248,44 +249,37 @@ def reformatter(destination, metallicity):
             if x[len(hoki.MODELS_PATH) + 1:len(hoki.MODELS_PATH) + 1 +
                  len("NEWSINMODS")] == "NEWSINMODS":
                 print(destination + "/" +
-                      sin_segment + "/Fits" +
-                      "Models{}hmg.fits".
-                      format(x[new_hmg_and_met:]))
+                                 sin_segment + "/Fits" +
+                                 "Models{}hmg.fits".format(x[new_hmg_and_met:]))
                 astroTable.write(destination + "/" +
                                  sin_segment + "/Fits" +
-                                 "Models{}hmg.fits".
-                                 format(x[new_hmg_and_met:]),
+                                 "Models{}hmg.fits".format(x[new_hmg_and_met:]),
                                  format='fits', overwrite=True)
                 continue
                 # Models that count as secondary star with compact remnants
                 # go into the <metallicity>/bin subdirectory of
                 # the destination.
-            print(x[len(hoki.MODELS_PATH) + 1:len(hoki.MODELS_PATH) + 1 +
-                    len("NEWBINMODS/XXXXXXXXXX")])
             if x[len(hoki.MODELS_PATH) + 1:len(hoki.MODELS_PATH) + 1 +
                  len("NEWBINMODS/XXXXXXXXXX")] == "NEWBINMODS/NEWSECMODS":
                 print(destination +
                       "/" + x[new_sec_to_met:
                               (new_sec_and_met) - 2] +
-                      "/FitsModels{}sec." +
-                      "fits".format(x[new_sec_and_met + 1:]))
+                      "/FitsModels{}sec.fits".format(x[new_sec_and_met + 1:]))
                 astroTable.write(destination +
                                  "/" + x[new_sec_to_met:
                                          (new_sec_and_met) - 2] +
-                                 "/FitsModels{}sec.fits".
-                                 format(x[new_sec_and_met + 1:]),
+                                 "/FitsModels{}sec.fits".format(x[new_sec_and_met + 1:]),
                                  format='fits', overwrite=True)
             else:
                 # Models that count as secondary star with compact remnants
                 # go into the <metallicity>/ subdirectory of the destinatuion.
                 print((destination + '/' +
                        x[new_bin_to_met: new_bin_and_met] +
-                       "/FitsModels{}bin" +
-                       ".fits".format(x[new_bin_and_met + 1:])))
+                       "/FitsModels{}bin.fits".
+                       format(x[new_bin_and_met + 1:])))
                 astroTable.write(destination + '/' +
                                  x[new_bin_to_met: new_bin_and_met] +
-                                 "/FitsModels{}bin.fits".
-                                 format(x[new_bin_and_met + 1:]),
+                                 "/FitsModels{}bin.fits".format(x[new_bin_and_met + 1:]),
                                  format='fits', overwrite=True)
 
 
@@ -498,7 +492,6 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                             # have a few choices for number of digits of
                             # the log_period
                             f['source'] = 3
-                            print(f['source'][0])
                         else:
                             # Here the decimal is number is 7
                             # characters long and
@@ -545,7 +538,6 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                     f['initl_logP'] = np.repeat(P_in_days, indexlen)
                     f['mergered?'] = np.repeat(False, indexlen)
                     f['source'] = 5
-                    print(f['source'][0])
                 else:
                     f['single'] = np.repeat(True, indexlen)
                     # Single stars do not have companions.
@@ -557,7 +549,6 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                     f['initl_logP'] = np.repeat(np.nan, indexlen)
                     f['mergered?'] = np.repeat(False, indexlen)
                     f['source'] = 6
-                    print(f['source'][0])
                 if initial:
                     initial = False
                     bigOne = f.to_pandas()
