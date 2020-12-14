@@ -28,6 +28,7 @@ from scipy.spatial import cKDTree as KDTree
 import inspect
 import astropy.modeling
 from astropy import constants
+import pdb
 cs = constants
 un = units
 c = constants
@@ -150,10 +151,11 @@ class Binary_Cluster(Cluster):
         t1 = time.time()
         self.iso = iso
         self.verbose = verbose
+        self.mass_tracker = 0.0
         #####
         # Sample the IMF to build up our cluster mass.
         #####
-        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass*1.75,
+        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass*2.1,
                                                                 seed=seed)
         # Figure out the filters we will make.
         # Names of the photometric filters as they would appear in a table
@@ -240,6 +242,7 @@ class Binary_Cluster(Cluster):
         star_systems['L'] = self.iso.singles['L'][indices]
         star_systems['logg'] = self.iso.singles['logg'][indices]
         star_systems['isWR'] = self.iso.singles['isWR'][indices]
+        star_systems['mass'] = self.iso.singles['mass'][indices]
         star_systems['mass_current'] = \
         self.iso.singles['mass_current'][indices]
         star_systems['phase'] = self.iso.singles['phase'][indices]
@@ -310,6 +313,7 @@ class Binary_Cluster(Cluster):
                 star_systems[filt][cdx_rem] = np.full(len(cdx_rem), np.nan)
             # Give remnants a magnitude of nan, so they can be
             # filtered out later when calculating flux.
+        self.mass_tracker += star_systems['mass'].sum()
         return star_systems
 
     def make_primaries_and_companions(self, star_systems, compMass):
@@ -419,6 +423,11 @@ class Binary_Cluster(Cluster):
         # Rows in which bad_system are true will be deleted.
         companions.add_column(Column(np.repeat(False, N_comp_tot),
                                      name='bad_system'))
+        for ind in range(len(star_systemsPrime)):
+            (companions['mass'][np.where
+                                (companions['system_idx'] ==
+                                 ind)]) = compMass[ind]
+            
         for filt in self.filt_names:
             companions.add_column(Column(np.empty(N_comp_tot, dtype=float),
                                          name=filt))
@@ -484,24 +493,26 @@ class Binary_Cluster(Cluster):
         min_log_as = {}
         for x in range(len(star_systemsPrime)):
             subtbl = companions[np.where(companions['system_idx'] == x)[0]]
+            subtbl2 = companions[np.where(companions['system_idx'] == x)[0]]
             min_log_as[x] = [0, 0]
-            subtbl[np.where(~np.isfinite(subtbl['log_a']))]['log_a'] = np.inf
-            min_log_as[x][0] = np.min(subtbl['log_a'])
+            subtbl2['log_a'][np.where(~np.isfinite(subtbl['log_a']))] = np.inf
+            idx1 = np.where(subtbl2['log_a'] == np.min(subtbl2['log_a']))[0]
+            min_log_as[x][0] = subtbl['log_a'][idx1][0]
             # Is there really a closest log_a? If not let's just look at
             # the most massive star and make it the secondary
             # Otherwise the secondary star will be the star with
             # the most initial mass out of all stars with
             # the minimum log_a
-            if not len(np.where(subtbl['log_a'] == min_log_as[x][0])[0]):
+            # BELOW
+            # accounting for Nan Case:
+            if np.isnan(min_log_as[x][0]):
                 min_log_as[x][1] = \
-                np.max(np.array(compMass[x])[np.arange(0, len(subtbl))])
+                np.max(np.array(subtbl['mass'])[np.arange(0, len(subtbl))])
             else:
-                subtbl = subtbl[np.where(subtbl['log_a'] ==
-                                min_log_as[x][0])[0]]
                 # Find the maximum mass associated with the minimum log_a
-                min_log_as[x][1] = np.max(np.array(compMass[x])
+                min_log_as[x][1] = np.max(subtbl['mass']
                                           [np.where(subtbl['log_a'] ==
-                                           min_log_as[x][0])[0]])
+                                           min_log_as[x][0])])
             # Where in the compMass table we are in
             # when we look at the companion?
             compMass_IDXs[x] = 0
@@ -517,13 +528,17 @@ class Binary_Cluster(Cluster):
             # log(separation with primary) for each column
             cond = (companions['log_a'][x] == min_log_as[sysID][0]) and \
             (companions['mass'][x] == min_log_as[sysID][1])
+            if np.isnan(min_log_as[sysID][0]):
+                cond = np.isnan(companions['log_a'][x]) and \
+                (companions['mass'][x] == min_log_as[sysID][1])
             if cond:
                 ind = match_binary_system(star_systemsPrime[sysID]['mass'],
                                           compMass[sysID]
                                           [compMass_IDXs[sysID]],
                                           companions['log_a'][x],
-                                          self.iso, companions['log_a']
-                                          [x] != np.nan)[0]
+                                          self.iso, not
+                                          np.isnan(companions['log_a']
+                                                   [x]))[0]
                 if (ind == -1 or star_systemsPrime['bad_system'][sysID]):
                     # Really just a way of trying to say
                     # that there is no matching system
@@ -534,27 +549,28 @@ class Binary_Cluster(Cluster):
                     # system-matching mechanism.
                     # Account for the first case.
                     star_systemsPrime['bad_system'][sysID] = True
-                    companions['bad_system'][x] = True
+                    companions['bad_system'][np.where(companions['system_idx'] ==
+                                                      sysID)] = True
                     continue
-                star_systemsPrime['mass'][sysID] = \
+                star_systemsPrime[sysID]['mass'] = \
                 self.iso.primaries['mass'][ind]
-                star_systemsPrime['Teff'][sysID] = \
+                star_systemsPrime[sysID]['Teff'] = \
                 self.iso.primaries['Teff'][ind]
-                star_systemsPrime['L'][sysID] = \
+                star_systemsPrime[sysID]['L'] = \
                 self.iso.primaries['L'][ind]
-                star_systemsPrime['logg'][sysID] = \
+                star_systemsPrime[sysID]['logg'] = \
                 self.iso.primaries['logg'][ind]
-                star_systemsPrime['isWR'][sysID] = \
+                star_systemsPrime[sysID]['isWR'] = \
                 np.round(self.iso.primaries['isWR'][ind])
-                star_systemsPrime['mass_current'][sysID] = \
+                star_systemsPrime[sysID]['mass_current'] = \
                 self.iso.primaries['mass_current'][ind]
-                star_systemsPrime['phase'][sysID] = \
-                np.round(self.iso.primaries['phase'][ind])
-                star_systemsPrime['merged'][sysID] = \
+                star_systemsPrime[sysID]['phase'] = \
+                np.round(self.iso.primaries['phase'][ind])                    
+                star_systemsPrime[sysID]['merged'] = \
                 np.round(self.iso.secondaries['merged'][ind])
                 table = self.iso.secondaries
                 for filt in self.filt_names:
-                    star_systemsPrime[filt][sysID] = \
+                    star_systemsPrime[sysID][filt] = \
                     self.iso.primaries[filt][ind]
                     companions[filt][x] = self.iso.secondaries[filt][ind]
             else:
@@ -562,12 +578,13 @@ class Binary_Cluster(Cluster):
                                                 np.array([compMass[sysID]
                                                          [compMass_IDXs
                                                           [sysID]]]), self.iso)[0]
-                if (ind == -1 or star_systemsPrime[companions[x]['system_idx']]['bad_system']):
+                if (ind == -1 or companions['bad_system'][x]):
                     # This means we cannot find a close enough companion.
                     # Well, we may need to filter it out, even
                     # though this kind of breaks from
                     # multiplicity.
                     companions['bad_system'][x] = True
+                    compMass_IDXs[sysID] += 1
                     continue
                 # Since the gravitational tug on the companion is not maximum
                 # (lowest separation and then the maximum mass for
@@ -606,15 +623,14 @@ class Binary_Cluster(Cluster):
         # not be matched to a close-enough star in the isochrone
         # Get rid of the Bad_systems (un-matchable systems) and bad stars.
         # =============
-        
-        star_systemsPrime = \
-        star_systemsPrime[np.where(~star_systemsPrime['bad_system'])[0]]
+        star_systemsPrime = star_systemsPrime[np.where((~star_systemsPrime['bad_system']))[0]]
         companions = companions[np.where(~companions['bad_system'])[0]]
+        
         
         # =============
         # Make the indices/designations of the star_systemsPrime
         # 0-indexed again.
-        # Do some matching for the companions so that
+        # Do some matching for the companions  so that
         # the system_idx tells us
         # that the companion matches to the system-idx-th
         # entry of the primary star table.
@@ -1663,7 +1679,7 @@ class Isochrone_Binary(Isochrone):
     R -- in units of solar radii. Radius of the secondary star.
     phase -- integer indicating whether a secondary star is a
     white dwarf (101) or not (12)
-    gravity -- log10(acceleration of gravity at the
+    logg -- log10(acceleration of gravity at the
     secondary star's surface in m/s^2)
     isWR -- boolean indicating whether a secondary star is a WR Star
     merged -- whether the corresponding primary star (WHICH IS AT THE
@@ -1682,6 +1698,7 @@ class Isochrone_Binary(Isochrone):
                  filters=['ubv,U', 'ubv,V', 'ubv,B', 'ubv,R', 'ubv,I'],
                  rebin=True, filepath=''):
         self.metallicity = metallicity
+        self.logage = logAge
         # Accounting for the definition of metallicity of the
         # evolution object's
         # Isochrone function.
@@ -1748,6 +1765,8 @@ class Isochrone_Binary(Isochrone):
                         mass_curr_all, phase_all, evol['single'], evol['source']],
                         names=['mass', 'L', 'Teff', 'R', 'logg',
                                'isWR', 'mass_current', 'phase', 'single', 'source'])
+        # Also have inserted conversion factor to deal with the units of
+        # log(a)
         primaries = Table([mass_all, evol['log(a)'] + np.log10(constants.R_sun/constants.au),
                            L_all, T_all, R_all, logg_all, isWR_all,
                            mass_curr_all, phase_all, evol['single'], evol['source']],
@@ -1817,10 +1836,9 @@ class Isochrone_Binary(Isochrone):
             # a little issue with the compact remnant primaries from
             # the secondary star models
             if x == "Primaries":
-                tab['phase'][np.where((phase != 101) & ((source==2) |
-                                                        (source==3) |
-                                                        (source==4)))
-                             [0]] = 110
+                tab['phase'][np.where((phase != 101) &
+                                      ((source==2) |(source==3) |
+                                       (source==4)))[0]] = 110
         # For each temperature extract the synthetic photometry.
             for ii in range(len(tab)):
                 # Loop is currently taking about 0.11 s per iteration
@@ -1861,12 +1879,12 @@ class Isochrone_Binary(Isochrone):
                     continue
                 # Check if the star has physical parameter values
                 # Before we create the atmospheres!
-                notcond =not (tab['phase'][ii]==110)
-                    
+                exclus_cond = (tab[ii]['phase']!=110)
                 cond = (np.isfinite(gravity) and gravity != 0.0 and
                         np.isfinite(L) and L > 0.0 and
                         np.isfinite(T) and T > 0.0 and
-                        np.isfinite(R) and R > 0.0 and notcond)
+                        np.isfinite(R) and R > 0.0 and exclus_cond)
+                
                 if cond:
                     if (T == np.nan or T == 0):
                         # If there's a bug, we need to know!
@@ -1899,10 +1917,23 @@ class Isochrone_Binary(Isochrone):
                     # Make sure that nonphysical stars/potential
                     # compact remnant end up getting
                     # at the very minimmum
-                    if (L != np.nan and notcond):
-                        tab[ii]['L'] = 0.0
-                    if (T != np.nan and notcond):
-                        tab[ii]['Teff'] = 0.0
+                    # Really policy should be that there is a 
+                    # non-visible or nonexistent star
+                    # and thus we need to make the star have
+                    # L, T, R as undefined
+                    # as a consequence of R =undef, we should
+                    # make logg undefined as well.
+                    # note that -inf has been used as undefined and
+                    # hence we should note L, T, R will become zero
+                    # as result of exponentiation.
+                    if not (np.isfinite(L) and L > 0.0 and
+                        np.isfinite(T) and T > 0.0 and
+                        np.isfinite(R) and R > 0.0):
+                        tab[ii]['L'] = np.nan
+                        tab[ii]['Teff'] = np.nan
+                        tab[ii]['R'] = np.nan
+                        tab[ii]['logg'] = np.nan
+                      
             self.singles = singles
             self.primaries = primaries
             self.secondaries = secondaries
@@ -1964,6 +1995,7 @@ class Isochrone_Binary(Isochrone):
             # do the filter integration
             print('Starting synthetic photometry')
             for x in self.pairings:
+                print(x)
                 listofStars = self.pairings2[x]
                 table = self.pairings[x]
                 length_of_list = len(listofStars)
@@ -2816,7 +2848,7 @@ def match_model_sin_bclus(isoMasses, starMasses, iso):
     indices = q_results[1]
 
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    idx = np.where(dm_frac > 0.2)[0]
+    idx = np.where(dm_frac > 0.3)[0]
     indices[idx] = -1
     return indices
 
@@ -2861,12 +2893,15 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                                             secondary_mass])))
         q_results = kdt.query(np.array([[1, 1]]))
         indices = q_results[1]
+        if (not len(indices)):
+            return np.array([-1])
         d_frac = np.sqrt((iso.primaries['mass'][indices] /
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        idx = np.where(d_frac > 0.2)[0]
+        idx = np.where(d_frac > 0.3)[0]
         indices[idx] = -1
+        indices[np.where(indices >= len(iso.primaries))] = -1
         return indices
     elif (loga == 0.0):
         # Although it may not be the best way of handling 1 AU separation,
@@ -2878,11 +2913,14 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                                             secondary_mass])))
         q_results = kdt.query(np.array([[1, 1]]))
         indices = q_results[1]
+        if (not len(indices)):
+            return np.array([-1])
         d_frac = np.sqrt((iso.primaries['mass'][indices] /
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        idx = np.where((d_frac > 0.2) | np.abs(iso.primaries['log_a'][indices] >= 0.2))[0]
+        idx = np.where((d_frac > 0.3) | (np.abs(iso.primaries['log_a'][indices]) >= 0.3))[0]
+        indices[np.where(indices >= len(iso.primaries))] = -1
         indices[idx] = -1
         return indices
     else:
@@ -2890,13 +2928,16 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
         q_results = kdt.query(np.array([[1, 1, 1]]))
     
     indices = q_results[1]
+    if np.any(indices>=len(iso.primaries)):
+        indices = -1
+        return indices
     d_frac = np.sqrt((iso.primaries['mass'][indices] /
                       primary_mass - 1) ** 2 +
                      (iso.secondaries['mass'][indices] /
                       secondary_mass - 1) ** 2 +
                      (iso.primaries['log_a'][indices] /
                       loga - 1) ** 2)
-    idx = np.where(d_frac > 0.2)[0]
+    idx = np.where(d_frac > 0.3)[0]
     indices[idx] = -1
     return indices
 
