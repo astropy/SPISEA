@@ -155,7 +155,7 @@ class Binary_Cluster(Cluster):
         #####
         # Sample the IMF to build up our cluster mass.
         #####
-        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass*2.1,
+        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass*(6.5 - 0.5*iso.logage),
                                                                 seed=seed)
         # Figure out the filters we will make.
         # Names of the photometric filters as they would appear in a table
