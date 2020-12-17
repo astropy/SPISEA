@@ -154,8 +154,12 @@ class Binary_Cluster(Cluster):
         self.mass_tracker = 0.0
         #####
         # Sample the IMF to build up our cluster mass.
+        # NOTE: I have adjustment factor 6.5 - 0.5*iso.logage in place
+        # in order to account for the amount of stars and star mass that
+        # may be weeded out due to making initial masses come from the
+        # isochrone
         #####
-        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass*(6.5 - 0.5*iso.logage),
+        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass,
                                                                 seed=seed)
         # Figure out the filters we will make.
         # Names of the photometric filters as they would appear in a table
@@ -1839,6 +1843,11 @@ class Isochrone_Binary(Isochrone):
                 tab['phase'][np.where((phase != 101) &
                                       ((source==2) |(source==3) |
                                        (source==4)))[0]] = 110
+            if x == "Secondaries":
+                tab['phase'][np.where((phase != 101) &
+                                      ((source==12) |(source==13) |
+                                       (source==14)))[0]] = 110
+                
         # For each temperature extract the synthetic photometry.
             for ii in range(len(tab)):
                 # Loop is currently taking about 0.11 s per iteration

@@ -508,23 +508,32 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                                                       "-")):
                                                  -8 - 1 * suffix_len])
                             f['source'] = 4
-                    
-                    f['mass'] = np.repeat(initlMass2, indexlen)
-                    f['mass2'] = np.repeat(initlMass, indexlen)
-                    temp1 = f['M2']
-                    temp2 = f['log(T2)']
-                    temp3 = f['log(R2)']
-                    temp4 = f['log(L2)']
-                    f['M2'] = f['M1']
-                    f['log(R2)'] = f['log(R1)']
-                    f['log(T2)'] = f['log(T1)']
-                    f['log(L2)'] = f['log(L1)']
-                    f['M1'] = temp1
-                    f['log(R1)'] = temp3
-                    f['log(T1)'] = temp2
-                    f['log(L1)'] = temp4
-                    f['initl_logP'] = np.repeat(log_P_in_days, indexlen)
-                    f['mergered?'] = np.repeat(False, indexlen)
+                    if (initlMass2 < initlMass):
+                        f['source'] += 10 # The .5 is a signal for the star system
+                        # to treat the more "initially" massive secondary star as the primary
+                        # this will help for matching purposes.
+                        f['mass2'] = np.repeat(initlMass2, indexlen)
+                        f['mass'] = np.repeat(initlMass, indexlen)
+                        f['initl_logP'] = np.repeat(log_P_in_days, indexlen)
+                        f['mergered?'] = np.repeat(False, indexlen)
+                    else:
+                        f['mass'] = np.repeat(initlMass2, indexlen)
+                        f['mass2'] = np.repeat(initlMass, indexlen)
+                        temp1 = f['M2']
+                        temp2 = f['log(T2)']
+                        temp3 = f['log(R2)']
+                        temp4 = f['log(L2)']
+                        f['M2'] = f['M1']
+                        f['log(R2)'] = f['log(R1)']
+                        f['log(T2)'] = f['log(T1)']
+                        f['log(L2)'] = f['log(L1)']
+                        f['M1'] = temp1
+                        f['log(R1)'] = temp3
+                        f['log(T1)'] = temp2
+                        f['log(L1)'] = temp4
+                        f['initl_logP'] = np.repeat(log_P_in_days, indexlen)
+                        f['mergered?'] = np.repeat(False, indexlen)
+                        f['single'] = np.repeat(False, indexlen)
                 elif (x[-1 * suffix_len: -5] == 'hmg'):
                     f['single'] = np.repeat(True, indexlen)
                     initlMass = float(rest[0])
