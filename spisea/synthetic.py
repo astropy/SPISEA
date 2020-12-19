@@ -521,7 +521,7 @@ class Binary_Cluster(Cluster):
             # when we look at the companion?
             compMass_IDXs[x] = 0
         # This is where the matching of the primary and the secondary begin
-
+        cluster_Mass = 0
         for x in range(len(companions)):
             # If the system I am currently trying to inspect has
             # been marked as rejected by the loop for assigning log_a
@@ -535,6 +535,7 @@ class Binary_Cluster(Cluster):
             if np.isnan(min_log_as[sysID][0]):
                 cond = np.isnan(companions['log_a'][x]) and \
                 (companions['mass'][x] == min_log_as[sysID][1])
+            print(cond)
             if cond:
                 ind = match_binary_system(star_systemsPrime[sysID]['mass'],
                                           compMass[sysID]
@@ -555,9 +556,10 @@ class Binary_Cluster(Cluster):
                     star_systemsPrime['bad_system'][sysID] = True
                     companions['bad_system'][np.where(companions['system_idx'] ==
                                                       sysID)] = True
+                    compMass_IDXs[sysID] += 1
+                    print("Bad system!")
                     continue
-                star_systemsPrime[sysID]['mass'] = \
-                self.iso.primaries['mass'][ind]
+
                 star_systemsPrime[sysID]['Teff'] = \
                 self.iso.primaries['Teff'][ind]
                 star_systemsPrime[sysID]['L'] = \
@@ -566,6 +568,8 @@ class Binary_Cluster(Cluster):
                 self.iso.primaries['logg'][ind]
                 star_systemsPrime[sysID]['isWR'] = \
                 np.round(self.iso.primaries['isWR'][ind])
+                star_systemsPrime[sysID]['mass'] = \
+                self.iso.primaries['mass'][ind]
                 star_systemsPrime[sysID]['mass_current'] = \
                 self.iso.primaries['mass_current'][ind]
                 star_systemsPrime[sysID]['phase'] = \
@@ -573,14 +577,14 @@ class Binary_Cluster(Cluster):
                 star_systemsPrime[sysID]['merged'] = \
                 np.round(self.iso.secondaries['merged'][ind])
                 table = self.iso.secondaries
+                cluster_Mass += star_systemsPrime[sysID]['mass']
                 for filt in self.filt_names:
                     star_systemsPrime[sysID][filt] = \
                     self.iso.primaries[filt][ind]
                     companions[filt][x] = self.iso.secondaries[filt][ind]
             else:
                 ind = match_model_sin_bclus(self.iso.singles['mass'],
-                                                np.array([compMass[sysID]
-                                                         [compMass_IDXs
+                                                np.array([compMass[sysID][compMass_IDXs
                                                           [sysID]]]), self.iso)[0]
                 if (ind == -1 or companions['bad_system'][x]):
                     # This means we cannot find a close enough companion.
@@ -602,11 +606,11 @@ class Binary_Cluster(Cluster):
             # Obtain data on the  photometry of the companinons
             if (star_systemsPrime['merged'][sysID]):
                 companions['log_a'][x] = np.nan 
-            companions['mass'][x] = table['mass'][ind]
             companions['Teff'][x] = table['Teff'][ind]
             companions['L'][x] = table['L'][ind]
             companions['logg'][x] = table['logg'][ind]
             companions['isWR'][x] = np.round(table['isWR'][ind])
+            companions['mass'][x] = table['mass'][ind]
             companions['mass_current'][x] = table['mass_current'][ind]
             companions['phase'][x] = np.round(table['phase'][ind])
             # We want to look at the NEXT binary system.
@@ -618,6 +622,7 @@ class Binary_Cluster(Cluster):
             companions['the_secondary_star?'][x] = \
             companions['the_secondary_star?'][x] and \
             (companions['mass'][x] == min_log_as[sysID][1])
+            cluster_Mass += companions['mass'][x]
             # We won't need to do checks for whether our stars are
             # outside the mass boundaries as
         # we have DIRECTLY pulled the stars from the isochrone
@@ -627,6 +632,7 @@ class Binary_Cluster(Cluster):
         # not be matched to a close-enough star in the isochrone
         # Get rid of the Bad_systems (un-matchable systems) and bad stars.
         # =============
+        print(cluster_Mass)
         star_systemsPrime = star_systemsPrime[np.where((~star_systemsPrime['bad_system']))[0]]
         companions = companions[np.where(~companions['bad_system'])[0]]
         
@@ -2855,9 +2861,9 @@ def match_model_sin_bclus(isoMasses, starMasses, iso):
     kdt = KDTree( isoMasses.reshape((len(isoMasses), 1)) )
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
-
+    print()
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    idx = np.where(dm_frac > 0.3)[0]
+    idx = np.where(dm_frac > 0.1)[0]
     indices[idx] = -1
     return indices
 
@@ -2895,6 +2901,7 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
     We will be lenient for now on what masses we select. I don't want to kill off too many systems and
     decrease the cluster's actual mass to much less than what it should be.
     """
+    
     if (not include_a):
         kdt = KDTree(np.transpose(np.array([iso.primaries['mass'] /
                                             primary_mass,
@@ -2908,19 +2915,19 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        idx = np.where(d_frac > 0.3)[0]
+        idx = np.where(d_frac > 0.2)[0]
         indices[idx] = -1
         indices[np.where(indices >= len(iso.primaries))] = -1
         return indices
-    elif (loga == 0.0):
+    elif (np.abs(loga) == 0.0):
         # Although it may not be the best way of handling 1 AU separation,
         # I wanted to avoid any effects of division by 0, which would be
         # mathematically wrong.
         kdt = KDTree(np.transpose(np.array([iso.primaries['mass'] /
                                             primary_mass,
                                             iso.secondaries['mass'] /
-                                            secondary_mass])))
-        q_results = kdt.query(np.array([[1, 1]]))
+                                            secondary_mass, 10**iso['log_a']])))
+        q_results = kdt.query(np.array([[1, 1, 1]]))
         indices = q_results[1]
         if (not len(indices)):
             return np.array([-1])
@@ -2928,25 +2935,33 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        idx = np.where((d_frac > 0.3) | (np.abs(iso.primaries['log_a'][indices]) >= 0.3))[0]
+        idx = np.where((d_frac > 0.2) | (np.abs(iso.secondaries['log_a'][indices]) > 0.3))[0]
         indices[np.where(indices >= len(iso.primaries))] = -1
         indices[idx] = -1
         return indices
     else:
-        kdt = KDTree(np.transpose(np.array([iso.primaries['mass']/primary_mass, iso.secondaries['mass']/secondary_mass, iso.primaries['log_a']/loga])))
+        kdt = KDTree(np.transpose(np.array([iso.primaries['mass']/primary_mass, iso.secondaries['mass']/secondary_mass, np.nan_to_num(iso.secondaries['log_a'], -1.5)/loga])))
         q_results = kdt.query(np.array([[1, 1, 1]]))
-    
     indices = q_results[1]
     if np.any(indices>=len(iso.primaries)):
         indices = -1
         return indices
+    if (np.any(np.isnan(iso.secondaries['log_a'][indices]))):
+        d_frac = np.sqrt((iso.primaries['mass'][indices] /
+                          primary_mass - 1) ** 2 +
+                         (iso.secondaries['mass'][indices] /
+                          secondary_mass - 1) ** 2)
+        idx = np.where((d_frac > 0.2))[0]
+        indices[idx] = -1
+        return indices
+        
     d_frac = np.sqrt((iso.primaries['mass'][indices] /
                       primary_mass - 1) ** 2 +
                      (iso.secondaries['mass'][indices] /
                       secondary_mass - 1) ** 2 +
-                     (iso.primaries['log_a'][indices] /
-                      loga - 1) ** 2)
-    idx = np.where(d_frac > 0.3)[0]
+                     (iso.secondaries['log_a'][indices] /
+                          loga - 1) ** 2)
+    idx = np.where(d_frac > 0.2)[0]
     indices[idx] = -1
     return indices
 
