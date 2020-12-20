@@ -416,7 +416,7 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                 f = f[[0]]
                 f['source'] = 0
                 indexlen = 1
-                if (x[-8:-5] == 'bin'):
+                if (x[-suffix_len:-5] == 'bin'):
                     f['single'] = np.repeat(False, indexlen)
                     initlMass = float(rest[0])
                     f['mass'] = np.repeat(initlMass, indexlen)
@@ -434,7 +434,7 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                     # with the Duchene-Krauss distributions
                     f['mergered?'] = indicesOfInterest >= merge_pt
                     f['source'] = 1
-                elif (x[-8:-5] == 'sec'):
+                elif (x[-suffix_len:-5] == 'sec'):
                     # Recall that the ending of the file
                     # is going to be XXX.fits
                     # The XXX can be sec, hmg, bin, sin.
