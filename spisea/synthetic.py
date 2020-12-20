@@ -159,8 +159,8 @@ class Binary_Cluster(Cluster):
         # may be weeded out due to making initial masses come from the
         # isochrone
         #####
-        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass,
-                                                                seed=seed)
+        mass, isMulti, compMass, sysMass = \
+        imf.generate_cluster(cluster_mass,seed=seed)
         # Figure out the filters we will make.
         # Names of the photometric filters as they would appear in a table
         self.filt_names = self.iso.filt_names_table
@@ -583,7 +583,7 @@ class Binary_Cluster(Cluster):
                     self.iso.primaries[filt][ind]
                     companions[filt][x] = self.iso.secondaries[filt][ind]
             else:
-                ind = match_model_sin_bclus(self.iso.singles['mass'],
+                ind = match_model_uorder_companions(self.iso.singles['mass'],
                                                 np.array([compMass[sysID][compMass_IDXs
                                                           [sysID]]]), self.iso)[0]
                 if (ind == -1 or companions['bad_system'][x]):
@@ -1777,10 +1777,10 @@ class Isochrone_Binary(Isochrone):
                                'isWR', 'mass_current', 'phase', 'single', 'source'])
         # Also have inserted conversion factor to deal with the units of
         # log(a)
-        primaries = Table([mass_all, evol['log(a)'] + np.log10(constants.R_sun/constants.au),
+        primaries = Table([mass_all,
                            L_all, T_all, R_all, logg_all, isWR_all,
                            mass_curr_all, phase_all, evol['single'], evol['source']],
-                          names=['mass', 'log_a', 'L', 'Teff', 'R', 'logg',
+                          names=['mass', 'L', 'Teff', 'R', 'logg',
                                  'isWR', 'mass_current', 'phase',  'single', 'source'])
         # Note that we keep information regarding whether
         # a star corresponds to a merger.
@@ -2861,12 +2861,26 @@ def match_model_sin_bclus(isoMasses, starMasses, iso):
     kdt = KDTree( isoMasses.reshape((len(isoMasses), 1)) )
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
-    print()
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
     idx = np.where(dm_frac > 0.1)[0]
     indices[idx] = -1
     return indices
-
+def match_model_uorder_companions(isoMasses, starMasses, iso):
+    """Given a column of initial  system masses (starMasses) and a column
+    of star masses from the isochrone (isoMasses) find for each mass in the starMasses
+     the index of the row of the isochrone's table where the initial mass
+     is closest and is within 10% of the corresponding mass in starMasses.
+     """
+    kdt = KDTree( isoMasses.reshape((len(isoMasses), 1)) )
+    q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
+    indices = q_results[1]
+    dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
+    if (starMasses[0] < 1):
+        idx = np.where(dm_frac > 1)[0]
+    else:
+        idx = np.where(dm_frac > 0.3)[0]
+    indices[idx] = -1
+    return indices
 def match_model_masses(isoMasses, starMasses):
     """Given a column of initial  system masses (starMasses) and a column
     of star masses from the isochrone (isoMasses) find for each mass in the starMasses
@@ -2890,16 +2904,9 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
     initial secondary mass (float/double in units of solar masses),
     and the initial separation between the primary and secondary in AU,
     tries to find the index in the iso.primaries/iso.secondaries table corresponding
-    to the binary system with primary mass, secondary mass ,separation closest to 
-    the specified parametres.
-    I.e. find star with initial primary mass (m_i, primary), initial secondary mass (m_2, secondary),
-    initial separation in AU (a_i) such that
-    ((m_i, primary)/(m_i, primary,input)-1)^2+((m_i, secondary)/(m_i, secondary,input)-1)^2+(a_i/(a_i, input)-1)^2)
-    is minimized.
-    Note that this will be a potentially coarser way of finding a binary system as there is no margin of error.
-    Will need to figure that out.
-    We will be lenient for now on what masses we select. I don't want to kill off too many systems and
-    decrease the cluster's actual mass to much less than what it should be.
+    to the binary system with primary mass, secondary mass, log(separation)
+    (if possible) closest to 
+    the specified parametres to a certain extent.
     """
     
     if (not include_a):
@@ -2915,29 +2922,51 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        idx = np.where(d_frac > 0.2)[0]
+        idx = np.where(d_frac > 1.0)[0]
         indices[idx] = -1
+        if (indices[0] == -1):
+            print("Failed!")
+            print(primary_mass)
+            print(secondary_mass)
+            print(loga)
         indices[np.where(indices >= len(iso.primaries))] = -1
         return indices
-    elif (np.abs(loga) == 0.0):
+    elif (np.abs(loga) < 1.0):
         # Although it may not be the best way of handling 1 AU separation,
         # I wanted to avoid any effects of division by 0, which would be
         # mathematically wrong.
         kdt = KDTree(np.transpose(np.array([iso.primaries['mass'] /
                                             primary_mass,
                                             iso.secondaries['mass'] /
-                                            secondary_mass, 10**iso['log_a']])))
+                                            secondary_mass, 10**iso.secondaries['log_a']])))
         q_results = kdt.query(np.array([[1, 1, 1]]))
         indices = q_results[1]
         if (not len(indices)):
+            print(primary_mass)
+            print(secondary_mass)
+            print(loga)
             return np.array([-1])
         d_frac = np.sqrt((iso.primaries['mass'][indices] /
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        idx = np.where((d_frac > 0.2) | (np.abs(iso.secondaries['log_a'][indices]) > 0.3))[0]
-        indices[np.where(indices >= len(iso.primaries))] = -1
+        cond_spec = (iso.primaries['mass'][indices][0]<1.0 or
+                iso.secondaries['mass'][indices][0]<1.0)
+        if cond_spec:
+            idx = np.where((d_frac > 1.0) | (np.abs(loga - 
+                                                    (iso.secondaries['log_a']
+                                                     [indices])) > 0.3))[0]
+        else:
+            idx = np.where((d_frac > 1.0) | (np.abs(loga - 
+                                                    (iso.secondaries['log_a']
+                                                     [indices])) > 0.3))[0]
         indices[idx] = -1
+        if (indices[0] == -1):
+            print("Failed!")
+            print(primary_mass)
+            print(secondary_mass)
+            print(loga)
+        indices[np.where(indices >= len(iso.primaries))] = -1
         return indices
     else:
         kdt = KDTree(np.transpose(np.array([iso.primaries['mass']/primary_mass, iso.secondaries['mass']/secondary_mass, np.nan_to_num(iso.secondaries['log_a'], -1.5)/loga])))
@@ -2947,22 +2976,38 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
         indices = -1
         return indices
     if (np.any(np.isnan(iso.secondaries['log_a'][indices]))):
+        # calculate the error
         d_frac = np.sqrt((iso.primaries['mass'][indices] /
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        idx = np.where((d_frac > 0.2))[0]
+        idx = np.where((d_frac > 1))[0]
         indices[idx] = -1
+        if (indices[0] == -1):
+            print("Failed!")
+            print(primary_mass)
+            print(secondary_mass)
+            print(loga)
+        indices[np.where(indices >= len(iso.primaries))] = -1
         return indices
-        
+    # calculate the error
     d_frac = np.sqrt((iso.primaries['mass'][indices] /
                       primary_mass - 1) ** 2 +
                      (iso.secondaries['mass'][indices] /
-                      secondary_mass - 1) ** 2 +
-                     (iso.secondaries['log_a'][indices] /
-                          loga - 1) ** 2)
-    idx = np.where(d_frac > 0.2)[0]
+                      secondary_mass - 1) ** 2)
+    if (primary_mass<1 or secondary_mass < 1):
+        idx = np.where((d_frac > 1 )|
+                       ((np.abs(loga - iso.secondaries['log_a']
+                                [indices])) > 0.3))[0]
+    else:
+        idx = np.where(d_frac > 1)[0]
     indices[idx] = -1
+    if (indices[0] == -1):
+        print("Failed!")
+        print(primary_mass)
+        print(secondary_mass)
+        print(loga)
+    indices[np.where(indices >= len(iso.primaries))] = -1
     return indices
 
     
