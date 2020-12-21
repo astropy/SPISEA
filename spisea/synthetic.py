@@ -47,7 +47,7 @@ def adjustment_helper(min_mass):
     if (min_mass[0] > 0.4):
         return -min_mass[0]
     else:
-        return 3.9*(0.4 - min_mass[0])
+        return 4.0*(0.4 - min_mass[0])
     
 def Vega():
     
@@ -176,7 +176,7 @@ class Binary_Cluster(Cluster):
         if inst:
             if (iso.logage < 8.0):
                 mass, isMulti, compMass, sysMass = \
-                imf.generate_cluster((1.8 - 1.9 *
+                imf.generate_cluster((1.8 - 2.1 *
                                       (iso.logage - 8.0) +
                                       adjustment_helper(imf._m_limits_low)) *
                                      cluster_mass,seed=seed)
@@ -1978,13 +1978,10 @@ class Isochrone_Binary(Isochrone):
                     # note that -inf has been used as undefined and
                     # hence we should note L, T, R will become zero
                     # as result of exponentiation.
-                    if not (np.isfinite(L) and L > 0.0 and
-                        np.isfinite(T) and T > 0.0 and
-                        np.isfinite(R) and R > 0.0):
-                        tab[ii]['L'] = np.nan
-                        tab[ii]['Teff'] = np.nan
-                        tab[ii]['R'] = np.nan
-                        tab[ii]['logg'] = np.nan
+                    tab[ii]['L'] = np.nan
+                    tab[ii]['Teff'] = np.nan
+                    tab[ii]['R'] = np.nan
+                    tab[ii]['logg'] = np.nan
                       
             self.singles = singles
             self.primaries = primaries
@@ -2987,11 +2984,11 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           secondary_mass - 1) ** 2)
         if (primary_mass < 0.5 or secondary_mass < 0.5):
             idx = np.where((d_frac > 0.294) | (np.abs(iso.secondaries['log_a'][indices] -
-                                               loga) > 0.3))[0]
+                                               loga) > 0.1))[0]
         else:
             idx = np.where((d_frac > 0.147) | 
                            (np.abs(iso.secondaries['log_a'][indices] -
-                                               loga) > 0.3))[0]
+                                               loga) > 0.1))[0]
         indices[np.where(indices >= len(iso.primaries))] = -1
         indices[idx] = -1
         return indices
