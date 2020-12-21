@@ -37,7 +37,7 @@ default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
 default_wd_atm_func = atm.get_wd_atmosphere
 
-def helper(min_mass):
+def adjustment_helper(min_mass):
     """
     Creates adjustment factor based on
     The minimum mass.
@@ -47,7 +47,7 @@ def helper(min_mass):
     if (min_mass[0] > 0.4):
         return -min_mass[0]
     else:
-        return 3.8*(0.4 - min_mass[0])
+        return 3.9*(0.4 - min_mass[0])
     
 def Vega():
     
@@ -177,22 +177,25 @@ class Binary_Cluster(Cluster):
             if (iso.logage < 8.0):
                 mass, isMulti, compMass, sysMass = \
                 imf.generate_cluster((1.8 - 1.9 *
-                                      (iso.logage - 8.0) + helper(imf._m_limits_low)) *
+                                      (iso.logage - 8.0) +
+                                      adjustment_helper(imf._m_limits_low)) *
                                      cluster_mass,seed=seed)
             else:
                 mass, isMulti, compMass, sysMass = \
                 imf.generate_cluster((1.8 + 0.4 * (iso.logage - 8.0) +
-                                      helper(imf._m_limits_low)) *
+                                      adjustment_helper(imf._m_limits_low)) *
                                      cluster_mass,seed=seed)
         else:
             if (iso.logage < 8.0):
                 mass, isMulti, compMass, sysMass = \
                 imf.generate_cluster((1.4 - 0.3 *
-                                      (iso.logage - 8.0) + helper(imf._m_limits_low)) *
+                                      (iso.logage - 8.0) +
+                                      adjustment_helper(imf._m_limits_low)) *
                                      cluster_mass,seed=seed)
             else:
                 mass, isMulti, compMass, sysMass = \
-                imf.generate_cluster((1.4 + helper(imf._m_limits_low)) *
+                imf.generate_cluster((1.4 +
+                                      adjustment_helper(imf._m_limits_low)) *
                                      cluster_mass,seed=seed)
             
                 
