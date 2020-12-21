@@ -44,10 +44,10 @@ def helper(min_mass):
     The less mass there is in initial
     the more adjustment needs to be made.
     """
-    if (min_mass>0.4):
-        return -min_mass
+    if (min_mass[0] > 0.4):
+        return -min_mass[0]
     else:
-        return 3.8*(0.4 - min_mass)
+        return 3.8*(0.4 - min_mass[0])
     
 def Vega():
     
@@ -176,22 +176,23 @@ class Binary_Cluster(Cluster):
         if inst:
             if (iso.logage < 8.0):
                 mass, isMulti, compMass, sysMass = \
-                imf.generate_cluster((2.2 - 2.5 *
+                imf.generate_cluster((1.8 - 1.9 *
                                       (iso.logage - 8.0) + helper(imf._m_limits_low)) *
                                      cluster_mass,seed=seed)
             else:
                 mass, isMulti, compMass, sysMass = \
-                imf.generate_cluster((2.2 + helper(imf._m_limits_low)) *
+                imf.generate_cluster((1.8 + 0.4 * (iso.logage - 8.0) +
+                                      helper(imf._m_limits_low)) *
                                      cluster_mass,seed=seed)
         else:
             if (iso.logage < 8.0):
                 mass, isMulti, compMass, sysMass = \
-                imf.generate_cluster((2.2 - 1.5 *
+                imf.generate_cluster((1.4 - 0.3 *
                                       (iso.logage - 8.0) + helper(imf._m_limits_low)) *
                                      cluster_mass,seed=seed)
             else:
                 mass, isMulti, compMass, sysMass = \
-                imf.generate_cluster((2.4 + helper(imf._m_limits_low)) *
+                imf.generate_cluster((1.4 + helper(imf._m_limits_low)) *
                                      cluster_mass,seed=seed)
             
                 
@@ -570,7 +571,6 @@ class Binary_Cluster(Cluster):
             if np.isnan(min_log_as[sysID][0]):
                 cond = np.isnan(companions['log_a'][x]) and \
                 (companions['mass'][x] == min_log_as[sysID][1])
-            print(cond)
             if cond:
                 ind = match_binary_system(star_systemsPrime[sysID]['mass'],
                                           compMass[sysID]
@@ -592,7 +592,6 @@ class Binary_Cluster(Cluster):
                     companions['bad_system'][np.where(companions['system_idx'] ==
                                                       sysID)] = True
                     compMass_IDXs[sysID] += 1
-                    print("Bad system!")
                     continue
 
                 star_systemsPrime[sysID]['Teff'] = \
@@ -2898,8 +2897,8 @@ def match_model_sin_bclus(isoMasses, starMasses, iso):
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
     idx = np.where(dm_frac > 0.1)[0]
-    if (starMasses[0] < 1):
-        idx = np.where(dm_frac > 1)[0]
+    if (starMasses[0] < 0.5):
+        idx = np.where(dm_frac > 0.2)[0]
     indices[idx] = -1
     return indices
 def match_model_uorder_companions(isoMasses, starMasses, iso):
@@ -2912,7 +2911,7 @@ def match_model_uorder_companions(isoMasses, starMasses, iso):
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    if (starMasses[0] < 1):
+    if (starMasses[0] < 0.5):
         idx = np.where(dm_frac > 0.2)[0]
     else:
         idx = np.where(dm_frac > 0.1)[0]
@@ -2959,11 +2958,14 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        idx = np.where(d_frac > 0.2)[0]
+        if (primary_mass<0.5 or secondary_mass<0.5):
+            idx = np.where(d_frac > 0.294)[0]
+        else:
+            idx = np.where(d_frac > 0.147)[0]
         indices[idx] = -1
         indices[np.where(indices >= len(iso.primaries))] = -1
         return indices
-    elif (np.abs(loga) < 1.0):
+    elif (np.abs(loga) == 0.0):
         # Although it may not be the best way of handling 1 AU separation,
         # I wanted to avoid any effects of division by 0, which would be
         # mathematically wrong.
@@ -2980,11 +2982,11 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        if (primary_mass < 1 or secondary_mass < 1):
-            idx = np.where((d_frac > 0.4) | (np.abs(iso.secondaries['log_a'][indices] -
+        if (primary_mass < 0.5 or secondary_mass < 0.5):
+            idx = np.where((d_frac > 0.294) | (np.abs(iso.secondaries['log_a'][indices] -
                                                loga) > 0.3))[0]
         else:
-            idx = np.where((d_frac > 0.2) | 
+            idx = np.where((d_frac > 0.147) | 
                            (np.abs(iso.secondaries['log_a'][indices] -
                                                loga) > 0.3))[0]
         indices[np.where(indices >= len(iso.primaries))] = -1
@@ -2997,12 +2999,12 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
     if np.any(indices>=len(iso.primaries)):
         indices = -1
         return indices
-    if (primary_mass < 1 or secondary_mass < 1):
+    if (primary_mass < 0.5 or secondary_mass < 0.5):
         d_frac = np.sqrt((iso.primaries['mass'][indices] /
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        idx = np.where((d_frac > 2/3))[0]
+        idx = np.where((d_frac > 0.374))[0]
         indices[idx] = -1
         return indices
     d_frac = np.sqrt((iso.primaries['mass'][indices] /
@@ -3011,7 +3013,7 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                       secondary_mass - 1) ** 2 +
                      (iso.secondaries['log_a'][indices] /
                           loga - 1) ** 2)
-    idx = np.where(d_frac > 0.3)[0]
+    idx = np.where(d_frac > 0.187)[0]
     indices[idx] = -1
     return indices
 
