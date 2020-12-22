@@ -191,8 +191,6 @@ def reformatter(destination, metallicity):
         # Get a set of all models where the primary is a compact remnant.
         c = set(glob.glob(("{}/NEWBINMODS/" +
                           "NEWSECMODS/{}_2/*").format(hoki.MODELS_PATH, x)))
-        print(("{}/NEWBINMODS/"+"NEWSECMODS/{}_2/*").format(hoki.MODELS_PATH, x))
-        print(len(c))
         setofAll = setofAll.union(a, b, c, d)
         if not os.path.isdir("{}/{}/".format(destination, x)):
             os.makedirs("{}/{}/".format(destination, x))
@@ -234,10 +232,7 @@ def reformatter(destination, metallicity):
                 len("NEWSINMODS") + 1] == "NEWSINMODS" and x[new_sin_to_met +
                                                          4:new_sin_to_met +
                                                          7] != "hmg"):
-            print(destination +
-                             "/" + sin_segment + "/Fits" +
-                             "Models{}sin.fits".format(
-                                    x[new_sin_and_met:]))
+
             astroTable.write(destination +
                              "/" + sin_segment + "/Fits" +
                              "Models{}sin.fits".format(
@@ -248,9 +243,7 @@ def reformatter(destination, metallicity):
             # (Still for some reason in SINMODS)
             if x[len(hoki.MODELS_PATH) + 1:len(hoki.MODELS_PATH) + 1 +
                  len("NEWSINMODS")] == "NEWSINMODS":
-                print(destination + "/" +
-                                 sin_segment + "/Fits" +
-                                 "Models{}hmg.fits".format(x[new_hmg_and_met:]))
+
                 astroTable.write(destination + "/" +
                                  sin_segment + "/Fits" +
                                  "Models{}hmg.fits".format(x[new_hmg_and_met:]),
@@ -261,10 +254,7 @@ def reformatter(destination, metallicity):
                 # the destination.
             if x[len(hoki.MODELS_PATH) + 1:len(hoki.MODELS_PATH) + 1 +
                  len("NEWBINMODS/XXXXXXXXXX")] == "NEWBINMODS/NEWSECMODS":
-                print(destination +
-                      "/" + x[new_sec_to_met:
-                              (new_sec_and_met) - 2] +
-                      "/FitsModels{}sec.fits".format(x[new_sec_and_met + 1:]))
+
                 astroTable.write(destination +
                                  "/" + x[new_sec_to_met:
                                          (new_sec_and_met) - 2] +
@@ -273,10 +263,7 @@ def reformatter(destination, metallicity):
             else:
                 # Models that count as secondary star with compact remnants
                 # go into the <metallicity>/ subdirectory of the destinatuion.
-                print((destination + '/' +
-                       x[new_bin_to_met: new_bin_and_met] +
-                       "/FitsModels{}bin.fits".
-                       format(x[new_bin_and_met + 1:])))
+
                 astroTable.write(destination + '/' +
                                  x[new_bin_to_met: new_bin_and_met] +
                                  "/FitsModels{}bin.fits".format(x[new_bin_and_met + 1:]),
