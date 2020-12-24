@@ -6,7 +6,7 @@ import os
 import hoki
 from hoki import load
 import glob
-import unittests
+import unittest
 
 import numpy as np
 import pandas as pd
@@ -61,7 +61,7 @@ def assign_props(dictionary, input_str, y):
 # May seem like an obvious one, but put it anyway:
 # Helps ensure that we are not creating jiberrish file names.
 class test_reformatter(unittest.TestCase):
-    def help_test2(destination, metallicity):
+    def help_test2(self, destination, metallicity):
         x = metallicity
         x1 = glob.glob("{}/{}/*sin.fits".format(destination, metallicity))
         x2 = glob.glob("{}/{}/*bin.fits".format(destination, metallicity))
@@ -89,6 +89,18 @@ class test_reformatter(unittest.TestCase):
                 if not (os.path.isfile("{}/NEWBINMODS/NEWSECMODS/{}_2/{}".format(hoki.MODELS_PATH, metallicity, x[len(destination + "/xxx/FitsModelss"):-8]))):
                     print("Error in ", x)
                     return
+        print(len(x1))
+        print(len(g))
+        print(len(x1)==len(g))
+        print(len(x2))
+        print(len(j))
+        print(len(x2)==len(j))
+        print(len(x3))
+        print(len(h))
+        print((len(x3)==len(h)))
+        print(len(x4))
+        print(len(k))
+        print((len(x4)==len(k)))
         if (len(x1)==len(g)) and (len(x2)==len(j)) and (len(x3)==len(h)) and (len(x4)==len(k)):
             print("Passed! "+metallicity)
             return True
@@ -243,24 +255,84 @@ class test_reformatter(unittest.TestCase):
         return (count == len(glob.glob("{}/{}/FitsModelssneplot_2-{}-*sec.fits"
                                                .format(input_dir, metallicity,
                                                        metallicity))))
-                            
+    def extractor_check_all(self, metallicity, input_dir):
+        """
+            Portions of the extractor function meant to test a)
+            whether all possible stars are covered
+            by the looping hashmap-parameter matching scheme
+            for binaries and single stars and b) whether all
+            possible stars are getting covered by my assumptions
+            about the length of 
+        """
+        # Set of files that exist and have been caught by the looping.
+        caught_no = set()
+        # Mapping of file name to a tuple of properties
+        # (primary star mass,(secondary star mass, initial logP for bin.fits types)
+        names_to_prop = {}
+        # Find all filenames of reformatted BPASS models from reformatter
+        for x in mass_list:
+            # Find all NEWBINMODS systems of the specified metallicity
+            for y in combos:
+                st = "{}/{}/FitsModelssneplot-{}-{}-{}-{}bin.fits"
+                st = st.format(input_dir,metallicity,
+                               metallicity,
+                               str(x), y[0],
+                               y[1])
+                names_to_prop[st] = (str(x), y[0], y[1])
+                if (os.path.isfile(st)):
+                    caught_no.add(st)
+                # Find all single star systems of the specified metallicity
+            st = "{}/{}/FitsModelssneplot-{}-{}sin.fits"
+            st = st.format(input_dir, metallicity,
+                               metallicity, str(x))
+            names_to_prop[st] = (str(x), )
+            if (os.path.isfile(st)):
+                caught_no.add(st)
+            # Find all Binary QHE systems of the specified metallicity
+            st = "{}/{}/FitsModelssneplot-{}-{}hmg.fits"
+            st = st.format(input_dir, metallicity,
+                               metallicity, str(x))
+            names_to_prop[st] = (str(x), )
+            if (os.path.isfile(st)):
+                caught_no.add(st)
+            # Find all NEWSINMODS systems of the specified metallicity
+            st = "{}/{}/FitsModelssneplot_2-{}-{}-*sec.fits"
+            st = st.format(input_dir, metallicity,
+                               metallicity,str(x))
+            li = glob.glob(str(st))
+            sec_files = set(li)
+            caught_no = caught_no.union(sec_files)
+            [assign_props(names_to_prop, name, (x,)) for name in sec_files]
+        return caught_no == set(glob.glob("{}/{}*.fits".format(input_dir, metallicity)))
+
     def test_reformatter_coverage(self, destination="/g/lu/scratch/ryotainagaki/BPASS_tester_newReformatTest/"):
         mets = ["zem5", "zem4", "zem3", "z001",
                 "z002", "z003", "z004", "z006",
                 "z008", "z010", "z014", "z020",
                 "z030", "z040"]
         for met in mets:
-            self.assertTrue(help_test2(destination, met))
-    def test_extractor(source="/g/lu/scratch/ryotainagaki/BPASS_tester_newReformatTest/"):
+            print(met)
+            self.assertTrue(self.help_test2(destination, met))
+    def test_extractor(self, source="/g/lu/scratch/ryotainagaki/BPASS_tester_newReformatTest/"):
         print("Testing if all of my assumptions regarding the reading of " +
                "NEWSECMODS type reformatted files are correct.")
-        print("Also testing for coverage of ALL secmods files")
+        print("Also testing for coverage of ALL secmods files" +
+              "In the sense that all of them would be considered" +
+              "in isochrone file making.")
         mets = ["zem5", "zem4", "zem3", "z001",
                 "z002", "z003", "z004", "z006",
                 "z008", "z010", "z014", "z020",
                 "z030", "z040"]
         for met in mets:
-            self.assertTrue(extractor(met, source))
-        
+            self.assertTrue(self.extractor(met, source))
+    def test_extractor2(self, source="/g/lu/scratch/ryotainagaki/BPASS_tester_newReformatTest/"):
+        print("Also testing for whether all files in the input directory will be covered" +
+              "by the infrastructure/assumptions of the extractor function")
+        mets = ["zem5", "zem4", "zem3", "z001",
+                "z002", "z003", "z004", "z006",
+                "z008", "z010", "z014", "z020",
+                "z030", "z040"]
+        for met in mets:
+            self.assertTrue(self.extractor_check_all(met, source))
 if __name__ == '__main__':
     unittest.main()

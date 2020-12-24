@@ -39,10 +39,9 @@ default_wd_atm_func = atm.get_wd_atmosphere
 
 def adjustment_helper(min_mass):
     """
-    Creates adjustment factor based on
-    The minimum mass.
-    The less mass there is in initial
-    the more adjustment needs to be made.
+        Based on the minimum mass represented by an IMF, creates part
+        of adjustment factor imposed onto the mass inputted into the
+        cluster mass generator of the isochrone.
     """
     if (min_mass[0] > 0.4):
         return -min_mass[0]
@@ -151,6 +150,9 @@ class Binary_Cluster(Cluster):
     NOTE: the IMF MUST be such that multiples are made (i.e.
     muliplicity CANNOT BE NONE).
     Otherwise, why else would we want to use BPASS?
+
+    ====================
+    
     """
     def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=True,
                  seed=None):
@@ -163,10 +165,9 @@ class Binary_Cluster(Cluster):
         t1 = time.time()
         self.iso = iso
         self.verbose = verbose
-        self.mass_tracker = 0.0
         #####
         # Sample the IMF to build up our cluster mass.
-        # NOTE: I have adjustment factor 6.5 - 0.5*iso.logage in place
+        # NOTE: I have adjustment factor in place
         # in order to account for the amount of stars and star mass that
         # may be weeded out due to making initial masses come from the
         # isochrone
@@ -176,10 +177,7 @@ class Binary_Cluster(Cluster):
         if inst:
             if (iso.logage < 8.0):
                 mass, isMulti, compMass, sysMass = \
-                imf.generate_cluster((1.8 - 2.1 *
-                                      (iso.logage - 8.0) +
-                                      adjustment_helper(imf._m_limits_low)) *
-                                     cluster_mass,seed=seed)
+                imf.generate_cluster(cluster_mass,seed=seed)
             else:
                 mass, isMulti, compMass, sysMass = \
                 imf.generate_cluster((1.8 + 0.4 * (iso.logage - 8.0) +
@@ -226,7 +224,8 @@ class Binary_Cluster(Cluster):
         
     def make_singles_systems_table(self, isMulti, sysMass):
         """
-        Make a star_systems table and get synthetic photometry
+        Make a part of
+        the star_systems table and get synthetic photometry
         for each single star system.
         Input: isMulti -> Whether a star system is a
         multi-star system. (output of the IMF)
@@ -344,8 +343,8 @@ class Binary_Cluster(Cluster):
             star_systems['L'][cdx_rem] = 0.0
             star_systems['phase'][cdx_rem_good] = r_id_tmp[good]
             for filt in self.filt_names:
-                star_systems[filt][cdx_rem_good] = \
-                np.full(len(cdx_rem_good), np.nan)
+                star_systems[filt][cdx_rem] = \
+                np.full(len(cdx_rem), np.nan)
         else:
             star_systems['phase'][cdx_rem] = 110
             # when we have somee undefined or 0 temperature, shouldn't we
@@ -356,7 +355,6 @@ class Binary_Cluster(Cluster):
                 star_systems[filt][cdx_rem] = np.full(len(cdx_rem), np.nan)
             # Give remnants a magnitude of nan, so they can be
             # filtered out later when calculating flux.
-        self.mass_tracker += star_systems['mass'].sum()
         return star_systems
 
     def make_primaries_and_companions(self, star_systems, compMass):
@@ -368,20 +366,33 @@ class Binary_Cluster(Cluster):
         which contain data regarding
         star systems with multiple stars
         and the companions.
-        IMPORTANT:
-        Recall that x-th row in the primaries table of isochrone is
-        the primary star of the x-th row in the compaiina
-        Given an initial primary star mass, initial companion mass,
-        and initial log separation between
-        the star and the companion and the fact that the separation
-        between the primary and companion is minimized and the row
-        has the highest companion mass for all rows with the minimal
-        primary-companion separation
-        , we find the corresponding row in the primaries and secondaries table.
-        We take out any stars that have a phase that is not
-        in the SPISEA style. (e.g. phase is not
-        The data is matched by looking for the corresponding primaries row.
+        
+        ====================
+        Makes the primary stars and companions for non-single star systems of
+        the star_systems table and get synthetic
+        photometry for each single star system. Creates remnants when necessary.
+        Given an initial primary star mass, initial companion mass, and log
+        separation (last one is included if applicable) between the star and
+        the companion, we designate the star with the secondary as the star with
+        least separation from the primary. If there are multiple stars with the
+        same value for separation, the star with the most mass is selected out of
+        the set of companions with the same minimum separation and is designated
+        as the secondary.
+        
+        Primaries and secondaries are matched to the pairs of stars with initial
+        primary mass - initial secondary mass - log_current separation from the
+        isochrone that are closest to the values generated by the IMF. Given that
+        the error between the isochrone star system and the imf generated system
+        is small enough, the star system is included in the cluster’s star_systems
+        and companions tables.
+        
+        Tertiary and higher order companions are included, but are matched to single
+        \star models. As  similar to the policy with matching the primary-secondary pairs,
+        if the companion deviates too much, in this case in terms of initial mass, from
+        the most similar single star from the isochrone, it does not become part of
+        the cluster object.
         """
+
         # Obtain the indices of systems corresponding to non-single systems
         indices = [x for x in range(len(compMass)) if len(compMass[x])]
         star_systems = star_systems[indices]
@@ -560,7 +571,6 @@ class Binary_Cluster(Cluster):
             # when we look at the companion?
             compMass_IDXs[x] = 0
         # This is where the matching of the primary and the secondary begin
-        cluster_Mass = 0
         for x in range(len(companions)):
             # If the system I am currently trying to inspect has
             # been marked as rejected by the loop for assigning log_a
@@ -614,7 +624,6 @@ class Binary_Cluster(Cluster):
                 star_systemsPrime[sysID]['merged'] = \
                 np.round(self.iso.secondaries['merged'][ind])
                 table = self.iso.secondaries
-                cluster_Mass += star_systemsPrime[sysID]['mass']
                 for filt in self.filt_names:
                     star_systemsPrime[sysID][filt] = \
                     self.iso.primaries[filt][ind]
@@ -659,7 +668,6 @@ class Binary_Cluster(Cluster):
             companions['the_secondary_star?'][x] = \
             companions['the_secondary_star?'][x] and \
             (companions['mass'][x] == min_log_as[sysID][1])
-            cluster_Mass += companions['mass'][x]
             # We won't need to do checks for whether our stars are
             # outside the mass boundaries as
         # we have DIRECTLY pulled the stars from the isochrone
@@ -669,7 +677,6 @@ class Binary_Cluster(Cluster):
         # not be matched to a close-enough star in the isochrone
         # Get rid of the Bad_systems (un-matchable systems) and bad stars.
         # =============
-        print(cluster_Mass)
         star_systemsPrime = star_systemsPrime[np.where((~star_systemsPrime['bad_system']))[0]]
         companions = companions[np.where(~companions['bad_system'])[0]]
         
@@ -890,7 +897,6 @@ class ResolvedCluster(Cluster):
         if seed is not None:
             print('WARNING: random seed set to %i' % seed)
 
-        t1 = time.time()
         ##### 
         # Sample the IMF to build up our cluster mass.
         #####
@@ -1744,12 +1750,12 @@ class Isochrone_Binary(Isochrone):
                  wave_range=[3000, 52000], min_mass=None, max_mass=None,
                  filters=['ubv,U', 'ubv,V', 'ubv,B', 'ubv,R', 'ubv,I'],
                  rebin=True, filepath=''):
+        t1=time.time()
         self.metallicity = metallicity
         self.logage = logAge
         # Accounting for the definition of metallicity of the
         # evolution object's
         # Isochrone function.
-        t1 = time.time()
         # Changes by Ryota: make atm_func and wd_atm_func instance vars
         self.atm_func = atm_func
         self.wd_atm_func = wd_atm_func
@@ -1886,10 +1892,6 @@ class Isochrone_Binary(Isochrone):
                 tab['phase'][np.where((phase != 101) &
                                       ((source==2) |(source==3) |
                                        (source==4)))[0]] = 110
-            if x == "Secondaries":
-                tab['phase'][np.where((phase != 101) &
-                                      ((source==12) |(source==13) |
-                                       (source==14)))[0]] = 110
                 
         # For each temperature extract the synthetic photometry.
             for ii in range(len(tab)):
@@ -2088,7 +2090,7 @@ class IsochronePhot(Isochrone):
         The distance of the isochrone, in pc
 
     metallicity : float, optional
-        The metallicity of the isochrone, in [M/H].
+        The metallicity of the isochrone, in [Z/Z_solar].
         Default is 0.
 
     evo_model: model evolution class, optional
@@ -2887,11 +2889,16 @@ def match_model_mass(isoMasses,theMass):
         return mdx
 
 def match_model_sin_bclus(isoMasses, starMasses, iso):
-    """Given a column of initial  system masses (starMasses) and a column
-    of star masses from the isochrone (isoMasses) find for each mass in the starMasses
-     the index of the row of the isochrone's table where the initial mass
-     is closest and is within 10% of the corresponding mass in starMasses.
-     """
+    """Given a column of single star initial masses generated by
+    the IMF, returns an array whose indices correspond to the index
+    of the star in the starMasses iterable and whose entry values
+    correspond to the index in the isoMasses of the star with the mass
+    closest to the starMasses star at the index of the output array.
+    For isochrone stars with initial masses that meet the previous condition
+    and are not within +/- margin of tolerance from the IMF generated initial
+    star mass at the cluster at the index, this results in -1 becoming the
+    entry of the output array at that index.
+    """
     kdt = KDTree( isoMasses.reshape((len(isoMasses), 1)) )
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
@@ -2901,12 +2908,12 @@ def match_model_sin_bclus(isoMasses, starMasses, iso):
         idx = np.where(dm_frac > 0.2)[0]
     indices[idx] = -1
     return indices
+
 def match_model_uorder_companions(isoMasses, starMasses, iso):
-    """Given a column of initial  system masses (starMasses) and a column
-    of star masses from the isochrone (isoMasses) find for each mass in the starMasses
-     the index of the row of the isochrone's table where the initial mass
-     is closest and is within 10% of the corresponding mass in starMasses.
-     """
+    """Operates in practically the exact same way as the match_models_sin_bclus
+    but is intended for matching tertiary and higher order companions of
+    primary stars.
+    """
     kdt = KDTree( isoMasses.reshape((len(isoMasses), 1)) )
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
@@ -2917,12 +2924,14 @@ def match_model_uorder_companions(isoMasses, starMasses, iso):
         idx = np.where(dm_frac > 0.1)[0]
     indices[idx] = -1
     return indices
+
 def match_model_masses(isoMasses, starMasses):
     """Given a column of initial  system masses (starMasses) and a column
     of star masses from the isochrone (isoMasses) find for each mass in the starMasses
      the index of the row of the isochrone's table where the initial mass
      is closest and is within 10% of the corresponding mass in starMasses.
      """
+
     kdt = KDTree( isoMasses.reshape((len(isoMasses), 1)) )
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
@@ -2936,15 +2945,20 @@ def match_model_masses(isoMasses, starMasses):
     
 def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
     """
-    Given the initial primary mass (float/double in units of solar masses),
-    initial secondary mass (float/double in units of solar masses),
-    and the initial separation between the primary and secondary in AU,
-    tries to find the index in the iso.primaries/iso.secondaries table corresponding
-    to the binary system with primary mass, secondary mass, log(separation)
-    (if possible) closest to 
-    the specified parametres to a certain extent.
+    Given a primary mass, secondary mass, and log separation value generated
+    from the IMF, returns an array (oftentimes 1
+    element) whose indices correspond to the index of the closest-matching
+    star system in the isochrone’s primaries and
+    secondaries table (remember: star at index x in the primaries table is
+    in the same system as the star at index x in the
+    secondaries table). If the closest matching system that comes from the
+    isochrone is too far away from the inputted, IMF
+    generated star system,  -1 is placed into the array in place of the index
+    of the closest-match from the isochrone.
+    This is used to find, if any, indices of closest-match stars systems of
+    individual, non-single stellar systems.
     """
-    
+ 
     if (not include_a):
         kdt = KDTree(np.transpose(np.array([iso.primaries['mass'] /
                                             primary_mass,
