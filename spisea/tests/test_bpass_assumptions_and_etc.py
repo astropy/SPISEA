@@ -333,6 +333,8 @@ class test_reformatter(unittest.TestCase):
                 "z008", "z010", "z014", "z020",
                 "z030", "z040"]
         for met in mets:
-            self.assertTrue(self.extractor_check_all(met, source))
+          result = self.extractor_check_all(met, source)
+          print(met+" ", result)
+          self.assertTrue(self.extractor_check_all(met, source))
 if __name__ == '__main__':
     unittest.main()
