@@ -335,6 +335,6 @@ class test_reformatter(unittest.TestCase):
         for met in mets:
           result = self.extractor_check_all(met, source)
           print(met+" ", result)
-          self.assertTrue(self.extractor_check_all(met, source))
+          self.assertTrue(result)
 if __name__ == '__main__':
     unittest.main()
