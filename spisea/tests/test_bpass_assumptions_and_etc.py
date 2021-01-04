@@ -325,7 +325,7 @@ class test_reformatter(unittest.TestCase):
                 "z030", "z040"]
         for met in mets:
             self.assertTrue(self.extractor(met, source))
-    def test_extractor2(self, source="/g/lu/scratch/ryotainagaki/BPASS_tester_newReformatTest/"):
+    def test_extractor2(self, source="/g/lu/scratch/ryotainagaki/BPASS_tester_newReformatTestIsolated/"):
         print("Also testing for whether all files in the input directory will be covered" +
               " by the infrastructure/assumptions of the extractor function")
         mets = ["zem5", "zem4", "zem3", "z001",
