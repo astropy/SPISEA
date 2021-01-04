@@ -166,12 +166,6 @@ def reformatter(destination, metallicity):
     vebose: boolean
         True for verbose output.
     """
-    # The list of possible BPASS metallicities.
-    # HMG stands for Qasi-Chemically Homogeneous Evolution Models.
-    # Real Deal metallicities=["zem5", "zem4", "z001",
-    # "z002", "z003", "z004", "z006", "z008",
-    # "z010", "z014","z020","z030", "z040", "zem5_hmg",
-    # "zem4_hmg", "z001_hmg", "z002_hmg", "z003_hmg", "z004_hmg"]
     # I will use the Python HashSet since (assuming that strings
     # have a good HashCode, adding to the HashSet should be fast in
     # normal case.

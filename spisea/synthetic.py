@@ -177,7 +177,9 @@ class Binary_Cluster(Cluster):
         if inst:
             if (iso.logage < 8.0):
                 mass, isMulti, compMass, sysMass = \
-                imf.generate_cluster(cluster_mass,seed=seed)
+                imf.generate_cluster((1.8 - 2.1 *(iso.logage - 8.0) +
+                                      adjustment_helper(imf._m_limits_low)) *
+                                     cluster_mass,seed=seed)
             else:
                 mass, isMulti, compMass, sysMass = \
                 imf.generate_cluster((1.8 + 0.4 * (iso.logage - 8.0) +
