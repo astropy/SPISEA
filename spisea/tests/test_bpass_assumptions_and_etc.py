@@ -317,8 +317,8 @@ class test_reformatter(unittest.TestCase):
         print("Testing if all of my assumptions regarding the reading of " +
                "NEWSECMODS type reformatted files are correct.")
         print("Also testing for coverage of ALL secmods files" +
-              "In the sense that all of them would be considered" +
-              "in isochrone file making.")
+              " in the sense that all of them would be considered" +
+              " in isochrone file making.")
         mets = ["zem5", "zem4", "zem3", "z001",
                 "z002", "z003", "z004", "z006",
                 "z008", "z010", "z014", "z020",
@@ -327,7 +327,7 @@ class test_reformatter(unittest.TestCase):
             self.assertTrue(self.extractor(met, source))
     def test_extractor2(self, source="/g/lu/scratch/ryotainagaki/BPASS_tester_newReformatTest/"):
         print("Also testing for whether all files in the input directory will be covered" +
-              "by the infrastructure/assumptions of the extractor function")
+              " by the infrastructure/assumptions of the extractor function")
         mets = ["zem5", "zem4", "zem3", "z001",
                 "z002", "z003", "z004", "z006",
                 "z008", "z010", "z014", "z020",
