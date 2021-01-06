@@ -117,7 +117,7 @@ class Cluster(object):
         return
     
     
-class Binary_Cluster(Cluster):
+class Cluster_w_Binaries(Cluster):
     """
     Cluster sub-class that produces a *resolved* stellar cluster with
     binary evolution accounted for.
@@ -172,31 +172,8 @@ class Binary_Cluster(Cluster):
         # may be weeded out due to making initial masses come from the
         # isochrone
         #####
-        inst = isinstance(imf._multi_props,
-                          multiplicity.MultiplicityResolvedDK)
-        if inst:
-            if (iso.logage < 8.0):
-                mass, isMulti, compMass, sysMass = \
-                imf.generate_cluster((1.8 - 2.1 *(iso.logage - 8.0) +
-                                      adjustment_helper(imf._m_limits_low)) *
-                                     cluster_mass,seed=seed)
-            else:
-                mass, isMulti, compMass, sysMass = \
-                imf.generate_cluster((1.8 + 0.4 * (iso.logage - 8.0) +
-                                      adjustment_helper(imf._m_limits_low)) *
-                                     cluster_mass,seed=seed)
-        else:
-            if (iso.logage < 8.0):
-                mass, isMulti, compMass, sysMass = \
-                imf.generate_cluster((1.4 - 0.3 *
-                                      (iso.logage - 8.0) +
-                                      adjustment_helper(imf._m_limits_low)) *
-                                     cluster_mass,seed=seed)
-            else:
-                mass, isMulti, compMass, sysMass = \
-                imf.generate_cluster((1.4 +
-                                      adjustment_helper(imf._m_limits_low)) *
-                                     cluster_mass,seed=seed)
+
+        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass,seed=seed)
             
                 
            
@@ -2905,9 +2882,8 @@ def match_model_sin_bclus(isoMasses, starMasses, iso):
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    idx = np.where(dm_frac > 0.1)[0]
-    if (starMasses[0] < 0.5):
-        idx = np.where(dm_frac > 0.2)[0]
+    if (starMasses[0] <= 100):
+        idx = np.where(dm_frac > 0.1)[0]
     indices[idx] = -1
     return indices
 
@@ -2920,9 +2896,7 @@ def match_model_uorder_companions(isoMasses, starMasses, iso):
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    if (starMasses[0] < 0.5):
-        idx = np.where(dm_frac > 0.2)[0]
-    else:
+    if (starMasses[0]<= 100):
         idx = np.where(dm_frac > 0.1)[0]
     indices[idx] = -1
     return indices
@@ -2974,14 +2948,12 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        if (primary_mass<0.5 or secondary_mass<0.5):
-            idx = np.where(d_frac > 0.294)[0]
-        else:
+        if (primary_mass<=100 and secondary_mass<=100):
             idx = np.where(d_frac > 0.147)[0]
         indices[idx] = -1
         indices[np.where(indices >= len(iso.primaries))] = -1
         return indices
-    elif (np.abs(loga) == 0.0):
+    elif (np.abs(loga) < 1.0):
         # Although it may not be the best way of handling 1 AU separation,
         # I wanted to avoid any effects of division by 0, which would be
         # mathematically wrong.
@@ -2998,13 +2970,10 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        if (primary_mass < 0.5 or secondary_mass < 0.5):
-            idx = np.where((d_frac > 0.294) | (np.abs(iso.secondaries['log_a'][indices] -
-                                               loga) > 0.1))[0]
-        else:
+        if (primary_mass <= 100 or secondary_mass <= 100):
             idx = np.where((d_frac > 0.147) | 
                            (np.abs(iso.secondaries['log_a'][indices] -
-                                               loga) > 0.1))[0]
+                                               loga) >= 0.1))[0]
         indices[np.where(indices >= len(iso.primaries))] = -1
         indices[idx] = -1
         return indices
@@ -3015,7 +2984,7 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
     if np.any(indices>=len(iso.primaries)):
         indices = -1
         return indices
-    if (primary_mass < 0.5 or secondary_mass < 0.5):
+    if (primary_mass <=100 or secondary_mass <= 100):
         d_frac = np.sqrt((iso.primaries['mass'][indices] /
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
@@ -3023,12 +2992,6 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
         idx = np.where((d_frac > 0.374))[0]
         indices[idx] = -1
         return indices
-    d_frac = np.sqrt((iso.primaries['mass'][indices] /
-                      primary_mass - 1) ** 2 +
-                     (iso.secondaries['mass'][indices] /
-                      secondary_mass - 1) ** 2 +
-                     (iso.secondaries['log_a'][indices] /
-                          loga - 1) ** 2)
     idx = np.where(d_frac > 0.187)[0]
     indices[idx] = -1
     return indices
