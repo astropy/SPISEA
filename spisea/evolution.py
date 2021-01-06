@@ -1656,6 +1656,37 @@ class BPASS(StellarEvolution):
             0.03000: 'z030/',
             0.04000: 'z040/',
             }
+    def run_formatter(self, destination="/g/lu/scratch/ryotainagaki/" +
+                      "BPASS_tester_newReformatTest/",
+                      metallicity=["zem5", "zem4", "z001", "z002", "z003", "z004",
+                                   "z006", "z008", "z010", "z014", "z030", "z040"]):
+        """
+        Reformat all BPASS stellar system models in  HOKI.MODELS_PATH
+        using the reformatter function into fits tables with the following
+        naming convention:
+        Fitsmodels<original name of BPASS stellar system model file>.fits
+        The files will be stored in destination/<BPASS metallicity> directory
+        """
+        reformatter(destination, metallicity)
+        return
+    
+    def run_extractor(self, source="/g/lu/scratch/ryotainagaki/" +
+                      "BPASS_tester_newReformatTest/",
+                      metallicity=["zem5", "zem4", "z001", "z002", "z003",
+                                   "z004", "z006", "z008", "z010", "z014",
+                                   "z030", "z040"],
+                     destination="/g/lu/scratch/ryotainagaki/BPASS_iso_filesTimedIsolated/",
+                     times=51):
+        """
+        Uses the reformatted BPASS stellar system model files in source directory
+        to create isochrones for log10(Age) = 6.0, 6.1, ... , 6.0 + 0.1*(x-times)
+        and for every metallicity. Stores those isochrones into the
+        destination/iso/<metallicity> directory.
+        """
+        for met in mets:
+            for x in range(times):
+                extractor(round(6.0 + 0.1 * x,1), met, source,
+                          destination, 0.05)
 
     def isochrone(self, dir_in='', age=1 * 10 ** 8.0, metallicity=0.0):
         """
@@ -1778,16 +1809,17 @@ class BPASS(StellarEvolution):
         # of the C-based numpy!
         iso['isWR'] = (iso['X'] < 0.40) & (iso['log(T1)'] >= 4.45)
         iso['isWR2'] = (iso['X'] < 0.40) & (iso['log(T2)'] >= 4.45)
+        iso['phase'] = 5
+        iso['phase2'] = 101
         iso['phase'][np.where((iso['logg'] > 6.9) & (iso['log(L1)'] < -1) &
-                              (iso['mass_current'] < 1.5))[0]] = 101
+                              (iso['mass_current'] < 1.4))[0]] = 101
+        iso['phase'][np.where(((iso['source']==2) | (iso['source']==3) | (iso['source']==4)) &
+                              (iso['mass_current'] == 1.4))[0]] = 102
+        iso['phase'][np.where(((iso['source']==2) | (iso['source']==3) | (iso['source']==4)) &
+                              (iso['mass_current'] > 3.0))[0]] = 101
         iso['phase2'][np.where((iso['logg2'] > 6.9) &
                                (iso['log(L2)'] < -1) &
-                               (iso['M2'] < 1.5))[0]] = 101
-        iso['phase'][np.where(((iso['logg'] <= 6.9) | (iso['log(L1)'] >= -1) |
-                               (iso['mass_current'] >= 1.5)))[0]] = 5
-        iso['phase2'][np.where(((iso['logg2'] <= 6.9) |
-                                (iso['log(L2)'] >= -1) |
-                                (iso['M2'] >= 1.5)))[0]] = 5
+                               (iso['M2'] < 1.4))[0]] = 101
         # Changing column name to
         # Making sure that names of the columns are consistent with
         # general format of isochrone.
