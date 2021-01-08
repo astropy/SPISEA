@@ -1631,14 +1631,6 @@ class BPASS(StellarEvolution):
             0.040,
             ]
         self.models_dir = models_dir + "/BPASS/v2.2/"
-        self.mass_list = [round(0.1, 1)] + [round(0.12 + x * 0.020, 2)
-                                            for x in range(95)]
-        self.mass_list = self.mass_list + [round(2.05 + x * 0.05, 2)
-                                           for x in range(20)]
-        self.mass_list = self.mass_list + [round(3.1 + 0.1 * x, 1)
-                                           for x in range(70)]
-        self.mass_list = self.mass_list + [11 + x for x in range(90)] \
-            + [125 + 25 * x for x in range(8)] + [400] + [500]
         self.z_solar = 0.020
         # The possible Metallicities of a BPASS Stellar model
         self.z_file_map = {
@@ -1675,7 +1667,7 @@ class BPASS(StellarEvolution):
                       metallicity=["zem5", "zem4", "z001", "z002", "z003",
                                    "z004", "z006", "z008", "z010", "z014",
                                    "z030", "z040"],
-                     destination="/g/lu/scratch/ryotainagaki/BPASS_iso_filesTimedIsolated/",
+                     destination=models_dir,
                      times=51):
         """
         Uses the reformatted BPASS stellar system model files in source directory
@@ -1814,9 +1806,9 @@ class BPASS(StellarEvolution):
         iso['phase'][np.where((iso['logg'] > 6.9) & (iso['log(L1)'] < -1) &
                               (iso['mass_current'] < 1.4))[0]] = 101
         iso['phase'][np.where(((iso['source']==2) | (iso['source']==3) | (iso['source']==4)) &
-                              (iso['mass_current'] == 1.4))[0]] = 102
+                              (np.round(iso['mass_current'], 1) == 1.4))[0]] = 102
         iso['phase'][np.where(((iso['source']==2) | (iso['source']==3) | (iso['source']==4)) &
-                              (iso['mass_current'] > 3.0))[0]] = 101
+                              (np.round(iso['mass_current']) > 3.0))[0]] = 101
         iso['phase2'][np.where((iso['logg2'] > 6.9) &
                                (iso['log(L2)'] < -1) &
                                (iso['M2'] < 1.4))[0]] = 101
@@ -1832,8 +1824,3 @@ class BPASS(StellarEvolution):
         iso.meta['metallicity_act'] = np.log10(closest_metallicity /
                                                self.z_solar)
         return iso
-
-
-class Isochrone(object):
-    def __init__(self, log_age):
-        self.log_age = log_age

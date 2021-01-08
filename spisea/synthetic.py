@@ -227,6 +227,7 @@ class Cluster_w_Binaries(Cluster):
         indices = \
         match_model_sin_bclus(np.array(self.iso.singles['mass']),
                                        sysMass, self.iso)
+        deleted = len(indices[np.where(indices == -1)[0]])
         indices = indices[np.where(indices != -1)[0]]
         N_systems = len(indices)
         sysMass = sysMass[indices]
@@ -334,6 +335,8 @@ class Cluster_w_Binaries(Cluster):
                 star_systems[filt][cdx_rem] = np.full(len(cdx_rem), np.nan)
             # Give remnants a magnitude of nan, so they can be
             # filtered out later when calculating flux.
+            if (self.verbose):
+                print("{} models needed to be deleted".format(deleted))
         return star_systems
 
     def make_primaries_and_companions(self, star_systems, compMass):
@@ -550,6 +553,10 @@ class Cluster_w_Binaries(Cluster):
             # when we look at the companion?
             compMass_IDXs[x] = 0
         # This is where the matching of the primary and the secondary begin
+        # I will be tracking the number of bad star systems throguh the
+        # variable rejected_system and rejected_companion
+        rejected_system = 0
+        rejected_companions = 0
         for x in range(len(companions)):
             # If the system I am currently trying to inspect has
             # been marked as rejected by the loop for assigning log_a
@@ -584,6 +591,8 @@ class Cluster_w_Binaries(Cluster):
                     companions['bad_system'][np.where(companions['system_idx'] ==
                                                       sysID)] = True
                     compMass_IDXs[sysID] += 1
+                    rejected_system+=1
+                    rejected_companions+=1
                     continue
 
                 star_systemsPrime[sysID]['Teff'] = \
@@ -618,6 +627,7 @@ class Cluster_w_Binaries(Cluster):
                     # multiplicity.
                     companions['bad_system'][x] = True
                     compMass_IDXs[sysID] += 1
+                    rejected_companions+=1
                     continue
                 # Since the gravitational tug on the companion is not maximum
                 # (lowest separation and then the maximum mass for
@@ -658,7 +668,6 @@ class Cluster_w_Binaries(Cluster):
         # =============
         star_systemsPrime = star_systemsPrime[np.where((~star_systemsPrime['bad_system']))[0]]
         companions = companions[np.where(~companions['bad_system'])[0]]
-        
         
         # =============
         # Make the indices/designations of the star_systemsPrime
@@ -832,6 +841,9 @@ class Cluster_w_Binaries(Cluster):
         # Get rid of the columns designation and and bad_system
         star_systemsPrime.remove_columns(['bad_system', 'designation'])
         companions.remove_columns(['bad_system', 'the_secondary_star?'])
+        if self.verbose:
+            print("{} star systems had to be deleted".format(str(rejected_system)))
+            print("{} companions had to be deleted".format(str(rejected_companions)))
         return companions, star_systemsPrime
 
 class ResolvedCluster(Cluster):
@@ -2896,8 +2908,9 @@ def match_model_uorder_companions(isoMasses, starMasses, iso):
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
+    idx = np.where(dm_frac > 0.1)[0]
     if (starMasses[0]<= 100):
-        idx = np.where(dm_frac > 0.1)[0]
+        idx = np.where(dm_frac > 0.2)[0]
     indices[idx] = -1
     return indices
 
@@ -2984,11 +2997,11 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
     if np.any(indices>=len(iso.primaries)):
         indices = -1
         return indices
-    if (primary_mass <=100 or secondary_mass <= 100):
-        d_frac = np.sqrt((iso.primaries['mass'][indices] /
+    d_frac = np.sqrt((iso.primaries['mass'][indices] /
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
+    if (primary_mass <=100 or secondary_mass <= 100):
         idx = np.where((d_frac > 0.374))[0]
         indices[idx] = -1
         return indices
