@@ -1,6 +1,6 @@
 # Ryota Inagaki's fork of the SPISEA repository.
 This is my repository for storing my SPISEA code additions. It is subject to modification throughout the next several months as I complete the code.
-This code will eventually be merged with the main SPISEA repository. **For Fall 2020 documentation and tutorials, please consult Fall-2020 Branch.**
+This code will eventually be merged with the main SPISEA repository. **For Fall 2020 documentation and tutorials, please consult Fall-2020 Branch.** For the in-development Spring 2021 version, please consult the dev branch.
 # SPISEA: Stellar Population Interface for Stellar Evolution and Atmospheres
 
 SPISEA is an python package that generates single-age, single-metallicity
