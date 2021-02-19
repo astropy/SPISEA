@@ -1,6 +1,6 @@
-![PyPopStar_Logo](docs/images/logo.png) 
+# SPISEA: Stellar Population Interface for Stellar Evolution and Atmospheres
 
-PyPopStar is an python package that generates single-age, single-metallicity
+SPISEA is an python package that generates single-age, single-metallicity
 populations (i.e. star clusters). It gives the user control over many parameters:
 
 * Cluster characteristics (age, metallicity, mass, distance)
@@ -10,27 +10,45 @@ populations (i.e. star clusters). It gives the user control over many parameters
 * Initial-Final Mass Relation
 * Photometric filters
 
-Here is a brief list of things that PyPopStar can do:
+Here is a brief list of things that SPISEA can do:
 
 * make a cluster isochrone in many filters using different stellar models
 * make a star cluster at any age with an unusual IMF and unresolved multiplicity
 * make a spectrum of a star cluster in integrated light
 
-See [documentation](https://pypopstar.readthedocs.io/en/latest/) for details on 
-[installing](https://pypopstar.readthedocs.io/en/latest/getting_started.html)
-and running PyPopStar. We also provide jupyter notebooks with a 
-[quick-start tutorial](https://github.com/astropy/PyPopStar/blob/master/docs/Quick_Start_Make_Cluster.ipynb)
-and [additional examples](https://github.com/astropy/PyPopStar/tree/master/docs/paper_examples)
-demonstrating how to use PyPopStar. 
+See [documentation](https://spisea.readthedocs.io/en/latest/) for
+details on installing and running SPISEA. We also provide jupyter notebooks with a 
+[quick-start tutorial](https://github.com/astropy/SPISEA/blob/main/docs/Quick_Start_Make_Cluster.ipynb)
+and [additional examples](https://github.com/astropy/SPISEA/tree/main/docs/paper_examples)
+demonstrating how to use SPISEA.
+
+If you use SPISEA in your research, please cite [Hosek et al. (2020)](https://ui.adsabs.harvard.edu/abs/2020arXiv200606691H/abstract).
+
+## Version Update
+Version 1 of this software package was called PyPopStar. Due to a naming conflict,
+we have renamed the package of SPISEA for version 2 and beyond.
+For reference, v2.0.0 has the same functionality as v1.0.1.
+
+Instructions for updating from version 1 to version 2 are provided in
+the documentation [here](https://spisea.readthedocs.io/en/latest/version_switch.html#version).
 
 ## Contributions
-We encourage contributions to PyPopStar, particular those that add support for star formation histories, new models, higher spectral resolution, etc. For feature additions, we ask that users fork or branch off of the development repository, make their changes, and then submit merge and pull requests.
+We encourage contributions to SPISEA, particularly those that add
+support for star formation histories, new models, higher spectral
+resolution, etc. For feature additions, we ask that users make their
+own fork of the repository, make their changes, and then submit a pull
+request to the "dev" branch.
 
-## License 
-This program is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License as published by the Free Software Foundation, either version 3 of the License, or any later version.
+All contributions will be acknowledged on the
+[contributors page](https://spisea.readthedocs.io/en/dev/contributors.html#contributors). Contributors
+with features used in code releases will be co-authors in future SPISEA software papers.
 
-This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more details.
-
-
-
-<sup>Logo by Abhimat Gautam
+## License
+This project is Copyright (c) Matthew Hosek Jr., Jessica Lu, Casey
+Lam, Abhimat Gautam, Kelly Lockhart, Dongwon Kim, and Siyao Jia and licensed under
+the terms of the GNU GPL v3+ license. This package is based upon
+the [Astropy package template](https://github.com/astropy/package-template)
+which is licensed under the BSD 3-clause license. See the licenses folder for
+more information. This program is distributed in the hope that it will
+be useful, but WITHOUT ANY WARRANTY;
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 

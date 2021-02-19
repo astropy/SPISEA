@@ -21,7 +21,7 @@ These strings follow the format ``<telescope/filter_set>,<filter>``.
 Note that there is no space after the comma, and case matters.
 
 Filter transmissions are stored in specific sub-directories
-in PyPopStar/filt_func. The functions in popstar/filters.py tell
+in ``SPISEA/filt_func``. The functions in ``spisea/filters.py`` tell
 the :ref:`isochrone_objects` how to interpret the filter strings
 and pull the corresponding transmission functions from the filt_func
 directories.
@@ -32,6 +32,7 @@ Available filters:
 * CTIO_OSIRIS
 * DeCam
 * GAIA
+* HAWK-I
 * Hubble Space Telescope
 * Johnson-Cousins
 * Johnson-Glass
@@ -80,11 +81,22 @@ Note that three sets are available: the pre-launch passbands used in DR1
 <https://ui.adsabs.harvard.edu/abs/2010A%26A...523A..48J/abstract>`_),
 the passbands used for the DR2 published photometry, and
 the *revised* DR2 passbands based on the DR2 data (October 2017).
-ONLY THE REVISED DR2 PASSBANDS ARE SUPPORTED BY PYPOPSTAR.
+ONLY THE REVISED DR2 PASSBANDS ARE SUPPORTED BY SPISEA.
 
 Filters: G, Gbp, Grp
 
-Example (gaia G filter from revised DR2 passbands): ``'gaia,dr2_rev,G'``
+Example (gaia G filter from revised DR2 passbands):
+``'gaia,dr2_rev,G'``
+
+**HAWK-I**
+
+The `High Acuity Wide Field K-band Imager
+<https://www.eso.org/sci/facilities/paranal/instruments/hawki.html>`_
+located on the ESO VLT (Unit Telescope 4).
+
+Filters: J, H, Ks
+
+Example: ``'hawki,J'``
 
 **Hubble Space Telescope**
 

@@ -5,7 +5,7 @@ Quick Start Guide
 ===================
 
 We provide a `jupyter notebook
-<https://github.com/astropy/PyPopStar/blob/master/docs/Quick_Start_Make_Cluster.ipynb>`_
+<https://github.com/astropy/SPISEA/blob/master/docs/Quick_Start_Make_Cluster.ipynb>`_
 as a Quick-Start Guide to demonstrate the steps required to simulate a cluster and interact
 with the resulting output. This guide shows you how to:
 
@@ -38,7 +38,7 @@ Examine Compact Remnants Produced by Different Clusters
 ----------------------------------------------------------------
 You will generate two massive clusters, one at 100 Myr and the other at 10
 Gyr, and compare the distribution of compact remnants produced given
-the default IFMR. You will also test how
+the IFMR IFMR_Raithel18. You will also test how
 changing the IMF of these clusters changes these distributions.
 
 .. figure:: images/compact_remnants_example.png

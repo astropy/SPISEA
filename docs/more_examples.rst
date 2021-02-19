@@ -4,8 +4,9 @@
 Further Examples
 ===================
 Additional Jupyter notebooks with tutorials to produce the plots shown
-in the PyPopStar paper (Hosek et al., in prep) can be found `here
-<https://github.com/astropy/PyPopStar/tree/master/docs/paper_examples>`_.
+in the SPISEA paper (`Hosek et al. (2020)
+<https://ui.adsabs.harvard.edu/abs/2020arXiv200606691H/abstract>`_) can be found `here
+<https://github.com/astropy/SPISEA/tree/master/docs/paper_examples>`_.
 
 Figure 2: HR-Diagrams with Different Evolution Models; CMDs with different Extinction Laws
 --------------------------------------------------------------------------------------------------------
@@ -31,7 +32,7 @@ Figure 5: Clusters with Different IMFs: Luminosity Function + BH Mass Function
 
 
 Figure 6: Wolf-Rayet Star Populations with Different Evolution Models
---------------------------------------------------------------------
+---------------------------------------------------------------------
 .. figure:: images/WRstars_example.png
 	    :align: center
 		    
