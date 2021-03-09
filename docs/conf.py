@@ -4,7 +4,7 @@
 #
 # This file does only contain a selection of the most common options. For a
 # full list see the documentation:
-# http://www.sphinx-doc.org/en/main/config
+# http://www.sphinx-doc.org/en/master/config
 
 # -- Path setup --------------------------------------------------------------
 
@@ -14,7 +14,7 @@
 #
 import os
 import sys
-import pdb
+
 sys.path.insert(0, os.path.abspath('../spisea/'))
 sys.path.insert(0, os.path.abspath('../'))
 

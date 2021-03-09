@@ -1,5 +1,5 @@
 These are the ZTF filters (GRI) from this site:
-https://github.com/ZwickyTransientFacility/ztf_information/tree/main/filter_transmission
+https://github.com/ZwickyTransientFacility/ztf_information/tree/master/filter_transmission
 OR
 http://svo2.cab.inta-csic.es/svo/theory/fps3/index.php?id=Palomar/ZTF.g
 http://svo2.cab.inta-csic.es/svo/theory/fps3/index.php?id=Palomar/ZTF.r
