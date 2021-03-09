@@ -10,7 +10,7 @@ os:
 # The apt packages below are needed for sphinx builds. A full list of packages
 # that can be included can be found here:
 #
-# https://github.com/travis-ci/apt-package-whitelist/blob/master/ubuntu-precise
+# https://github.com/travis-ci/apt-package-whitelist/blob/main/ubuntu-precise
 
 addons:
     apt:

@@ -14,7 +14,7 @@ have the new models you add be added to the SPISEA package and made
 available to the community, please fork or branch off of the
 development repository and then submit merge requests to add your
 changes to the package. These contributions will be added to the
-master branch (with attributes given!) in the next code update.
+main branch (with attributes given!) in the next code update.
 
 .. _setup:
 
