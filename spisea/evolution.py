@@ -1680,7 +1680,7 @@ class BPASS(StellarEvolution):
                 extractor(round(6.0 + 0.1 * x,1), met, source,
                           destination, 0.05)
 
-    def isochrone(self, dir_in='', age=1 * 10 ** 8.0, metallicity=0.0):
+    def isochrone(self, age=1 * 10 ** 8.0, metallicity=0.0):
         """
         This function adds several necessary
         columns (e.g. isWR, logg, and
@@ -1736,6 +1736,8 @@ class BPASS(StellarEvolution):
         """
         oldmetallicity = metallicity
         # The following metallicity fraction as how BPASS is organized.
+        print(metallicity)
+        print(self.z_solar)
         metallicity = self.z_solar * 10 ** metallicity
         log_age = math.log10(age)
         if log_age < np.min(self.age_list) or log_age > np.max(self.age_list):
@@ -1751,8 +1753,6 @@ class BPASS(StellarEvolution):
         closest_metallicity = min([x for x in self.z_file_map],
                                   key=lambda x: abs(metallicity - x))
         z_dir = self.z_file_map[closest_metallicity]
-        if dir_in:
-            self.models_dir = dir_in
         # Use the full path to the desired isochrone file.
 
         full_iso_file = self.models_dir + 'iso/' + z_dir + iso_file

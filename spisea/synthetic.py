@@ -193,11 +193,13 @@ class Cluster_w_Binaries(Cluster):
         if self.imf.make_multiples:
             companions, double_systems = \
             self.make_primaries_and_companions(sysMass, compMass)
+            self.star_systems = vstack([double_systems, single_star_systems])
+            self.companions = companions
+            return
         #####
         # Save our arrays to the object
         #####
-        self.star_systems = vstack([double_systems, single_star_systems])
-        self.companions = companions
+        self.star_systems = single_star_systems
         return
 
         
@@ -1740,7 +1742,7 @@ class Isochrone_Binary(Isochrone):
                  red_law=default_red_law,
                  wave_range=[3000, 52000], min_mass=None, max_mass=None,
                  filters=['ubv,U', 'ubv,V', 'ubv,B', 'ubv,R', 'ubv,I'],
-                 rebin=True, filepath=''):
+                 rebin=True):
         t1=time.time()
         self.metallicity = metallicity
         self.logage = logAge
@@ -1768,7 +1770,7 @@ class Isochrone_Binary(Isochrone):
             return
         # Get solar metallicity models for a population at a specific age.
         # Takes about 0.1 seconds.
-        evol = evo_model.isochrone(dir_in=filepath, age=10 ** logAge,
+        evol = evo_model.isochrone(age=10 ** logAge,
                                    metallicity=metallicity)
 
         # Eliminate cases where log g is less than 0
