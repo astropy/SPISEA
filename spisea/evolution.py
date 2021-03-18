@@ -1737,7 +1737,6 @@ class BPASS(StellarEvolution):
         oldmetallicity = metallicity
         # The following metallicity fraction as how BPASS is organized.
         print(metallicity)
-        print(self.z_solar)
         metallicity = self.z_solar * 10 ** metallicity
         log_age = math.log10(age)
         if log_age < np.min(self.age_list) or log_age > np.max(self.age_list):
