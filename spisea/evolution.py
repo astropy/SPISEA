@@ -1805,9 +1805,11 @@ class BPASS(StellarEvolution):
         iso['phase2'] = 101
         iso['phase'][np.where((iso['logg'] > 6.9) & (iso['log(L1)'] < -1) &
                               (iso['mass_current'] < 1.4))[0]] = 101
-        iso['phase'][np.where(((iso['source']==2) | (iso['source']==3) | (iso['source']==4)) &
+        iso['phase'][np.where(((iso['source'] == 2) | (iso['source']==3) |
+                               (iso['source'] == 4)) &
                               (np.round(iso['mass_current'], 1) == 1.4))[0]] = 102
-        iso['phase'][np.where(((iso['source']==2) | (iso['source']==3) | (iso['source']==4)) &
+        iso['phase'][np.where(((iso['source'] == 2) | (iso['source'] == 3) |
+                               (iso['source'] == 4)) &
                               (np.round(iso['mass_current']) > 3.0))[0]] = 103
         iso['phase2'][np.where((iso['logg2'] > 6.9) &
                                (iso['log(L2)'] < -1) &
