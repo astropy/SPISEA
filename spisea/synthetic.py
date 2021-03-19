@@ -3008,7 +3008,6 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
         indices[idx] = -1
         return indices
     idx = np.where(d_frac > 0.187)[0]
-    indices[idx] = -1
     return indices
 
     
