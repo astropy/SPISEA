@@ -1736,7 +1736,8 @@ class BPASS(StellarEvolution):
         """
         oldmetallicity = metallicity
         # The following metallicity fraction as how BPASS is organized.
-        print(metallicity)
+        # Borrow from matt hosek's code:
+        # Look for the closest valid age to the input age
         metallicity = self.z_solar * 10 ** metallicity
         log_age = math.log10(age)
         if log_age < np.min(self.age_list) or log_age > np.max(self.age_list):
@@ -1745,8 +1746,6 @@ class BPASS(StellarEvolution):
                 metallicity > np.max(self.z_list)):
             logger.error('Requested metallicity {0} is out of bounds.'.
                          format(metallicity))
-        # Borrow from matt hosek's code:
-        # Look for the closest valid age to the input age
         iso_file = 'iso' + str(round(log_age, 1)) + '.fits'
         # Find the closest valid metallicity to the given metallicity
         closest_metallicity = min([x for x in self.z_file_map],
@@ -1801,7 +1800,7 @@ class BPASS(StellarEvolution):
         iso['isWR'] = (iso['X'] < 0.40) & (iso['log(T1)'] >= 4.45)
         iso['isWR2'] = (iso['X'] < 0.40) & (iso['log(T2)'] >= 4.45)
         iso['phase'] = 5
-        iso['phase2'] = 101
+        iso['phase2'] = 5
         iso['phase'][np.where((iso['logg'] > 6.9) & (iso['log(L1)'] < -1) &
                               (iso['mass_current'] < 1.4))[0]] = 101
         iso['phase'][np.where(((iso['source'] == 2) | (iso['source']==3) |

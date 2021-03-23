@@ -371,7 +371,7 @@ class Cluster_w_Binaries(Cluster):
         and companions tables.
         
         Tertiary and higher order companions are included, but are matched to single
-        \star models. As  similar to the policy with matching the primary-secondary pairs,
+        star models. As  similar to the policy with matching the primary-secondary pairs,
         if the companion deviates too much, in this case in terms of initial mass, from
         the most similar single star from the isochrone, it does not become part of
         the cluster object.
@@ -987,7 +987,9 @@ class ResolvedCluster(Cluster):
         # effect is so small
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+        bad = np.where((star_systems_phase_non_nan > 5) &
+                       (star_systems_phase_non_nan < 101) &
+                       (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
         # Print warning, if desired
         verbose=False
         if verbose:
@@ -1115,7 +1117,10 @@ class ResolvedCluster(Cluster):
                 # then round it down to 5, rather than up to 101).
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
                 star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-                bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+                bad = np.where( (star_systems_phase_non_nan > 5) &
+                               (star_systems_phase_non_nan < 101) &
+                               (star_systems_phase_non_nan != 9) &
+                               (star_systems_phase_non_nan != -99))
                 # Print warning, if desired
                 verbose=False
                 if verbose:
@@ -2918,10 +2923,11 @@ def match_model_uorder_companions(isoMasses, starMasses, iso):
 
 def match_model_masses(isoMasses, starMasses):
     """Given a column of initial  system masses (starMasses) and a column
-    of star masses from the isochrone (isoMasses) find for each mass in the starMasses
-     the index of the row of the isochrone's table where the initial mass
-     is closest and is within 10% of the corresponding mass in starMasses.
-     """
+    of star masses from the isochrone (isoMasses) find for each mass
+    in the starMasses the index of the row of the isochrone's table where
+    the initial mass
+    is closest and is within 10% of the corresponding mass in starMasses.
+    """
 
     kdt = KDTree( isoMasses.reshape((len(isoMasses), 1)) )
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
@@ -2963,7 +2969,7 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        if (primary_mass<=100 and secondary_mass<=100):
+        if (primary_mass <= 100 and secondary_mass <= 100):
             idx = np.where(d_frac > 0.147)[0]
         indices[idx] = -1
         indices[np.where(indices >= len(iso.primaries))] = -1
@@ -2985,15 +2991,18 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        if (primary_mass <= 100 or secondary_mass <= 100):
+        if (primary_mass <= 100 and secondary_mass <= 100):
             idx = np.where((d_frac > 0.147) | 
                            (np.abs(iso.secondaries['log_a'][indices] -
-                                               loga) >= 0.1))[0]
-        indices[np.where(indices >= len(iso.primaries))] = -1
-        indices[idx] = -1
-        return indices
+                                   loga) >= 0.1))[0]
+            indices[np.where(indices >= len(iso.primaries))] = -1
+            indices[idx] = -1
+            return indices
     else:
-        kdt = KDTree(np.transpose(np.array([iso.primaries['mass']/primary_mass, iso.secondaries['mass']/secondary_mass, np.nan_to_num(iso.secondaries['log_a'], -1.5)/loga])))
+        kdt = KDTree(np.transpose(np.array([iso.primaries['mass'] / primary_mass,
+                                            iso.secondaries['mass'] / secondary_mass,
+                                            np.nan_to_num(iso.secondaries['log_a'], -1.5) /
+                                            loga])))
         q_results = kdt.query(np.array([[1, 1, 1]]))
     indices = q_results[1]
     if np.any(indices>=len(iso.primaries)):
@@ -3003,7 +3012,7 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-    if (primary_mass <=100 or secondary_mass <= 100):
+    if (primary_mass > 100 or secondary_mass > 100):
         idx = np.where((d_frac > 0.374))[0]
         indices[idx] = -1
         return indices
