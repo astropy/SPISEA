@@ -36,7 +36,8 @@ default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
 default_wd_atm_func = atm.get_wd_atmosphere
-
+sqrt_2_over_10 = np.sqrt(2) / 10
+sqrt_3_over_10 = np.sqrt(3) / 10
 def adjustment_helper(min_mass):
     """
         Based on the minimum mass represented by an IMF, creates part
@@ -472,6 +473,9 @@ class Cluster_w_Binaries(Cluster):
             star_systemsPrime.add_column(Column(np.empty(N_systems,
                                                          dtype=float),
                                                 name=filt))
+            star_systemsPrime.add_column(Column(np.empty(N_systems,
+                                                         dtype=float),
+                                                name=filt + "Prim"))
         # If we are using Duchene-Krauss for our Multipliciy
         # we would definitely use it to obtain log_a.
         # Note that when I was testing, there happened to be
@@ -579,8 +583,9 @@ class Cluster_w_Binaries(Cluster):
                                           companions['log_a'][x],
                                           self.iso, not
                                           np.isnan(companions['log_a']
-                                                   [x]))[0]
-                if (ind == -1 or star_systemsPrime['bad_system'][sysID]):
+                                                   [x]))
+                ind = ind[np.where(ind != -1)[0]]
+                if ((not len(ind)) or star_systemsPrime['bad_system'][sysID]):
                     # Really just a way of trying to say
                     # that there is no matching system
                     # i.e. We do not have a good enough
@@ -593,10 +598,11 @@ class Cluster_w_Binaries(Cluster):
                     companions['bad_system'][np.where(companions['system_idx'] ==
                                                       sysID)] = True
                     compMass_IDXs[sysID] += 1
-                    rejected_system+=1
-                    rejected_companions+=1
+                    rejected_system += 1
+                    rejected_companions += 1
                     continue
 
+                ind = ind[-1]
                 star_systemsPrime[sysID]['Teff'] = \
                 self.iso.primaries['Teff'][ind]
                 star_systemsPrime[sysID]['L'] = \
@@ -618,6 +624,8 @@ class Cluster_w_Binaries(Cluster):
                     star_systemsPrime[sysID][filt] = \
                     self.iso.primaries[filt][ind]
                     companions[filt][x] = self.iso.secondaries[filt][ind]
+                    star_systemsPrime[sysID][filt + "Prim"] = \
+                    self.iso.primaries[filt][ind]
             else:
                 ind = match_model_uorder_companions(self.iso.singles['mass'],
                                                 np.array([compMass[sysID][compMass_IDXs
@@ -2915,10 +2923,9 @@ def match_model_uorder_companions(isoMasses, starMasses, iso):
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    idx = np.where(dm_frac > 0.1)[0]
     if (starMasses[0]<= 100):
-        idx = np.where(dm_frac > 0.2)[0]
-    indices[idx] = -1
+        idx = np.where(dm_frac > 0.1)[0]
+        indices[idx] = -1
     return indices
 
 def match_model_masses(isoMasses, starMasses):
@@ -2970,8 +2977,8 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
         if (primary_mass <= 100 and secondary_mass <= 100):
-            idx = np.where(d_frac > 0.147)[0]
-        indices[idx] = -1
+            idx = np.where(d_frac > sqrt_2_over_10)[0]
+            indices[idx] = -1
         indices[np.where(indices >= len(iso.primaries))] = -1
         return indices
     elif (np.abs(loga) < 1.0):
@@ -2987,17 +2994,19 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
         indices = q_results[1]
         if (not len(indices)):
             return np.array([-1])
+        # recall d_frac = cartesian "distance" between two primary-mass,
+        # comapnion-mass pairs 
         d_frac = np.sqrt((iso.primaries['mass'][indices] /
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
         if (primary_mass <= 100 and secondary_mass <= 100):
-            idx = np.where((d_frac > 0.147) | 
+            idx = np.where((d_frac > sqrt_2_over_10) | 
                            (np.abs(iso.secondaries['log_a'][indices] -
                                    loga) >= 0.1))[0]
-            indices[np.where(indices >= len(iso.primaries))] = -1
             indices[idx] = -1
-            return indices
+        indices[np.where(indices >= len(iso.primaries))] = -1
+        return indices
     else:
         kdt = KDTree(np.transpose(np.array([iso.primaries['mass'] / primary_mass,
                                             iso.secondaries['mass'] / secondary_mass,
@@ -3005,18 +3014,16 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                                             loga])))
         q_results = kdt.query(np.array([[1, 1, 1]]))
     indices = q_results[1]
-    if np.any(indices>=len(iso.primaries)):
-        indices = -1
-        return indices
+    if (not len(indices)):
+        return np.array([-1])
     d_frac = np.sqrt((iso.primaries['mass'][indices] /
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-    if (primary_mass > 100 or secondary_mass > 100):
-        idx = np.where((d_frac > 0.374))[0]
+    if (primary_mass <= 100 or secondary_mass <= 100):
+        idx = np.where(d_frac > sqrt_3_over_10)[0]
         indices[idx] = -1
-        return indices
-    idx = np.where(d_frac > 0.187)[0]
+    indices[np.where(indices >= len(iso.primaries))] = -1
     return indices
 
     
