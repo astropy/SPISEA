@@ -40,6 +40,8 @@ default_atm_func = atm.get_merged_atmosphere
 default_wd_atm_func = atm.get_wd_atmosphere
 frmr_sqrt_2_over_10 = 1 / 10
 frmr_sqrt_3_over_10 = 1 / 10
+
+
 def adjustment_helper(min_mass):
     """
         Based on the minimum mass represented by an IMF, creates part
@@ -1841,6 +1843,9 @@ class Isochrone_Binary(Isochrone):
         pairings = {"Singles": singles, "Primaries": primaries,
                     "Secondaries": secondaries}
         self.pairings = pairings
+        self.singles = singles
+        self.primaries = primaries
+        self.secondaries = secondaries
         # For each temperature extract the synthetic photometry.
         for x in pairings:
             tab = pairings[x]
@@ -1870,31 +1875,7 @@ class Isochrone_Binary(Isochrone):
                             np.isfinite(tab['Teff']) & (tab['Teff'] > 0.0) &
                             np.isfinite(tab['R']) & (tab['R']> 0.0) &
                             (tab['phase'] <= 101) & (tab['phase'] != -99))[0]
-            for c_ind in cond:
-                if (np.log10(tab['L'][c_ind]) < 5):
-                    print(tab['L'][c_ind])
-                if (tab[c_ind]['phase'] < 101):
-                    star =  atm_func(temperature=tab['Teff'][c_ind],
-                                     gravity=tab['logg'][c_ind],
-                                     metallicity=self.metallicity,
-                                     rebin=rebin)
-                else:
-                    star =  wd_atm_func(temperature=tab['Teff'][c_ind],
-                                        gravity=tab['logg'][c_ind],
-                                        metallicity=self.metallicity,
-                                        verbose=False)
-                    # Trim wavelength range down to
-                    # JHKL range (0.5 - 5.2 microns)
-                star = spectrum.trimSpectrum(star, wave_range[0],
-                                             wave_range[1])
-                # Convert into flux observed at Earth (unreddened)
-                R = float(R_all[c_ind].to("pc") / units.pc)
-                star *= (R / distance) ** 2 # in erg s^-1 cm^-2 A^-1
-                # Redden the spectrum. This doesn't take much time at all.
-                red = red_law.reddening(AKs).resample(star.wave)
-                star *= red
-                # Save the final spectrum to our spec_list for later use.
-                atm_list[c_ind] = star
+            atm_vectorized(cond, )
             bad_starcond = np.where(~ (np.isfinite(tab['logg']) &
                                        (tab['logg'] != 0.0) &
                                        np.isfinite(tab['L']) &
@@ -1927,11 +1908,49 @@ class Isochrone_Binary(Isochrone):
             tab.meta['METAL_ACT'] = evol.meta['metallicity_act']
             tab.meta['WAVEMIN'] = wave_range[0]
             tab.meta['WAVEMAX'] = wave_range[1]
-
         self.make_photometry()
         t2 = time.time()
         print('Isochrone generation took {0:f} s.'.format(t2-t1))
         return
+    
+
+    def atm_generator_to_vectorize(self, c_ind, code):
+        if not code:
+            tab = self.singles
+            atm_list = self.spec_list_si
+        elif code == 1:
+            tab = self.primaries
+            atm_list = self.self.spec_list2_pri
+        else:
+            tab = self.secondaries
+            atm_list = self.spec_list3_sec
+            
+        if (np.log10(tab['L'][c_ind]) < 5):
+            print(tab['L'][c_ind])
+        if (tab[c_ind]['phase'] < 101):
+            star =  atm_func(temperature=tab['Teff'][c_ind],
+                             gravity=tab['logg'][c_ind],
+                             metallicity=self.metallicity,
+                             rebin=rebin)
+        else:
+            star =  wd_atm_func(temperature=tab['Teff'][c_ind],
+                                gravity=tab['logg'][c_ind],
+                                metallicity=self.metallicity,
+                                verbose=False)
+        # Trim wavelength range down to
+        # JHKL range (0.5 - 5.2 microns)
+        star = spectrum.trimSpectrum(star, wave_range[0],
+                                             wave_range[1])
+        # Convert into flux observed at Earth (unreddened)
+        R = float(R_all[c_ind].to("pc") / units.pc)
+        star *= (R / distance) ** 2 # in erg s^-1 cm^-2 A^-1
+        # Redden the spectrum. This doesn't take much time at all.
+        red = red_law.reddening(AKs).resample(star.wave)
+        star *= red
+        # Save the final spectrum to our spec_list for later use.
+        atm_list[c_ind] = star
+        return
+    atm_vectorized = np.vectorize(atm_generator_to_vectorize)
 
     def make_photometry(self, rebin=True, vega=vega):
         """
