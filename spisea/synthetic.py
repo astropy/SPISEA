@@ -624,7 +624,6 @@ class Cluster_w_Binaries(Cluster):
         based on the row's initial primary mass.
         """
         # We will be only looking for stars that are not multiple systems
-        sysMass = sysMass[np.where(~isMulti)[0]]
         indices = \
         match_model_sin_bclus(np.array(self.iso.singles['mass']),
                                        sysMass, self.iso)
@@ -642,7 +641,6 @@ class Cluster_w_Binaries(Cluster):
         star_systems['logg'] = self.iso.singles['logg'][indices]
         star_systems['isWR'] = self.iso.singles['isWR'][indices]
         star_systems['mass'] = self.iso.singles['mass'][indices]
-        star_systems['systemMass'] = self.iso.singles['mass'][indices]
         star_systems['mass_current'] = \
         self.iso.singles['mass_current'][indices]
         star_systems['phase'] = self.iso.singles['phase'][indices]
@@ -2832,14 +2830,11 @@ def match_model_sin_bclus(isoMasses, starMasses, iso):
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
+    idx = np.where((dm_frac > 0.15) & (starMasses >= 100))[0]
+    indices[idx] = -1
     idx = np.where(dm_frac > 0.1)[0]
     indices[idx] = -1
     counter = 0
-    for ind in indices:
-        if (ind != -1):
-            sampl_mass1 = iso.singles['mass'][ind]
-            assert np.abs(sampl_mass1 / starMasses[counter] - 1) < 0.1
-        counter += 1
     return indices
 
 def match_model_uorder_companions(isoMasses, starMasses, iso):
@@ -2851,14 +2846,12 @@ def match_model_uorder_companions(isoMasses, starMasses, iso):
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    idx = np.where(dm_frac > 0.1)[0]
+    if (starMasses[0] > 0):
+        idx = np.where(dm_frac > 0.15)[0]
+    else:
+        idx = np.where(dm_frac > 0.1)[0]
     indices[idx] = -1
     counter = 0
-    for ind in indices:
-        if (ind != -1):
-            sampl_mass1 = iso.singles['mass'][ind]
-            assert np.abs(sampl_mass1 / starMasses[counter] - 1) < 0.1
-        counter += 1
     return indices
 
 def match_model_masses(isoMasses, starMasses):
@@ -2908,19 +2901,16 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        # if (primary_mass <= 100 and secondary_mass <= 100):
-        idx = np.where(d_frac > frmr_sqrt_2_over_10)[0]
+        if (primary_mass <= 100 and secondary_mass <= 100):
+            idx = np.where(d_frac > frmr_sqrt_2_over_10)[0]
+        else:
+            idx = np.where(d_frac > 0.15)[0]
         indices[idx] = -1
         indices[np.where(indices >= len(iso.primaries))] = -1
         ind = indices[np.where(indices != -1)[0]]
         if (not ind):
             return indices
         ind = ind[0]
-        if (ind != -1):
-            sampl_mass1 = iso.primaries['mass'][ind]
-            sampl_mass2 = iso.secondaries['mass'][ind]
-            assert np.abs(sampl_mass1 / primary_mass - 1) < 0.1
-            assert np.abs(sampl_mass2 / secondary_mass - 1) < 0.1
         return indices
     elif (np.abs(loga) < 1.0):
         # Although it may not be the best way of handling 1 AU separation,
@@ -2941,21 +2931,20 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                           primary_mass - 1) ** 2 +
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
-        # if (primary_mass <= 100 and secondary_mass <= 100):
-        idx = np.where((d_frac > frmr_sqrt_2_over_10) |
-                        (iso.secondaries['log_a'][indices] - 
-                         loga >= 0.1))[0]
+        if (primary_mass <= 100 and secondary_mass <= 100):
+            idx = np.where((d_frac > frmr_sqrt_2_over_10) |
+                           (iso.secondaries['log_a'][indices] -
+                            loga >= 0.1))[0]
+        else:
+            idx = np.where((d_frac > 0.15) |
+                           (iso.secondaries['log_a'][indices] -
+                            loga >= 0.1))[0]
         indices[idx] = -1
         indices[np.where(indices >= len(iso.primaries))] = -1
         ind = indices[np.where(indices != -1)[0]]
         if (not ind):
             return indices
         ind = ind[0]
-        if (ind != -1):
-            sampl_mass1 = iso.primaries['mass'][ind]
-            sampl_mass2 = iso.secondaries['mass'][ind]
-            assert np.abs(sampl_mass1 / primary_mass - 1) < 0.1
-            assert np.abs(sampl_mass2 / secondary_mass - 1) < 0.1
         return indices
     else:
         kdt = KDTree(np.transpose(np.array([iso.primaries['mass'] / primary_mass,
@@ -2969,20 +2958,19 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
     d_frac = np.sqrt((iso.primaries['mass'][indices] /
                       primary_mass - 1) ** 2 +
                      (iso.secondaries['mass'][indices] /
-                      secondary_mass - 1) ** 2)
-    # if (primary_mass <= 100 and secondary_mass <= 100):
-    idx = np.where(d_frac > frmr_sqrt_3_over_10)[0]
+                      secondary_mass - 1) ** 2 +
+                     (iso.secondaries['log_a'][indices] /
+                      loga - 1) ** 2)
+    if (primary_mass <= 100 and secondary_mass <= 100):
+        idx = np.where(d_frac > frmr_sqrt_3_over_10)[0]
+    else:
+        idx = np.where(d_frac > 0.15)[0]
     indices[idx] = -1
     indices[np.where(indices >= len(iso.primaries))] = -1
     ind = indices[np.where(indices != -1)[0]]
     if (not ind):
         return indices
     ind = ind[0]
-    if (ind != -1):
-        sampl_mass1 = iso.primaries['mass'][ind]
-        sampl_mass2 = iso.secondaries['mass'][ind]
-        assert np.abs(sampl_mass1 / primary_mass - 1) < 0.1
-        assert np.abs(sampl_mass2 / secondary_mass - 1) < 0.1
     return indices
 
     
