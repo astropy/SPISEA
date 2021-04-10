@@ -641,6 +641,7 @@ class Cluster_w_Binaries(Cluster):
         star_systems['logg'] = self.iso.singles['logg'][indices]
         star_systems['isWR'] = self.iso.singles['isWR'][indices]
         star_systems['mass'] = self.iso.singles['mass'][indices]
+        star_systems['systemMass'] = self.iso.singles['mass'][indices]
         star_systems['mass_current'] = \
         self.iso.singles['mass_current'][indices]
         star_systems['phase'] = self.iso.singles['phase'][indices]
@@ -649,6 +650,7 @@ class Cluster_w_Binaries(Cluster):
         self.applying_IFMR_stars(star_systems)
         for filt in self.filt_names:
             star_systems[filt] = self.iso.singles[filt][indices]
+        print("{} single stars had to be deleted".fmt(deleted))
         return star_systems
 
     def make_primaries_and_companions(self, star_systems, compMass):
@@ -817,7 +819,7 @@ class Cluster_w_Binaries(Cluster):
         star_systemsPrime.remove_columns(['bad_system', 'designation'])
         companions.remove_columns(['bad_system', 'the_secondary_star?'])
         if self.verbose:
-            print("{} star systems had to be deleted".format(str(rejected_system)))
+            print("{} non-single star systems had to be deleted".format(str(rejected_system)))
             print("{} companions had to be deleted".format(str(rejected_companions)))
         # For testing purposes we can make rejected_system and rejected_comapnions
         # be returned too.
@@ -2830,7 +2832,7 @@ def match_model_sin_bclus(isoMasses, starMasses, iso):
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    idx = np.where((dm_frac > 0.15) & (starMasses >= 100))[0]
+    idx = np.where((dm_frac > 0.25) & (starMasses >= 100))[0]
     indices[idx] = -1
     idx = np.where(dm_frac > 0.1)[0]
     indices[idx] = -1
@@ -2847,7 +2849,7 @@ def match_model_uorder_companions(isoMasses, starMasses, iso):
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
     if (starMasses[0] > 0):
-        idx = np.where(dm_frac > 0.15)[0]
+        idx = np.where(dm_frac > 0.25)[0]
     else:
         idx = np.where(dm_frac > 0.1)[0]
     indices[idx] = -1
@@ -2904,7 +2906,7 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
         if (primary_mass <= 100 and secondary_mass <= 100):
             idx = np.where(d_frac > frmr_sqrt_2_over_10)[0]
         else:
-            idx = np.where(d_frac > 0.15)[0]
+            idx = np.where(d_frac > 0.12)[0]
         indices[idx] = -1
         indices[np.where(indices >= len(iso.primaries))] = -1
         ind = indices[np.where(indices != -1)[0]]
@@ -2936,7 +2938,7 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                            (iso.secondaries['log_a'][indices] -
                             loga >= 0.1))[0]
         else:
-            idx = np.where((d_frac > 0.15) |
+            idx = np.where((d_frac > 0.25) |
                            (iso.secondaries['log_a'][indices] -
                             loga >= 0.1))[0]
         indices[idx] = -1
@@ -2964,7 +2966,7 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
     if (primary_mass <= 100 and secondary_mass <= 100):
         idx = np.where(d_frac > frmr_sqrt_3_over_10)[0]
     else:
-        idx = np.where(d_frac > 0.15)[0]
+        idx = np.where(d_frac > 0.25)[0]
     indices[idx] = -1
     indices[np.where(indices >= len(iso.primaries))] = -1
     ind = indices[np.where(indices != -1)[0]]

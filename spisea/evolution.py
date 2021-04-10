@@ -1819,6 +1819,8 @@ class BPASS(StellarEvolution):
         iso.rename_column('M2', 'mass_current2')
         iso.rename_column('log(L1)', 'logL')
         iso.rename_column('age', 'logAge')
+        iso['logT'][np.where(iso['phase'] == 103)] = -np.inf
+        iso['logL'][np.where(iso['phase'] == 103)] = -np.inf
         iso.meta['log_age'] = age
         iso.meta['metallicity_in'] = oldmetallicity
         iso.meta['metallicity_act'] = np.log10(closest_metallicity /
