@@ -74,6 +74,44 @@ def Vega():
 
 vega = Vega()
 
+class BpyasserContainer():
+    description = "This is so vectorization doesn't think that I'm an array"
+
+def atm_generator_to_vectorize(c_ind, tab_w_wrapper, list_wrapper, met):
+        tab = tab_w_wrapper.tab
+        wave_range = tab_w_wrapper.wave_range
+        distance = table_w_wrapper.distance
+        R = float( R_all[ii].to('pc') / units.pc) 
+
+                         # in pc
+        atm_list = list_wrapper.list
+        if (np.log10(tab['L'][c_ind]) < 5):
+            print(tab['L'][c_ind])
+        if (tab[c_ind]['phase'] < 101):
+            star =  atm_func(temperature=tab['Teff'][c_ind],
+                             gravity=tab['logg'][c_ind],
+                             metallicity=met,
+                             rebin=rebin)
+        else:
+            star =  wd_atm_func(temperature=tab['Teff'][c_ind],
+                                gravity=tab['logg'][c_ind],
+                                metallicity=met,
+                                verbose=False)
+        # Trim wavelength range down to
+        # JHKL range (0.5 - 5.2 microns)
+        star = spectrum.trimSpectrum(star, wave_range[0],
+                                             wave_range[1])
+        # Convert into flux observed at Earth (unreddened)
+        R = float(R_all[c_ind].to("pc") / units.pc)
+        star *= (R / distance) ** 2 # in erg s^-1 cm^-2 A^-1
+        # Redden the spectrum. This doesn't take much time at all.
+        red = red_law.reddening(AKs).resample(star.wave)
+        star *= red
+        # Save the final spectrum to our spec_list for later use.
+        atm_list[c_ind] = star
+        return
+vectorized_atm_maker = np.vectorize(atm_generator_to_vectorize)
+    
 
 class Cluster(object):
     
@@ -1852,15 +1890,10 @@ class Isochrone_Binary(Isochrone):
             atm_list = self.pairings2[x]
             # Workaround for a glitch encountered with units not showing up.
             # may need to come back and get rid of it since it looks silly.
-            L_all = tab['L']
-            T_all = tab['Teff']
             R_all = tab['R'] * units.m/units.m
             gravity_table = tab['logg']
-            phase = tab['phase']
-            source = tab['source']
             # a little issue with the compact remnant primaries from
             # the secondary star
-            # === DRAFT: PARALELLIZING (a bit)===
             if x == 'Secondaries':
                 merged = np.where(tab['merged'])
                 tab['mass_current'][merged] = np.nan
@@ -1869,13 +1902,19 @@ class Isochrone_Binary(Isochrone):
                 tab['logg'][merged] = np.nan
                 tab['isWR'][merged] = False
                 tab['phase'][merged] = -99
-            # which stars are bad?
+                                 
             cond = np.where(np.isfinite(tab['logg']) & (tab['logg'] != 0.0) &
                             np.isfinite(tab['L']) & (tab['L'] > 0.0) &
                             np.isfinite(tab['Teff']) & (tab['Teff'] > 0.0) &
                             np.isfinite(tab['R']) & (tab['R']> 0.0) &
                             (tab['phase'] <= 101) & (tab['phase'] != -99))[0]
-            atm_vectorized(cond, )
+            
+                              
+            wrapper = BypasserContainer()
+            wrapper.table= tab
+            wrapper.wave_range = wave_range
+            wrapper.distance = distance
+            vectorized_atm_maker(cond, wrapper, wrapper, metallicity)
             bad_starcond = np.where(~ (np.isfinite(tab['logg']) &
                                        (tab['logg'] != 0.0) &
                                        np.isfinite(tab['L']) &
@@ -1913,44 +1952,6 @@ class Isochrone_Binary(Isochrone):
         print('Isochrone generation took {0:f} s.'.format(t2-t1))
         return
     
-
-    def atm_generator_to_vectorize(self, c_ind, code):
-        if not code:
-            tab = self.singles
-            atm_list = self.spec_list_si
-        elif code == 1:
-            tab = self.primaries
-            atm_list = self.self.spec_list2_pri
-        else:
-            tab = self.secondaries
-            atm_list = self.spec_list3_sec
-            
-        if (np.log10(tab['L'][c_ind]) < 5):
-            print(tab['L'][c_ind])
-        if (tab[c_ind]['phase'] < 101):
-            star =  atm_func(temperature=tab['Teff'][c_ind],
-                             gravity=tab['logg'][c_ind],
-                             metallicity=self.metallicity,
-                             rebin=rebin)
-        else:
-            star =  wd_atm_func(temperature=tab['Teff'][c_ind],
-                                gravity=tab['logg'][c_ind],
-                                metallicity=self.metallicity,
-                                verbose=False)
-        # Trim wavelength range down to
-        # JHKL range (0.5 - 5.2 microns)
-        star = spectrum.trimSpectrum(star, wave_range[0],
-                                             wave_range[1])
-        # Convert into flux observed at Earth (unreddened)
-        R = float(R_all[c_ind].to("pc") / units.pc)
-        star *= (R / distance) ** 2 # in erg s^-1 cm^-2 A^-1
-        # Redden the spectrum. This doesn't take much time at all.
-        red = red_law.reddening(AKs).resample(star.wave)
-        star *= red
-        # Save the final spectrum to our spec_list for later use.
-        atm_list[c_ind] = star
-        return
-    atm_vectorized = np.vectorize(atm_generator_to_vectorize)
 
     def make_photometry(self, rebin=True, vega=vega):
         """
@@ -2398,10 +2399,7 @@ class iso_table(object):
         for ii in range(len(tab['Teff'])):
             # Loop is currently taking about 0.11 s per iteration
 
-            gravity = float( logg_all[ii] )
-            L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
-            T = float( T_all[ii] / units.K)               # in Kelvin
-            R = float( R_all[ii].to('pc') / units.pc)              # in pc
+            
 
             # Get the atmosphere model now. Wavelength is in Angstroms
             # This is the time-intensive call... everything else is negligable.
