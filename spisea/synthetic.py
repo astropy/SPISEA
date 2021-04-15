@@ -41,17 +41,6 @@ default_wd_atm_func = atm.get_wd_atmosphere
 frmr_sqrt_2_over_10 = 1 / 10
 frmr_sqrt_3_over_10 = 1 / 10
 
-
-def adjustment_helper(min_mass):
-    """
-        Based on the minimum mass represented by an IMF, creates part
-        of adjustment factor imposed onto the mass inputted into the
-        cluster mass generator of the isochrone.
-    """
-    if (min_mass[0] > 0.4):
-        return -min_mass[0]
-    else:
-        return 4.0*(0.4 - min_mass[0])
     
 def Vega():
     
@@ -74,43 +63,10 @@ def Vega():
 
 vega = Vega()
 
-class BpyasserContainer():
+class BypasserContainer():
     description = "This is so vectorization doesn't think that I'm an array"
 
-def atm_generator_to_vectorize(c_ind, tab_w_wrapper, list_wrapper, met):
-        tab = tab_w_wrapper.tab
-        wave_range = tab_w_wrapper.wave_range
-        distance = table_w_wrapper.distance
-        R = float( R_all[ii].to('pc') / units.pc) 
 
-                         # in pc
-        atm_list = list_wrapper.list
-        if (np.log10(tab['L'][c_ind]) < 5):
-            print(tab['L'][c_ind])
-        if (tab[c_ind]['phase'] < 101):
-            star =  atm_func(temperature=tab['Teff'][c_ind],
-                             gravity=tab['logg'][c_ind],
-                             metallicity=met,
-                             rebin=rebin)
-        else:
-            star =  wd_atm_func(temperature=tab['Teff'][c_ind],
-                                gravity=tab['logg'][c_ind],
-                                metallicity=met,
-                                verbose=False)
-        # Trim wavelength range down to
-        # JHKL range (0.5 - 5.2 microns)
-        star = spectrum.trimSpectrum(star, wave_range[0],
-                                             wave_range[1])
-        # Convert into flux observed at Earth (unreddened)
-        R = float(R_all[c_ind].to("pc") / units.pc)
-        star *= (R / distance) ** 2 # in erg s^-1 cm^-2 A^-1
-        # Redden the spectrum. This doesn't take much time at all.
-        red = red_law.reddening(AKs).resample(star.wave)
-        star *= red
-        # Save the final spectrum to our spec_list for later use.
-        atm_list[c_ind] = star
-        return
-vectorized_atm_maker = np.vectorize(atm_generator_to_vectorize)
     
 
 class Cluster(object):
@@ -232,7 +188,7 @@ class Cluster_w_Binaries(Cluster):
         # Make a table to contain all the information
         # about each stellar system.
         #####
-        single_star_systems = self.make_singles_systems_table(isMulti, sysMass)
+        single_star_systems, self.non_matchable = self.make_singles_systems_table(isMulti, sysMass)
         #####
         # Make a table to contain all the information
         # about companions.
@@ -384,6 +340,8 @@ class Cluster_w_Binaries(Cluster):
             for filt in self.filt_names:
                 stars[filt][cdx_rem] = \
                 np.full(len(cdx_rem), np.nan)
+        else:
+            stars.remove_rows(cdx_rem)
         return None
                 
     def generate_2body_parameters(self, star_systemsPrime, companions):
@@ -511,6 +469,7 @@ class Cluster_w_Binaries(Cluster):
         """
         rejected_system = 0
         rejected_companions = 0
+        self.unmatched_tertiary = []
         for x in range(len(companions)):
             sysID = companions[x]['system_idx']
             companions['mass'][x] = compMass[sysID][compMass_IDXs[sysID]]
@@ -521,14 +480,15 @@ class Cluster_w_Binaries(Cluster):
             # Now find the minimum log_a and corresponding maximum m_init
             if not min_log_gs[sysID][0]:
                 cond = np.isnan(companions['log_a'][x]) and \
-                np.isclose(companions['mass'][x], min_log_gs[sysID][1], atol=0.001)
+                np.isclose(companions['mass'][x], min_log_gs[sysID][1], atol=0.01)
+
             if cond:
                 ind = match_binary_system(star_systemsPrime[sysID]['mass'],
                                           compMass[sysID]
                                           [compMass_IDXs[sysID]],
                                           companions['log_a'][x],
                                           self.iso,
-                                          np.isnan(companions['log_a']
+                                          not np.isnan(companions['log_a']
                                                    [x]))
                 ind = ind[np.where(ind != -1)[0]]
                 if ((not len(ind)) or star_systemsPrime['bad_system'][sysID]):
@@ -570,6 +530,8 @@ class Cluster_w_Binaries(Cluster):
                 if ((not len(ind)) or companions['bad_system'][x]):
                     # This means we cannot find a close enough companion.
                     companions['bad_system'][x] = True
+                    self.unmatched_tertiary.append(compMass[sysID][compMass_IDXs
+                                                                   [sysID]])
                     compMass_IDXs[sysID] += 1
                     rejected_companions += 1
                     continue
@@ -593,6 +555,7 @@ class Cluster_w_Binaries(Cluster):
             # Obtain whether the companion is the secondary star
             # and not a tertiary or farther.
             companions['the_secondary_star?'][x] = cond
+        self.unmatched_tertiary = np.array(self.unmatched_tertiary)
         return rejected_system, rejected_companions
 
     def adding_up_photometry(self, star_systemsPrime, companions):
@@ -664,10 +627,15 @@ class Cluster_w_Binaries(Cluster):
         based on the row's initial primary mass.
         """
         # We will be only looking for stars that are not multiple systems
+        sysMass = sysMass[np.where(~ isMulti)[0]]
+        old_sysMass = sysMass
         indices = \
         match_model_sin_bclus(np.array(self.iso.singles['mass']),
-                                       sysMass, self.iso)
+                                       sysMass, self.iso,
+                              not self.imf.make_multiples)
+        del_mass = sysMass[np.where(indices == -1)[0]].sum()
         deleted = len(indices[np.where(indices == -1)[0]])
+        del_in = np.where(indices == -1)[0]
         indices = indices[np.where(indices != -1)[0]]
         N_systems = len(indices)
         sysMass = sysMass[indices]
@@ -690,8 +658,11 @@ class Cluster_w_Binaries(Cluster):
         self.applying_IFMR_stars(star_systems)
         for filt in self.filt_names:
             star_systems[filt] = self.iso.singles[filt][indices]
-        print("{} single stars had to be deleted".fmt(deleted))
-        return star_systems
+        print("{} single stars had to be deleted".format(deleted))
+        print("{} mass had to be deleted from single stars".format(del_mass))
+        print(del_in)
+        print(len(old_sysMass[del_in]))
+        return star_systems, old_sysMass[del_in]
 
     def make_primaries_and_companions(self, star_systems, compMass):
         """
@@ -1882,6 +1853,10 @@ class Isochrone_Binary(Isochrone):
                           "Secondaries": self.spec_list3_sec}
         pairings = {"Singles": singles, "Primaries": primaries,
                     "Secondaries": secondaries}
+        codes = {"Singles": 0, "Primaries": 1,
+                    "Secondaries": 2}
+        self.codes2 = {0: singles, 1: primaries,
+                       2: secondaries}
         self.pairings = pairings
         self.singles = singles
         self.primaries = primaries
@@ -1911,12 +1886,13 @@ class Isochrone_Binary(Isochrone):
                             np.isfinite(tab['R']) & (tab['R']> 0.0) &
                             (tab['phase'] <= 101) & (tab['phase'] != -99))[0]
             
-                              
             wrapper = BypasserContainer()
-            wrapper.table= tab
             wrapper.wave_range = wave_range
             wrapper.distance = distance
-            vectorized_atm_maker(cond, wrapper, wrapper, metallicity)
+            wrapper.lis = atm_list
+            vectorized_atm_maker = np.vectorize(self.atm_generator_to_vectorize)
+            vectorized_atm_maker(cond, wrapper, wrapper, metallicity, atm_func,
+                                 wd_atm_func, red_law, AKs, rebin, codes[x])
             bad_starcond = np.where(~ (np.isfinite(tab['logg']) &
                                        (tab['logg'] != 0.0) &
                                        np.isfinite(tab['L']) &
@@ -1926,10 +1902,10 @@ class Isochrone_Binary(Isochrone):
                                        np.isfinite(tab['R']) & (tab['R'] > 0.0) &
                                        (tab['phase'] <= 101) &
                                        (tab['phase'] != -99)))[0]
-            tab[bad_starcond]['Teff'] = np.nan
-            tab[bad_starcond]['L'] = np.nan
-            tab[bad_starcond]['R'] = np.nan
-            tab[bad_starcond]['logg'] = np.nan
+            tab['Teff'][bad_starcond] = np.nan
+            tab['L'][bad_starcond] = np.nan
+            tab['R'][bad_starcond] = np.nan
+            tab['logg'][bad_starcond] = np.nan
         # I hope to change the next few lines to this as this will make
         # more thorough use of numpy and decrease the number of for-loop
         # iterations that are used.
@@ -1953,8 +1929,41 @@ class Isochrone_Binary(Isochrone):
         t2 = time.time()
         print('Isochrone generation took {0:f} s.'.format(t2-t1))
         return
-    
 
+    def atm_generator_to_vectorize(self, c_ind, w_wrapper, list_wrapper, met,
+                                   atm_func, wd_atm_func, red_law, AKs, rebin,
+                                   code):
+        tab = self.codes2[code]
+        wave_range = w_wrapper.wave_range
+        distance = w_wrapper.distance
+        atm_list = list_wrapper.lis
+        R_all = tab['R'] * units.m / units.m
+        R = float( R_all[c_ind].to('pc') / units.pc) 
+
+        if (tab[c_ind]['phase'] < 101):
+            star =  atm_func(temperature=tab['Teff'][c_ind],
+                             gravity=tab['logg'][c_ind],
+                             metallicity=met,
+                             rebin=rebin)
+        else:
+            star =  wd_atm_func(temperature=tab['Teff'][c_ind],
+                                gravity=tab['logg'][c_ind],
+                                metallicity=met,
+                                verbose=False)
+        # Trim wavelength range down to
+        # JHKL range (0.5 - 5.2 microns)
+        star = spectrum.trimSpectrum(star, wave_range[0],
+                                             wave_range[1])
+        # Convert into flux observed at Earth (unreddened)
+        R = float(R_all[c_ind].to("pc") / units.pc)
+        star *= (R / distance) ** 2 # in erg s^-1 cm^-2 A^-1
+        # Redden the spectrum. This doesn't take much time at all.
+        red = red_law.reddening(AKs).resample(star.wave)
+        star *= red
+        # Save the final spectrum to our spec_list for later use.
+        atm_list[c_ind] = star
+        return
+    
     def make_photometry(self, rebin=True, vega=vega):
         """
         Make synthetic photometry for the specified filters. This function
@@ -1995,7 +2004,6 @@ class Isochrone_Binary(Isochrone):
             # do the filter integration
             print('Starting synthetic photometry')
             for x in self.pairings:
-                print(x)
                 listofStars = self.pairings2[x]
                 table = self.pairings[x]
                 length_of_list = len(listofStars)
@@ -2834,7 +2842,7 @@ def match_model_mass(isoMasses,theMass):
     else:
         return mdx
 
-def match_model_sin_bclus(isoMasses, starMasses, iso):
+def match_model_sin_bclus(isoMasses, starMasses, iso, sin_only):
     """Given a column of single star initial masses generated by
     the IMF, returns an array whose indices correspond to the index
     of the star in the starMasses iterable and whose entry values
@@ -2849,9 +2857,9 @@ def match_model_sin_bclus(isoMasses, starMasses, iso):
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    idx = np.where((dm_frac > 0.25) & (starMasses >= 100))[0]
+    idx = np.where((dm_frac > 0.40) & (starMasses >= 100))[0]
     indices[idx] = -1
-    idx = np.where(dm_frac > 0.1)[0]
+    idx = np.where((dm_frac > 0.25) & (starMasses < 100))[0]
     indices[idx] = -1
     counter = 0
     return indices
@@ -2865,10 +2873,10 @@ def match_model_uorder_companions(isoMasses, starMasses, iso):
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    if (starMasses[0] > 0):
-        idx = np.where(dm_frac > 0.25)[0]
+    if (starMasses[0] >= 100):
+        idx = np.where(dm_frac > 0.40)[0]
     else:
-        idx = np.where(dm_frac > 0.1)[0]
+        idx = np.where(dm_frac > 0.25)[0]
     indices[idx] = -1
     counter = 0
     return indices
@@ -2921,9 +2929,9 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
         if (primary_mass <= 100 and secondary_mass <= 100):
-            idx = np.where(d_frac > frmr_sqrt_2_over_10)[0]
+            idx = np.where(d_frac > 0.25)[0]
         else:
-            idx = np.where(d_frac > 0.12)[0]
+            idx = np.where(d_frac > 0.4)[0]
         indices[idx] = -1
         indices[np.where(indices >= len(iso.primaries))] = -1
         ind = indices[np.where(indices != -1)[0]]
@@ -2951,13 +2959,13 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
         if (primary_mass <= 100 and secondary_mass <= 100):
-            idx = np.where((d_frac > frmr_sqrt_2_over_10) |
-                           (iso.secondaries['log_a'][indices] -
-                            loga >= 0.1))[0]
-        else:
             idx = np.where((d_frac > 0.25) |
                            (iso.secondaries['log_a'][indices] -
-                            loga >= 0.1))[0]
+                            loga >= 0.2))[0]
+        else:
+            idx = np.where((d_frac > 0.40) |
+                           (iso.secondaries['log_a'][indices] -
+                            loga >= 0.2))[0]
         indices[idx] = -1
         indices[np.where(indices >= len(iso.primaries))] = -1
         ind = indices[np.where(indices != -1)[0]]
@@ -2981,11 +2989,13 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                      (iso.secondaries['log_a'][indices] /
                       loga - 1) ** 2)
     if (primary_mass <= 100 and secondary_mass <= 100):
-        idx = np.where(d_frac > frmr_sqrt_3_over_10)[0]
-    else:
         idx = np.where(d_frac > 0.25)[0]
+    else:
+        idx = np.where(d_frac > 0.40)[0]
     indices[idx] = -1
     indices[np.where(indices >= len(iso.primaries))] = -1
+    print(np.shape(indices))
+    print(np.shape(np.where(indices != -1)[0]))
     ind = indices[np.where(indices != -1)[0]]
     if (not ind):
         return indices
