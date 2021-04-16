@@ -290,7 +290,8 @@ class Cluster_w_Binaries(Cluster):
         
         cdx_rem = np.where((stars['Teff'] == 0) |
                            (~np.isfinite(stars['Teff'])) |
-                           (stars['logg'] >= 6.9))[0]
+                           ((stars['logg'] >= 6.9) &
+                            (stars['logg']==5)))[0]
         if comps:
             # A secondary star should be designated as a secondary
             # when it has high surface gravity (>= 6.9)
@@ -341,6 +342,8 @@ class Cluster_w_Binaries(Cluster):
                 stars[filt][cdx_rem] = \
                 np.full(len(cdx_rem), np.nan)
         else:
+            # If the IFMR doesn't exist, then we may need to
+            # get rid of the stars that would warrant usage of the IFMR.
             stars.remove_rows(cdx_rem)
         return None
                 
@@ -660,8 +663,6 @@ class Cluster_w_Binaries(Cluster):
             star_systems[filt] = self.iso.singles[filt][indices]
         print("{} single stars had to be deleted".format(deleted))
         print("{} mass had to be deleted from single stars".format(del_mass))
-        print(del_in)
-        print(len(old_sysMass[del_in]))
         return star_systems, old_sysMass[del_in]
 
     def make_primaries_and_companions(self, star_systems, compMass):
@@ -810,9 +811,9 @@ class Cluster_w_Binaries(Cluster):
         # Identify compact objects as those with Teff = 0 or 
         # the secondary stars that are non-merged and have a non-
         # finite temperature
-        self.applying_IFMR_stars(star_systemsPrime)
         self.applying_IFMR_stars(companions, comps=True,
                                  star_sys=star_systemsPrime)
+        self.applying_IFMR_stars(star_systemsPrime)
         # The compact remnants have photometric
         # fluxes of nan now. So now we can procede
         # with the photometry.
@@ -2994,8 +2995,6 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
         idx = np.where(d_frac > 0.40)[0]
     indices[idx] = -1
     indices[np.where(indices >= len(iso.primaries))] = -1
-    print(np.shape(indices))
-    print(np.shape(np.where(indices != -1)[0]))
     ind = indices[np.where(indices != -1)[0]]
     if (not ind):
         return indices
