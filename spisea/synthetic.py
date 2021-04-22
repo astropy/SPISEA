@@ -473,6 +473,7 @@ class Cluster_w_Binaries(Cluster):
         rejected_system = 0
         rejected_companions = 0
         self.unmatched_tertiary = []
+        self.unmatched_primary_pairs = []
         for x in range(len(companions)):
             sysID = companions[x]['system_idx']
             companions['mass'][x] = compMass[sysID][compMass_IDXs[sysID]]
@@ -495,6 +496,9 @@ class Cluster_w_Binaries(Cluster):
                                                    [x]))
                 ind = ind[np.where(ind != -1)[0]]
                 if ((not len(ind)) or star_systemsPrime['bad_system'][sysID]):
+                    self.unmatched_primary_pairs.append([star_systemsPrime[sysID]['mass'],
+                                                         compMass[sysID]
+                                                         [compMass_IDXs[sysID]]])
                     star_systemsPrime['bad_system'][sysID] = True
                     companions['bad_system'][np.where(companions['system_idx'] ==
                                                       sysID)] = True
@@ -559,6 +563,7 @@ class Cluster_w_Binaries(Cluster):
             # and not a tertiary or farther.
             companions['the_secondary_star?'][x] = cond
         self.unmatched_tertiary = np.array(self.unmatched_tertiary)
+        self.unmatched_primary_pairs = np.array(self.unmatched_primary_pairs)
         return rejected_system, rejected_companions
 
     def adding_up_photometry(self, star_systemsPrime, companions):
@@ -583,6 +588,7 @@ class Cluster_w_Binaries(Cluster):
             (int(star_systems_phase_non_nan) < 101) and
             (int(star_systems_phase_non_nan) != -99))
             if (cond):
+                print("Changing phase of primaries")
                 if (self.verbose):
                     print('WARNING: changing phase {0} to 5'.format(star_systems_phase_non_nan))
                 star_systemsPrime['phase'][x] = 5
@@ -824,6 +830,7 @@ class Cluster_w_Binaries(Cluster):
                        (companions_phase_non_nan < 101) &
                        (companions_phase_non_nan != -99))
         if self.verbose:
+            print("Running the changing phase on companions")
             for ii in range(len(bad[0])):
                 print('WARNING: changing phase {0} to 5'.format(companions_phase_non_nan[bad[0][ii]]))
             companions['phase'][bad] = 5
@@ -2858,9 +2865,9 @@ def match_model_sin_bclus(isoMasses, starMasses, iso, sin_only):
     q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    idx = np.where((dm_frac > 0.40) & (starMasses >= 100))[0]
+    idx = np.where((dm_frac >= 0.50) & (starMasses > 100))[0]
     indices[idx] = -1
-    idx = np.where((dm_frac > 0.25) & (starMasses < 100))[0]
+    idx = np.where((dm_frac >= 0.3) & (starMasses <= 100))[0]
     indices[idx] = -1
     counter = 0
     return indices
@@ -2875,9 +2882,9 @@ def match_model_uorder_companions(isoMasses, starMasses, iso):
     indices = q_results[1]
     dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
     if (starMasses[0] >= 100):
-        idx = np.where(dm_frac > 0.40)[0]
+        idx = np.where(dm_frac >= 0.50)[0]
     else:
-        idx = np.where(dm_frac > 0.25)[0]
+        idx = np.where(dm_frac >= 0.3)[0]
     indices[idx] = -1
     counter = 0
     return indices
@@ -2930,9 +2937,9 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
         if (primary_mass <= 100 and secondary_mass <= 100):
-            idx = np.where(d_frac > 0.25)[0]
+            idx = np.where(d_frac >= 0.3)[0]
         else:
-            idx = np.where(d_frac > 0.4)[0]
+            idx = np.where(d_frac >= 0.5)[0]
         indices[idx] = -1
         indices[np.where(indices >= len(iso.primaries))] = -1
         ind = indices[np.where(indices != -1)[0]]
@@ -2960,13 +2967,13 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                          (iso.secondaries['mass'][indices] /
                           secondary_mass - 1) ** 2)
         if (primary_mass <= 100 and secondary_mass <= 100):
-            idx = np.where((d_frac > 0.25) |
-                           (iso.secondaries['log_a'][indices] -
-                            loga >= 0.2))[0]
+            idx = np.where((d_frac >= 0.3) |
+                           (np.abs(iso.secondaries['log_a'][indices] -
+                            loga) >= 0.5))[0]
         else:
-            idx = np.where((d_frac > 0.40) |
-                           (iso.secondaries['log_a'][indices] -
-                            loga >= 0.2))[0]
+            idx = np.where((d_frac >= 0.50) |
+                           (np.abs(iso.secondaries['log_a'][indices] -
+                            loga) >= 0.5))[0]
         indices[idx] = -1
         indices[np.where(indices >= len(iso.primaries))] = -1
         ind = indices[np.where(indices != -1)[0]]
@@ -2990,9 +2997,9 @@ def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
                      (iso.secondaries['log_a'][indices] /
                       loga - 1) ** 2)
     if (primary_mass <= 100 and secondary_mass <= 100):
-        idx = np.where(d_frac > 0.25)[0]
+        idx = np.where(d_frac >= 0.3)[0]
     else:
-        idx = np.where(d_frac > 0.40)[0]
+        idx = np.where(d_frac >= 0.5)[0]
     indices[idx] = -1
     indices[np.where(indices >= len(iso.primaries))] = -1
     ind = indices[np.where(indices != -1)[0]]
