@@ -845,8 +845,6 @@ class Cluster_w_Binaries(Cluster):
         return companions, star_systemsPrime
 
 class ResolvedCluster(Cluster):
-    
-    
     """
     Cluster sub-class that produces a *resolved* stellar cluster.
     A table is output with the synthetic photometry and intrinsic 
@@ -875,8 +873,6 @@ class ResolvedCluster(Cluster):
     vebose: boolean
         True for verbose output.
     """
-    
-    
     def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=True,
                      seed=None):
         Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
@@ -886,6 +882,7 @@ class ResolvedCluster(Cluster):
         if seed is not None:
             print('WARNING: random seed set to %i' % seed)
 
+        t1 = time.time()
         ##### 
         # Sample the IMF to build up our cluster mass.
         #####
@@ -930,7 +927,6 @@ class ResolvedCluster(Cluster):
 
         return
 
-    
     def set_filter_names(self):
         """
         Set filter column names
@@ -942,7 +938,6 @@ class ResolvedCluster(Cluster):
                 filt_names.append(col_name)
 
         return filt_names
-        
         
     def _make_star_systems_table(self, mass, isMulti, sysMass):
         """
@@ -983,9 +978,7 @@ class ResolvedCluster(Cluster):
         # effect is so small
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-        bad = np.where((star_systems_phase_non_nan > 5) &
-                       (star_systems_phase_non_nan < 101) &
-                       (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
         # Print warning, if desired
         verbose=False
         if verbose:
@@ -1027,6 +1020,7 @@ class ResolvedCluster(Cluster):
             # Give remnants a magnitude of nan, so they can be filtered out later when calculating flux.
             for filt in self.filt_names:
                 star_systems[filt][idx_rem_good] = np.full(len(idx_rem_good), np.nan)
+
         return star_systems
         
     def _make_companions_table(self, star_systems, compMass):
@@ -1087,7 +1081,7 @@ class ResolvedCluster(Cluster):
         # Find all the systems with at least one companion... add the flux
         # of that companion to the primary. Repeat for 2 companions,
         # 3 companions, etc.
-        for cc in range(1, N_comp_max + 1):
+        for cc in range(1, N_comp_max+1):
             # All systems with at least cc companions.
             idx = np.where(N_companions >= cc)[0]
 
@@ -1113,11 +1107,9 @@ class ResolvedCluster(Cluster):
                 # then round it down to 5, rather than up to 101).
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
                 star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-                bad = np.where( (star_systems_phase_non_nan > 5) &
-                               (star_systems_phase_non_nan < 101) &
-                               (star_systems_phase_non_nan != -99))
+                bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
                 # Print warning, if desired
-                verbose = False
+                verbose=False
                 if verbose:
                     for ii in range(len(bad[0])):
                         print('WARNING: changing phase {0} to 5'.format(companions['phase'][bad[0][ii]]))
@@ -1158,10 +1150,10 @@ class ResolvedCluster(Cluster):
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
             if 'metallicity_array' in inspect.getfullargspec(self.ifmr.generate_death_mass).args:
-                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem],
-                                                                     metallicity_array=companions['metallicity'][cdx_rem])
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=star_systems['mass'][cdx_rem],
+                                                                     metallicity_array=star_systems['metallicity'][cdx_rem])
             else:
-                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem])
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=star_systems['mass'][cdx_rem])
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
@@ -1222,7 +1214,6 @@ class ResolvedCluster(Cluster):
             compMass = [compMass[ii] for ii in idx]
         
         return star_systems, compMass
-
     
 class ResolvedClusterDiffRedden(ResolvedCluster):
     
