@@ -10,8 +10,6 @@ from astropy.table import Table, vstack, Column
 from scipy import interpolate
 import pylab as py
 from spisea.utils import objects
-import matplotlib.pyplot as plt
-
 
 logger = logging.getLogger('evolution')
 
@@ -1001,12 +999,9 @@ class MISTv1(StellarEvolution):
         collection.
         """
         # convert metallicity to mass fraction
-        ## here z_defined is converted z from metallicity numbering
         z_defined = self.z_solar * (10.**metallicity)
-        #print('input_metal and z:', metallicity, z_defined)
-        
+
         log_age = math.log10(age)
-        #print('logage', log_age)
 
         # check age and metallicity are within bounds
         if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
@@ -1024,240 +1019,51 @@ class MISTv1(StellarEvolution):
         iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        z_idx = np.where(abs(self.z_list - z_defined) == min(abs(self.z_list - z_defined)))[0][0]
-        #print('z_idx:', z_idx)
+        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        if z_idx == len(self.z_list):   # in case just over last index
+            z_idx = z_idx - 1
+        z_dir = self.z_file_map[self.z_list[z_idx]]
         
-        def iso_extract(full_iso_file, version):
-            iso = Table.read(full_iso_file, format='fits')
-            if version == 1.0:
-                iso.rename_column('col7', 'Z')
-                iso.rename_column('col2', 'logAge')
-                iso.rename_column('col3', 'mass')
-                iso.rename_column('col4', 'logT')
-                iso.rename_column('col5', 'logg')
-                iso.rename_column('col6', 'logL')
-                iso.rename_column('col65', 'phase')
-            elif version == 1.2:
-                iso.rename_column('col1', 'EEP')            ### add EEP here to do metallicity interpolation
-                iso.rename_column('col2', 'logAge')
-                iso.rename_column('col3', 'mass')
-                iso.rename_column('col4', 'mass_current')
-                iso.rename_column('col9', 'logL')
-                iso.rename_column('col14', 'logT')
-                iso.rename_column('col17', 'logg')
-                iso.rename_column('col79', 'phase')
-            
-            # For MIST isochrones, anything with phase = 6 is a WD.
-            # Following our IFMR convention, change the phase designation
-            # to 101
-            isWD = np.where(iso['phase'] == 6)[0]
-            iso['phase'][isWD] = 101
-
-            # Define "isWR" column based on phase info
-            isWR = Column([False] * len(iso), name='isWR')
-            idx_WR = np.where(iso['phase'] == 9)[0]
-            isWR[idx_WR] = True
-            iso.add_column(isWR)
-            
-            return iso
-    
-        ## if version = 1.0, no interpolation
+        # generate isochrone file string
+        full_iso_file = self.model_dir + 'iso/' + z_dir + iso_file
+        
+        # return isochrone data. Column locations depend on
+        # version
+        iso = Table.read(full_iso_file, format='fits')
         if self.version == 1.0:
-            #z_dir = self.z_file_map[self.z_list[z_idx]]
-            z_dir = 'z015/'
-            # generate isochrone file string
-            full_iso_file = self.model_dir + 'iso/' + z_dir + iso_file
-            iso = iso_extract(full_iso_file, self.version)
-            iso.meta['log_age'] = log_age
-            iso.meta['metallicity_in'] = metallicity
-            iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
-            
+            iso.rename_column('col7', 'Z')
+            iso.rename_column('col2', 'logAge')
+            iso.rename_column('col3', 'mass')
+            iso.rename_column('col4', 'logT')
+            iso.rename_column('col5', 'logg')
+            iso.rename_column('col6', 'logL')
+            iso.rename_column('col65', 'phase')
         elif self.version == 1.2:
-            ### start interpolation!!
-            ##find the closest two isochrones and do interpolation
-            z_diff = float(z_defined - self.z_list[z_idx])
-            #print('z_diff', z_diff)
-            if z_diff < 0:
-                #print('z_diff < 0')
-                z_low = self.z_list[z_idx - 1]
-                z_high = self.z_list[z_idx]
-            elif z_diff > 0:
-                z_low = self.z_list[z_idx]
-                z_high = self.z_list[z_idx + 1]
-            
-            ## For testing
-            ##=====================================================================##
-            test_z = False
-            if test_z:
-                z_low = self.z_list[12]     ###z = 0
-                z_high = self.z_list[13]    ###z = 0.25
-                #full_iso_file_test = self.model_dir + 'iso/' + 'ztest/feh013_iso_6.50.fits'
-                full_iso_file_test = self.model_dir + 'iso/' + 'ztest/feh013_iso_9.50.fits'
-                z_diff < 0
-                iso_test = iso_extract(full_iso_file_test, self.version)
-                print('iso_test_mass', iso_test['mass'])    
-            ##=====================================================================##
-            
-            z_dir_low = self.z_file_map[z_low]
-            z_dir_high = self.z_file_map[z_high]
-            
-            #print('z_low, z_high:', z_low, z_high) 
-            #print('z_dir_low, z_dir_high:', z_dir_low, z_dir_high)    
-            full_iso_file_low = self.model_dir + 'iso/' + z_dir_low + iso_file
-            full_iso_file_high = self.model_dir + 'iso/' + z_dir_high + iso_file
-            iso_low = iso_extract(full_iso_file_low, self.version)
-            iso_high = iso_extract(full_iso_file_high, self.version)
-            #print('Two_iso_numStars:', len(iso_low['mass']), len(iso_high['mass']))
-            
-            common_EEP, ind_low, ind_high = np.intersect1d(iso_low['EEP'], iso_high['EEP'], return_indices = True)
-            iso_low_common = iso_low[ind_low]
-            iso_high_common = iso_high[ind_high]
-            
-            mass_interp = []
-            mass_cu_interp = []
-            logage_interp = []
-            logT_interp = []
-            logL_interp = []
-            logg_interp = []
-            phase_interp = []
-            isWR_interp = []
-            print('Begin looping over each star')
+            iso.rename_column('col2', 'logAge')
+            iso.rename_column('col3', 'mass')
+            iso.rename_column('col4', 'mass_current')
+            iso.rename_column('col9', 'logL')
+            iso.rename_column('col14', 'logT')
+            iso.rename_column('col17', 'logg')
+            iso.rename_column('col79', 'phase')
 
-            for i in range(len(common_EEP)):
-                # Do interpolations in linear space
-                model_metals = [z_low, z_high]
-                target_metal = z_defined
-                #print('insideloop')
-                #print('model_metals, target', model_metals, target_metal)
-                
-                logL_arr = [iso_low_common['logL'][i], iso_high_common['logL'][i]]
-                logT_arr = [iso_low_common['logT'][i], iso_high_common['logT'][i]]
-                logg_arr = [iso_low_common['logg'][i], iso_high_common['logg'][i]]
-                mass_arr = [iso_low_common['mass'][i], iso_high_common['mass'][i]]
-                mass_cu_arr = [iso_low_common['mass_current'][i], iso_high_common['mass_current'][i]]
-                
-                f_logL = interpolate.interp1d(model_metals, logL_arr, kind = 'linear')
-                f_logT = interpolate.interp1d(model_metals, logT_arr, kind = 'linear')
-                f_logg = interpolate.interp1d(model_metals, logg_arr, kind = 'linear')
-                f_mass = interpolate.interp1d(model_metals, mass_arr, kind = 'linear')
-                f_mass_cu = interpolate.interp1d(model_metals, mass_cu_arr, kind = 'linear')
-                
-                logL_interp.append(f_logL(target_metal))
-                logT_interp.append(f_logT(target_metal))
-                logg_interp.append(f_logg(target_metal))   
-                mass_interp.append(f_mass(target_metal))
-                mass_cu_interp.append(f_mass_cu(target_metal))         
-                logage_interp.append(log_age)
-                
-                ## choose the closest to copy the grids
-                if z_diff > 0:
-                    phase_interp.append(iso_low['phase'][i])
-                    isWR_interp.append(iso_low['isWR'][i])
-                
-                else:
-                    phase_interp.append(iso_high['phase'][i])
-                    isWR_interp.append(iso_high['isWR'][i])
-            print('End looping over each star')
-            
-            ##iso_test
-            if test_z:
-                common_EEP_test, ind_test, ind_interp = np.intersect1d(iso_test['EEP'], common_EEP, return_indices = True)
-                iso_test_common = iso_test[ind_test]
-                
-                py.figure(1, figsize = (20, 10))
-                py.subplot(121)
-                py.plot(logT_interp, logL_interp, 'b-', label = 'Interp')
-                py.plot(iso_test['logT'], iso_test['logL'], 'r-', label = 'Interp_predicted')
-                py.plot(iso_low['logT'], iso_low['logL'], 'k--', alpha = 0.5, label = 'metal_low')
-                py.plot(iso_high['logT'], iso_high['logL'], 'k--', alpha = 0.5, label = 'metal_high')
-                rng = py.axis()
-                py.xlim(rng[1], rng[0])
-                py.xlabel('log Teff')
-                py.ylabel('log L')
-                py.legend()
-                
-                py.subplot(122)
-                py.plot(logT_interp, logg_interp, 'b-', label = 'Interp')
-                py.plot(iso_test['logT'], iso_test['logg'], 'r-', label = 'Interp_predicted')
-                py.plot(iso_low['logT'], iso_low['logg'], 'k--', alpha = 0.5, label = 'metal_low')
-                py.plot(iso_high['logT'], iso_high['logg'], 'k--', alpha = 0.5, label = 'metal_high')
-                rng = py.axis()
-                py.xlim(rng[1], rng[0])
-                py.xlabel('log Teff')
-                py.ylabel('log g')
-                py.legend()
-                #py.savefig('/u/zhuochen/software/zhuocode/code_fitting/plots/interp_iso_EEP.png')
-                
-                
-                diff_logT = []
-                diff_logL = []
-                diff_logg = []
-                diff_logT_frac = []
-                diff_logL_frac = []
-                diff_logg_frac = []
-                for i in range(len(common_EEP_test)):
-                    diff_logT.append(logT_interp[i] - iso_test_common['logT'][i])
-                    diff_logL.append(logL_interp[i] - iso_test_common['logL'][i])
-                    diff_logg.append(logg_interp[i] - iso_test_common['logg'][i])
-                    diff_logT_frac.append((logT_interp[i] - iso_test_common['logT'][i])/iso_test_common['logT'][i])
-                    diff_logL_frac.append((logL_interp[i] - iso_test_common['logL'][i])/iso_test_common['logL'][i])
-                    diff_logg_frac.append((logg_interp[i] - iso_test_common['logg'][i])/iso_test_common['logg'][i])
+        # For MIST isochrones, anything with phase = 6 is a WD.
+        # Following our IFMR convention, change the phase designation
+        # to 101
+        isWD = np.where(iso['phase'] == 6)[0]
+        iso['phase'][isWD] = 101
 
-                py.figure(3, figsize = (20, 10))
-                py.subplot(121)
-                py.plot(iso_test_common['logT'], diff_logT, 'ko')
-                rng = py.axis()
-                py.xlim(rng[1], rng[0])
-                py.xlabel('log Teff (True)')
-                py.ylabel('Difference (logT_interp - logT_true)')
-                py.ylim(-0.02, 0.02)
-                
-                py.subplot(122)
-                py.plot(iso_test_common['logT'], diff_logT_frac, 'ko')
-                rng = py.axis()
-                py.xlim(rng[1], rng[0])
-                py.xlabel('log Teff (True)')
-                py.ylabel('Fraction (logT_interp - logT_true)/logT_true')
-                py.ylim(-0.02, 0.02)
-                py.savefig('/u/zhuochen/software/zhuocode/code_fitting/plots/logT_diff_interpEEP.png')
-                
-                py.figure(4, figsize = (20, 10))
-                py.subplot(121)
-                py.plot(iso_test_common['logL'], diff_logL, 'ko')
-                py.xlabel('log L (True)')
-                py.ylabel('Difference (logL_interp - logL_true)')
-                py.ylim(-0.12, 0.12)
-                
-                py.subplot(122)
-                py.plot(iso_test_common['logL'], diff_logL_frac, 'ko')
-                py.xlabel('log L (True)')
-                py.ylabel('Fraction (logL_interp - logL_true)/logL_true')
-                py.ylim(-0.5, 0.5)
-                py.savefig('/u/zhuochen/software/zhuocode/code_fitting/plots/logL_diff_interpEEP.png')
-                
-                py.figure(5, figsize = (20, 10))
-                py.subplot(121)
-                py.plot(iso_test_common['logg'], diff_logg, 'ko')
-                py.xlabel('log g (True)')
-                py.ylabel('Difference (logg_interp - logg_true)')
-                py.ylim(-0.1, 0.1)
-                
-                py.subplot(122)
-                py.plot(iso_test_common['logg'], diff_logg_frac, 'ko')
-                py.xlabel('log g (True)')
-                py.ylabel('Fraction (logg_interp - logg_true)/logg_true')
-                py.ylim(-10, 10)
-                py.savefig('/u/zhuochen/software/zhuocode/code_fitting/plots/logg_diff_interpEEP.png')
-                
-                
-            iso  = Table([logage_interp, mass_interp, mass_cu_interp, logL_interp, logT_interp, logg_interp, phase_interp, isWR_interp], 
-            names=['logAge', 'mass', 'mass_current', 'logL', 'logT', 'logg', 'phase', 'isWR'])
-            iso.meta['log_age'] = log_age
-            iso.meta['metallicity_in'] = metallicity
-            iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
-            
+        # Define "isWR" column based on phase info
+        isWR = Column([False] * len(iso), name='isWR')
+        idx_WR = np.where(iso['phase'] == 9)[0]
+        isWR[idx_WR] = True
+        iso.add_column(isWR)
+
+        iso.meta['log_age'] = log_age
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
+
         return iso
-    
         
     def format_isochrones(self, input_iso_dir, metallicity_list):
         r"""
@@ -1318,13 +1124,11 @@ class MISTv1(StellarEvolution):
         os.chdir(start_dir)
         return
 
-
-
 #==============================#
 # Merged model classes
 #==============================#
 class MergedBaraffePisaEkstromParsec(StellarEvolution):
-    r"""
+    """
     This is a combination of several different evolution models:
 
     * Baraffe (`Baraffe et al. 2015 <https://ui.adsabs.harvard.edu/abs/2015A%26A...577A..42B/abstract>`_)

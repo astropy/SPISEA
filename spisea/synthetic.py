@@ -738,9 +738,12 @@ class Isochrone(object):
         evol = evo_model.isochrone(age=10**logAge,
                                    metallicity=metallicity)
 
+        print('end evo_model.isochrone function')
+        print(len(evol))
         # Eliminate cases where log g is less than 0
         idx = np.where(evol['logg'] > 0)
         evol = evol[idx]
+        print(len(evol))
 
         # Trim to desired mass range
         if min_mass != None:
@@ -763,7 +766,8 @@ class Isochrone(object):
         mass_curr_all = evol['mass_current'] * units.Msun
         phase_all = evol['phase']
         isWR_all = evol['isWR']
-
+        
+        #print(phase_all)
         # Define the table that contains the "average" properties for each star.
         tab = Table([L_all, T_all, R_all, mass_all, logg_all, isWR_all, mass_curr_all, phase_all],
                     names=['L', 'Teff', 'R', 'mass', 'logg', 'isWR', 'mass_current', 'phase'])
@@ -784,6 +788,7 @@ class Isochrone(object):
             # This is the time-intensive call... everything else is negligable.
             # If source is a star, pull from star atmospheres. If it is a WD,
             # pull from WD atmospheres
+            #print('phase', phase)
             if phase == 101:
                 star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
                                        verbose=False)
