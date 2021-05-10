@@ -75,4 +75,4 @@ branch off of the development repository, make their changes,
 and then submit merge and pull requests.
 
 
-<sub>Logo by Natasha Adams</sub>
+<sub>Logo by Natasha Abrams</sub>
