@@ -1,6 +1,5 @@
-
 <p align="center">
-  <img width="350" height="309" src="./SPISEA_logo_final.png">
+  <img width="450" height="398" src="./SPISEA_logo_final.png">
 </p>
 
 # SPISEA: Stellar Population Interface for Stellar Evolution and Atmospheres
