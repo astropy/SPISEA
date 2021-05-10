@@ -50,4 +50,4 @@ without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
 PARTICULAR PURPOSE.  
 
 
-<sub>Logo by Natasha Adams<\sub>
+<sub>Logo by Natasha Adams</sub>
