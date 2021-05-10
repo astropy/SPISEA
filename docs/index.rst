@@ -3,6 +3,10 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
+<p align="center">
+  <img width="450" height="398" src="./SPISEA_logo_final.png">
+</p>
+
 ==========================================================================
 SPISEA: Stellar Population Interface for Stellar Evolution and Atmospheres
 ==========================================================================
@@ -69,3 +73,6 @@ new models, higher spectral resolution, etc.
 For feature additions, we ask that users fork or
 branch off of the development repository, make their changes,
 and then submit merge and pull requests.
+
+
+<sub>Logo by Natasha Adams</sub>
