@@ -1,4 +1,5 @@
-![](./SPISEA_logo_final.png =350x309)
+![](./SPISEA_logo_final.png)
+<img src="./SPISEA_logo_final.png" alt="drawing" width="350" height="309"/>
 
 # SPISEA: Stellar Population Interface for Stellar Evolution and Atmospheres
 
