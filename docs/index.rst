@@ -4,7 +4,7 @@
    contain the root `toctree` directive.
 
 <p align="center">
-  <img width="450" height="398" src="./SPISEA_logo_final.png">
+  <img width="450" height="398" src="./../SPISEA_logo_final.png">
 </p>
 
 ==========================================================================
