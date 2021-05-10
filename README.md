@@ -42,4 +42,5 @@ the [Astropy package template](https://github.com/astropy/package-template)
 which is licensed under the BSD 3-clause license. See the licenses folder for
 more information. This program is distributed in the hope that it will
 be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  
