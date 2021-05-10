@@ -974,7 +974,7 @@ class IsochronePhot(Isochrone):
         # metallicity tag since they were all solar metallicity) to be read
         # properly
         if metallicity == 0.0:
-            save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_p00.fits'
+            save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_p000.fits'
             self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5))
 
             save_file_legacy = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
@@ -985,11 +985,11 @@ class IsochronePhot(Isochrone):
                 metal_pre = 'm'
             else:
                 metal_pre = 'p'
-            metal_flag = int(abs(metallicity)*10)
+            metal_flag = int(abs(metallicity)*100)
             
             save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_{4}{5:2s}.fits'
-            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
-            self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
+            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(3))
+            self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(3))
             
         # Expected filters
         self.filters = filters
