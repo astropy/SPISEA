@@ -1,5 +1,8 @@
 # SPISEA: Stellar Population Interface for Stellar Evolution and Atmospheres
 
+![](./SPISEA_logo_final.png)
+try
+
 SPISEA is an python package that generates single-age, single-metallicity
 populations (i.e. star clusters). It gives the user control over many parameters:
 
