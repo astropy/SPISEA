@@ -1,6 +1,4 @@
-![](./SPISEA_logo_final.png)
-<img src="./SPISEA_logo_final.png" alt="drawing" width="350"
-height="309"/>
+
 
 <div>
     <img class="marginauto" src="./SPISEA_logo_final.png"
