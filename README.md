@@ -3,7 +3,8 @@
 height="309"/>
 
 <div>
-    <img class="marginauto" src="./SPISEA_logo_final.png" alt="centered image" />
+    <img class="marginauto" src="./SPISEA_logo_final.png"
+    alt="centered image" width="350" height="309"/>
 </div>
 
 # SPISEA: Stellar Population Interface for Stellar Evolution and Atmospheres
