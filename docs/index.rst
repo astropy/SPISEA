@@ -4,8 +4,8 @@
    contain the root `toctree` directive.
 
 .. figure:: ../SPISEA_logo_final.png
-	    :width: 500
-            :height: 442
+	    :width: 380
+            :height: 336
 	    :align: center
 
 ==========================================================================
