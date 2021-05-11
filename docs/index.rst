@@ -4,6 +4,8 @@
    contain the root `toctree` directive.
 
 .. figure:: ../SPISEA_logo_final.png
+	    :width: 450
+            :height: 398
 	    :align: center
 
 ==========================================================================
@@ -74,4 +76,4 @@ branch off of the development repository, make their changes,
 and then submit merge and pull requests.
 
 
-<sub>Logo by Natasha Abrams</sub>
+Logo by Natasha Abrams
