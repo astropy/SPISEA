@@ -3,9 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-<p align="center">
-  <img width="450" height="398" src="./../SPISEA_logo_final.png">
-</p>
+.. figure:: ../SPISEA_logo_final.png
+	    :align: center
 
 ==========================================================================
 SPISEA: Stellar Population Interface for Stellar Evolution and Atmospheres
