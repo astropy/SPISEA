@@ -669,8 +669,9 @@ class Cluster_w_Binaries(Cluster):
         for filt in self.filt_names:
             star_systems[filt] = self.iso.singles[filt][indices]
         print("{} single stars had to be deleted".format(deleted))
-        print("{} mass had to be deleted from single stars before" +
-              " application of the IFMR".format(del_mass))
+        print("{} solar masses".format(del_mass) +
+              " had to be deleted from single stars before" +
+              " application of the IFMR")
         return star_systems, old_sysMass[del_in]
 
     def make_primaries_and_companions(self, star_systems, compMass):
@@ -840,10 +841,12 @@ class Cluster_w_Binaries(Cluster):
         star_systemsPrime.remove_columns(['bad_system', 'designation'])
         companions.remove_columns(['bad_system', 'the_secondary_star?'])
         if self.verbose:
-            print("{} non-single star systems had to be deleted" +
-                  " before IFMR application".format(str(rejected_system)))
-            print("{} companions had to be deleted before" +
-                  " IFMR was applied".format(str(rejected_companions)))
+            print("{} non-single star systems".format(str(rejected_system)) + 
+                  " had to be deleted" +
+                  " before IFMR application")
+            print("{} companions".format(str(rejected_companions)) +
+                  " had to be deleted before" +
+                  " IFMR was applied")
         # For testing purposes we can make rejected_system and rejected_comapnions
         # be returned too.
         return companions, star_systemsPrime
