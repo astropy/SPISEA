@@ -1,3 +1,7 @@
+<p align="center">
+  <img width="380" height="336" src="./SPISEA_logo_final.png">
+</p>
+
 # SPISEA: Stellar Population Interface for Stellar Evolution and Atmospheres
 
 SPISEA is an python package that generates single-age, single-metallicity
@@ -51,4 +55,8 @@ the [Astropy package template](https://github.com/astropy/package-template)
 which is licensed under the BSD 3-clause license. See the licenses folder for
 more information. This program is distributed in the hope that it will
 be useful, but WITHOUT ANY WARRANTY;
-without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. 
+without even the implied warranty of MERCHANTABILITY or FITNESS FOR A
+PARTICULAR PURPOSE.  
+
+
+<sub>Logo by Natasha Abrams</sub>
