@@ -831,7 +831,7 @@ class IFMR_Raithel18(IFMR):
 
         return(output_array)
 
-class IFMR_N20_Sukhbold(IFMR):
+ class IFMR_N20_Sukhbold(IFMR):
     """
     BH/NS IFMR based on Sukhbold & Woosley 2014 for zero-Z models:
         https://ui.adsabs.harvard.edu/abs/2014ApJ...783...10S/abstract
@@ -843,11 +843,17 @@ class IFMR_N20_Sukhbold(IFMR):
         https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
     """
     # Linear fits to Sukhbold simulations.
-    zero_coeff = [0.46522639, -3.29170817]
-    solar_coeff = [-0.27079245, 24.74320755]
+
+    def zero_BH_mass(self, MZAMS):
+        #zero_coeff = [0.46522639, -3.29170817]
+        #func = np.poly1d(zero_coeff)
+        #result = func(MZAMS)
+        return 0.46522639*MZAMS + -3.29170817
     
-    zero_BH_mass = np.poly1d(zero_coeff)
-    solar_BH_mass = np.poly1d(solar_coeff)
+    def solar_BH_mass(self, MZAMS):
+        #solar_coeff = [-0.27079245, 24.74320755]
+        #func = np.poly1d(solar_coeff)
+        return -0.27079245*MZAMS + 24.74320755
 
     # Solar metallicity (what Sam is using)
     Zsun = 0.014
@@ -866,13 +872,14 @@ class IFMR_N20_Sukhbold(IFMR):
         
         """
         return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
-
-
+ 
+ 
     def BH_mass_low(self, MZAMS):
         """
         9 < MZAMS < 40 Msun
         """
-        mBH = zero_BH_mass(MZAMS)
+        print(hi)
+        mBH = self.zero_BH_mass(MZAMS)
 
         return mBH
 
@@ -891,7 +898,7 @@ class IFMR_N20_Sukhbold(IFMR):
             raise ValueError('Z must be non-negative.')
 
         # Linearly interpolate
-        mBH = (1 - zfrac) * zero_BH_mass(MZAMS) + zfrac*solar_BH_mass(MZAMS)
+        mBH = (1 - zfrac) * self.zero_BH_mass(MZAMS) + zfrac*self.solar_BH_mass(MZAMS)
 
         return mBH
 
