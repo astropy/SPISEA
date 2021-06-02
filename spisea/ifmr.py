@@ -831,7 +831,7 @@ class IFMR_Raithel18(IFMR):
 
         return(output_array)
 
- class IFMR_N20_Sukhbold(IFMR):
+class IFMR_N20_Sukhbold(IFMR):
     """
     BH/NS IFMR based on Sukhbold & Woosley 2014 for zero-Z models:
         https://ui.adsabs.harvard.edu/abs/2014ApJ...783...10S/abstract
@@ -871,14 +871,16 @@ class IFMR_Raithel18(IFMR):
         Kiziltan et al. (2010)
         
         """
-        return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
+        if isinstance(MZAMS, np.ndarray):
+            return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
+        else:
+            return np.random.normal(loc=1.36, scale=0.09, size=1)
  
  
     def BH_mass_low(self, MZAMS):
         """
         9 < MZAMS < 40 Msun
         """
-        print(hi)
         mBH = self.zero_BH_mass(MZAMS)
 
         return mBH
@@ -888,14 +890,19 @@ class IFMR_Raithel18(IFMR):
         """
         39.6 Msun < MZAMS < 120 Msun
         """
+        # Solar metallicity (what Sam is using)
+        Zsun = 0.01
+        
         zfrac = Z/Zsun
 
         # super-solar Z gives identical results as solar Z
-        if zfrac > 1:
-            zfrac = 1
+        above_idx = np.where(zfrac > 1)
+        if len(above_idx) > 1:
+            zfrac[above_idx] = 1.0
 
-        if zfrac < 0:
-            raise ValueError('Z must be non-negative.')
+        bad_idx = np.where(zfrac < 0)
+        if len(bad_idx) > 1:
+            raise ValueError('Z must be non-negative')
 
         # Linearly interpolate
         mBH = (1 - zfrac) * self.zero_BH_mass(MZAMS) + zfrac*self.solar_BH_mass(MZAMS)
@@ -907,13 +914,19 @@ class IFMR_Raithel18(IFMR):
         """
         Probability of BH formation for 60 < Mzams < 120 Msun
         """
+        # Solar metallicity (what Sam is using)
+        Zsun = 0.01
+        
         zfrac = Z/Zsun
+        
+        # super-solar Z gives identical results as solar Z
+        above_idx = np.where(zfrac > 1)
+        if len(above_idx) > 1:
+            zfrac[above_idx] = 1.0
 
-        if Zfrac > 1:
-            Zfrac = 1
-
-        if zfrac < 0:
-            raise ValueError('Z must be non-negative.')
+        bad_idx = np.where(zfrac < 0)
+        if len(bad_idx) > 1:
+            raise ValueError('Z must be non-negative')
 
         pBH = 1 - 0.8*zfrac
 
@@ -1007,14 +1020,14 @@ class IFMR_Raithel18(IFMR):
         output_array[1][id_array7] = codes['BH']
 
         id_array8 = np.where((mass_array >= 60) & (mass_array < 120))
-        for idx in id_array8:
-            pBH = prob_BH_high(Z_array[id_array8][idx])
-            if random_array[id_array8][idx] > 100*pBH:
-                output_array[0][id_array8][idx] = self.BH_mass_high(mass_array[id_array8][idx],
-                                                                    Z_array[id_array8][idx])
-                output_array[1][id_array8][idx] = codes['BH']
+        for i in range(0, len(id_array8)):
+            pBH = self.prob_BH_high(Z_array[id_array8][i])
+            if random_array[id_array8][i] > 100*pBH:
+                output_array[0][id_array8][i] = self.BH_mass_high(mass_array[id_array8][i],
+                                                                    Z_array[id_array8][i])
+                output_array[1][id_array8][i] = codes['BH']
             else:
-                output_array[0][id_array8][idx] = self.NS_mass(mass_array[id_array8][idx])
-                output_array[1][id_array8][idx] = codes['NS']
+                output_array[0][id_array8][i] = self.NS_mass(mass_array[id_array8][i])
+                output_array[1][id_array8][i] = codes['NS']
 
         return(output_array)
