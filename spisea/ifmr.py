@@ -874,7 +874,7 @@ class IFMR_N20_Sukhbold(IFMR):
         if isinstance(MZAMS, np.ndarray):
             return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
         else:
-            return np.random.normal(loc=1.36, scale=0.09, size=1)
+            return np.random.normal(loc=1.36, scale=0.09, size=1)[0]
  
  
     def BH_mass_low(self, MZAMS):
@@ -891,7 +891,7 @@ class IFMR_N20_Sukhbold(IFMR):
         39.6 Msun < MZAMS < 120 Msun
         """
         # Solar metallicity (what Sam is using)
-        Zsun = 0.01
+        Zsun = 0.014
         
         zfrac = Z/Zsun
 
@@ -915,17 +915,15 @@ class IFMR_N20_Sukhbold(IFMR):
         Probability of BH formation for 60 < Mzams < 120 Msun
         """
         # Solar metallicity (what Sam is using)
-        Zsun = 0.01
+        Zsun = 0.014
         
         zfrac = Z/Zsun
         
         # super-solar Z gives identical results as solar Z
-        above_idx = np.where(zfrac > 1)
-        if len(above_idx) > 1:
-            zfrac[above_idx] = 1.0
+        if zfrac > 1:
+            zfrac = 1.0
 
-        bad_idx = np.where(zfrac < 0)
-        if len(bad_idx) > 1:
+        if zfrac < 0:
             raise ValueError('Z must be non-negative')
 
         pBH = 1 - 0.8*zfrac
@@ -1020,14 +1018,15 @@ class IFMR_N20_Sukhbold(IFMR):
         output_array[1][id_array7] = codes['BH']
 
         id_array8 = np.where((mass_array >= 60) & (mass_array < 120))
-        for i in range(0, len(id_array8)):
+        for i in range(0, len(id_array8[0])):
             pBH = self.prob_BH_high(Z_array[id_array8][i])
             if random_array[id_array8][i] > 100*pBH:
-                output_array[0][id_array8][i] = self.BH_mass_high(mass_array[id_array8][i],
+                output_array[0][id_array8[0][i]] = self.BH_mass_high(mass_array[id_array8][i],
                                                                     Z_array[id_array8][i])
-                output_array[1][id_array8][i] = codes['BH']
+                output_array[1][id_array8[0][i]] = codes['BH']
+                
             else:
-                output_array[0][id_array8][i] = self.NS_mass(mass_array[id_array8][i])
-                output_array[1][id_array8][i] = codes['NS']
+                output_array[0][id_array8[0][i]] = self.NS_mass(mass_array[id_array8][i])
+                output_array[1][id_array8[0][i]] = codes['NS']
 
         return(output_array)
