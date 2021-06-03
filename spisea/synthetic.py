@@ -238,6 +238,8 @@ class Cluster_w_Binaries(Cluster):
                             name='mass_current'))
         t.add_column(Column(np.empty(N_systems, dtype=int),
                             name='phase'))
+        t.add_column(Column(np.repeat(False, N_systems),
+                            name='touchedP'))
         t.add_column(Column(np.repeat(self.iso.metallicity,
                                       N_systems),
                             name='metallicity'))
@@ -477,11 +479,11 @@ class Cluster_w_Binaries(Cluster):
         for x in range(len(companions)):
             sysID = companions[x]['system_idx']
             companions['mass'][x] = compMass[sysID][compMass_IDXs[sysID]]
-            # First I find if the secondary star has the greatest
+            # First I find if the companion star has the greatest
             # possible gravitational pull on it.
+            # if so, we've found the primary
             cond = np.isclose(companions['mass'][x]/(10 ** (-2 * companions['log_a'][x])),
                               min_log_gs[sysID][0], rtol=1e-2)
-            # Now find the minimum log_a and corresponding maximum m_init
             if not min_log_gs[sysID][0]:
                 cond = np.isnan(companions['log_a'][x]) and \
                 np.isclose(companions['mass'][x], min_log_gs[sysID][1], atol=0.01)
@@ -508,20 +510,23 @@ class Cluster_w_Binaries(Cluster):
                     continue
 
                 ind = ind[0]
-                star_systemsPrime[sysID]['Teff'] = \
+                star_systemsPrime['touchedP'][sysID] = True
+                star_systemsPrime['Teff'][sysID] = \
                 self.iso.primaries['Teff'][ind]
-                star_systemsPrime[sysID]['L'] = \
+                star_systemsPrime['L'][sysID] = \
                 self.iso.primaries['L'][ind]
-                star_systemsPrime[sysID]['logg'] = \
+                star_systemsPrime['logg'][sysID] = \
                 self.iso.primaries['logg'][ind]
-                star_systemsPrime[sysID]['isWR'] = \
+                star_systemsPrime['isWR'][sysID] = \
                 np.round(self.iso.primaries['isWR'][ind])
-                star_systemsPrime[sysID]['mass'] = \
+                star_systemsPrime['mass'][sysID] = \
                 self.iso.primaries['mass'][ind]
-                star_systemsPrime[sysID]['mass_current'] = \
+                star_systemsPrime['mass_current'][sysID] = \
                 self.iso.primaries['mass_current'][ind]
-                star_systemsPrime[sysID]['phase'] = \
-                np.round(self.iso.primaries['phase'][ind])                    
+                star_systemsPrime['phase'] = \
+                np.round(self.iso.primaries['phase'][ind])
+                if not (np.round(self.iso.primaries['phase'][ind])):
+                    print("Bad phase")
                 star_systemsPrime[sysID]['merged'] = \
                 np.round(self.iso.secondaries['merged'][ind])
                 table = self.iso.secondaries
@@ -531,8 +536,9 @@ class Cluster_w_Binaries(Cluster):
                     companions[filt][x] = self.iso.secondaries[filt][ind]
             else:
                 ind = match_model_uorder_companions(self.iso.singles['mass'],
-                                                np.array([compMass[sysID][compMass_IDXs
-                                                          [sysID]]]), self.iso)
+                                                    np.array([compMass[sysID]
+                                                              [compMass_IDXs[sysID]]]),
+                                                    self.iso)
                 ind = ind[np.where(ind != -1)[0]]
                 if ((not len(ind)) or companions['bad_system'][x]):
                     # This means we cannot find a close enough companion.
@@ -672,6 +678,7 @@ class Cluster_w_Binaries(Cluster):
         print("{} solar masses".format(del_mass) +
               " had to be deleted from single stars before" +
               " application of the IFMR")
+        star_systems.remove_columns(['touchedP'])
         return star_systems, old_sysMass[del_in]
 
     def make_primaries_and_companions(self, star_systems, compMass):
@@ -794,10 +801,9 @@ class Cluster_w_Binaries(Cluster):
         # Get rid of the Bad_systems (un-matchable systems) and bad stars.
         # =============
         star_systemsPrime = (star_systemsPrime
-                             [np.where((~star_systemsPrime['bad_system']))
+                             [np.where(((~star_systemsPrime['bad_system']) | (~star_systemsPrime['touchedP'])))
                               [0]])
         companions = companions[np.where(~companions['bad_system'])[0]]
-        
         # =============
         # Make the indices/designations of the star_systemsPrime
         # 0-indexed again.
@@ -838,8 +844,8 @@ class Cluster_w_Binaries(Cluster):
                 print('WARNING: changing phase {0} to 5'.format(companions_phase_non_nan[bad[0][ii]]))
             companions['phase'][bad] = 5
         # Get rid of the columns designation and and bad_system
-        star_systemsPrime.remove_columns(['bad_system', 'designation'])
-        companions.remove_columns(['bad_system', 'the_secondary_star?'])
+        star_systemsPrime.remove_columns(['bad_system', 'designation', 'touchedP'])
+        companions.remove_columns(['bad_system', 'the_secondary_star?', 'touchedP'])
         if self.verbose:
             print("{} non-single star systems".format(str(rejected_system)) + 
                   " had to be deleted" +
