@@ -1,7 +1,5 @@
 import pytest
 from spisea import synthetic
-import loading_jlu_file
-from loading_jlu_file import load_klf_by_radius
 from spisea import imf
 from spisea import ifmr
 import numpy as np
@@ -9,6 +7,13 @@ from pytest import approx
 import math
 import matplotlib.pyplot as plt
 py = plt
+
+import pickle
+import sys
+import numpy as np
+import spisea.loading_jlu_file
+from spisea.loading_jlu_file import load_klf_by_radius
+
 
 def test_third_figure_tests():
     """ In this test I will try to make sure that
@@ -398,11 +403,72 @@ def test_third_figure_revised():
         assert np.abs(n2[x] - n[x]) == approx(0, abs=0.125)
         assert np.abs(n2[x] - n3[x]) == approx(0, abs=0.125)
     # Now we try to generate a figure closer to the Figure 1 of Lu et al 2013
-    custom_IMF2 = 
-    BPASS_Cluster = synthetic.Cluster_w_Binaries(BPASS_iso, custom_IMF,
+    # In other words use a Salpeter-style IMF
+    custom_IMF2 = imf.imf.IMF_broken_powerlaw(np.array([1, 150]),
+                                              np.array([-2.35]),
+                                              multiplicity=
+                                              (imf.multiplicity.
+                                               MultiplicityUnresolved()))
+    BPASS_Cluster = synthetic.Cluster_w_Binaries(BPASS_iso, custom_IMF2,
                                                  1000000,
                                                  ifmr=None)
-    
+    Mist_Cluster = synthetic.ResolvedCluster(MIST_iso, custom_IMF,
+                                             1000000,
+                                             ifmr=None)
+    Merged_Cluster = synthetic.ResolvedCluster(Merged_iso, custom_IMF,
+                                             1000000,
+                                             ifmr=None)
+    totl_mist =(MIST_Cluster.star_systems['m_nirc2_Kp']
+                [np.where((MIST_Cluster.star_systems['isWR'] == 0))[0]])
+    totl_merged =(Merged_Cluster.star_systems['m_nirc2_Kp']
+                  [np.where((Merged_Cluster.star_systems['isWR'] == 0))[0]])
+    totl_BPASS = (BPASS_Cluster.star_systems['m_nirc2_Kp']
+                  [np.where((~BPASS_Cluster.star_systems['isWR']))[0]])
+    mist_scale = scaleFactorBPS
+    merged_scale = mist_scale
+    weightsMST = np.array([1.0 for x in totl_mist])
+    weightsMST *= mist_scale
+    weightsBPS = np.array([1.0 for x in totl_BPASS])
+    weightsBPS *= scaleFactorBPS
+    weightsMerged = np.array([1.0 for x in totl_merged])
+    weightsMerged *= merged_scale
+    # Binning the K' magnitudes into their respective bins
+    # And plotting KLF's of BPASS_Cluster, MIST clusters, and
+    # Observed KLF
+    # n, bins, patches are exactly the same objects that are
+    # described as outputs of matplotlib.hist
+    # Right below: BPASS cluster KLF histogram's bin values, bin-edges, and patches
+    n, bins, patches = py.hist(totl_mist, bins=binEdges, histtype='step',
+                               weights=weightsMST, color='green', label='Merged Model',
+                               align='mid', linewidth=1.5)
+    # Right below: BPASS cluster KLF histogram's bin values, bin-edges, and patches
+    n2, bins2, patches2 = py.hist(totl_BPASS, bins=binEdges, histtype='step',
+                                  weights=weightsBPS, color='blue',
+                                  label='(BPASS Model KLF)',
+                                  align='mid', linewidth=1.5)
+    n3, bins3, patches3 = py.hist(totl_merged, bins=binEdges, histtype='step',
+                                  weights=weightsMerged, color='blue',
+                                  label='(BPASS Model KLF)',
+                                  align='mid', linewidth=1.5)
+    py.errorbar(result.Kp[idx], result.KLF_ext_cmp_sp_im_noWR[idx],
+                fmt='ro-', xerr=magBin/2.0, capsize=0, linewidth=2)
+    py.errorbar(result.Kp[idx] ,result.KLF_ext_cmp_sp_im_noWR[idx],
+                fmt='ro-', yerr=result.eKLF_ext_cmp_sp_im_noWR[idx],
+                linewidth=2,
+                label='Observed')
+    py.xlim(8.5, 15.5)
+    py.xlabel('Kp magnitude')
+    py.ylabel("stars / (arcsecond^2 mag)")
+    py.title("KLF's at Age = %d Myr" % (10**(6.78 - 6)), fontsize=14)
+    py.legend(loc='upper left', numpoints=1)
+    py.savefig('Comparisons_w_Real_Data.png')
+    # Now compare differences in the heights of BPASS cluster KLF and given KLF
+    for x in range(len(binEdges)):
+        assert np.abs(result.KLF_ext_cmp_sp_im_noWR[idx][x] - n[x]) == approx(0, abs=0.25)
+    print("BPASS IMF does not seem too far off when compared to the BPASS IMF")
+    # Now compare differences in the BPASS and MIST KLF's (or values
+    # of bins in histograms for both KLF's)
+
 def test_third_figure_w_Tab2Sol1():
     """ In this test I will try to make sure that
     BPASS clusters' KLF's do not deviate too widely
@@ -428,7 +494,7 @@ def test_third_figure_w_Tab2Sol1():
     binEdges = binsKp[0:-1] + (binsKp[1:] - binsKp[0:-1]) / 2.0
 
 
-    BPASS_iso = synthetic.Isochrone_Binary(6.78, 2.7,
+    BPASS_iso = synthetic.Isochrone_Binary(6.62, 2.7,
                                            8000, 0.0,
                                            filters=['nirc2,Kp'])
    # If we want to use control group, let's use multiplicity = None.

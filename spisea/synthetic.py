@@ -290,10 +290,9 @@ class Cluster_w_Binaries(Cluster):
         # I decided to use the ifmr in a different context.
         #####
         
-        cdx_rem = np.where((stars['Teff'] == 0) |
+        cdx_rem = np.where((stars['phase'] == 5) & ((stars['Teff'] == 0) |
                            (~np.isfinite(stars['Teff'])) |
-                           ((stars['logg'] >= 6.9) &
-                            (stars['logg']==5)))[0]
+                           (stars['logg'] >= 6.9)))[0]
         if comps:
             # A secondary star should be designated as a secondary
             # when it has high surface gravity (>= 6.9)
@@ -305,12 +304,12 @@ class Cluster_w_Binaries(Cluster):
             # I assume that the surface gravities of neutron stars
             # and black holes are generally greater than those of
             # white dwarf stars
-            cdx_rem = np.where((stars['phase'] == 5) & ((stars['Teff'] == 0) |
-                               (stars['logg'] >= 6.9) |
-                               ((~np.isfinite(stars["Teff"])) &
+            cdx_rem = np.where(((stars['phase'] == 5) &
                                 (~(stars['the_secondary_star?'] &
-                                   (star_sys['merged']
-                                    [stars['system_idx']]))))))[0]
+                                   star_sys['merged'][stars['system_idx']]))) &
+                               ((stars['Teff'] == 0) |
+                               (stars['logg'] >= 6.9) |
+                               (~np.isfinite(stars["Teff"]))))[0]
         if self.ifmr:
             # Identify compact objects as those with Teff = 0.
             # Conditions the star has to be not merged and the star has to be
@@ -482,7 +481,7 @@ class Cluster_w_Binaries(Cluster):
             # First I find if the companion star has the greatest
             # possible gravitational pull on it.
             # if so, we've found the primary
-            cond = np.isclose(companions['mass'][x]/(10 ** (-2 * companions['log_a'][x])),
+            cond = np.isclose(companions['mass'][x]/(10 ** (2 * companions['log_a'][x])),
                               min_log_gs[sysID][0], rtol=1e-2)
             if not min_log_gs[sysID][0]:
                 cond = np.isnan(companions['log_a'][x]) and \
@@ -602,6 +601,7 @@ class Cluster_w_Binaries(Cluster):
                 # Magnitude of primary star (initially)
                 mag_s = star_systemsPrime[filt][x]
                 # Companion stars corresponding to the primary star
+                # Note that I try tio make sure that 
                 comps = companions[np.where((companions['system_idx'] == x) &
                                             np.isfinite(companions[filt]))[0]]
                 # trying to obtain as many finite magnitudes as I can
@@ -678,7 +678,7 @@ class Cluster_w_Binaries(Cluster):
         print("{} solar masses".format(del_mass) +
               " had to be deleted from single stars before" +
               " application of the IFMR")
-        star_systems.remove_columns(['touchedP'])
+        # star_systems.remove_columns(['touchedP'])
         return star_systems, old_sysMass[del_in]
 
     def make_primaries_and_companions(self, star_systems, compMass):
@@ -801,7 +801,8 @@ class Cluster_w_Binaries(Cluster):
         # Get rid of the Bad_systems (un-matchable systems) and bad stars.
         # =============
         star_systemsPrime = (star_systemsPrime
-                             [np.where(((~star_systemsPrime['bad_system']) | (~star_systemsPrime['touchedP'])))
+                             [np.where(((~star_systemsPrime['bad_system']) &
+                                        (star_systemsPrime['touchedP'])))
                               [0]])
         companions = companions[np.where(~companions['bad_system'])[0]]
         # =============
@@ -816,7 +817,7 @@ class Cluster_w_Binaries(Cluster):
         for x in range(len(companions)):
             companions['system_idx'][x] = \
             np.where(star_systemsPrime['designation'] ==
-                     companions['system_idx'][x])[0][0]
+                     companions['system_idx'][x])[0]
         
         
         #####
@@ -844,7 +845,7 @@ class Cluster_w_Binaries(Cluster):
                 print('WARNING: changing phase {0} to 5'.format(companions_phase_non_nan[bad[0][ii]]))
             companions['phase'][bad] = 5
         # Get rid of the columns designation and and bad_system
-        star_systemsPrime.remove_columns(['bad_system', 'designation', 'touchedP'])
+        star_systemsPrime.remove_columns(['bad_system', 'designation'])
         companions.remove_columns(['bad_system', 'the_secondary_star?', 'touchedP'])
         if self.verbose:
             print("{} non-single star systems".format(str(rejected_system)) + 
