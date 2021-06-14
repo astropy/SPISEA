@@ -1745,11 +1745,11 @@ class Isochrone_Binary(Isochrone):
 
     def __init__(self, logAge, AKs, distance, metallicity,
                  evo_model=evolution.BPASS(), atm_func=default_atm_func,
-                 wd_atm_func=default_wd_atm_func, mass_sampling=1,
-                 red_law=default_red_law,
-                 wave_range=[3000, 52000], min_mass=None, max_mass=None,
-                 filters=['ubv,U', 'ubv,V', 'ubv,B', 'ubv,R', 'ubv,I'],
-                 rebin=True):
+                 wd_atm_func=default_wd_atm_func, wave_range=[3000, 52000],
+                 red_law=default_red_law, mass_sampling=1, iso_dir='./',
+                 min_mass=None, max_mass=None,
+                 rebin=True, recomp=False,
+                 filters=['ubv,U', 'ubv,V', 'ubv,B', 'ubv,R', 'ubv,I']):
         t1=time.time()
         self.metallicity = metallicity
         self.logage = logAge
@@ -1766,6 +1766,7 @@ class Isochrone_Binary(Isochrone):
         self.filters = filters
         self.filt_names_table = []
         self.verbose = True
+        self.recalc = True
 
         # Assert that the wavelength ranges are within the limits of the
         # VEGA model (0.1 - 10 microns)
@@ -1775,8 +1776,35 @@ class Isochrone_Binary(Isochrone):
         except AssertionError:
             print('Desired wavelength range invalid. Limit to 1000 - 10000 A')
             return
-        # Get solar metallicity models for a population at a specific age.
-        # Takes about 0.1 seconds.
+
+        # Reading in files, if there are any files that will help piece
+        # together the Isochrone_Binary. Note that there are no legacy files
+        if metallicity < 0:
+            metal_pre = 'm'
+        else:
+            metal_pre = 'p'
+        metal_flag = int(abs(metallicity) * 10)
+        # The files name minus file type and whether the star is a single
+        # primary or secondary star
+        save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_{4}{5:2s}_IB'
+        self.save_file = save_file_fmt.format(iso_dir, logAge, AKs,
+                                              str(distance).zfill(5), metal_pre,
+                                              str(metal_flag).zfill(2))
+        self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs,
+                                                     str(distance).zfill(5), metal_pre,
+                                                     str(metal_flag).zfill(2))
+        # Expected filters
+        self.filters = filters
+        # Recalculate isochrone if save_file doesn't exist or recomp == True
+        file_exists = self.check_save_file(evo_model, atm_func, red_law)
+        print(file_exists)
+        if file_exists[0] and not recomp:
+            self.recalc = False
+            self.singles = file_exists[1]
+            self.primaries = file_exists[2]
+            self.secondaries = file_exists[3]
+            return
+
         evol = evo_model.isochrone(age=10 ** logAge,
                                    metallicity=metallicity)
 
@@ -1991,6 +2019,72 @@ class Isochrone_Binary(Isochrone):
         # Save the final spectrum to our spec_list for later use.
         atm_list[c_ind] = star
         return
+
+    def plot_HR_diagram(self, savefile=None):
+        
+        
+        """
+        Make a standard HR diagram for this isochrone.
+        Took the code from the Isochrone base class and
+        adapted it to work on the isochrone binary object
+
+        Parameters
+        -----------
+        savefile: path or None, optional
+             Path to file plot too, if desired. 
+             Default is None
+        """
+        plt.clf()
+        plt.loglog(self.singles['Teff'], self.singles['L'],
+                   color='black', linestyle='solid', marker='+')
+        plt.loglog(self.primaries['Teff'], self.primaries['L'],
+                   color='black', linestyle='solid', marker='+')
+        plt.loglog(self.secondaries['Teff'], self.secondaries['L'],
+                   color='black', linestyle='solid', marker='+')
+        plt.gca().invert_xaxis()
+        plt.xlabel(r'T$_{\mathrm{eff}}$ (K)')
+        plt.ylabel('Luminosity (erg / s)')
+        
+        fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
+        plt.title(fmt_title.format(self.singles.meta['LOGAGE'],
+                                  self.singles.meta['DISTANCE']/1e3,
+                                  self.singles.meta['AKS']))
+
+        if savefile != None:
+            plt.savefig(savefile)
+        
+        return
+
+    def plot_mass_luminosity(self, savefile=None):
+        
+        
+        """
+        Make a standard mass-luminosity relation plot for this isochrone.
+        Took the code from the Isochrone base class and
+        adapted it to work on the isochrone binary object
+
+        Parameters
+        -----------
+        savefile: path or None, optional
+             Path to file plot too, if desired. 
+             Default is None
+        """
+        plt.clf()
+        plt.loglog(self.singles['mass'], self.singles['L'], 'k.')
+        plt.loglog(self.primaries['mass'], self.primaries['L'], 'k.')
+        plt.loglog(self.secondaries['mass'], self.secondaries['L'], 'k.')
+        plt.xlabel(r'Mass (M$_\odot$)')
+        plt.ylabel('Luminosity (erg / s)')
+        
+        fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
+        plt.title(fmt_title.format(self.singles.meta['LOGAGE'],
+                                  self.singles.meta['DISTANCE']/1e3,
+                                  self.singles.meta['AKS']))
+        
+        if savefile != None:
+            plt.savefig(savefile)
+        
+        return
     
     def make_photometry(self, rebin=True, vega=vega):
         """
@@ -2055,7 +2149,57 @@ class Isochrone_Binary(Isochrone):
                                                  filt_name, star_mag))
         endTime = time.time()
         print('      Time taken: {0:.2f} seconds'.format(endTime - startTime))
+        # Part where I need to save the file
+        if self.save_file != None:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                self.singles.write(self.savefile +
+                                   "single.fits", overwrite=True)
+                self.primaries.write(self.savefile2 +
+                                     "primary.fits", overwrite=True)
+                self.secondaries.write(self.savefile3 +
+                                       "secondary.fits", overwrite=True)
         return
+
+    def check_save_file(self, evo_model, atm_func, red_law):
+        """
+        Check to see if save_file exists, as saved by the save_file.
+        If the filename exists, check the
+        meta-data as well. We make sure all three necessary tables
+        are there.
+        returns a tuple: 
+        first element: True is file exists, false otherwise
+        tmp1: single star table (if file exists)
+        tmp2: primary star table (if file exists)
+        tmp3: secondary star table (if file exists)
+        """        
+        if os.path.exists(self.save_file + "single.fits"):
+            tmp1 = Table.read(self.save_file + "single.fits")
+        else:
+            return (False, None, None, None)
+        if os.path.exists(self.save_file + "primary.fits"):
+            tmp2 = Table.read(self.save_file + "primary.fits")
+        else:
+            return (False, None, None, None)
+        if os.path.exists(self.save_file + "secondary.fits"):
+            tmp3 = Table.read(self.save_file + "secondary.fits")
+        else:
+            return (False, None, None, None)
+            # See if the meta-data matches: evo model, atm_func, redlaw
+        out_bool1 = ( (tmp1.meta['EVOMODEL'] == type(evo_model).__name__) &
+                     (tmp1.meta['ATMFUNC'] == atm_func.__name__) &
+                     (tmp1.meta['REDLAW'] == red_law.name) )
+                
+        out_bool2 = ( (tmp2.meta['EVOMODEL'] == type(evo_model).__name__) &
+                     (tmp2.meta['ATMFUNC'] == atm_func.__name__) &
+                     (tmp2.meta['REDLAW'] == red_law.name) )
+                
+        out_bool3 = ( (tmp3.meta['EVOMODEL'] == type(evo_model).__name__) &
+                     (tmp3.meta['ATMFUNC'] == atm_func.__name__) &
+                     (tmp3.meta['REDLAW'] == red_law.name) )
+        ret_tuple = ((out_bool1 and out_bool2 and out_bool3), tmp1, tmp2, tmp3)
+        print(type(ret_tuple))
+        return ret_tuple
 
 
 class IsochronePhot(Isochrone):
