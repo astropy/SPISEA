@@ -66,7 +66,6 @@ vega = Vega()
 class BypasserContainer():
     description = "This is so vectorization doesn't think that I'm an array"
 
-
     
 
 class Cluster(object):
@@ -146,9 +145,6 @@ class Cluster_w_Binaries(Cluster):
         Default None
     vebose: boolean
         True for verbose output.
-    NOTE: the IMF MUST be such that multiples are made (i.e.
-    muliplicity CANNOT BE NONE).
-    Otherwise, why else would we want to use BPASS?
 
     ====================
     
@@ -220,10 +216,15 @@ class Cluster_w_Binaries(Cluster):
 
     def set_columns_of_table(self, t, N_systems, multi=False):
         """
-        Input: t <--> Astropy Table with entries for initial masses
+        - Inputs -
+        t:Astropy Table with entries for initial masses
         of the stars.
-        N_systems <--> Length of AstroPy Table
-        Output/Result: adds columns for basic parameters to table t with their
+        N_systems: Length of AstroPy Table
+        multi: whether t is the table for multi-star systems
+        - Output -
+        None
+        ====================
+        adds columns for basic parameters to table t with their
         descriptions (e.g. metallicity or Teff)
         """
         t.add_column(Column(np.zeros(N_systems, dtype=float),
@@ -259,16 +260,19 @@ class Cluster_w_Binaries(Cluster):
             
         return None
 
-    def applying_IFMR_stars(self, stars,
-                            comps=False, star_sys=None):
+    def applying_IFMR_stars(self, stars):
         """
-        Input:
-        stars: Astropy table of stars (either primary stars or companions)
-        comps: whether the stars table is the table of companion stars.
+        - Input - 
+        stars: Astropy table of stars (either of single stars, primary stars,
+        or companions)
+        - Output -
+        None
+        ====================
         We apply the IFMR (if there's any given) to the
         a table of stars. Specifically, when stars have phase of 5 but
-        have an effective temperature of 0, or have logg >= 6.9 or have
-        non-physical temperatures (and are not merged with the primary)
+        have an effective temperature of 0 or some non-finite quantity,
+        or have logg >= 6.9 or have non-physical temperatures
+        (and are not merged with the primary)
         This is in order to make sure there are no compact stars masquerading
         as non-compact stars.
         """
@@ -285,31 +289,15 @@ class Cluster_w_Binaries(Cluster):
                                         [ii]]))
         stars['phase'][bad] = 5
         #####
-        # Make Remnants for phase 5 stars with nan and for
-        # stars with 0 Kelvin Teff
-        # I decided to use the ifmr in a different context.
+        # The IFMR is applied on stars with phase 5 (which are therefore not
+        # secondary stars that were merged with the system primary) and have
+        # have nonphysical effective temperature (Teff = 0 or some finite value)
+        # and/or have surface gravity of at least 6.9 cgs.
         #####
         
         cdx_rem = np.where((stars['phase'] == 5) & ((stars['Teff'] == 0) |
                            (~np.isfinite(stars['Teff'])) |
                            (stars['logg'] >= 6.9)))[0]
-        if comps:
-            # A secondary star should be designated as a secondary
-            # when it has high surface gravity (>= 6.9)
-            # 0 Teff (Should not happen)
-            # or if it has non-finite Teff but is not
-            # merged with the primary.
-            # The 6.9 Comes from the minimum mass set
-            # in HOKI for a star to be considered a white dwarf
-            # I assume that the surface gravities of neutron stars
-            # and black holes are generally greater than those of
-            # white dwarf stars
-            cdx_rem = np.where(((stars['phase'] == 5) &
-                                (~(stars['the_secondary_star?'] &
-                                   star_sys['merged'][stars['system_idx']]))) &
-                               ((stars['Teff'] == 0) |
-                               (stars['logg'] >= 6.9) |
-                               (~np.isfinite(stars["Teff"]))))[0]
         if self.ifmr:
             # Identify compact objects as those with Teff = 0.
             # Conditions the star has to be not merged and the star has to be
@@ -350,7 +338,7 @@ class Cluster_w_Binaries(Cluster):
                 
     def generate_2body_parameters(self, star_systemsPrime, companions):
         """
-        Input:
+        - Input - 
         star_systemsPrime:Astropy table of the primary stars of the cluster
         companions: Astropy table of the companion stars of the cluster
         Generate the log_separation, e, i, omegas,
@@ -410,6 +398,7 @@ class Cluster_w_Binaries(Cluster):
     
     def finding_secondary_stars(self, star_systemsPrime, companions):
         """
+        ====================
         Given the table so far of the primary stars and of the companions
         we try to find the secondary of the primary star.
         star_systemsPrime: table of primary stars (with companinos)
@@ -445,6 +434,20 @@ class Cluster_w_Binaries(Cluster):
                                             companions, compMass_IDXs,
                                             min_log_gs, compMass):
         """
+        - Input - 
+        star_systems: Table containing information so far
+        about IMF generated star systems and their primary stars 
+
+        companions: Table containing information so far about IMF
+        generated companions.
+
+        - Output -
+        rejected_system, rejected_value: respectively,
+        the number of star systems that could not be matched to a close
+        enough isochrone counterpart 
+        and the number of companions that could not be matched to one
+        from the isochrone
+        ====================
         Matches IMF generated systems to BPASS isochrone
         primary-secondary pairs  by closeness of primary stars
         - companion star - log separation tuples
@@ -457,19 +460,6 @@ class Cluster_w_Binaries(Cluster):
         companions table using photometry, luminosity, and dynamics values
         from match in isochrone to describe star systems'
         higher-order companions.
-        
-        Inputs: star_systems: Table containing information so far
-        about IMF generated star systems and their primary stars 
-        
-        companions: Table containing information so far about IMF
-        generated companions.
-        
-        Output: rejected_system, rejected_value: respectively,
-        the number of star systems that could not be matched to a close
-        enough isochrone counterpart 
-        and the number of companions that could not be matched to one
-        from the isochrone
-
         """
         rejected_system = 0
         rejected_companions = 0
@@ -572,7 +562,18 @@ class Cluster_w_Binaries(Cluster):
         return rejected_system, rejected_companions
 
     def adding_up_photometry(self, star_systemsPrime, companions):
-        """ Adds up initial masses of secondaries to initial mass
+        """
+        - Input - 
+        star_systemsPrime: AstroPy table representing non-single
+        star systems/primaries filled in partially by
+        filling_in_primaries_and_companions
+        companions: AstroPy table representing companion stars of
+        systems represented in star_systemsPrime
+        filled in partially by filling_in_primaries_and_companons
+        - Output -
+        None
+        ====================
+        Adds up initial masses of secondaries to initial mass
         of the primary to create the systemMass values.
         Also adding up the photometries (kind of hard and ugly)
         to find each star systems' aggregate photometry.
@@ -595,7 +596,8 @@ class Cluster_w_Binaries(Cluster):
             if (cond):
                 print("Changing phase of primaries")
                 if (self.verbose):
-                    print('WARNING: changing phase {0} to 5'.format(star_systems_phase_non_nan))
+                    print('WARNING: changing phase' +
+                          ' {0} to 5'.format(star_systems_phase_non_nan))
                 star_systemsPrime['phase'][x] = 5
             for filt in self.filt_names:
                 # Magnitude of primary star (initially)
@@ -631,13 +633,13 @@ class Cluster_w_Binaries(Cluster):
         """
         Make a part of the star_systems table and get synthetic photometry
         for each single star system. 
-
-        Input: isMulti <--> Whether a star system is a
+        - Input -
+        isMulti: Whether a star system is a
         multi-star system. (output of the IMF) 
-        sysMass <--> System masses of all stellar systems (generated by IMF)
-
-        Output: A part of the star_systems table that contains all
-        information regarding single star systems.
+        sysMass: System masses of all stellar systems (generated by IMF)
+        - Output -
+        A part of what becomes the self.star_systems table that contains all
+        information (mass, luminosity, photometry) regarding single star systems.
         Data values are matched from rows of the self.isochrone
         based on the row's initial primary mass.
         """
@@ -683,16 +685,17 @@ class Cluster_w_Binaries(Cluster):
 
     def make_primaries_and_companions(self, star_systems, compMass):
         """
-        Input: star_systems--> numpy array of all star_system
+        - Input -
+        star_systems: numpy array of all star_system
         masses (generated by IMF)
+        compMass: list of lists of masses of companions of each star system
 
-        compMass--> list of lists of masses of companions of each star system
-
-        Output:Creates tables star_systemsPrime and companions,
+        - Output -
+        Creates tables star_systemsPrime and companions,
         which contain data regarding
         star systems with multiple stars
         and the companions.
-        
+
         ====================
         Makes the primary stars and companions for non-single star systems of
         the star_systems table and get synthetic
@@ -827,8 +830,7 @@ class Cluster_w_Binaries(Cluster):
         # Identify compact objects as those with Teff = 0 or 
         # the secondary stars that are non-merged and have a non-
         # finite temperature
-        self.applying_IFMR_stars(companions, comps=True,
-                                 star_sys=star_systemsPrime)
+        self.applying_IFMR_stars(companions)
         self.applying_IFMR_stars(star_systemsPrime)
         # The compact remnants have photometric
         # fluxes of nan now. So now we can procede
@@ -1946,6 +1948,19 @@ class Isochrone_Binary(Isochrone):
     def atm_generator_to_vectorize(self, c_ind, w_wrapper, list_wrapper, met,
                                    atm_func, wd_atm_func, red_law, AKs, rebin,
                                    code):
+        """
+        - Input -
+        c_ind: 
+        w_wrapper:
+        list_wrapper:
+        met: 
+        rebin: 
+        atm_func: atmosphere function inputted into the constructor of
+        Isochrone_Binary
+        red_law: Extinction law object inputted into constructor of isochrone
+        binary
+        AKs: extinction at the Ks band inputted 
+        """
         tab = self.codes2[code]
         wave_range = w_wrapper.wave_range
         distance = w_wrapper.distance
