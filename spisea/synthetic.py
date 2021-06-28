@@ -30,6 +30,7 @@ import astropy.modeling
 from astropy import constants
 import pdb
 import copy
+from scipy.interpolate import LinearNDInterpolator
 
 cs = constants
 un = units
@@ -184,7 +185,7 @@ class Cluster_w_Binaries(Cluster):
         # Make a table to contain all the information
         # about each stellar system.
         #####
-        single_star_systems, self.non_matchable = self.make_singles_systems_table(isMulti, sysMass)
+        single_star_systems = self.make_singles_systems_table(isMulti, sysMass)
         #####
         # Make a table to contain all the information
         # about companions.
@@ -344,7 +345,6 @@ class Cluster_w_Binaries(Cluster):
         Generate the log_separation, e, i, omegas,
         (2-body problem parameters) using the given
         multiplicity.
-        
         """
 
         N_comp_tot = len(companions)
@@ -448,117 +448,89 @@ class Cluster_w_Binaries(Cluster):
         and the number of companions that could not be matched to one
         from the isochrone
         ====================
-        Matches IMF generated systems to BPASS isochrone
-        primary-secondary pairs  by closeness of primary stars
-        - companion star - log separation tuples
-        and fills tables using photometry, luminosity, and dynamics
-        values from match in isochrone to describe star systems and
-        secondary companions.
-
-        Also, matches IMF generated tertiary companions with stars
-        from BPASS isochrone's single stars by initial mass and fills
-        companions table using photometry, luminosity, and dynamics values
-        from match in isochrone to describe star systems'
-        higher-order companions.
+        Utilizes linear interpolation to try to find the luminosity, current mass,
+        photometry, phase, surface gravity, and temperature of the cluster.
         """
-        rejected_system = 0
-        rejected_companions = 0
-        self.unmatched_tertiary = []
-        self.unmatched_primary_pairs = []
-        for x in range(len(companions)):
-            sysID = companions[x]['system_idx']
-            companions['mass'][x] = compMass[sysID][compMass_IDXs[sysID]]
-            # First I find if the companion star has the greatest
-            # possible gravitational pull on it.
-            # if so, we've found the primary
-            cond = np.isclose(companions['mass'][x]/(10 ** (2 * companions['log_a'][x])),
-                              min_log_gs[sysID][0], rtol=1e-2)
-            if not min_log_gs[sysID][0]:
-                cond = np.isnan(companions['log_a'][x]) and \
-                np.isclose(companions['mass'][x], min_log_gs[sysID][1], atol=0.01)
 
-            if cond:
-                ind = match_binary_system(star_systemsPrime[sysID]['mass'],
-                                          compMass[sysID]
-                                          [compMass_IDXs[sysID]],
-                                          companions['log_a'][x],
-                                          self.iso,
-                                          not np.isnan(companions['log_a']
-                                                   [x]))
-                ind = ind[np.where(ind != -1)[0]]
-                if ((not len(ind)) or star_systemsPrime['bad_system'][sysID]):
-                    self.unmatched_primary_pairs.append([star_systemsPrime[sysID]['mass'],
-                                                         compMass[sysID]
-                                                         [compMass_IDXs[sysID]]])
-                    star_systemsPrime['bad_system'][sysID] = True
-                    companions['bad_system'][np.where(companions['system_idx'] ==
-                                                      sysID)] = True
-                    compMass_IDXs[sysID] += 1
-                    rejected_system += 1
-                    rejected_companions += 1
-                    continue
-
-                ind = ind[0]
-                star_systemsPrime['touchedP'][sysID] = True
-                star_systemsPrime['Teff'][sysID] = \
-                self.iso.primaries['Teff'][ind]
-                star_systemsPrime['L'][sysID] = \
-                self.iso.primaries['L'][ind]
-                star_systemsPrime['logg'][sysID] = \
-                self.iso.primaries['logg'][ind]
-                star_systemsPrime['isWR'][sysID] = \
-                np.round(self.iso.primaries['isWR'][ind])
-                star_systemsPrime['mass'][sysID] = \
-                self.iso.primaries['mass'][ind]
-                star_systemsPrime['mass_current'][sysID] = \
-                self.iso.primaries['mass_current'][ind]
-                star_systemsPrime['phase'] = \
-                np.round(self.iso.primaries['phase'][ind])
-                if not (np.round(self.iso.primaries['phase'][ind])):
-                    print("Bad phase")
-                star_systemsPrime[sysID]['merged'] = \
-                np.round(self.iso.secondaries['merged'][ind])
-                table = self.iso.secondaries
-                for filt in self.filt_names:
-                    star_systemsPrime[sysID][filt] = \
-                    self.iso.primaries[filt][ind]
-                    companions[filt][x] = self.iso.secondaries[filt][ind]
-            else:
-                ind = match_model_uorder_companions(self.iso.singles['mass'],
-                                                    np.array([compMass[sysID]
-                                                              [compMass_IDXs[sysID]]]),
-                                                    self.iso)
-                ind = ind[np.where(ind != -1)[0]]
-                if ((not len(ind)) or companions['bad_system'][x]):
-                    # This means we cannot find a close enough companion.
-                    companions['bad_system'][x] = True
-                    self.unmatched_tertiary.append(compMass[sysID][compMass_IDXs
-                                                                   [sysID]])
-                    compMass_IDXs[sysID] += 1
-                    rejected_companions += 1
-                    continue
-                ind = ind[0]
-                table = self.iso.singles
-                for filt in self.filt_names:
-                    companions[filt][x] = table[filt][ind]
-            # Obtain data on the  photometry of the companinons
-            if (star_systemsPrime['merged'][sysID]):
-                companions['log_a'][x] = np.nan 
-            companions['Teff'][x] = table['Teff'][ind]
-            companions['L'][x] = table['L'][ind]
-            companions['logg'][x] = table['logg'][ind]
-            companions['isWR'][x] = np.round(table['isWR'][ind])
-            companions['mass'][x] = table['mass'][ind]
-            companions['mass_current'][x] = table['mass_current'][ind]
-            companions['phase'][x] = np.round(table['phase'][ind])
-            # We want to look at the NEXT companion once we come back
-            # to the system.
-            compMass_IDXs[sysID] += 1
-            # Obtain whether the companion is the secondary star
-            # and not a tertiary or farther.
-            companions['the_secondary_star?'][x] = cond
-        self.unmatched_tertiary = np.array(self.unmatched_tertiary)
-        self.unmatched_primary_pairs = np.array(self.unmatched_primary_pairs)
+        # Case where multiplicity DK is used.
+        li = list(zip(self.iso.primaries['mass'], self.iso.secondaries['mass'],
+                      self.iso.secondaries['log_a']))
+        li2 = list(zip(self.iso.primaries['mass'],
+                       self.iso.secondaries['mass']))
+        interp_keys = ['Teff', 'L', 'logg', 'isWR', 'mass_current', 'phase'] + self.filt_names
+        iso_interpsP = {}
+        iso_interpsS = {}
+        interp_creation_time = []
+        inst = isinstance(self.imf._multi_props,
+                          multiplicity.MultiplicityResolvedDK)
+        if not inst:
+            for ikey in interp_keys:
+                iso_interpsP[ikey] = LinearNDInterpolator(li2, self.iso.primaries[ikey])
+                iso_interpsS[ikey] = LinearNDInterpolator(li2, self.iso.secondaries[ikey])
+            iso_interpsS['log_a'] = LinearNDInterpolator(li2, self.iso.secondaries['log_a'])
+            iso_interpsS['merged'] = LinearNDInterpolator(li2, self.iso.secondaries['merged'])
+        else:
+            for ikey in interp_keys:
+                iso_interpsP[ikey] = LinearNDInterpolator(li, self.iso.primaries[ikey])
+                iso_interpsS[ikey] = LinearNDInterpolator(li, self.iso.secondaries[ikey])
+            iso_interpsS['merged'] = LinearNDInterpolator(li, self.iso.secondaries['merged'])
+        # Dealing with single stars and higher order companions
+        iso_interps3 = {}
+        interp_creation_time3 = []
+        for ikey in interp_keys:
+            iso_interps3[ikey] = interpolate.interp1d(self.iso.singles['mass'], self.iso.singles[ikey],
+                                                      kind='linear', bounds_error=False, fill_value=np.nan)
+        # Now time to introduce it to the IMF generated stars
+        if inst:
+            for sys in range(len(star_systemsPrime)):
+                # segundaria: index of the secondary
+                comps_of_sys= np.where(companions['system_idx'] == sys)[0]
+                segundaria = np.where((companions['system_idx'] == sys) &
+                                      np.isclose(companions['mass'] /
+                                                 (10 ** (2 * companions['log_a'])),
+                                                 min_log_gs[sys][0], rtol=1e-2))[0][0]
+                for k in interp_keys:
+                    # Run the interpolator on all companions. Then, rerun the interpolator on the
+                    # secondary star. Although it may seem redundant. Note that there is ony one
+                    # secondary star and that this prevents me from having to do some really
+                    # crafty and nasty logic tric.
+                    companions[k][comps_of_sys] = iso_interps3[k](companions['mass'][comps_of_sys])
+                    star_systemsPrime[k][sys] = iso_interpsP[k](star_systemsPrime[sys]['mass'],
+                                                                companions['mass'][segundaria],
+                                                                companions['log_a'][segundaria])
+                    companions[k][segundaria] = iso_interpsS[k](star_systemsPrime[sys]['mass'],
+                                                                companions['mass'][segundaria],
+                                                                companions['log_a'][segundaria])
+                companions['merged'][segundaria] = iso_interpsS['merged'](star_systemsPrime[sys]['mass'],
+                                                                          companions['mass'][segundaria],
+                                                                          companions['log_a'][segundaria])
+            star_systemsPrime['metallicity'] = np.ones(len(star_systemsPrime)) * self.iso.metallicity
+            companions['metallicity'] = np.ones(len(companions)) * self.iso.metallicity
+        else:
+            for sys in range(len(star_systemsPrime)):
+                # segundaria: index of the secondary
+                comps_of_sys= np.where(companions['system_idx'] == sys)[0]
+                segundaria = np.where((companions['system_idx'] == sys) &
+                                       np.isclose(companions['mass'],
+                                                  min_log_gs[sys][1], rtol=1e-2))[0][0]
+                for k in interp_keys:
+                    companions[k][comps_of_sys] = iso_interps3[k](companions['mass'][comps_of_sys])
+                    put_in_tester = iso_interpsP[k](star_systemsPrime[sys]['mass'],
+                                                    companions['mass'][segundaria])
+                    if k == 'phase':
+                        star_systemsPrime[k][sys] = put_in_tester
+                    put_in_tester = iso_interpsS[k](star_systemsPrime[sys]['mass'],
+                                                                companions['mass'][segundaria])
+                    if k == 'phase':
+                        star_systemsPrime[k][segundaria] = np.round(put_in_tester)
+                companions['log_a'][segundaria] = iso_interpsS['log_a'](star_systemsPrime[sys]['mass'],
+                                                                        companions['mass'][segundaria])
+                companions['merged'][segundaria] = iso_interpsS['merged'](star_systemsPrime[sys]['mass'],
+                                                                          companions['mass'][segundaria])
+            star_systemsPrime['metallicity'] = np.ones(len(star_systemsPrime)) * self.iso.metallicity
+            companions['metallicity'] = np.ones(len(companions)) * self.iso.metallicity
+            rejected_system = np.where(np.isnan(star_systemsPrime['mass_current']))
+            rejected_companions = np.where(np.isnan(star_systemsPrime['mass_current']))
         return rejected_system, rejected_companions
 
     def adding_up_photometry(self, star_systemsPrime, companions):
@@ -645,43 +617,35 @@ class Cluster_w_Binaries(Cluster):
         """
         # We will be only looking for stars that are not multiple systems
         sysMass = sysMass[np.where(~ isMulti)[0]]
-        old_sysMass = sysMass
-        indices = \
-        match_model_sin_bclus(np.array(self.iso.singles['mass']),
-                                       sysMass, self.iso,
-                              not self.imf.make_multiples)
-        del_mass = sysMass[np.where(indices == -1)[0]].sum()
-        # Notice: DELETED IS BEFORE IFMR APPLICATION
-        deleted = len(indices[np.where(indices == -1)[0]])
-        del_in = np.where(indices == -1)[0]
-        indices = indices[np.where(indices != -1)[0]]
-        N_systems = len(indices)
-        sysMass = sysMass[indices]
+        N_systems = len(sysMass)
         star_systems = Table([sysMass, sysMass],
                              names=['mass', 'systemMass'])
         self.set_columns_of_table(star_systems, N_systems)
+        # Set up for interpolation
+        interp_keys = (['Teff', 'L', 'logg', 'isWR', 'mass_current', 'phase'] +
+                       self.filt_names)
+        iso_interps3 = {}
+        for ikey in interp_keys:
+            iso_interps3[ikey] = interpolate.interp1d(self.iso.singles['mass'],
+                                                      self.iso.singles[ikey],
+                                                      kind='linear',
+                                                      bounds_error=False,
+                                                      fill_value=np.nan)
         # Add columns for the Teff, L, logg, isWR,
         # mass_current, phase for the primary stars.
-        star_systems['Teff'] = self.iso.singles['Teff'][indices]
-        star_systems['L'] = self.iso.singles['L'][indices]
-        star_systems['logg'] = self.iso.singles['logg'][indices]
-        star_systems['isWR'] = self.iso.singles['isWR'][indices]
-        star_systems['mass'] = self.iso.singles['mass'][indices]
-        star_systems['systemMass'] = self.iso.singles['mass'][indices]
-        star_systems['mass_current'] = \
-        self.iso.singles['mass_current'][indices]
-        star_systems['phase'] = self.iso.singles['phase'][indices]
+        star_systems['Teff'] = iso_interps3['Teff'](star_systems['mass'])
+        star_systems['L'] = iso_interps3['L'](star_systems['mass'])
+        star_systems['logg'] = iso_interps3['logg'](star_systems['mass'])
+        star_systems['isWR'] = iso_interps3['isWR'](star_systems['mass'])
+        star_systems['mass_current'] = iso_interps3['mass_current'](star_systems['mass'])
+        star_systems['phase'] = iso_interps3['phase'](star_systems['mass'])
         star_systems['metallicity'] = np.ones(N_systems) * \
         self.iso.metallicity
         self.applying_IFMR_stars(star_systems)
         for filt in self.filt_names:
-            star_systems[filt] = self.iso.singles[filt][indices]
-        print("{} single stars had to be deleted".format(deleted))
-        print("{} solar masses".format(del_mass) +
-              " had to be deleted from single stars before" +
-              " application of the IFMR")
+            star_systems[filt] = iso_interps3[filt](star_systems['mass'])
         # star_systems.remove_columns(['touchedP'])
-        return star_systems, old_sysMass[del_in]
+        return star_systems
 
     def make_primaries_and_companions(self, star_systems, compMass):
         """
@@ -728,6 +692,7 @@ class Cluster_w_Binaries(Cluster):
         star_systems = star_systems[indices]
         # For each star system, the total mass of companions
         compMass_sum = np.array([sum(compMass[x]) for x in indices])
+        # Converting companion masses 2D list into array.
         compMass = np.array([compMass[x] for x in indices])
         # Make star_systems array only contain the masses of the primary stars
         star_systems = star_systems - compMass_sum
@@ -793,7 +758,6 @@ class Cluster_w_Binaries(Cluster):
         compMass_IDXs, max_log_gs = (self.finding_secondary_stars(star_systemsPrime,
                                                                   companions))
         
-        
         rejected_system, rejected_companions = \
         self.filling_in_primaries_and_companions(star_systemsPrime,
                                                  companions, compMass_IDXs,
@@ -804,13 +768,12 @@ class Cluster_w_Binaries(Cluster):
         # Get rid of the Bad_systems (un-matchable systems) and bad stars.
         # =============
         star_systemsPrime = (star_systemsPrime
-                             [np.where(((~star_systemsPrime['bad_system']) &
-                                        (star_systemsPrime['touchedP'])))
+                             [np.where(((~star_systemsPrime['bad_system'])))
                               [0]])
         companions = companions[np.where(~companions['bad_system'])[0]]
         # =============
         # Make the indices/designations of the star_systemsPrime
-        # 0-indexed again.
+        # 0-indexed again after deletion of unmatched systems
         # Do some matching for the companions  so that
         # the system_idx tells us
         # that the companion matches to the system-idx-th
@@ -820,9 +783,7 @@ class Cluster_w_Binaries(Cluster):
         for x in range(len(companions)):
             companions['system_idx'][x] = \
             np.where(star_systemsPrime['designation'] ==
-                     companions['system_idx'][x])[0]
-        
-        
+                     companions['system_idx'][x])[0]        
         #####
         # Make Remnants for non-merged stars with nan
         # and for stars with 0 Kelvin Teff
@@ -848,7 +809,7 @@ class Cluster_w_Binaries(Cluster):
             companions['phase'][bad] = 5
         # Get rid of the columns designation and and bad_system
         star_systemsPrime.remove_columns(['bad_system', 'designation'])
-        companions.remove_columns(['bad_system', 'the_secondary_star?', 'touchedP'])
+        companions.remove_columns(['bad_system', 'the_secondary_star?'])
         if self.verbose:
             print("{} non-single star systems".format(str(rejected_system)) + 
                   " had to be deleted" +
@@ -1991,7 +1952,71 @@ class Isochrone_Binary(Isochrone):
         # Save the final spectrum to our spec_list for later use.
         atm_list[c_ind] = star
         return
-    
+
+    def plot_HR_diagram(self, savefile=None):
+        
+        
+        """
+        Make a standard HR diagram for this isochrone.
+        Took the code from the Isochrone base class and
+        adapted it to work on the isochrone binary object
+        Parameters
+        -----------
+        savefile: path or None, optional
+             Path to file plot too, if desired. 
+             Default is None
+        """
+        plt.clf()
+        plt.loglog(self.singles['Teff'], self.singles['L'],
+                   color='black', linestyle='solid', marker='+')
+        plt.loglog(self.primaries['Teff'], self.primaries['L'],
+                   color='black', linestyle='solid', marker='+')
+        plt.loglog(self.secondaries['Teff'], self.secondaries['L'],
+                   color='black', linestyle='solid', marker='+')
+        plt.gca().invert_xaxis()
+        plt.xlabel(r'T$_{\mathrm{eff}}$ (K)')
+        plt.ylabel('Luminosity (erg / s)')
+        
+        fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
+        plt.title(fmt_title.format(self.singles.meta['LOGAGE'],
+                                  self.singles.meta['DISTANCE']/1e3,
+                                  self.singles.meta['AKS']))
+
+        if savefile != None:
+            plt.savefig(savefile)
+        
+        return
+
+    def plot_mass_luminosity(self, savefile=None):
+        
+        
+        """
+        Make a standard mass-luminosity relation plot for this isochrone.
+        Took the code from the Isochrone base class and
+        adapted it to work on the isochrone binary object
+        Parameters
+        -----------
+        savefile: path or None, optional
+             Path to file plot too, if desired. 
+             Default is None
+        """
+        plt.clf()
+        plt.loglog(self.singles['mass'], self.singles['L'], 'k.')
+        plt.loglog(self.primaries['mass'], self.primaries['L'], 'k.')
+        plt.loglog(self.secondaries['mass'], self.secondaries['L'], 'k.')
+        plt.xlabel(r'Mass (M$_\odot$)')
+        plt.ylabel('Luminosity (erg / s)')
+        
+        fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
+        plt.title(fmt_title.format(self.singles.meta['LOGAGE'],
+                                  self.singles.meta['DISTANCE']/1e3,
+                                  self.singles.meta['AKS']))
+        
+        if savefile != None:
+            plt.savefig(savefile)
+        
+        return
+
     def make_photometry(self, rebin=True, vega=vega):
         """
         Make synthetic photometry for the specified filters. This function
