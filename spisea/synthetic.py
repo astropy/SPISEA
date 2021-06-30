@@ -234,11 +234,11 @@ class Cluster_w_Binaries(Cluster):
                             name='L'))
         t.add_column(Column(np.empty(N_systems, dtype=float),
                             name='logg'))
-        t.add_column(Column(np.repeat(False, N_systems),
+        t.add_column(Column(np.repeat(0.0, N_systems),
                             name='isWR'))
         t.add_column(Column(np.empty(N_systems, dtype=float),
                             name='mass_current'))
-        t.add_column(Column(np.empty(N_systems, dtype=int),
+        t.add_column(Column(np.empty(N_systems, dtype=float),
                             name='phase'))
         t.add_column(Column(np.repeat(False, N_systems),
                             name='touchedP'))
@@ -247,7 +247,7 @@ class Cluster_w_Binaries(Cluster):
                             name='metallicity'))
         t.add_column(Column(np.repeat(multi, N_systems),
                                        name='isMultiple'))
-        t.add_column(Column(np.repeat(False, N_systems),
+        t.add_column(Column(np.repeat(0.0, N_systems),
                             name='merged'))
         # Add the filter columns to the table. They are empty so far.
         # Keep track of the filter names in : filt_names
@@ -494,18 +494,32 @@ class Cluster_w_Binaries(Cluster):
                     # secondary star. Although it may seem redundant. Note that there is ony one
                     # secondary star and that this prevents me from having to do some really
                     # crafty and nasty logic tric.
-                    companions[k][comps_of_sys] = iso_interps3[k](companions['mass'][comps_of_sys])
-                    star_systemsPrime[k][sys] = iso_interpsP[k](star_systemsPrime[sys]['mass'],
-                                                                companions['mass'][segundaria],
-                                                                companions['log_a'][segundaria])
-                    companions[k][segundaria] = iso_interpsS[k](star_systemsPrime[sys]['mass'],
-                                                                companions['mass'][segundaria],
-                                                                companions['log_a'][segundaria])
-                companions['merged'][segundaria] = iso_interpsS['merged'](star_systemsPrime[sys]['mass'],
-                                                                          companions['mass'][segundaria],
-                                                                          companions['log_a'][segundaria])
+                    if (k == 'phase' or k == 'isWR'):
+                        companions[k][comps_of_sys] = np.round(iso_interps3[k](companions['mass'][comps_of_sys]))
+                        put_in_tester = iso_interpsP[k](star_systemsPrime[sys]['mass'],
+                                                        companions['mass'][segundaria],
+                                                        companions['log_a'][segundaria])
+                        star_systemsPrime[k][sys] = np.round(put_in_tester)
+                        put_in_tester = iso_interpsS[k](star_systemsPrime[sys]['mass'],
+                                                        companions['mass'][segundaria],
+                                                        companions['log_a'][segundaria])
+                        companions[k][segundaria] = np.round(put_in_tester)
+                    else:
+                        star_systemsPrime[k][sys] = iso_interpsP[k](star_systemsPrime[sys]['mass'],
+                                                                    companions['mass'][segundaria],
+                                                                    companions['log_a'][segundaria])
+                        companions[k][segundaria] = iso_interpsS[k](star_systemsPrime[sys]['mass'],
+                                                                    companions['mass'][segundaria],
+                                                                    companions['log_a'][segundaria])
+                         
+                companions['merged'][segundaria] = np.round(iso_interpsS['merged']
+                                                            (star_systemsPrime[sys]['mass'],
+                                                             companions['mass'][segundaria],
+                                                             companions['log_a'][segundaria]))
             star_systemsPrime['metallicity'] = np.ones(len(star_systemsPrime)) * self.iso.metallicity
             companions['metallicity'] = np.ones(len(companions)) * self.iso.metallicity
+            rejected_system = np.where(np.isnan(star_systemsPrime['mass_current']))
+            rejected_companions = np.where(np.isnan(star_systemsPrime['mass_current']))
         else:
             for sys in range(len(star_systemsPrime)):
                 # segundaria: index of the secondary
@@ -517,20 +531,23 @@ class Cluster_w_Binaries(Cluster):
                     companions[k][comps_of_sys] = iso_interps3[k](companions['mass'][comps_of_sys])
                     put_in_tester = iso_interpsP[k](star_systemsPrime[sys]['mass'],
                                                     companions['mass'][segundaria])
-                    if k == 'phase':
-                        star_systemsPrime[k][sys] = put_in_tester
+                    if k == 'phase' or k == 'isWR':
+                        put_in_tester = np.round(put_in_tester)
+                    star_systemsPrime[k][sys] = put_in_tester
                     put_in_tester = iso_interpsS[k](star_systemsPrime[sys]['mass'],
                                                                 companions['mass'][segundaria])
-                    if k == 'phase':
-                        star_systemsPrime[k][segundaria] = np.round(put_in_tester)
+                    if k == 'phase' or k == 'isWR':
+                        put_in_tester = np.round(put_in_tester)
+                    star_systemsPrime[k][sys] = put_in_tester
                 companions['log_a'][segundaria] = iso_interpsS['log_a'](star_systemsPrime[sys]['mass'],
                                                                         companions['mass'][segundaria])
-                companions['merged'][segundaria] = iso_interpsS['merged'](star_systemsPrime[sys]['mass'],
-                                                                          companions['mass'][segundaria])
+                companions['merged'][segundaria] = np.round(iso_interpsS['merged']
+                                                            (star_systemsPrime[sys]['mass'],
+                                                             companions['mass'][segundaria]))
             star_systemsPrime['metallicity'] = np.ones(len(star_systemsPrime)) * self.iso.metallicity
             companions['metallicity'] = np.ones(len(companions)) * self.iso.metallicity
             rejected_system = np.where(np.isnan(star_systemsPrime['mass_current']))
-            rejected_companions = np.where(np.isnan(star_systemsPrime['mass_current']))
+            rejected_companions = np.where(np.isnan(companions['mass_current']))
         return rejected_system, rejected_companions
 
     def adding_up_photometry(self, star_systemsPrime, companions):
@@ -558,7 +575,7 @@ class Cluster_w_Binaries(Cluster):
             # Obtain the system mass.
             star_systemsPrime['systemMass'][x] = sum_of_comp + \
             star_systemsPrime['mass'][x]
-            if (star_systemsPrime['phase'][x] == np.nan):
+            if np.isnan(star_systemsPrime['phase'][x]):
                 star_systems_phase_non_nan = -99
             else:
                 star_systems_phase_non_nan = star_systemsPrime['phase'][x]
@@ -636,9 +653,9 @@ class Cluster_w_Binaries(Cluster):
         star_systems['Teff'] = iso_interps3['Teff'](star_systems['mass'])
         star_systems['L'] = iso_interps3['L'](star_systems['mass'])
         star_systems['logg'] = iso_interps3['logg'](star_systems['mass'])
-        star_systems['isWR'] = iso_interps3['isWR'](star_systems['mass'])
+        star_systems['isWR'] = np.round(iso_interps3['isWR'](star_systems['mass']))
         star_systems['mass_current'] = iso_interps3['mass_current'](star_systems['mass'])
-        star_systems['phase'] = iso_interps3['phase'](star_systems['mass'])
+        star_systems['phase'] = np.round(iso_interps3['phase'](star_systems['mass']))
         star_systems['metallicity'] = np.ones(N_systems) * \
         self.iso.metallicity
         self.applying_IFMR_stars(star_systems)
