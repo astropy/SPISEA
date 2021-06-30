@@ -481,6 +481,8 @@ class Cluster_w_Binaries(Cluster):
             iso_interps3[ikey] = interpolate.interp1d(self.iso.singles['mass'], self.iso.singles[ikey],
                                                       kind='linear', bounds_error=False, fill_value=np.nan)
         # Now time to introduce it to the IMF generated stars
+        rejected_system = []
+        good_system = []
         if inst:
             for sys in range(len(star_systemsPrime)):
                 # segundaria: index of the secondary
@@ -516,10 +518,17 @@ class Cluster_w_Binaries(Cluster):
                                                             (star_systemsPrime[sys]['mass'],
                                                              companions['mass'][segundaria],
                                                              companions['log_a'][segundaria]))
+                companions['the_secondary_star?'][segundaria] = True
+                cond_bad = (np.isnan(companions['mass_current'][segundaria]) or
+                            np.isnan(star_systemsPrime['mass_current'][sys]))
+                if cond_bad:
+                    rejected_system.append([star_systemsPrime['mass'][sys],
+                                            companions['mass'][segundaria]])
+                else:
+                    good_system.append([star_systemsPrime['mass'][sys],
+                                        companions['mass'][segundaria]])
             star_systemsPrime['metallicity'] = np.ones(len(star_systemsPrime)) * self.iso.metallicity
             companions['metallicity'] = np.ones(len(companions)) * self.iso.metallicity
-            rejected_system = np.where(np.isnan(star_systemsPrime['mass_current']))
-            rejected_companions = np.where(np.isnan(star_systemsPrime['mass_current']))
         else:
             for sys in range(len(star_systemsPrime)):
                 # segundaria: index of the secondary
@@ -544,11 +553,21 @@ class Cluster_w_Binaries(Cluster):
                 companions['merged'][segundaria] = np.round(iso_interpsS['merged']
                                                             (star_systemsPrime[sys]['mass'],
                                                              companions['mass'][segundaria]))
+                companions['the_secondary_star?'][segundaria] = True
+                cond_bad = (np.isnan(companions['mass_current'][segundaria]) or
+                            np.isnan(star_systemsPrime['mass_current'][sys]))
+                if cond_bad:
+                    rejected_system.append([star_systemsPrime['mass'][sys],
+                                            companions['mass'][segundaria]])
+                else:
+                    good_system.append([star_systemsPrime['mass'][sys],
+                                        companions['mass'][segundaria]])
             star_systemsPrime['metallicity'] = np.ones(len(star_systemsPrime)) * self.iso.metallicity
             companions['metallicity'] = np.ones(len(companions)) * self.iso.metallicity
-            rejected_system = np.where(np.isnan(star_systemsPrime['mass_current']))
-            rejected_companions = np.where(np.isnan(companions['mass_current']))
-        return rejected_system, rejected_companions
+                
+        rejected_system = np.array(rejected_system)
+        good_system = np.array(good_system)
+        return rejected_system[:, 0], rejected_system[:, 1], good_system
 
     def adding_up_photometry(self, star_systemsPrime, companions):
         """
@@ -775,7 +794,7 @@ class Cluster_w_Binaries(Cluster):
         compMass_IDXs, max_log_gs = (self.finding_secondary_stars(star_systemsPrime,
                                                                   companions))
         
-        rejected_system, rejected_companions = \
+        self.rejected_prims, self.rejected_sec, self.good_systems = \
         self.filling_in_primaries_and_companions(star_systemsPrime,
                                                  companions, compMass_IDXs,
                                                  max_log_gs, compMass)
@@ -827,13 +846,13 @@ class Cluster_w_Binaries(Cluster):
         # Get rid of the columns designation and and bad_system
         star_systemsPrime.remove_columns(['bad_system', 'designation'])
         companions.remove_columns(['bad_system', 'the_secondary_star?'])
-        if self.verbose:
-            print("{} non-single star systems".format(str(rejected_system)) + 
-                  " had to be deleted" +
-                  " before IFMR application")
-            print("{} companions".format(str(rejected_companions)) +
-                  " had to be deleted before" +
-                  " IFMR was applied")
+        # if self.verbose:
+        #.   print("{} non-single star systems".format(str(rejected_prims)) + 
+        #.   " had to be deleted" +
+        #.    " before IFMR application")
+        #.    print("{} companions".format(str(rejected_companions)) +
+        #.   " had to be deleted before" +
+        #.   " IFMR was applied")
         # For testing purposes we can make rejected_system and rejected_comapnions
         # be returned too.
         return companions, star_systemsPrime
