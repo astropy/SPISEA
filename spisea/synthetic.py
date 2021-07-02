@@ -519,8 +519,9 @@ class Cluster_w_Binaries(Cluster):
                                                              companions['mass'][segundaria],
                                                              companions['log_a'][segundaria]))
                 companions['the_secondary_star?'][segundaria] = True
-                cond_bad = (np.isnan(companions['mass_current'][segundaria]) or
-                            np.isnan(star_systemsPrime['mass_current'][sys]))
+                cond_bad = ((np.isnan(companions['mass_current'][segundaria]) or
+                             np.isnan(star_systemsPrime['mass_current'][sys])) and
+                            not companions['merged'][segundaria])
                 if cond_bad:
                     rejected_system.append([star_systemsPrime['mass'][sys],
                                             companions['mass'][segundaria]])
@@ -554,8 +555,9 @@ class Cluster_w_Binaries(Cluster):
                                                             (star_systemsPrime[sys]['mass'],
                                                              companions['mass'][segundaria]))
                 companions['the_secondary_star?'][segundaria] = True
-                cond_bad = (np.isnan(companions['mass_current'][segundaria]) or
-                            np.isnan(star_systemsPrime['mass_current'][sys]))
+                cond_bad = ((np.isnan(companions['mass_current'][segundaria]) or
+                             np.isnan(star_systemsPrime['mass_current'][sys])) and
+                            not companions['merged'][segundaria])
                 if cond_bad:
                     rejected_system.append([star_systemsPrime['mass'][sys],
                                             companions['mass'][segundaria]])
@@ -564,7 +566,6 @@ class Cluster_w_Binaries(Cluster):
                                         companions['mass'][segundaria]])
             star_systemsPrime['metallicity'] = np.ones(len(star_systemsPrime)) * self.iso.metallicity
             companions['metallicity'] = np.ones(len(companions)) * self.iso.metallicity
-                
         rejected_system = np.array(rejected_system)
         good_system = np.array(good_system)
         return rejected_system[:, 0], rejected_system[:, 1], good_system
