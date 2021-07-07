@@ -151,7 +151,7 @@ class Cluster_w_Binaries(Cluster):
     
     """
     def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=False,
-                 seed=None):
+                 seed=None, tests='mass_current'):
         Cluster.__init__(self, iso, imf, cluster_mass,
                          ifmr=ifmr, verbose=verbose,
                          seed=seed)
@@ -199,7 +199,7 @@ class Cluster_w_Binaries(Cluster):
             self.intended_primaries_mass = (sysMass[np.where(isMulti)[0]].sum() -
                                             self.intended_companions_mass)
             companions, double_systems = \
-            self.make_primaries_and_companions(sysMass, compMass)
+            self.make_primaries_and_companions(sysMass, compMass, test=tests)
             self.star_systems = vstack([double_systems, single_star_systems])
             self.companions = companions
             
@@ -440,7 +440,8 @@ class Cluster_w_Binaries(Cluster):
 
     def filling_in_primaries_and_companions(self, star_systemsPrime,
                                             companions, compMass_IDXs,
-                                            min_log_gs, compMass):
+                                            min_log_gs, compMass,
+                                            error_check='mass_current'):
         """
         ====================
         Utilizes linear interpolation to try to find the luminosity, current mass,
@@ -526,8 +527,8 @@ class Cluster_w_Binaries(Cluster):
                                                              companions['mass'][segundaria],
                                                              companions['log_a'][segundaria]))
                 companions['the_secondary_star?'][segundaria] = True
-                cond_bad = ((np.isnan(companions['mass_current'][segundaria]) or
-                             np.isnan(star_systemsPrime['mass_current'][sys])) and
+                cond_bad = ((np.isnan(companions[error_check][segundaria]) or
+                             np.isnan(star_systemsPrime[error_check][sys])) and
                             not companions['merged'][segundaria])
                 if cond_bad:
                     rejected_system.append([star_systemsPrime['mass'][sys],
@@ -562,9 +563,9 @@ class Cluster_w_Binaries(Cluster):
                                                             (star_systemsPrime[sys]['mass'],
                                                              companions['mass'][segundaria]))
                 companions['the_secondary_star?'][segundaria] = True
-                cond_bad = ((np.isnan(companions['mass_current'][segundaria]) or
-                             np.isnan(star_systemsPrime['mass_current'][sys])) and
-                            not companions['merged'][segundaria])
+                cond_bad = ((np.isnan(companions[error_check][segundaria]) or
+                             np.isnan(star_systemsPrime[error_check][sys])) and
+                            (companions['merged'][segundaria] == 0))
                 if cond_bad:
                     rejected_system.append([star_systemsPrime['mass'][sys],
                                             companions['mass'][segundaria]])
@@ -689,7 +690,7 @@ class Cluster_w_Binaries(Cluster):
         # star_systems.remove_columns(['touchedP'])
         return star_systems
 
-    def make_primaries_and_companions(self, star_systems, compMass):
+    def make_primaries_and_companions(self, star_systems, compMass, test='mass_current'):
         """
         - Input -
         star_systems: numpy array of all star_system
@@ -803,7 +804,8 @@ class Cluster_w_Binaries(Cluster):
         self.rejected_prims, self.rejected_sec, self.good_systems = \
         self.filling_in_primaries_and_companions(star_systemsPrime,
                                                  companions, compMass_IDXs,
-                                                 max_log_gs, compMass)
+                                                 max_log_gs, compMass,
+                                                 error_check=test)
         # =============
         # Now I delete the primary and companion which could
         # not be matched to a close-enough star in the isochrone
