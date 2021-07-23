@@ -180,6 +180,8 @@ class Cluster_w_Binaries(Cluster):
         single_star_systems = self.make_singles_systems_table(isMulti, sysMass)
         if self.imf.make_multiples:
             # Temporary companion mass finder:
+            # Double systems is a bit of a misnomer
+            # Correct term would be "multi_star_system"
             companions, double_systems = \
             self.make_primaries_and_companions(sysMass, compMass)
             self.star_systems = vstack([double_systems, single_star_systems])
@@ -216,6 +218,8 @@ class Cluster_w_Binaries(Cluster):
                             name='mass_current'))
         t.add_column(Column(np.empty(N_systems, dtype=float),
                             name='phase'))
+        t.add_column(Column(np.repeat(False, N_systems),
+                            name='IFMR_it'))
         # To ADD: 
         # t.add_column(Column(np.repeat(False, N_systems),
         #.                    name='out_of_range'))
@@ -282,9 +286,10 @@ class Cluster_w_Binaries(Cluster):
         # and/or have surface gravity of at least 6.9 cgs.
         #####
         
-        cdx_rem = np.where((stars['phase'] == 5) & ((stars['Teff'] == 0) |
-                           (~np.isfinite(stars['Teff'])) |
-                           (stars['logg'] >= 6.9)))[0]
+        cdx_rem = np.where(((stars['phase'] == 5) & ((stars['Teff'] == 0) |
+                                                     (~np.isfinite(stars['Teff'])) |
+                                                     (stars['logg'] >= 6.9))) |
+                           (stars['IFMR_it']))[0]
         if self.ifmr:
             # Identify compact objects as those with Teff = 0.
             # Conditions the star has to be not merged and the star has to be
@@ -463,12 +468,14 @@ class Cluster_w_Binaries(Cluster):
                           multiplicity.MultiplicityResolvedDK)
         if not inst:
             for ikey in interp_keys:
+                print("Interpolation for: " + ikey)
                 iso_interpsP[ikey] = LinearNDInterpolator(li2, self.iso.primaries[ikey])
                 iso_interpsS[ikey] = LinearNDInterpolator(li2, self.iso.secondaries[ikey])
             iso_interpsS['log_a'] = LinearNDInterpolator(li2, self.iso.secondaries['log_a'])
             iso_interpsS['merged'] = LinearNDInterpolator(li2, self.iso.secondaries['merged'])
         else:
             for ikey in interp_keys:
+                print("Interpolation for: " + ikey)
                 iso_interpsP[ikey] = LinearNDInterpolator(li, self.iso.primaries[ikey])
                 iso_interpsS[ikey] = LinearNDInterpolator(li, self.iso.secondaries[ikey])
             iso_interpsS['merged'] = LinearNDInterpolator(li, self.iso.secondaries['merged'])
@@ -476,8 +483,10 @@ class Cluster_w_Binaries(Cluster):
         iso_interps3 = {}
         interp_creation_time3 = []
         for ikey in interp_keys:
-            iso_interps3[ikey] = interpolate.interp1d(self.iso.singles['mass'], self.iso.singles[ikey],
-                                                      kind='linear', bounds_error=False, fill_value=np.nan)
+            iso_interps3[ikey] = interpolate.interp1d(self.iso.singles['mass'],
+                                                      self.iso.singles[ikey],
+                                                      kind='linear', bounds_error=False,
+                                                      fill_value=np.nan)
         # Now time to introduce it to the IMF generated stars
         rejected_system = []
         good_system = []
@@ -685,6 +694,9 @@ class Cluster_w_Binaries(Cluster):
         star_systems['phase'] = np.round(iso_interps3['phase'](star_systems['mass']))
         star_systems['metallicity'] = np.ones(N_systems) * \
         self.iso.metallicity
+        # Remove star systems that are outside of max mass of isochrone
+        # Still inquiring about the secondary stars
+        star_systems,  dummy = self._remove_bad_systems(star_systems)
         self.applying_IFMR_stars(star_systems)
         for filt in self.filt_names:
             star_systems[filt] = iso_interps3[filt](star_systems['mass'])
@@ -807,6 +819,8 @@ class Cluster_w_Binaries(Cluster):
                                                  companions, compMass_IDXs,
                                                  max_log_gs, compMass,
                                                  error_check=test)
+        star_systemsPrime, companions = self._remove_bad_systems(star_systemsPrime, companions)
+        
         # We don't need to worry about stars that did not get matched
         # to a close enough equivalent in the KD Tree.
         # Why? We've moved on to using the 
@@ -814,7 +828,7 @@ class Cluster_w_Binaries(Cluster):
         for x in range(len(companions)):
             companions['system_idx'][x] = \
             np.where(star_systemsPrime['designation'] ==
-                     companions['system_idx'][x])[0]        
+                     companions['system_idx'][x])[0]      
         #####
         # Make Remnants for non-merged stars with nan
         # and for stars with 0 Kelvin Teff
@@ -841,8 +855,8 @@ class Cluster_w_Binaries(Cluster):
                 print('WARNING: changing phase {0} to 5'.format(companions_phase_non_nan[bad[0][ii]]))
             companions['phase'][bad] = 5
         # Get rid of the columns designation and and bad_system
-        star_systemsPrime.remove_columns(['bad_system', 'designation'])
-        companions.remove_columns(['bad_system', 'the_secondary_star?'])
+        star_systemsPrime.remove_columns(['bad_system', 'designation', 'IFMR_it'])
+        companions.remove_columns(['bad_system', 'IFMR_it'])
         # Following is commented out as I will need to rethink deletion.
         # if self.verbose:
         #.   print("{} non-single star systems".format(str(rejected_prims)) + 
@@ -902,10 +916,10 @@ class Cluster_w_Binaries(Cluster):
             star_systems['IFMR_it'][to_still_apply_IFMR] = True
         N_systems = len(star_systems)
 
-        if self.imf.make_multiples:
+        if companions!=None:
             # Clean up companion stuff (which we haven't handled yet)
             # Delete stars that are companions of primaries we deleted
-            companions = comapnions[np.where(np.isin(companions['designation'], idx))]
+            companions = companions[np.where(np.isin(star_systems['designation'], idx))[0]]
         
         return star_systems, companions
 
