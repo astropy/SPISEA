@@ -39,8 +39,6 @@ default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
 default_wd_atm_func = atm.get_wd_atmosphere
-frmr_sqrt_2_over_10 = 1 / 10
-frmr_sqrt_3_over_10 = 1 / 10
 
     
 def Vega():
@@ -468,14 +466,14 @@ class Cluster_w_Binaries(Cluster):
                           multiplicity.MultiplicityResolvedDK)
         if not inst:
             for ikey in interp_keys:
-                print("Interpolation for: " + ikey)
+                print("Creating Interpolator for: " + ikey)
                 iso_interpsP[ikey] = LinearNDInterpolator(li2, self.iso.primaries[ikey])
                 iso_interpsS[ikey] = LinearNDInterpolator(li2, self.iso.secondaries[ikey])
             iso_interpsS['log_a'] = LinearNDInterpolator(li2, self.iso.secondaries['log_a'])
             iso_interpsS['merged'] = LinearNDInterpolator(li2, self.iso.secondaries['merged'])
         else:
             for ikey in interp_keys:
-                print("Interpolation for: " + ikey)
+                print("Creating Interpolator for: " + ikey)
                 iso_interpsP[ikey] = LinearNDInterpolator(li, self.iso.primaries[ikey])
                 iso_interpsS[ikey] = LinearNDInterpolator(li, self.iso.secondaries[ikey])
             iso_interpsS['merged'] = LinearNDInterpolator(li, self.iso.secondaries['merged'])
@@ -493,8 +491,8 @@ class Cluster_w_Binaries(Cluster):
         if inst:
             for sys in range(len(star_systemsPrime)):
                 # segundaria: index of the secondary
-                comps_of_sys= np.where(companions['system_idx'] == sys)[0]
-                segundaria = np.where((companions['system_idx'] == sys) &
+                comps_of_sys= np.where(companions['system_idx'] == star_systemsPrime[sys]['designation'])[0]
+                segundaria = np.where((companions['system_idx'] == star_systemsPrime[sys]['designation']) &
                                       np.isclose(companions['mass'] /
                                                  (10 ** (2 * companions['log_a'])),
                                                  min_log_gs[sys][0], rtol=1e-2))[0][0]
@@ -502,88 +500,106 @@ class Cluster_w_Binaries(Cluster):
                     # Run the interpolator on all companions. Then, rerun the interpolator on the
                     # secondary star. Although it may seem redundant. Note that there is ony one
                     # secondary star and that this prevents me from having to do some really
-                    # crafty and nasty logic tric.
-                    if (k == 'phase' or k == 'isWR'):
-                        companions[k][comps_of_sys] = np.round(iso_interps3[k](companions['mass'][comps_of_sys]))
-                        put_in_tester = iso_interpsP[k](star_systemsPrime[sys]['mass'],
+                    # crafty and nasty logic trick.
+                    companions[k][comps_of_sys] = np.round(iso_interps3[k](companions['mass'][comps_of_sys]))
+                    put_in_table = iso_interpsP[k](star_systemsPrime[sys]['mass'],
                                                         companions['mass'][segundaria],
                                                         companions['log_a'][segundaria])
-                        star_systemsPrime[k][sys] = np.round(put_in_tester)
-                        put_in_tester = iso_interpsS[k](star_systemsPrime[sys]['mass'],
+                    put_in_table2 = iso_interpsS[k](star_systemsPrime[sys]['mass'],
                                                         companions['mass'][segundaria],
                                                         companions['log_a'][segundaria])
-                        companions[k][segundaria] = np.round(put_in_tester)
+                    if (k == 'phase' or k == 'isWR'):                        
+                        star_systemsPrime[k][sys] = np.round(put_in_table)
+                        companions[k][segundaria] = np.round(put_in_table2)
                     else:
-                        star_systemsPrime[k][sys] = iso_interpsP[k](star_systemsPrime[sys]['mass'],
-                                                                    companions['mass'][segundaria],
-                                                                    companions['log_a'][segundaria])
-                        companions[k][segundaria] = iso_interpsS[k](star_systemsPrime[sys]['mass'],
-                                                                    companions['mass'][segundaria],
-                                                                    companions['log_a'][segundaria])
+                        star_systemsPrime[k][sys] = put_in_table
+                        companions[k][segundaria] = put_in_table2
                          
                 companions['merged'][segundaria] = np.round(iso_interpsS['merged']
                                                             (star_systemsPrime[sys]['mass'],
                                                              companions['mass'][segundaria],
                                                              companions['log_a'][segundaria]))
                 companions['the_secondary_star?'][segundaria] = True
-                cond_bad = ((np.isnan(companions[error_check][segundaria]) or
-                             np.isnan(star_systemsPrime[error_check][sys])) and
-                            not companions['merged'][segundaria])
-                # Want to make sure that I can use the error_check to look at Teff and L
-                # values. I don't want to accidentally count a compact remnant (by any stupid chance)
-                # as a badly interpolated star.
-                cond_bad = cond_bad and (((error_check == 'Teff' or error_check == 'L') and
-                                         (companions['phase'][segundaria] < 101 and
-                                          star_systemsPrime['phase'][sys] < 101)) or
-                                         not (error_check == 'Teff' or error_check == 'L'))
+                if (error_check == 'Teff' or error_check == 'L'):
+                    # We need to make sure that the primary did not interpolate
+                    # correctly or the secondary did not interpolate correctly
+                    # Consider where the star system did not interpolate correctly.
+                    # Note that current parameters can be validly equal to NaN if they are of
+                    # a merged secondary
+                    cond_bad = (np.isnan(companions[error_check][segundaria]) and 
+                                (companions['phase'][segundaria] < 101) and
+                                (companions['merged'][segundaria] == 0))
+                    cond_bad = cond_bad or ((np.isnan(star_systemsPrime[error_check][sys]) and
+                                             (star_systemsPrime['phase'][sys] < 101)))
+                else:
+                    # Consider where the star system did not interpolate correctly.
+                    # Note that current parameters can be validly equal to NaN if they are of
+                    # a merged secondary
+                    cond_bad = ((np.isnan(companions[error_check][segundaria]) and
+                                 (companions['merged'][segundaria] == 0)) or
+                                np.isnan(star_systemsPrime[error_check][sys]))
                 if cond_bad:
                     rejected_system.append([star_systemsPrime['mass'][sys],
                                             companions['mass'][segundaria]])
                 else:
                     good_system.append([star_systemsPrime['mass'][sys],
                                         companions['mass'][segundaria]])
-            star_systemsPrime['metallicity'] = np.ones(len(star_systemsPrime)) * self.iso.metallicity
-            companions['metallicity'] = np.ones(len(companions)) * self.iso.metallicity
         else:
+            # Case where the multiplicity does not create the log-
             for sys in range(len(star_systemsPrime)):
                 # segundaria: index of the secondary
-                comps_of_sys= np.where(companions['system_idx'] == sys)[0]
-                segundaria = np.where((companions['system_idx'] == sys) &
+                comps_of_sys= np.where(companions['system_idx'] == star_systemsPrime[sys]['designation'])[0]
+                segundaria = np.where((companions['system_idx'] == star_systemsPrime[sys]['designation']) &
                                        np.isclose(companions['mass'],
                                                   min_log_gs[sys][1], rtol=1e-2))[0][0]
                 for k in interp_keys:
                     companions[k][comps_of_sys] = iso_interps3[k](companions['mass'][comps_of_sys])
-                    put_in_tester = iso_interpsP[k](star_systemsPrime[sys]['mass'],
+                    put_in_table = iso_interpsP[k](star_systemsPrime[sys]['mass'],
                                                     companions['mass'][segundaria])
+                    put_in_table2 = iso_interpsS[k](star_systemsPrime[sys]['mass'],
+                                                    companions['mass'][segundaria])
+                    # we want to make sure that the phase and status of whether a star
+                    # isWR are integers, not some wacky float
                     if k == 'phase' or k == 'isWR':
-                        put_in_tester = np.round(put_in_tester)
-                    star_systemsPrime[k][sys] = put_in_tester
-                    put_in_tester = iso_interpsS[k](star_systemsPrime[sys]['mass'],
-                                                                companions['mass'][segundaria])
-                    if k == 'phase' or k == 'isWR':
-                        put_in_tester = np.round(put_in_tester)
-                    star_systemsPrime[k][sys] = put_in_tester
+                        put_in_table = np.round(put_in_table)
+                        put_in_table2 = np.round(put_in_table2)
+                    star_systemsPrime[k][sys] = put_in_table
+                    companions[k][sys] = put_in_table2
                 companions['log_a'][segundaria] = iso_interpsS['log_a'](star_systemsPrime[sys]['mass'],
                                                                         companions['mass'][segundaria])
+                # Check if the secondary star is merged.
                 companions['merged'][segundaria] = np.round(iso_interpsS['merged']
                                                             (star_systemsPrime[sys]['mass'],
                                                              companions['mass'][segundaria]))
+                # Kind of obvious, but we want to mark the secondary star as the 
+                # secondary; otherwise, the star is just another companion.
                 companions['the_secondary_star?'][segundaria] = True
-                cond_bad = ((np.isnan(companions[error_check][segundaria]) or
-                             np.isnan(star_systemsPrime[error_check][sys])) and
-                            (companions['merged'][segundaria] == 0))
-                cond_bad = cond_bad and (((error_check == 'Teff' or error_check == 'L') and
-                                         (companions['phase'][segundaria] < 101 and
-                                          star_systemsPrime['phase'][sys] < 101)) or
-                                         not (error_check == 'Teff' or error_check == 'L'))
+                # Consider stars that I suspect are NOT properly inteprolated
+                if (error_check == 'Teff' or error_check == 'L'):
+                    # We need to make sure that the primary did not interpolate
+                    # correctly or the secondary did not interpolate correctly
+                    # Consider where the star system did not interpolate correctly.
+                    # Note that current parameters can be validly equal to NaN if they are of
+                    # a merged secondary
+                    cond_bad = (np.isnan(companions[error_check][segundaria]) and 
+                                (companions['phase'][segundaria] < 101) and
+                                (companions['merged'][segundaria] == 0))
+                    cond_bad = cond_bad or (np.isnan(star_systemsPrime[error_check][sys]) and
+                                            (star_systemsPrime['phase'][sys] < 101))
+                else:
+                    cond_bad = ((np.isnan(companions[error_check][segundaria]) and
+                                 (companions['merged'][segundaria] == 0)) or
+                                np.isnan(star_systemsPrime[error_check][sys]))
                 if cond_bad:
+                    # If not already, note that current parameters can be validly equal to
+                    # NaN if they are of a merged secondary
                     rejected_system.append([star_systemsPrime['mass'][sys],
                                             companions['mass'][segundaria]])
                 else:
                     good_system.append([star_systemsPrime['mass'][sys],
                                         companions['mass'][segundaria]])
-            star_systemsPrime['metallicity'] = np.ones(len(star_systemsPrime)) * self.iso.metallicity
-            companions['metallicity'] = np.ones(len(companions)) * self.iso.metallicity
+        star_systemsPrime['metallicity'] = np.ones(len(star_systemsPrime)) * self.iso.metallicity
+        companions['metallicity'] = np.ones(len(companions)) * self.iso.metallicity
         rejected_system = np.array(rejected_system)
         good_system = np.array(good_system)
         return rejected_system[:, 0], rejected_system[:, 1], good_system
@@ -1047,7 +1063,7 @@ class ResolvedCluster(Cluster):
         star_systems['isWR'] = np.round(self.iso_interps['isWR'](star_systems['mass']))
         star_systems['mass_current'] = self.iso_interps['mass_current'](star_systems['mass'])
         star_systems['phase'] = np.round(self.iso_interps['phase'](star_systems['mass']))
-        star_systems['metallicity'] = np.ones(N_systems)*self.iso.metallicity
+        star_systems['metallicity'] = np.ones(N_systems) * self.iso.metallicity
 
         # For a very small fraction of stars, the star phase falls on integers in-between
         # the ones we have definition for, as a result of the interpolation. For these
@@ -1057,7 +1073,8 @@ class ResolvedCluster(Cluster):
         # effect is so small
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+        bad = np.where((star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) &
+                       (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
         # Print warning, if desired
         verbose=False
         if verbose:
@@ -1141,9 +1158,11 @@ class ResolvedCluster(Cluster):
             
             for ii in range(len(companions)):
                 companions['log_a'][ii] = self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx'][ii]])
-            
             companions['e'] = self.imf._multi_props.random_e(np.random.rand(N_comp_tot))
-            companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(np.random.rand(N_comp_tot),np.random.rand(N_comp_tot),np.random.rand(N_comp_tot))
+            companions['i'], companions['Omega'], companions['omega'] = \
+            self.imf._multi_props.random_keplarian_parameters(np.random.rand(N_comp_tot),
+                                                              np.random.rand(N_comp_tot),
+                                                              np.random.rand(N_comp_tot))
 
 
         # Make an array that maps system index (ii), companion index (cc) to
@@ -1186,7 +1205,8 @@ class ResolvedCluster(Cluster):
                 # then round it down to 5, rather than up to 101).
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
                 star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-                bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+                bad = np.where((star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) &
+                               (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
                 # Print warning, if desired
                 verbose=False
                 if verbose:
@@ -3000,164 +3020,6 @@ def match_model_mass(isoMasses,theMass):
         return None
     else:
         return mdx
-
-def match_model_sin_bclus(isoMasses, starMasses, iso, sin_only):
-    """Given a column of single star initial masses generated by
-    the IMF, returns an array whose indices correspond to the index
-    of the star in the starMasses iterable and whose entry values
-    correspond to the index in the isoMasses of the star with the mass
-    closest to the starMasses star at the index of the output array.
-    For isochrone stars with initial masses that meet the previous condition
-    and are not within +/- margin of tolerance from the IMF generated initial
-    star mass at the cluster at the index, this results in -1 becoming the
-    entry of the output array at that index.
-    """
-    kdt = KDTree( isoMasses.reshape((len(isoMasses), 1)) )
-    q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
-    indices = q_results[1]
-    dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    idx = np.where((dm_frac >= 0.50) & (starMasses > 100))[0]
-    indices[idx] = -1
-    idx = np.where((dm_frac >= 0.3) & (starMasses <= 100))[0]
-    indices[idx] = -1
-    counter = 0
-    return indices
-
-def match_model_uorder_companions(isoMasses, starMasses, iso):
-    """Operates in practically the exact same way as the match_models_sin_bclus
-    but is intended for matching tertiary and higher order companions of
-    primary stars.
-    """
-    kdt = KDTree( isoMasses.reshape((len(isoMasses), 1)) )
-    q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
-    indices = q_results[1]
-    dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-    if (starMasses[0] >= 100):
-        idx = np.where(dm_frac >= 0.50)[0]
-    else:
-        idx = np.where(dm_frac >= 0.3)[0]
-    indices[idx] = -1
-    counter = 0
-    return indices
-
-def match_model_masses(isoMasses, starMasses):
-    """Given a column of initial  system masses (starMasses) and a column
-    of star masses from the isochrone (isoMasses) find for each mass
-    in the starMasses the index of the row of the isochrone's table where
-    the initial mass
-    is closest and is within 10% of the corresponding mass in starMasses.
-    """
-
-    kdt = KDTree( isoMasses.reshape((len(isoMasses), 1)) )
-    q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
-    indices = q_results[1]
-
-    dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-
-    idx = np.where(dm_frac > 0.1)[0]
-    indices[idx] = -1
-    
-    return indices
-    
-def match_binary_system(primary_mass, secondary_mass, loga, iso, include_a):
-    """
-    Given a primary mass, secondary mass, and log separation value generated
-    from the IMF, returns an array (oftentimes 1
-    element) whose indices correspond to the index of the closest-matching
-    star system in the isochrone’s primaries and
-    secondaries table (remember: star at index x in the primaries table is
-    in the same system as the star at index x in the
-    secondaries table). If the closest matching system that comes from the
-    isochrone is too far away from the inputted, IMF
-    generated star system,  -1 is placed into the array in place of the index
-    of the closest-match from the isochrone.
-    This is used to find, if any, indices of closest-match stars systems of
-    individual, non-single stellar systems.
-    """
-    if (not include_a):
-        kdt = KDTree(np.transpose(np.array([iso.primaries['mass'] /
-                                            primary_mass,
-                                            iso.secondaries['mass'] /
-                                            secondary_mass])))
-        q_results = kdt.query(np.array([[1, 1]]))
-        indices = q_results[1]
-        if (not len(indices)):
-            return np.array([-1])
-        d_frac = np.sqrt((iso.primaries['mass'][indices] /
-                          primary_mass - 1) ** 2 +
-                         (iso.secondaries['mass'][indices] /
-                          secondary_mass - 1) ** 2)
-        if (primary_mass <= 100 and secondary_mass <= 100):
-            idx = np.where(d_frac >= 0.3)[0]
-        else:
-            idx = np.where(d_frac >= 0.5)[0]
-        indices[idx] = -1
-        indices[np.where(indices >= len(iso.primaries))] = -1
-        ind = indices[np.where(indices != -1)[0]]
-        if (not ind):
-            return indices
-        ind = ind[0]
-        return indices
-    elif (np.abs(loga) < 1.0):
-        # Although it may not be the best way of handling 1 AU separation,
-        # I wanted to avoid any effects of division by 0, which would be
-        # mathematically wrong.
-        kdt = KDTree(np.transpose(np.array([iso.primaries['mass'] /
-                                            primary_mass,
-                                            iso.secondaries['mass'] /
-                                            secondary_mass,
-                                            10 ** iso.secondaries['log_a']])))
-        q_results = kdt.query(np.array([[1, 1, 1]]))
-        indices = q_results[1]
-        if (not len(indices)):
-            return np.array([-1])
-        # recall d_frac = cartesian "distance" between two primary-mass,
-        # comapnion-mass pairs 
-        d_frac = np.sqrt((iso.primaries['mass'][indices] /
-                          primary_mass - 1) ** 2 +
-                         (iso.secondaries['mass'][indices] /
-                          secondary_mass - 1) ** 2)
-        if (primary_mass <= 100 and secondary_mass <= 100):
-            idx = np.where((d_frac >= 0.3) |
-                           (np.abs(iso.secondaries['log_a'][indices] -
-                            loga) >= 0.5))[0]
-        else:
-            idx = np.where((d_frac >= 0.50) |
-                           (np.abs(iso.secondaries['log_a'][indices] -
-                            loga) >= 0.5))[0]
-        indices[idx] = -1
-        indices[np.where(indices >= len(iso.primaries))] = -1
-        ind = indices[np.where(indices != -1)[0]]
-        if (not ind):
-            return indices
-        ind = ind[0]
-        return indices
-    else:
-        kdt = KDTree(np.transpose(np.array([iso.primaries['mass'] / primary_mass,
-                                            iso.secondaries['mass'] / secondary_mass,
-                                            iso.secondaries['log_a']/
-                                            loga])))
-        q_results = kdt.query(np.array([[1, 1, 1]]))
-    indices = q_results[1]
-    if (not len(indices)):
-        return np.array([-1])
-    d_frac = np.sqrt((iso.primaries['mass'][indices] /
-                      primary_mass - 1) ** 2 +
-                     (iso.secondaries['mass'][indices] /
-                      secondary_mass - 1) ** 2 +
-                     (iso.secondaries['log_a'][indices] /
-                      loga - 1) ** 2)
-    if (primary_mass <= 100 and secondary_mass <= 100):
-        idx = np.where(d_frac >= 0.3)[0]
-    else:
-        idx = np.where(d_frac >= 0.5)[0]
-    indices[idx] = -1
-    indices[np.where(indices >= len(iso.primaries))] = -1
-    ind = indices[np.where(indices != -1)[0]]
-    if (not ind):
-        return indices
-    ind = ind[0]
-    return indices
 
     
 def get_evo_model_by_string(evo_model_string):
