@@ -18,6 +18,19 @@ un = units
 
 logger = logging.getLogger('evolution')
 
+# Plug in some rough bounds for parameters such that
+# if the parameter is greater than the specified value
+# that parameter is almost certainly bogus! (Best used with good physical
+# sense)
+# User is more than welcome to modify these bounds!
+bad_logg = 20 # in CGS
+bad_Teff = 10 ** 8.0 # in Kelvin
+bad_mass = 10 ** 4.0 # in solar masses
+bad_log_a = 10 # in log - solar radii
+bad_L = 10 ** 9 # in log - solar luminosity
+
+
+
 # Fetch root directory of evolution models.
 try:
     models_dir = os.environ['SPISEA_MODELS']
@@ -1677,7 +1690,7 @@ class BPASS(StellarEvolution):
         and for every metallicity. Stores those isochrones into the
         destination/iso/<metallicity> directory.
         """
-        for met in mets:
+        for met in metallicity:
             for x in range(times):
                 extractor(round(6.0 + 0.1 * x,1), met, source,
                           destination, 0.05)
@@ -1794,15 +1807,51 @@ class BPASS(StellarEvolution):
                                  (1 / cs.au) * un.m)
         iso.rename_column('M1', 'mass_current')
         iso['age'] = np.log10(iso['age'])
+        iso['phase'] = 5
+        iso['phase2'] = 5
+        # We may also want to consider which secondary stars are invalid
+        # i.e. have some infinite current mass, surface gravity, temperature
+        # or log(L2)
+        # We shouldn't worry much about replacing Temperature and Luminosity
+        # type parameters. Even if dealing with compact remnants,
+        # there should not be infinite parameters.
+        problematic_secsM = np.where(iso['M2'] > bad_mass)
+        iso['M2'][problematic_secsM] = np.nan
+        iso['phase2'][problematic_secsM] = -99
+        print(np.where(iso['M2'] > 10 ** 10)[0])
+        problematic_secs_lg = np.where(iso['logg2']  > bad_logg)
+        iso['logg2'][problematic_secs_lg] = np.nan
+        iso['phase2'][problematic_secs_lg] = -99
+        problematic_secs_T = np.where((10 ** iso['log(T2)'] > bad_Teff))
+        iso['log(T2)'][problematic_secs_T] = np.nan
+        iso['phase2'][problematic_secs_T] = -99
+        problematic_secs_L = np.where((10 ** iso['log(L2)'] > bad_L))
+        iso['log(L2)'][problematic_secs_L] = np.nan
+        iso['phase2'][problematic_secs_L] = -99
 
+        # Now deal with primary stars
+        problematic_primsM = np.where(iso['mass_current'] > bad_mass)
+        iso['mass_current'][problematic_primsM] = np.nan
+        iso['phase'][problematic_primsM] = -99
+        print(np.where(iso['mass_current'] > 10 ** 3)[0])
+        problematic_prims_lg = np.where(iso['logg'] > bad_logg)
+        iso['logg'][problematic_prims_lg] = np.nan
+        iso['phase'][problematic_prims_lg] = -99
+        problematic_prims_T = np.where((10 ** iso['log(T1)'] > bad_Teff))
+        iso['log(T1)'][problematic_prims_T] = np.nan
+        iso['phase'][problematic_prims_T] = -99
+        problematic_prims_L = np.where((10 ** iso['log(L1)'] > bad_L))
+        iso['log(L1)'][problematic_prims_L] = np.nan
+        iso['phase'][problematic_prims_L] = -99
+        problematic_log_a = np.where(np.abs(iso['log(a)']) > bad_log_a)
+        iso['log(a)'][problematic_prims_L] = np.nan
+        
         # Using Stanway and Elridge Criterion for calculating whether
         # a star is a WR star or not for using the PotsDam Atmospheres
         # Decided to get rid of loops in order to take fuller advantage
         # of the C-based numpy!
         iso['isWR'] = (iso['X'] < 0.40) & (iso['log(T1)'] >= 4.45)
         iso['isWR2'] = (iso['X'] < 0.40) & (iso['log(T2)'] >= 4.45)
-        iso['phase'] = 5
-        iso['phase2'] = 5
         iso['phase'][np.where((iso['logg'] > 6.9) & (iso['log(L1)'] < -1) &
                               (iso['mass_current'] < 1.4))[0]] = 101
         iso['phase'][np.where(((iso['source'] == 2) | (iso['source']==3) |
@@ -1821,8 +1870,8 @@ class BPASS(StellarEvolution):
         iso.rename_column('M2', 'mass_current2')
         iso.rename_column('log(L1)', 'logL')
         iso.rename_column('age', 'logAge')
-        iso['logT'][np.where(iso['phase'] == 103)] = -np.inf
-        iso['logL'][np.where(iso['phase'] == 103)] = -np.inf
+        iso['logT'][np.where(iso['phase'] >= 102)] = np.nan
+        iso['logL'][np.where(iso['phase'] >= 102)] = np.nan
         iso.meta['log_age'] = age
         iso.meta['metallicity_in'] = oldmetallicity
         iso.meta['metallicity_act'] = np.log10(closest_metallicity /

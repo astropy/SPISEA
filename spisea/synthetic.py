@@ -456,8 +456,10 @@ class Cluster_w_Binaries(Cluster):
         # Case where multiplicity DK is used.
         li = list(zip(self.iso.primaries['mass'], self.iso.secondaries['mass'],
                       self.iso.secondaries['log_a']))
+        li = np.array(li)
         li2 = list(zip(self.iso.primaries['mass'],
                        self.iso.secondaries['mass']))
+        li2 = np.array(li2)
         interp_keys = ['Teff', 'L', 'logg', 'isWR', 'mass_current', 'phase'] + self.filt_names
         iso_interpsP = {}
         iso_interpsS = {}
@@ -474,6 +476,10 @@ class Cluster_w_Binaries(Cluster):
         else:
             for ikey in interp_keys:
                 print("Creating Interpolator for: " + ikey)
+                print(np.max(self.iso.primaries[ikey][np.where(~np.isnan(self.iso.primaries[ikey]))]))
+                print(np.where(self.iso.primaries[ikey] == 
+                               np.max(self.iso.primaries[ikey]
+                                      [np.where(~np.isnan(self.iso.primaries[ikey]))])))
                 iso_interpsP[ikey] = LinearNDInterpolator(li, self.iso.primaries[ikey])
                 iso_interpsS[ikey] = LinearNDInterpolator(li, self.iso.secondaries[ikey])
             iso_interpsS['merged'] = LinearNDInterpolator(li, self.iso.secondaries['merged'])
@@ -761,6 +767,7 @@ class Cluster_w_Binaries(Cluster):
         # Obtain the indices of the systems corresponding to each companion
         # make star_systems contain only multi-star systems
         indices = [x for x in range(len(compMass)) if len(compMass[x])]
+        # We only consider star systems with at least one companion
         star_systems = star_systems[indices]
         # For each star system, the total mass of companions
         compMass_sum = np.array([sum(compMass[x]) for x in indices])
@@ -935,7 +942,7 @@ class Cluster_w_Binaries(Cluster):
         if companions!=None:
             # Clean up companion stuff (which we haven't handled yet)
             # Delete stars that are companions of primaries we deleted
-            companions = companions[np.where(np.isin(star_systems['designation'], idx))[0]]
+            companions = companions[np.where(np.isin(star_systems['designation'], companions['system_idx']))[0]]
         
         return star_systems, companions
 

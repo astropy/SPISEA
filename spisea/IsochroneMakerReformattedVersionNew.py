@@ -13,6 +13,8 @@ possible_secondary_q = ['0.1', '0.2', '0.3',
 # The list encompassing possible primary
 # mass for primary and secondary. Trying to encompass
 # all possible cases, even if there is a bit of redundancy and excess.
+# I get this list of possible intial primary and secondary
+# star masses from the BPASS v2.2.1 README files
 mass_list = [round(0.1, 1)] + [round(0.12 + x * 0.020, 2) for x in range(95)]
 mass_list = mass_list + [round(2.05 + x * 0.05, 2) for x in range(20)]
 mass_list = mass_list + [round(3.1 + 0.1 * x, 1) for x in range(70)]
@@ -384,6 +386,7 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
         indicesOfInterest = np.where(np.abs(np.log10(org['age']) -
                                             age) <= margin)[0]
         f = org[indicesOfInterest]  # f stands for frame in DataFrame
+        # which is how AstroPy was thought of.
         indicesOfInterest = np.array(indicesOfInterest)
         # If no stars have a log10(age) within margin of
         # the given lage in log-10 years, we
@@ -415,6 +418,7 @@ def extractor(age, metallicity, input_dir, bpass_evo_dir,
                     # for the sake of working
                     # with the Duchene-Krauss distributions
                     f['mergered?'] = indicesOfInterest >= merge_pt
+                    # Mark the problem-rows
                     f['source'] = 1
                 elif (x[-suffix_len:-5] == 'sec'):
                     # Recall that the ending of the file
