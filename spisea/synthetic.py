@@ -476,10 +476,6 @@ class Cluster_w_Binaries(Cluster):
         else:
             for ikey in interp_keys:
                 print("Creating Interpolator for: " + ikey)
-                print(np.max(self.iso.primaries[ikey][np.where(~np.isnan(self.iso.primaries[ikey]))]))
-                print(np.where(self.iso.primaries[ikey] == 
-                               np.max(self.iso.primaries[ikey]
-                                      [np.where(~np.isnan(self.iso.primaries[ikey]))])))
                 iso_interpsP[ikey] = LinearNDInterpolator(li, self.iso.primaries[ikey])
                 iso_interpsS[ikey] = LinearNDInterpolator(li, self.iso.secondaries[ikey])
             iso_interpsS['merged'] = LinearNDInterpolator(li, self.iso.secondaries['merged'])
@@ -718,8 +714,11 @@ class Cluster_w_Binaries(Cluster):
         self.iso.metallicity
         # Remove star systems that are outside of max mass of isochrone
         # Still inquiring about the secondary stars
+        # dummy variable exists as there is no companions table passed into
+        # this verison of _remove_bad_systems
         star_systems,  dummy = self._remove_bad_systems(star_systems)
         self.applying_IFMR_stars(star_systems)
+        star_systems.remove_columns(['IFMR_it'])
         for filt in self.filt_names:
             star_systems[filt] = iso_interps3[filt](star_systems['mass'])
         # star_systems.remove_columns(['touchedP'])
@@ -843,12 +842,17 @@ class Cluster_w_Binaries(Cluster):
                                                  max_log_gs, compMass,
                                                  error_check=test)
         star_systemsPrime, companions = self._remove_bad_systems(star_systemsPrime, companions)
+        # run removal of bad systems on companion stars
+        companions, dummy = self._remove_bad_systems(companions)
         
         # We don't need to worry about stars that did not get matched
         # to a close enough equivalent in the KD Tree.
         # Why? We've moved on to using the 
         
         for x in range(len(companions)):
+            # Relabeling: new system_index of the companion star
+            # is going to be the position on the table of the companion's
+            # primary star.
             companions['system_idx'][x] = \
             np.where(star_systemsPrime['designation'] ==
                      companions['system_idx'][x])[0]      
@@ -943,6 +947,7 @@ class Cluster_w_Binaries(Cluster):
             # Clean up companion stuff (which we haven't handled yet)
             # Delete stars that are companions of primaries we deleted
             companions = companions[np.where(np.isin(star_systems['designation'], companions['system_idx']))[0]]
+            # Now get rid of the 
         
         return star_systems, companions
 
@@ -1838,11 +1843,11 @@ class Isochrone_Binary(Isochrone):
 
     def __init__(self, logAge, AKs, distance, metallicity,
                  evo_model=evolution.BPASS(), atm_func=default_atm_func,
-                 wd_atm_func=default_wd_atm_func, mass_sampling=1,
-                 red_law=default_red_law,
-                 wave_range=[3000, 52000], min_mass=None, max_mass=None,
-                 filters=['ubv,U', 'ubv,V', 'ubv,B', 'ubv,R', 'ubv,I'],
-                 rebin=True):
+                 wd_atm_func=default_wd_atm_func, wave_range=[3000, 52000],
+                 red_law=default_red_law, mass_sampling=1, iso_dir='./',
+                 min_mass=None, max_mass=None,
+                 rebin=True, recomp=True,
+                 filters=['ubv,U', 'ubv,V', 'ubv,B', 'ubv,R', 'ubv,I']):
         t1=time.time()
         self.metallicity = metallicity
         self.logage = logAge
@@ -1868,8 +1873,40 @@ class Isochrone_Binary(Isochrone):
         except AssertionError:
             print('Desired wavelength range invalid. Limit to 1000 - 10000 A')
             return
+        # See if there is a saved isochrone
+        if metallicity < 0:
+            metal_pre = 'm'
+        else:
+            metal_pre = 'p'
+        metal_flag = int(abs(metallicity) * 10)
+        # The files name minus file type and whether the star is a single
+        # primary or secondary star
+        save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_{4}{5:2s}_IB'
+        self.save_file = save_file_fmt.format(iso_dir, logAge, AKs,
+                                              str(distance).zfill(5), metal_pre,
+                                              str(metal_flag).zfill(2))
+        # Expected filters
+        self.filters = filters
+        # Recalculate isochrone if save_file doesn't exist or recomp == True
+        # otherwise retrieve it!
+        file_exists = self.check_save_file(evo_model, atm_func, red_law)
+        if file_exists[0] and not recomp:
+            print("We won't recompute the Isochrone Object!")
+            self.recalc = False
+            self.singles = file_exists[1]
+            self.primaries = file_exists[2]
+            self.secondaries = file_exists[3]
+            self.max_mass = np.max([np.max(self.singles['mass']),
+                                    np.max(self.secondaries['mass']),
+                                    np.max(self.primaries['mass'])])
+            self.min_mass = np.min([np.min(self.singles['mass']),
+                                    np.min(self.secondaries['mass']),
+                                    np.min(self.primaries['mass'])])
+            
+            return
         # Get solar metallicity models for a population at a specific age.
         # Takes about 0.1 seconds.
+        print("We (re)compute")
         evol = evo_model.isochrone(age=10 ** logAge,
                                    metallicity=metallicity)
 
@@ -2026,7 +2063,7 @@ class Isochrone_Binary(Isochrone):
         for tab in (singles, primaries, secondaries):
             tab.meta['REDLAW'] = red_law.name
             tab.meta['ATMFUNC'] = atm_func.__name__
-            tab.meta['EVOMODEL'] = 'BPASS v2.2'
+            tab.meta['EVOMODEL'] = 'BPASS'
             tab.meta['LOGAGE'] = logAge
             tab.meta['AKS'] = AKs
             tab.meta['DISTANCE'] = distance
@@ -2213,8 +2250,70 @@ class Isochrone_Binary(Isochrone):
                                                  filt_name, star_mag))
         endTime = time.time()
         print('      Time taken: {0:.2f} seconds'.format(endTime - startTime))
+        if self.save_file != None:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                self.singles.write(self.save_file +
+                                   "single.fits", overwrite=True)
+                self.primaries.write(self.save_file +
+                                     "primary.fits", overwrite=True)
+                self.secondaries.write(self.save_file +
+                                       "secondary.fits", overwrite=True)
         return
 
+    def check_save_file(self, evo_model, atm_func, red_law):
+        """
+        Checks to see if a fits file with name the same as the value of
+        self.save_file exists.
+        If the filename exists, check the
+        meta-data as well. We make sure all three necessary tables
+        are there.
+        returns a tuple: 
+        first element: True is file exists, false otherwise
+        tmp1: single star table (if file exists)
+        tmp2: primary star table (if file exists)
+        tmp3: secondary star table (if file exists)
+        """ 
+        if os.path.exists(self.save_file + "single.fits"):
+            tmp1 = Table.read(self.save_file + "single.fits")
+        else:
+            return (False, None, None, None)
+        if os.path.exists(self.save_file + "primary.fits"):
+            tmp2 = Table.read(self.save_file + "primary.fits")
+        else:
+            return (False, None, None, None)
+        if os.path.exists(self.save_file + "secondary.fits"):
+            tmp3 = Table.read(self.save_file + "secondary.fits")
+        else:
+            return (False, None, None, None)
+            # See if the meta-data matches: evo model, atm_func, redlaw
+        out_bool1 = ( (tmp1.meta['EVOMODEL'] == type(evo_model).__name__) &
+                     (tmp1.meta['ATMFUNC'] == atm_func.__name__) &
+                     (tmp1.meta['REDLAW'] == red_law.name) )
+        out_bool2 = ( (tmp2.meta['EVOMODEL'] == type(evo_model).__name__) &
+                     (tmp2.meta['ATMFUNC'] == atm_func.__name__) &
+                     (tmp2.meta['REDLAW'] == red_law.name) )
+        out_bool3 = ( (tmp3.meta['EVOMODEL'] == type(evo_model).__name__) &
+                     (tmp3.meta['ATMFUNC'] == atm_func.__name__) &
+                     (tmp3.meta['REDLAW'] == red_law.name) )
+        ret_tuple = ((out_bool1 and out_bool2 and out_bool3), tmp1, tmp2, tmp3)
+        if ret_tuple[0]:
+            print("We found files from which we can create our isochrone")
+            print("Evolution Models of potential saved " +
+                  "isochrone and desired isochrone")
+            print(tmp1.meta['EVOMODEL'] )
+            print(type(evo_model).__name__)
+            print("Atmosphereic Models of potential saved" +
+                  " isochrone and desired isochrone")
+            print(tmp1.meta['ATMFUNC'])
+            print(atm_func.__name__)
+            print("Reddening Laws of potential saved" +
+              " isochrone and desired isochrone")
+            print(tmp1.meta['REDLAW'])
+            print(red_law.name)
+        else:
+            print("Need to Recompute")
+        return ret_tuple
 
 class IsochronePhot(Isochrone):
     """

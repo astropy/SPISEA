@@ -27,7 +27,7 @@ bad_logg = 20 # in CGS
 bad_Teff = 10 ** 8.0 # in Kelvin
 bad_mass = 10 ** 4.0 # in solar masses
 bad_log_a = 10 # in log - solar radii
-bad_L = 10 ** 9 # in log - solar luminosity
+bad_L = 10 ** 9 # in solar luminosity
 
 
 
@@ -1818,7 +1818,6 @@ class BPASS(StellarEvolution):
         problematic_secsM = np.where(iso['M2'] > bad_mass)
         iso['M2'][problematic_secsM] = np.nan
         iso['phase2'][problematic_secsM] = -99
-        print(np.where(iso['M2'] > 10 ** 10)[0])
         problematic_secs_lg = np.where(iso['logg2']  > bad_logg)
         iso['logg2'][problematic_secs_lg] = np.nan
         iso['phase2'][problematic_secs_lg] = -99
@@ -1833,7 +1832,6 @@ class BPASS(StellarEvolution):
         problematic_primsM = np.where(iso['mass_current'] > bad_mass)
         iso['mass_current'][problematic_primsM] = np.nan
         iso['phase'][problematic_primsM] = -99
-        print(np.where(iso['mass_current'] > 10 ** 3)[0])
         problematic_prims_lg = np.where(iso['logg'] > bad_logg)
         iso['logg'][problematic_prims_lg] = np.nan
         iso['phase'][problematic_prims_lg] = -99
