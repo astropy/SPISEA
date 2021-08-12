@@ -287,7 +287,7 @@ class Cluster_w_Binaries(Cluster):
         cdx_rem = np.where(((stars['phase'] == 5) & ((stars['Teff'] == 0) |
                                                      (~np.isfinite(stars['Teff'])) |
                                                      (stars['logg'] >= 6.9))) |
-                           (stars['IFMR_it']))[0]
+                           (stars['IFMR_it'] & ~stars['merged']))[0]
         if self.ifmr:
             # Identify compact objects as those with Teff = 0.
             # Conditions the star has to be not merged and the star has to be

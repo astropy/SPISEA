@@ -23,11 +23,11 @@ logger = logging.getLogger('evolution')
 # that parameter is almost certainly bogus! (Best used with good physical
 # sense)
 # User is more than welcome to modify these bounds!
-bad_logg = 20 # in CGS
-bad_Teff = 10 ** 8.0 # in Kelvin
-bad_mass = 10 ** 4.0 # in solar masses
-bad_log_a = 10 # in log - solar radii
-bad_L = 10 ** 9 # in solar luminosity
+upper_logg = 20 # in CGS
+upper_Teff = 10 ** 8.0 # in Kelvin
+upper_mass = 10 ** 4.0 # in solar masses
+upper_log_a = 10 # in log - solar radii
+upper_L = 10 ** 9 # in solar luminosity
 
 
 
@@ -1815,33 +1815,33 @@ class BPASS(StellarEvolution):
         # We shouldn't worry much about replacing Temperature and Luminosity
         # type parameters. Even if dealing with compact remnants,
         # there should not be infinite parameters.
-        problematic_secsM = np.where(iso['M2'] > bad_mass)
+        problematic_secsM = np.where(iso['M2'] > upper_mass)
         iso['M2'][problematic_secsM] = np.nan
         iso['phase2'][problematic_secsM] = -99
-        problematic_secs_lg = np.where(iso['logg2']  > bad_logg)
+        problematic_secs_lg = np.where(iso['logg2']  > upper_logg)
         iso['logg2'][problematic_secs_lg] = np.nan
         iso['phase2'][problematic_secs_lg] = -99
-        problematic_secs_T = np.where((10 ** iso['log(T2)'] > bad_Teff))
+        problematic_secs_T = np.where((10 ** iso['log(T2)'] > upper_Teff))
         iso['log(T2)'][problematic_secs_T] = np.nan
         iso['phase2'][problematic_secs_T] = -99
-        problematic_secs_L = np.where((10 ** iso['log(L2)'] > bad_L))
+        problematic_secs_L = np.where((10 ** iso['log(L2)'] > upper_L))
         iso['log(L2)'][problematic_secs_L] = np.nan
         iso['phase2'][problematic_secs_L] = -99
 
         # Now deal with primary stars
-        problematic_primsM = np.where(iso['mass_current'] > bad_mass)
+        problematic_primsM = np.where(iso['mass_current'] > upper_mass)
         iso['mass_current'][problematic_primsM] = np.nan
         iso['phase'][problematic_primsM] = -99
-        problematic_prims_lg = np.where(iso['logg'] > bad_logg)
+        problematic_prims_lg = np.where(iso['logg'] > upper_logg)
         iso['logg'][problematic_prims_lg] = np.nan
         iso['phase'][problematic_prims_lg] = -99
-        problematic_prims_T = np.where((10 ** iso['log(T1)'] > bad_Teff))
+        problematic_prims_T = np.where((10 ** iso['log(T1)'] > upper_Teff))
         iso['log(T1)'][problematic_prims_T] = np.nan
         iso['phase'][problematic_prims_T] = -99
-        problematic_prims_L = np.where((10 ** iso['log(L1)'] > bad_L))
+        problematic_prims_L = np.where((10 ** iso['log(L1)'] > upper_L))
         iso['log(L1)'][problematic_prims_L] = np.nan
         iso['phase'][problematic_prims_L] = -99
-        problematic_log_a = np.where(np.abs(iso['log(a)']) > bad_log_a)
+        problematic_log_a = np.where(np.abs(iso['log(a)']) > upper_log_a)
         iso['log(a)'][problematic_prims_L] = np.nan
         
         # Using Stanway and Elridge Criterion for calculating whether
