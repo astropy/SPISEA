@@ -7,7 +7,15 @@
 #IFMR_Spera15 comes from Spera et al. 2015 appendix C and includes metallicity dependence
 #https://ui.adsabs.harvard.edu/abs/2015MNRAS.451.4086S/abstract
 #
-#Both IFMRs rely on Kalirai et al. 2008 WD IFMR on the low mass end < 9 M_sun for Raitehl18, and < 7 M_sun for Spera15
+#IFMR_N20_Sukhbold combines the follwing
+#BH/NS IFMR based on Sukhbold & Woosley 2014 for zero-Z models:
+#https://ui.adsabs.harvard.edu/abs/2014ApJ...783...10S/abstract
+#BH/NS IFMR based on Sukhbold et al. 2016 for solar-Z models::
+#https://ui.adsabs.harvard.edu/abs/2016ApJ...821...38S/abstract
+#PPISN based on Woosley 2017: 
+#https://ui.adsabs.harvard.edu/abs/2017ApJ...836..244W/abstract
+#
+#All IFMRs rely on Kalirai et al. 2008 WD IFMR on the low mass end < 9 M_sun for Raitehl18 and N20_Sukhbold, and < 7 M_sun for Spera15
 #https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
 #
 #########################################################
@@ -1028,5 +1036,11 @@ class IFMR_N20_Sukhbold(IFMR):
             else:
                 output_array[0][id_array8[0][i]] = self.NS_mass(mass_array[id_array8][i])
                 output_array[1][id_array8[0][i]] = codes['NS']
+        #this is where sam's janky fix for unphysical BH massses goes
+        #any BH with mass less then 3 M_sun is reassigned as a NS
+        #and given a mass from the NS mass dist instead
+        id_array9 = np.where((output_array[1] == codes['BH']) & (output_array[0] < 3.0))
+        output_array[0][id_array9] = self.NS_mass(mass_array[id_array9])
+        output_array[1][id_array9] = codes['NS']
 
         return(output_array)
