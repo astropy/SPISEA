@@ -968,7 +968,7 @@ class IsochronePhot(Isochrone):
         # Make the iso_dir, if it doesn't already exist
         if not os.path.exists(iso_dir):
             os.mkdir(iso_dir)
-
+        #print('iso_dir', iso_dir)
         # Make and input/output file name for the stored isochrone photometry.
         # For solar metallicity case, allow for legacy isochrones (which didn't have
         # metallicity tag since they were all solar metallicity) to be read
@@ -986,7 +986,8 @@ class IsochronePhot(Isochrone):
             else:
                 metal_pre = 'p'
             metal_flag = int(abs(metallicity)*100)
-            
+            #print('metal_flag:', metal_flag)            
+
             save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_{4}{5:2s}.fits'
             self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(3))
             self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(3))
