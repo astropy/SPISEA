@@ -1024,7 +1024,8 @@ class MISTv1(StellarEvolution):
         iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        z_idx = np.where(abs(self.z_list - z_defined) == min(abs(self.z_list - z_defined)))[0][0]
+        #z_idx = np.where(abs(self.z_list - z_defined) == min(abs(self.z_list - z_defined)))[0][0]
+        z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)))[0][0]
         #print('z_idx:', z_idx)
         
         def iso_extract(full_iso_file, version):
