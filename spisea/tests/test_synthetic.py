@@ -600,6 +600,42 @@ def test_cluster_mass():
 
     return
 
+def test_compact_object_companions():
+    
+    # Define cluster parameters
+    logAge = 6.7
+    AKs = 2.4
+    distance = 4000
+    cluster_mass = 10**4.
+    mass_sampling=5
+
+    # Test filters
+    filt_list = ['nirc2,J', 'nirc2,Kp']
+
+    startTime = time.time()
+    
+    evo = evolution.MergedBaraffePisaEkstromParsec()
+    atm_func = atmospheres.get_merged_atmosphere
+
+    red_law = reddening.RedLawNishiyama09()
+    
+    iso = syn.IsochronePhot(logAge, AKs, distance,
+                            evo_model=evo, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                            mass_sampling=mass_sampling)
+
+    print('Constructed isochrone: %d seconds' % (time.time() - startTime))
+    
+    clust_multiplicity = multiplicity.MultiplicityResolvedDK()
+    clust_imf_Mult = imf.Kroupa_2001(multiplicity=clust_multiplicity)
+    clust_Mult = synthetic.ResolvedCluster(iso_merged, clust_imf_Mult, clust_mtot, ifmr=ifmr.IFMR_Raithel18())
+    
+    # Makes sure compact object companions not including MIST WDs
+    #(i.e. those with no luminosity) are being given phases
+    nan_lum_companions = clust_Mult.companions[np.isnan(clust_Mult.companions['L'])]
+    
+    assert all(np.isnan(nan_lum_companions['phase'])) == False
+
 #=================================#
 # Additional timing functions
 #=================================#
