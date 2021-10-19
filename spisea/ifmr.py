@@ -29,6 +29,7 @@ class IFMR(object):
     def get_Z(self, Fe_H):
         """
         This function converts metallicity given as [Fe/H] into Z values assuming Z_solar = 0.014.
+        Ekstrom+12 https://ui.adsabs.harvard.edu/abs/2012A%26A...537A.146E/abstract
 
         """
         return 10**(Fe_H - 1.85387)
