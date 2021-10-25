@@ -628,7 +628,7 @@ def test_compact_object_companions():
     
     clust_multiplicity = multiplicity.MultiplicityResolvedDK()
     clust_imf_Mult = imf.Kroupa_2001(multiplicity=clust_multiplicity)
-    clust_Mult = synthetic.ResolvedCluster(iso_merged, clust_imf_Mult, clust_mtot, ifmr=ifmr.IFMR_Raithel18())
+    clust_Mult = syn.ResolvedCluster(iso, clust_imf_Mult, cluster_mass, ifmr=ifmr.IFMR_Raithel18())
     
     # Makes sure compact object companions not including MIST WDs
     #(i.e. those with no luminosity) are being given phases
