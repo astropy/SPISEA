@@ -32,4 +32,6 @@ IFMR Base Classes
 	      
 .. autoclass:: ifmr.IFMR_Raithel18
 	       :members: generate_death_mass
+.. autoclass:: ifmr.IFMR_SukhboldN20
+               :members: generate_death_mass
 	     
