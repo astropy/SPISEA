@@ -61,13 +61,12 @@ class IFMR(object):
 
 class IFMR_Spera15(IFMR):
     """
-    BH/NS IFMR comes from Spera et. al. 2015 Appendix C (used for MZAMS>= 7 M_sun)
+    The BH/NS IFMR (used for MZAMS>= 7 M_sun) comes from
     `Spera et. al. (2015) Appendix C <https://ui.adsabs.harvard.edu/abs/2015MNRAS.451.4086S/abstract>`_.
     The WD IFMR (used for MZAMS< 7_Msun) comes from 
     `Kalirai et al. (2008) <https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract>`_.
-    See
-    'Rose et al. (submitted)`_
-    for more details.
+
+    See Rose et al. (submitted) for more details.
     
     """
     
@@ -683,9 +682,7 @@ class IFMR_Raithel18(IFMR):
 
     See 
     `Lam et al. (2020) <https://ui.adsabs.harvard.edu/abs/2020ApJ...889...31L/abstract>`_
-    and
-    `Rose et al. (submitted)`_  
-    for more details.
+    and Rose et al. (submitted)  for more details.
     """
 
     def BH_mass_core_low(self, MZAMS):
@@ -722,15 +719,15 @@ class IFMR_Raithel18(IFMR):
 
     def NS_mass(self, MZAMS):
         """                                                                                                      
-        Paper: 9 < MZAMS 120                                                                                     
-        Drawing the mass from gaussian created using observational data
-         Done by Emily Ramey and Sergiy Vasylyev at University of Caifornia, Berkeley
-        sample oF NS from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020), 
+        Drawing the NS mass from a Gaussian distrobuton based on observational data.
+
+        Gaussian fit by Emily Ramey and Sergiy Vasylyev of University of Caifornia, Berkeley using a
+        sample of NSs from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020), 
         J2302+4442 Kirichenko et al. (2018), J2215+5135 Linares et al. (2018), 
         J1913+1102 Ferdman & Collaboration (2017), J1411+2551 Martinez et al. (2017), 
         J1757+1854 Cameron et al. (2018), J0030+0451 Riley et al. (2019), J1301+0833 Romani et al. (2016)
-        The gaussian distribution was created using this data and a Bayesian MCMC method adapted from
-        Kiziltan et al. (2010)
+        The Gaussian distribution was fit using this data and a Bayesian MCMC method adapted from
+        Kiziltan et al. (2010).
         
         """
         return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
@@ -850,22 +847,21 @@ class IFMR_Raithel18(IFMR):
 
 class IFMR_N20_Sukhbold(IFMR):
     """
-    BH/NS IFMR for zero-Z models from
+    The BH/NS IFMR for zero metallicity progenitors comes from
     `Sukhbold & Woosley (2014) <https://ui.adsabs.harvard.edu/abs/2014ApJ...783...10S/abstract>`_.
-    BH/NS IFMR based on Sukhbold et al. (2016) for solar-Z models::
+    The BH/NS IFMR for solar metallicity progenitors comes from
     `Sukhbold et al. (2016) <https://ui.adsabs.harvard.edu/abs/2016ApJ...821...38S/abstract>`_.
-    PPISN from 
+    The PPISN models are from 
     `Woosley (2017) <https://ui.adsabs.harvard.edu/abs/2017ApJ...836..244W/abstract>`_
     and
     `Woosley et al. (2020) <https://ui.adsabs.harvard.edu/abs/2020ApJ...896...56W/abstract>`_.
-    WD IFMR from 
+    The WD IFMR is from 
     `Kalirai et al. (2008) <https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract>`_.
-    Note that the NS masses are NOT assigned based on the above results
-    We do take the NS/BH formation ratio and the BH masses
+    Note that the NS masses are NOT assigned based on the above results.
+    We do take the NS/BH formation ratio and the BH masses.
     NS masses are assigned based on random draws from a Gaussian (see NS_mass function).
-    See 
-    `Rose et al. (submitted)`_
-    for more details.
+
+    See Rose et al. (submitted) for more details.
     """
     # Linear fits to Sukhbold simulations.
 
@@ -885,15 +881,15 @@ class IFMR_N20_Sukhbold(IFMR):
 
     def NS_mass(self, MZAMS):
         """                                                                                                      
-        9 < MZAMS 120                                                                                     
-        Drawing the mass from Gaussian created using observational data
-        Done by Emily Ramey and Sergiy Vasylyev at University of Caifornia, Berkeley
+        Drawing the NS mass from a Gaussian distrobuton based on observational data.
+
+        Gaussian fit by Emily Ramey and Sergiy Vasylyev of University of Caifornia, Berkeley using a
         sample of NSs from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020), 
         J2302+4442 Kirichenko et al. (2018), J2215+5135 Linares et al. (2018), 
         J1913+1102 Ferdman & Collaboration (2017), J1411+2551 Martinez et al. (2017), 
         J1757+1854 Cameron et al. (2018), J0030+0451 Riley et al. (2019), J1301+0833 Romani et al. (2016)
-        The gaussian distribution was created using this data and a Bayesian MCMC method adapted from
-        Kiziltan et al. (2010)
+        The Gaussian distribution was fit using this data and a Bayesian MCMC method adapted from
+        Kiziltan et al. (2010).
         
         """
         if isinstance(MZAMS, np.ndarray):
