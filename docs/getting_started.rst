@@ -24,12 +24,7 @@ Dependencies
 * scipy
 * numpy (>= v1.17)
 * matplotlib
-* STScI CDBS data package (Download from the `website
-  <http://www.stsci.edu/hst/instrumentation/reference-data-for-calibration-and-tools/synphot-throughput-tables.html>`_
-  or directly via ftp `here
-  <ftp://archive.stsci.edu/pub/hst/pysynphot>`_. You will need 2
-  files: synphot1.tar.gz (63 MB unzipped) and synphot5.tar.gz (791 MB
-  unzipped). See :ref:`set-up-cdbs` below for further instructions.)
+* STScI CDBS data package (See :ref:`set-up-cdbs` below for instructions)
 
 .. _Build:
 
@@ -49,18 +44,42 @@ directory.
 Set Up CDBS Directory
 ---------------------------------
 SPISEA uses the STScI CDBS infrastructure to store
-model atmospheres and HST filter functions. It requires
-a top-level ``cdbs`` directory with 3 sub-directories: ``comp``, ``grid``,
-and ``mtab``. The ``comp`` and ``mtab`` directories are downloaded as
-part of the ``synphot1.tar.gz`` file in the STSci CDBS download (grp/hst/cdbs/comp,
-grp/hst/cdbs/mtab). The ``grid`` directory will eventually hold all of
-the model atmospheres, but start by putting the Phoenix model
-directory from ``synphot5.tar.gz`` there (grp/hst/cdbs/grid/phoenix).
-You will add additional atmosphere model directories to ``cdbs/grid`` in
+model atmospheres and HST filter throughputs.
+In particular, it expects a top-level ``cdbs`` directory
+with 3 sub-directories: ``comp``, ``mtab``,
+and ``grid``. If you already have these set-up then you may
+proceed to the next section. Otherwise, follow the steps below.
+
+#. Create a cdbs directory on your laptop::
+
+     mkdir <your_path>/cdbs
+
+#. The CDBS files can be downloaded from this STScI `website
+   <https://archive.stsci.edu/hlsp/reference-atlases>`_.
+   Download the ``synphot1_throughput-master.tar`` and
+   ``synphot5_pheonix-models.tar`` files, and place them in your
+   cdbs directory.
+
+#. Untar each of the files::
+
+     tar -xvf <tar_file>
+
+    Once completed, a new directory named ``grp`` will appear.
+
+#. The ``comp``, ``mtab``, and ``grid`` sub-directories SPISEA needs
+   are under ``grp/redcat/trds/``. Move these directories directly to
+   ``<your_path>/cdbs`` (e.g., put these files right under your cdbs
+   directory).
+
+#. You may remove the (now empty) ``grp`` directory, and
+   the tar files if desired.
+
+You should end up with a cdbs directory
+``<your_path>/cdbs`` with sub-directories
+called ``comp``, ``mtab``, and ``grid``.
+You will add additional atmosphere models to ``cdbs/grid`` in
 the :ref:`models` section below.
 
-So, you should end up with a single ``cdbs`` directory with
-the ``cdbs/comp``, ``cdbs/grid``, and ``cdbs/mtab`` sub-directories.
 
 .. _models:
 
