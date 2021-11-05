@@ -60,11 +60,7 @@ proceed to the next section. Otherwise, follow the steps below.
    ``synphot5_pheonix-models.tar`` files and place them in your
    cdbs directory.
 
-#. Untar each of the files::
-
-     tar -xvf <tar_file>
-
-  Once completed, a new directory named ``grp`` will appear.
+#. Untar each of the files. Once completed, a new directory named ``grp`` will appear.
 
 #. The ``comp``, ``mtab``, and ``grid`` sub-directories SPISEA needs
    are under ``grp/redcat/trds/``. Move these directories directly to
@@ -122,8 +118,8 @@ then you should put the .gz files in ``/<your_path>/models/``
 and then unzip them from there::
 
    cd /<your_path>/models/
-   tar xvf spisea_cdbs.tar.gz
-   tar xvf spisea_models.tar.gz
+   tar -xvf spisea_cdbs.tar.gz
+   tar -xvf spisea_models.tar.gz
 
 
 ``spisea_cdbs.tar.gz`` will put the model atmospheres in
