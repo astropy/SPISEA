@@ -64,7 +64,7 @@ proceed to the next section. Otherwise, follow the steps below.
 
      tar -xvf <tar_file>
 
-Once completed, a new directory named ``grp`` will appear.
+  Once completed, a new directory named ``grp`` will appear.
 
 #. The ``comp``, ``mtab``, and ``grid`` sub-directories SPISEA needs
    are under ``grp/redcat/trds/``. Move these directories directly to
@@ -96,16 +96,18 @@ You will need to download 2 files:
 
 * `spisea_cdbs.tar.gz <http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs.tar.gz>`_  (142 MB; 248 MB unzipped)
 
-You can also optionally download a third file, which contains higher-resolution versions of the atmospheres in ``spisea_cdbs.tar.gz``:
+You can also optionally download a third file, which contains
+higher-resolution stellar atmospheres:
 
 * `spisea_cdbs_highres.tar.gz <http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs_highres.tar.gz>`_ (50 GB; 74 GB unzipped)
 
 SPISEA uses the low-resolution atmospheres (R = 250) in
 ``spisea_cdbs.tar.gz`` by default, as
-it is then much faster to calculate synthetic photometry and
+it is then much faster for synthetic photometry and
 is sufficient in most applications. However, the user can change
 this default; see  :ref:`atmo_models` for
-more details. 
+more details. Unless you change this default,
+``spisea_cdbs_highres.tar.gz`` is not required.
 
 Once downloaded, ``spisea_cdbs.tar.gz`` (and
 ``spisea_cdbs_highres.tar.gz``, if desired) should be
@@ -115,18 +117,18 @@ The ``spisea_models.tar.gz`` file can be expanded
 anywhere, though we recommend expanding it in the same location as 
 your ``cdbs`` directory. 
 
-For example, if your cdbs directory is ``/g/lu/models/cdbs/``
-then you should put the .gz files in ``/g/lu/models/``
+For example, if your cdbs directory is ``/<your_path>/models/cdbs/``
+then you should put the .gz files in ``/<your_path>/models/``
 and then unzip them from there::
 
-   cd /g/lu/models/
+   cd /<your_path>/models/
    tar xvf spisea_cdbs.tar.gz
    tar xvf spisea_models.tar.gz
 
 
 ``spisea_cdbs.tar.gz`` will put the model atmospheres in
 ``cdbs/grid``, and ``spisea_models.tar.gz`` will put the evolution
-models in a directory called ``evolution/``
+models in a new directory called ``evolution/``
 
 .. _setup-paths:
 
