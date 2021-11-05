@@ -50,28 +50,27 @@ with 3 sub-directories: ``comp``, ``mtab``,
 and ``grid``. If you already have these set-up then you may
 proceed to the next section. Otherwise, follow the steps below.
 
-#. Create a cdbs directory on your laptop::
+#. Create a cdbs directory on your machine::
 
      mkdir <your_path>/cdbs
 
 #. The CDBS files can be downloaded from this STScI `website
    <https://archive.stsci.edu/hlsp/reference-atlases>`_.
    Download the ``synphot1_throughput-master.tar`` and
-   ``synphot5_pheonix-models.tar`` files, and place them in your
+   ``synphot5_pheonix-models.tar`` files and place them in your
    cdbs directory.
 
 #. Untar each of the files::
 
      tar -xvf <tar_file>
 
-    Once completed, a new directory named ``grp`` will appear.
+Once completed, a new directory named ``grp`` will appear.
 
 #. The ``comp``, ``mtab``, and ``grid`` sub-directories SPISEA needs
    are under ``grp/redcat/trds/``. Move these directories directly to
-   ``<your_path>/cdbs`` (e.g., put these files right under your cdbs
-   directory).
+   ``<your_path>/cdbs``.
 
-#. You may remove the (now empty) ``grp`` directory, and
+#. You may remove the (now empty) ``grp`` directory and
    the tar files if desired.
 
 You should end up with a cdbs directory
