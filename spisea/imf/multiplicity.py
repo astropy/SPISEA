@@ -264,7 +264,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         if mass >= 2.9:
             log_a_std = log_a_std_func(np.log10(2.9)) #sigma_log(a)
         if log_a_std < 0.1:
-            log_a_std = 1
+            log_a_std = 0.1
             
         log_semimajoraxis = np.random.normal(log_a_mean, log_a_std)
         while 10**log_semimajoraxis > 2000 or log_semimajoraxis < -2: #AU
