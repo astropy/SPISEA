@@ -401,9 +401,9 @@ class ResolvedCluster(Cluster):
         if self.ifmr != None:
             # Identify compact objects as those with Teff = 0 or with masses above the max iso mass
             highest_mass_iso = self.iso.points['mass'].max()
-            cdx_rem = np.where((companions['Teff'] == 0) &
+            cdx_rem = np.where(np.isnan(companions['Teff']) &
                                 (companions['mass'] > highest_mass_iso))[0]
-            
+
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
             if 'metallicity_array' in inspect.getfullargspec(self.ifmr.generate_death_mass).args:
