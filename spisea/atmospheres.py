@@ -913,6 +913,22 @@ def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False
         bbspec.convert('flam')
         bbspec *= (1000 * 3.08e18 / 6.957e10)**2
         return bbspec
+
+def get_bb_atmosphere(temperature=20000):
+    """
+    Return a blackbody spectrum
+
+    Parameters
+    ----------
+    temperature: float
+        The stellar temperature, in units of K
+    """
+    # Use a blackbody.
+    bbspec = pysynphot.spectrum.BlackBody(temperature)
+    bbspec.convert('flam')
+    bbspec *= (1000 * 3.08e18 / 6.957e10)**2
+    return bbspec
+
     
 #--------------------------------------#
 # Atmosphere formatting functions
