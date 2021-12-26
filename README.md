@@ -1,4 +1,4 @@
-# SPISEA: Stellar Population Interface for Stellar Evolution and Atmospheres
+# Ryota Inagaki's fork of SPISEA
 
 SPISEA is an python package that generates single-age, single-metallicity
 populations (i.e. star clusters). It gives the user control over many parameters:

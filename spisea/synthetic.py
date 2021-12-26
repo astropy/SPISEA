@@ -12,8 +12,8 @@ from pysynphot import spectrum
 from pysynphot import ObsBandpass
 from pysynphot import observation as obs
 import pysynphot
-from astropy import constants, units
-from astropy.table import Table, Column, MaskedColumn
+from astropy import units
+from astropy.table import Table, Column, MaskedColumn, hstack, vstack
 import pickle
 import time, datetime
 import math
@@ -24,17 +24,26 @@ import matplotlib
 import matplotlib.pyplot as plt
 import time
 import warnings
-import pdb
 from scipy.spatial import cKDTree as KDTree
 import inspect
 import astropy.modeling
+from astropy import constants
+import pdb
+import copy
+from scipy.interpolate import LinearNDInterpolator
 
+cs = constants
+un = units
+c = constants
 default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
 default_wd_atm_func = atm.get_wd_atmosphere
 
+    
 def Vega():
+    
+    
     # Use Vega as our zeropoint... assume V=0.03 mag and all colors = 0.0
     # These parameters are defined in Girardi+02
     vega = atm.get_kurucz_atmosphere(temperature=9550, 
@@ -53,7 +62,14 @@ def Vega():
 
 vega = Vega()
 
+class BypasserContainer():
+    description = "This is so vectorization doesn't think that I'm an array"
+
+    
+
 class Cluster(object):
+    
+    
     """
     Base class to create a cluster with user-specified isochrone,
     imf, ifmr, and total mass. 
@@ -82,8 +98,12 @@ class Cluster(object):
     vebose: boolean
         True for verbose output.
     """
+    
+    
     def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=False,
                      seed=None):
+        
+        
         self.verbose = verbose
         self.iso = iso
         self.imf = imf
@@ -93,13 +113,884 @@ class Cluster(object):
         
         return
     
+    
+class Cluster_w_Binaries(Cluster):
+    """
+    Cluster sub-class that produces a *resolved* stellar cluster with
+    binary evolution accounted for.
+    A table is output with the synthetic photometry and intrinsic
+    properties of the individual stars (or stellar systems, if
+    mutliplicity is used in the IMF object).
+
+    A second table is produced that
+    contains the properties of the companion stars independent of their
+    primary stars.
+
+    Parameters
+    -----------
+    iso: isochrone_binary object
+        SPISEA binary_isochrone object
+    imf: imf object
+        SPISEA IMF object
+    cluster_mass: float
+        Total initial mass of the cluster, in M_sun
+    ifmr: ifmr object or None
+        If ifmr object is defined, will create compact remnants
+        produced by the cluster at the given isochrone age. Otherwise,
+        no compact remnants are produced.
+    seed: int
+        If set to non-None, all random sampling will be seeded with the
+        specified seed, forcing identical output.
+        Default None
+    vebose: boolean
+        True for verbose output.
+
+    ====================
+    
+    """
+    def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=False,
+                 seed=None, tests='mass_current'):
+        Cluster.__init__(self, iso, imf, cluster_mass,
+                         ifmr=ifmr, verbose=verbose,
+                         seed=seed)
+        # Provide a user warning is random seed is set
+        if seed is not None:
+            print('WARNING: random seed set to %i' % seed)
+        t1 = time.time()
+        self.iso = iso
+        self.verbose = verbose
+        #####
+        # Sample the IMF to build up our cluster mass.
+        # NOTE: I have adjustment factor in place
+        # in order to account for the amount of stars and star mass that
+        # may be weeded out due to making initial masses come from the
+        # isochrone
+        #####
+
+        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass,seed=seed)
+        self.filt_names = self.iso.filt_names_table
+        # Below: INTENDED cluster mass!
+        self.cluster_mass = cluster_mass
+        # A little sanity check inserted to make sure that IMF generated
+        # cluster mass is close to the desired cluster mass
+        np_min_mass = np.min([sysMass.sum(), cluster_mass])
+        #####
+        single_star_systems = self.make_singles_systems_table(isMulti, sysMass)
+        if self.imf.make_multiples:
+            # Temporary companion mass finder:
+            # Double systems is a bit of a misnomer
+            # Correct term would be "multi_star_system"
+            companions, double_systems = \
+            self.make_primaries_and_companions(sysMass, compMass)
+            self.star_systems = vstack([double_systems, single_star_systems])
+            self.companions = companions
+            
+        else:
+            self.star_systems = single_star_systems
+            self.intended_primaries_mass = 0
+            self.intended_companions_mass = 0
+            self.intended_singles_mass = sysMass.sum()
+        return
+
+    def set_columns_of_table(self, t, N_systems, multi=False):
+        """
+        adds columns for basic stellar parameters to table t with their
+        descriptions (e.g. metallicity or Teff)
+
+        Parameters
+        -----------
+        t: Astropy Table
+            table containing entries for initial masses
+            of the primary, comapnions, or single-system stars
+        N_systems: integer
+            length of AstroPy Table
+        multi: boolean
+            whether t is the table representing
+            the primary stars of multi-star systems
+        """
+        t.add_column(Column(np.zeros(N_systems, dtype=float),
+                            name='Teff'))
+        t.add_column(Column(np.empty(N_systems, dtype=float),
+                            name='L'))
+        t.add_column(Column(np.empty(N_systems, dtype=float),
+                            name='logg'))
+        t.add_column(Column(np.repeat(0.0, N_systems),
+                            name='isWR'))
+        t.add_column(Column(np.empty(N_systems, dtype=float),
+                            name='mass_current'))
+        t.add_column(Column(np.empty(N_systems, dtype=float),
+                            name='phase'))
+        t.add_column(Column(np.repeat(False, N_systems),
+                            name='IFMR_it'))
+        # To ADD: 
+        # t.add_column(Column(np.repeat(False, N_systems),
+        #.                    name='out_of_range'))
+        t.add_column(Column(np.repeat(self.iso.metallicity,
+                                      N_systems),
+                            name='metallicity'))
+        t.add_column(Column(np.repeat(multi, N_systems),
+                                       name='isMultiple'))
+        t.add_column(Column(np.repeat(0.0, N_systems),
+                            name='merged'))
+        # Add the filter columns to the table. They are empty so far.
+        # Keep track of the filter names in : filt_names
+        for filt in self.filt_names:
+            t.add_column(Column(np.zeros(N_systems,
+                                         dtype=float),
+                                name=filt))
+        if multi:
+            t.add_column(Column(np.arange(N_systems),
+                                name='designation'))
+            
+        return None
+
+    def applying_IFMR_stars(self, stars):
+        """
+        Applies the IFMR (if there's any given) to the
+        a table of stars. Specifically, when stars have phase of 5 but
+        have an effective temperature of 0 or some non-finite quantity,
+        or have logg >= 6.9 or have non-physical temperatures
+        (and are not merged with the primary)
+        This is in order to make sure there are no compact stars masquerading
+        as non-compact stars.
+
+        Output: None
+
+        Parameters
+        -----------
+        stars:
+             Astropy table of stars (either of single stars, primary stars,
+             or companions)
+        """
+        star_systems_phase_non_nan = np.nan_to_num(stars['phase'],
+                                                   nan=-99)
+        bad = np.where((star_systems_phase_non_nan > 5) &
+                       (star_systems_phase_non_nan < 101) &
+                       (star_systems_phase_non_nan != -99))
+        # Print warning, if desired
+        if self.verbose:
+            for ii in range(len(bad[0])):
+                print('WARNING: changing phase ' +
+                      '{0} to 5'.format(star_systems_phase_non_nan[bad[0]
+                                        [ii]]))
+        stars['phase'][bad] = 5
+        # Also dealing with interpolation screwing up phases less than 5
+        bad2 = np.where((star_systems_phase_non_nan < 5))
+        # Print warning, if desired
+        if self.verbose:
+            for ii in range(len(bad[0])):
+                print('WARNING: changing phase ' +
+                      '{0} to 5'.format(star_systems_phase_non_nan[bad[0]
+                                        [ii]]))
+        stars['phase'][bad2] = -99
+        ####
+        # The IFMR is applied on stars with phase 5 (which are therefore not
+        # secondary stars that were merged with the system primary) and have
+        # have nonphysical effective temperature (Teff = 0 or some finite value)
+        # and/or have surface gravity of at least 6.9 cgs.
+        #####
+        
+        cdx_rem = np.where((stars['merged']==0) & (stars['phase'] == 5) & ((((stars['Teff'] == 0) |
+                                                     (~np.isfinite(stars['Teff'])) |
+                                                     (stars['logg'] >= 6.9))) |
+                           (stars['IFMR_it'])))[0]
+        if self.ifmr:
+            # Identify compact objects as those with Teff = 0.
+            # Conditions the star has to be not merged and the star has to be
+            # Calculate remnant mass and ID for compact
+            # objects; update remnant_id and
+            # remnant_mass arrays accordingly
+            cond = ('metallicity_array' in
+                    inspect.getfullargspec(self.ifmr.generate_death_mass).args)
+            if cond:
+                r_mass_tmp, r_id_tmp = \
+                self.ifmr.generate_death_mass(mass_array=stars
+                                              ['mass'][cdx_rem],
+                                              metallicity_array=stars
+                                              ['metallicity'][cdx_rem])
+            else:
+                r_mass_tmp, r_id_tmp = \
+                self.ifmr.generate_death_mass(mass_array=stars
+                                              ['mass'][cdx_rem])
+            # Drop remnants where it is not relevant
+            # (e.g. not a compact object or
+            # outside mass range IFMR is defined for)
+            good = np.where(r_id_tmp > 0)
+            cdx_rem_good = cdx_rem[good]
+            stars['mass_current'][cdx_rem_good] = r_mass_tmp[good]
+            # when we have somee undefined or 0 temperature,
+            # shouldn't we practically have no light coming
+            # out of it (not even blackbody radiation)?
+            stars['L'][cdx_rem] = 0.0
+            stars['phase'][cdx_rem_good] = r_id_tmp[good]
+            for filt in self.filt_names:
+                stars[filt][cdx_rem] = \
+                np.full(len(cdx_rem), np.nan)
+        else:
+            # If the IFMR doesn't exist, then we may need to
+            # get rid of the stars that would warrant usage of the IFMR.
+            stars.remove_rows(cdx_rem)
+        return None
+                
+    def generate_2body_parameters(self, star_systemsPrime, companions):
+        """
+        Creates columns of table corresponding to log-separation, eccentricity,
+        inclination, argument of periapsis, longitude of ascending node associated with
+        each companion of each primary star of non-single-star system.
+
+        Parameters
+        -----------
+        star_systemsPrime: AstroPy Table
+            table of the primary stars of the cluster
+            companions. Used for calculating log-separation when
+            multiplicity type allows it.
+        companions: Astropy table of the companion stars of the cluster
+            Generate the log_separation, e, i, omegas,
+            (2-body problem parameters) using the given
+            multiplicity.
+        """
+
+        N_comp_tot = len(companions)
+        inst = isinstance(self.imf._multi_props,
+                          multiplicity.MultiplicityResolvedDK)
+        if inst:
+            companions.add_column(Column(np.zeros(N_comp_tot, dtype=float),
+                                         name='log_a'))
+            companions.add_column(Column(np.zeros(N_comp_tot, dtype=float),
+                                         name='e'))
+            companions.add_column(Column(np.zeros(N_comp_tot, dtype=float),
+                                         name='i', description='degrees'))
+            companions.add_column(Column(np.zeros(N_comp_tot, dtype=float),
+                                         name='Omega'))
+            companions.add_column(Column(np.zeros(N_comp_tot, dtype=float),
+                                         name='omega'))
+            for ii in range(len(companions)):
+                # If the mass of the star is less than 0.1 I will
+                # then let the log_a be 0.
+                # Do not want to trigger an error but I will try
+                # NOT to cause and instead make
+                # log_a = np.nan. That will be our indicator that
+                # I could not calculate the log_a using
+                # Duchene and Krauss and that we will
+                # not use the log(a)
+                try:
+                    companions['log_a'][ii] = \
+                    self.imf._multi_props.log_semimajoraxis(star_systemsPrime
+                                                            ['mass']
+                                                            [companions
+                                                             ['system_idx']
+                                                             [ii]])
+                except ValueError:
+                    # Indicator that we can't use the Multiplicity for log_a
+                    companions['log_a'][ii] = np.nan
+                    continue
+            companions['e'] = \
+            self.imf._multi_props.random_e(np.random.rand(N_comp_tot))
+            props = self.imf._multi_props
+            companions['i'], companions['Omega'], companions['omega'] = \
+            props.random_keplarian_parameters(np.random.rand(N_comp_tot),
+                                              np.random.rand(N_comp_tot),
+                                              np.random.rand(N_comp_tot))
+        else:
+            # Indicator that we can't use the Multiplicity for log_a
+            companions['log_a'] = np.nan
+            companions['e'] = np.nan
+            companions['i'], companions['Omega'], companions['omega'] = \
+            np.nan, np.nan, np.nan
+        return None
+    
+    def finding_secondary_stars(self, star_systemsPrime, companions):
+        """
+        Given the table so far of the primary stars and of the companions
+        we try to find the secondary of the primary star. Secondary star
+        is the companion star with a) greatest gravitational pull on the primary
+        (if isochrone provides primary) or b) greatest mass.
+        
+        Output: compMass_IDXs: a hashmap linking the star system to the next companion
+        star in compMass array (generated by IMF) that needs to be evaluated in
+        filling_in_primaries_and_companions
+        max_log_gs: hashmap linking star system to a 2-element list such that the first
+        element of the list is the GM_secondary star/(separation)^2 and Mass of the secondary star
+        
+        Parameters
+        -----------
+
+        star_systemsPrime: AstroPy Table
+            table of primary stars (with companions)
+        companions: AstroPy Table
+            table of companions of all primary stars listed in star_systemsPrime
+        """
+        compMass_IDXs = {}
+        max_log_gs = {}
+        
+        for x in range(len(star_systemsPrime)):
+            # subtbl stands for sub-table. (of companions whose primary star
+            # is at index x.
+            subtbl = companions[np.where(companions['system_idx'] == x)[0]]
+            subtbl2 = copy.deepcopy(subtbl)
+            max_log_gs[x] = [0, 0]
+            # handling nan'ed separations. We generally don't want to
+            # consider for minimum distance and maximum gravitational
+            # influence to the primary
+            subtbl2['log_a'][np.where(~np.isfinite(subtbl['log_a']))] = np.inf
+            max_log_gs[x][0] = np.max(subtbl2['mass']/(10 ** subtbl2['log_a']) ** 2)
+            max_log_gs[x][1] = np.max(subtbl2['mass'])
+              
+            # Indicate where in the compMass array for star system
+            # number x we are in
+            # when we start looking at the companion
+            compMass_IDXs[x] = 0
+            # This is where the matching of the primary and the secondary begin
+            # I will be tracking the number of bad star systems throguh the
+            # variable rejected_system and rejected_companion
+        return compMass_IDXs, max_log_gs
+
+    def filling_in_primaries_and_companions(self, star_systemsPrime,
+                                            companions,
+                                            min_log_gs,
+                                            error_check='mass_current'):
+        """
+        Utilizes linear interpolation to try to find the luminosity, current mass,
+        photometry, phase, surface gravity, and temperature of the cluster.
+
+        Output: rejected_system[:, 0], rejected_system[:, 1]: NumPy table
+        The first two being the imf generated masses of primary stars
+        and secondary stars such that when mass_current
+        is interpolated over  the primary star's initial mass and the secondary star's
+        initial mass, the primary star's or secondary star's error_check parameter is NOT
+        interpolated correctly (i.e. spits out an NaN). This does not include
+        stars that interpolation predicts to be the 
+        
+        good_system is the NumPy table where each row contains the primary-secondary star initial
+        mass pair (IMF generated) of star systems not included in rejected_system
+
+        Parameters
+        -----------
+        star_systems: AstroPy Table
+            table containing information so far
+            about IMF generated multi-star systems and their primary stars
+        companions: AstroPy Table
+            table containing information so far about IMF generated companions of 
+            each of the star systems represented in star_systems
+        min_log_gs: dictionary
+            maps from index of primary star in star_systems to a 2-element list containing,
+            respectively, maximum gravitational pull between primary and companion that exists in
+            the star system of the primary star AND the maximum mass of a companion of the primary
+            star     
+        error_check: String
+            name of parameter used to check whether interpolation was correctly done.
+
+        """
+
+        # Case where multiplicity DK is used.
+        li = list(zip(self.iso.primaries['mass'], self.iso.secondaries['mass'],
+                      self.iso.secondaries['log_a']))
+        li = np.array(li)
+        li2 = list(zip(self.iso.primaries['mass'],
+                       self.iso.secondaries['mass']))
+        li2 = np.array(li2)
+        interp_keys = ['Teff', 'L', 'logg', 'isWR', 'mass_current', 'phase'] + self.filt_names
+        iso_interpsP = {}
+        iso_interpsS = {}
+        interp_creation_time = []
+        inst = isinstance(self.imf._multi_props,
+                          multiplicity.MultiplicityResolvedDK)
+        if not inst:
+            for ikey in interp_keys:
+                print("Creating Interpolator for: " + ikey)
+                iso_interpsP[ikey] = LinearNDInterpolator(li2, self.iso.primaries[ikey])
+                iso_interpsS[ikey] = LinearNDInterpolator(li2, self.iso.secondaries[ikey])
+            iso_interpsS['log_a'] = LinearNDInterpolator(li2, self.iso.secondaries['log_a'])
+            iso_interpsS['merged'] = LinearNDInterpolator(li2, self.iso.secondaries['merged'])
+        else:
+            for ikey in interp_keys:
+                print("Creating Interpolator for: " + ikey)
+                iso_interpsP[ikey] = LinearNDInterpolator(li, self.iso.primaries[ikey])
+                iso_interpsS[ikey] = LinearNDInterpolator(li, self.iso.secondaries[ikey])
+            iso_interpsS['merged'] = LinearNDInterpolator(li, self.iso.secondaries['merged'])
+        # Dealing with single stars and higher order companions
+        iso_interps3 = {}
+        interp_creation_time3 = []
+        for ikey in interp_keys:
+            iso_interps3[ikey] = interpolate.interp1d(self.iso.singles['mass'],
+                                                      self.iso.singles[ikey],
+                                                      kind='linear', bounds_error=False,
+                                                      fill_value=np.nan)
+        # Now time to introduce it to the IMF generated stars
+        rejected_system = []
+        good_system = []
+        if inst:
+            for sys in range(len(star_systemsPrime)):
+                # segundaria: index of the secondary
+                comps_of_sys= np.where(companions['system_idx'] == star_systemsPrime[sys]['designation'])[0]
+                segundaria = np.where((companions['system_idx'] == star_systemsPrime[sys]['designation']) &
+                                      np.isclose(companions['mass'] /
+                                                 (10 ** (2 * companions['log_a'])),
+                                                 min_log_gs[sys][0], rtol=1e-2))[0][0]
+                for k in interp_keys:
+                    # Run the interpolator on all companions. Then, rerun the interpolator on the
+                    # secondary star. Although it may seem redundant. Note that there is ony one
+                    # secondary star and that this prevents me from having to do some really
+                    # crafty and nasty logic trick.
+                    companions[k][comps_of_sys] = np.round(iso_interps3[k](companions['mass'][comps_of_sys]))
+                    put_in_table = iso_interpsP[k](star_systemsPrime[sys]['mass'],
+                                                        companions['mass'][segundaria],
+                                                        companions['log_a'][segundaria])
+                    put_in_table2 = iso_interpsS[k](star_systemsPrime[sys]['mass'],
+                                                        companions['mass'][segundaria],
+                                                        companions['log_a'][segundaria])
+                    if (k == 'phase' or k == 'isWR'):                        
+                        star_systemsPrime[k][sys] = np.round(put_in_table)
+                        companions[k][segundaria] = np.round(put_in_table2)
+                    else:
+                        star_systemsPrime[k][sys] = put_in_table
+                        companions[k][segundaria] = put_in_table2
+                         
+                companions['merged'][segundaria] = np.round(iso_interpsS['merged']
+                                                            (star_systemsPrime[sys]['mass'],
+                                                             companions['mass'][segundaria],
+                                                             companions['log_a'][segundaria]))
+                companions['the_secondary_star?'][segundaria] = True
+                if (error_check == 'Teff' or error_check == 'L'):
+                    # We need to make sure that the primary did not interpolate
+                    # correctly or the secondary did not interpolate correctly
+                    # Consider where the star system did not interpolate correctly.
+                    # Note that current parameters can be validly equal to NaN if they are of
+                    # a merged secondary
+                    cond_bad = (np.isnan(companions[error_check][segundaria]) and 
+                                (companions['phase'][segundaria] < 101) and
+                                (companions['merged'][segundaria] == 0))
+                    cond_bad = cond_bad or ((np.isnan(star_systemsPrime[error_check][sys]) and
+                                             (star_systemsPrime['phase'][sys] < 101)))
+                else:
+                    # Consider where the star system did not interpolate correctly.
+                    # Note that current parameters can be validly equal to NaN if they are of
+                    # a merged secondary
+                    cond_bad = ((np.isnan(companions[error_check][segundaria]) and
+                                 (companions['merged'][segundaria] == 0)) or
+                                np.isnan(star_systemsPrime[error_check][sys]))
+                if cond_bad:
+                    rejected_system.append([star_systemsPrime['mass'][sys],
+                                            companions['mass'][segundaria]])
+                else:
+                    good_system.append([star_systemsPrime['mass'][sys],
+                                        companions['mass'][segundaria]])
+        else:
+            # Case where the multiplicity does not create the log-
+            for sys in range(len(star_systemsPrime)):
+                # segundaria: index of the secondary
+                comps_of_sys= np.where(companions['system_idx'] == star_systemsPrime[sys]['designation'])[0]
+                segundaria = np.where((companions['system_idx'] == star_systemsPrime[sys]['designation']) &
+                                       np.isclose(companions['mass'],
+                                                  min_log_gs[sys][1], rtol=1e-2))[0][0]
+                for k in interp_keys:
+                    companions[k][comps_of_sys] = iso_interps3[k](companions['mass'][comps_of_sys])
+                    put_in_table = iso_interpsP[k](star_systemsPrime[sys]['mass'],
+                                                    companions['mass'][segundaria])
+                    put_in_table2 = iso_interpsS[k](star_systemsPrime[sys]['mass'],
+                                                    companions['mass'][segundaria])
+                    # we want to make sure that the phase and status of whether a star
+                    # isWR are integers, not some wacky float
+                    if k == 'phase' or k == 'isWR':
+                        put_in_table = np.round(put_in_table)
+                        put_in_table2 = np.round(put_in_table2)
+                    star_systemsPrime[k][sys] = put_in_table
+                    companions[k][sys] = put_in_table2
+                companions['log_a'][segundaria] = iso_interpsS['log_a'](star_systemsPrime[sys]['mass'],
+                                                                        companions['mass'][segundaria])
+                # Check if the secondary star is merged.
+                companions['merged'][segundaria] = np.round(iso_interpsS['merged']
+                                                            (star_systemsPrime[sys]['mass'],
+                                                             companions['mass'][segundaria]))
+                # Kind of obvious, but we want to mark the secondary star as the 
+                # secondary; otherwise, the star is just another companion.
+                companions['the_secondary_star?'][segundaria] = True
+                # Consider stars that I suspect are NOT properly inteprolated
+                if (error_check == 'Teff' or error_check == 'L'):
+                    # We need to make sure that the primary did not interpolate
+                    # correctly or the secondary did not interpolate correctly
+                    # Consider where the star system did not interpolate correctly.
+                    # Note that current parameters can be validly equal to NaN if they are of
+                    # a merged secondary
+                    cond_bad = (np.isnan(companions[error_check][segundaria]) and 
+                                (companions['phase'][segundaria] < 101) and
+                                (companions['merged'][segundaria] == 0))
+                    cond_bad = cond_bad or (np.isnan(star_systemsPrime[error_check][sys]) and
+                                            (star_systemsPrime['phase'][sys] < 101))
+                else:
+                    cond_bad = ((np.isnan(companions[error_check][segundaria]) and
+                                 (companions['merged'][segundaria] == 0)) or
+                                np.isnan(star_systemsPrime[error_check][sys]))
+                if cond_bad:
+                    # If not already, note that current parameters can be validly equal to
+                    # NaN if they are of a merged secondary
+                    rejected_system.append([star_systemsPrime['mass'][sys],
+                                            companions['mass'][segundaria]])
+                else:
+                    good_system.append([star_systemsPrime['mass'][sys],
+                                        companions['mass'][segundaria]])
+        star_systemsPrime['metallicity'] = np.ones(len(star_systemsPrime)) * self.iso.metallicity
+        companions['metallicity'] = np.ones(len(companions)) * self.iso.metallicity
+        rejected_system = np.array(rejected_system)
+        good_system = np.array(good_system)
+        return rejected_system[:, 0], rejected_system[:, 1], good_system
+
+    def adding_up_photometry(self, star_systemsPrime, companions):
+        """
+        Adds up initial masses of secondaries to initial mass
+        of the primary to create the systemMass values.
+        Also adding up the photometries (kind of hard and ugly)
+        to find each star systems' aggregate photometry.
+
+        Parameters
+        -----------
+        star_systemsPrime: AstroPy table
+            table representing non-single star systems/primaries with some essential data already
+            inputted through filling_in_primaries_and_companions
+        companions: AstroPy table
+            table containing companion stars of
+            systems represented in star_systemsPrime
+            filled in partially by filling_in_primaries_and_companons
+        """
+
+        for x in range(len(star_systemsPrime)):
+            # Find all companions of the star system
+            sub_tbl = companions[np.where(companions['system_idx'] == x)[0]]
+            sum_of_comp = sub_tbl['mass'].sum()
+            # Obtain the system mass.
+            star_systemsPrime['systemMass'][x] = sum_of_comp + \
+            star_systemsPrime['mass'][x]
+            if np.isnan(star_systemsPrime['phase'][x]):
+                star_systems_phase_non_nan = -99
+            else:
+                star_systems_phase_non_nan = star_systemsPrime['phase'][x]
+            cond = ((int(star_systems_phase_non_nan) > 5) and
+            (int(star_systems_phase_non_nan) < 101) and
+            (int(star_systems_phase_non_nan) != -99))
+            if (cond):
+                print("Changing phase of primaries")
+                if (self.verbose):
+                    print('WARNING: changing phase' +
+                          ' {0} to 5'.format(star_systems_phase_non_nan))
+                star_systemsPrime['phase'][x] = 5
+            for filt in self.filt_names:
+                # Magnitude of primary star (initially)
+                mag_s = star_systemsPrime[filt][x]
+                # Companion stars corresponding to the primary star
+                # Note that I try tio make sure that 
+                comps = companions[np.where((companions['system_idx'] == x) &
+                                            np.isfinite(companions[filt]))[0]]
+                # trying to obtain as many finite magnitudes as I can
+                if (not len(comps[filt])):
+                    mag_c = np.nan
+                else:
+                    # Finding the sum of fluxes and then taking magnitude.
+                    mag_c = comps[filt]
+                # Add companion flux to system flux.
+                f1 = 10 ** (-1 * mag_s / 2.5)
+                f2 = 10 ** (-1 * mag_c / 2.5)
+
+                f1 = np.nan_to_num(f1)
+                f2 = np.nan_to_num(f2)
+                f2 = np.sum(f2)
+                # Good and bad systems
+                
+                # If *both* objects are dark, then keep the magnitude
+                # as np.nan. Otherwise, add fluxes together
+                if (f1 != 0 or f2 != 0):
+                    star_systemsPrime[filt][x] = -2.5 * np.log10(f1 + f2)
+                else:
+                    star_systemsPrime[filt][x] = np.nan
+                
+
+    def make_singles_systems_table(self, isMulti, sysMass):
+        """
+        Makes the part of the star_systems table corresponding to single-star systems
+        and obtains synthetic photometry for each single star system via interpolation.
+
+        Output: A part of what becomes the self.star_systems table that contains all
+        information (mass, luminosity, photometry) regarding single star systems.
+        Data values are matched from rows of the self.isochrone
+        based on the row's initial primary mass.
+
+        Parameters
+        -----------
+        isMulti: NumPy Array of booleans
+            table containing whether a star system is a
+            multi-star system. (output of the IMF) 
+        sysMass: NumPy Array of floats
+            System masses of all stellar systems (generated by IMF)
+        """
+        # We will be only looking for stars that are not multiple systems
+        sysMass = sysMass[np.where(~ isMulti)[0]]
+        N_systems = len(sysMass)
+        star_systems = Table([sysMass, sysMass],
+                             names=['mass', 'systemMass'])
+        self.set_columns_of_table(star_systems, N_systems)
+        # Set up for interpolation
+        interp_keys = (['Teff', 'L', 'logg', 'isWR', 'mass_current', 'phase'] +
+                       self.filt_names)
+        iso_interps3 = {}
+        for ikey in interp_keys:
+            iso_interps3[ikey] = interpolate.interp1d(self.iso.singles['mass'],
+                                                      self.iso.singles[ikey],
+                                                      kind='linear',
+                                                      bounds_error=False,
+                                                      fill_value=np.nan)
+        # Add columns for the Teff, L, logg, isWR,
+        # mass_current, phase for the primary stars.
+        star_systems['Teff'] = iso_interps3['Teff'](star_systems['mass'])
+        star_systems['L'] = iso_interps3['L'](star_systems['mass'])
+        star_systems['logg'] = iso_interps3['logg'](star_systems['mass'])
+        star_systems['isWR'] = np.round(iso_interps3['isWR'](star_systems['mass']))
+        star_systems['mass_current'] = iso_interps3['mass_current'](star_systems['mass'])
+        star_systems['phase'] = np.round(iso_interps3['phase'](star_systems['mass']))
+        star_systems['metallicity'] = np.ones(N_systems) * \
+        self.iso.metallicity
+        # Remove star systems that are outside of max mass of isochrone
+        # Still inquiring about the secondary stars
+        # dummy variable exists as there is no companions table passed into
+        # this verison of _remove_bad_systems
+        star_systems,  dummy = self._remove_bad_systems(star_systems)
+        self.applying_IFMR_stars(star_systems)
+        star_systems.remove_columns(['IFMR_it'])
+        for filt in self.filt_names:
+            star_systems[filt] = iso_interps3[filt](star_systems['mass'])
+        # star_systems.remove_columns(['touchedP'])
+        return star_systems
+
+    def make_primaries_and_companions(self, star_systems, compMass, test='mass_current'):
+        """        
+
+        Makes the primary stars and companions for non-single star systems of
+        the star_systems table and get synthetic
+        photometry for each single star system. Creates remnants when necessary.
+        Given an initial primary star mass, initial companion mass, and log
+        separation (last one is included if applicable) between the star and
+        the companion, we designate the star with the secondary as the star with
+        least separation from the primary. If there are multiple stars with the
+        same value for separation, the star with the most mass is selected out of
+        the set of companions with the same minimum separation and is designated
+        as the secondary.
+        
+        Output: Creates tables star_systemsPrime and companions,
+        which contain data regarding
+        star systems with multiple stars
+        and the companions.
+
+        Parameters
+        -----------
+        star_systems: numpy array
+            array of all star_system masses (generated by IMF)
+        
+        compMass: numpy array/iterable
+            list of lists of masses of companions of each star system
+            
+        test: String
+            name of stellar parameter used to check for failure of interpolation
+        """
+
+        # Obtain the indices of the systems corresponding to each companion
+        # make star_systems contain only multi-star systems
+        indices = [x for x in range(len(compMass)) if len(compMass[x])]
+        # We only consider star systems with at least one companion
+        star_systems = star_systems[indices]
+        # For each star system, the total mass of companions
+        compMass_sum = np.array([sum(compMass[x]) for x in indices])
+        # Converting companion masses 2D list into array.
+        compMass = np.array([compMass[x] for x in indices])
+        # Make star_systems array only contain the masses of the primary stars
+        star_systems = star_systems - compMass_sum
+        # Number of multi-body star systems
+        N_systems = len(star_systems)
+        #####
+        # MULTIPLICITY
+        # Make a second table containing all the companion-star masses.
+        # This table will be much longer... here are the arrays:
+        # sysIndex - the index of the system this star belongs too
+        # mass - the mass of this individual star.
+        N_companions = np.array([len(star_masses) for star_masses in compMass])
+        N_comp_tot = N_companions.sum()
+        system_index = np.repeat(range(len(indices)), N_companions)
+        # From now on, we will try to use the
+        # new indices (i.e. what the 0-index system is
+        # after we get rid of the single systems from the
+        # star systems table) as much as possible.
+        # Shows which star system number (index of primary star)
+        # each companion star corresponds to
+        companions = Table([system_index], names=['system_idx'])
+        star_systemsPrime = Table([star_systems, np.zeros(N_systems,
+                                                           dtype=float)],
+                                  names=['mass', 'systemMass'])
+        # Create a table for primary stars
+        N_systems = len(indices)
+        # Add columns for the Teff, L, logg, isWR,
+        # mass_current, phase for the primary stars.
+        self.set_columns_of_table(star_systemsPrime, N_systems, multi=True)
+        
+        # The following column indicates whether a star system
+        # will have to be deleted due to lack of good match.
+        star_systemsPrime.add_column(Column(np.repeat(False, N_systems),
+                                            name='bad_system'))
+        # Designation is really the index of the star,
+        # but this may not be equal to
+        # the 0, 1.., len -1 index iterable of the
+        # cluster once we kill off the bad systems (systems whose
+        # primary-secondary pair could not be found
+        
+        # Add columns for the Teff, L, logg, isWR mass_current,
+        # phase, and filters for the companion stars.
+        companions.add_column(Column(np.zeros(N_comp_tot, dtype=float),
+                                     name='mass'))
+        self.set_columns_of_table(companions, N_comp_tot)
+        
+        # Marks whether the system was unmatchable and
+        # its row must be deleted.
+        companions.add_column(Column(np.repeat(False, N_comp_tot),
+                                     name='bad_system'))
+        companions.add_column(Column(np.repeat(False, N_comp_tot),
+                                     name='the_secondary_star?'))
+        for ind in range(len(star_systemsPrime)):
+            (companions['mass'][np.where
+                                (companions['system_idx'] ==
+                                 ind)]) = compMass[ind]
+        
+        self.generate_2body_parameters(star_systemsPrime, companions)
+        # Finding the secondary star for each primary star through finding the companion
+        # that exerts strongest gravitational pull on the primary or finding the companion
+        # with the highest mass.
+        compMass_IDXs, max_log_gs = (self.finding_secondary_stars(star_systemsPrime,
+                                                                  companions))
+        
+        self.rejected_prims, self.rejected_sec, self.good_systems = \
+        self.filling_in_primaries_and_companions(star_systemsPrime,
+                                                 companions,
+                                                 max_log_gs,
+                                                 error_check=test)
+        star_systemsPrime, companions = self._remove_bad_systems(star_systemsPrime, companions)
+        # run removal of bad systems on companion stars
+        companions, dummy = self._remove_bad_systems(companions)
+        
+        # We don't need to worry about stars that did not get matched
+        # to a close enough equivalent in the KD Tree.
+        # Why? We've moved on to using the 
+        
+        for x in range(len(companions)):
+            # Relabeling: new system_index of the companion star
+            # is going to be the position on the table of the companion's
+            # primary star.
+            companions['system_idx'][x] = \
+            np.where(star_systemsPrime['designation'] ==
+                     companions['system_idx'][x])[0]      
+        #####
+        # Make Remnants for non-merged stars with nan
+        # and for stars with 0 Kelvin Teff
+        #####
+        # Identify compact objects as those with Teff = 0 or 
+        # the secondary stars that are non-merged and have a non-
+        # finite temperature
+        self.applying_IFMR_stars(companions)
+        self.applying_IFMR_stars(star_systemsPrime)
+        # The compact remnants have photometric
+        # fluxes of nan now. So now we can procede
+        # with the photometry.
+        self.adding_up_photometry(star_systemsPrime, companions)
+        companions_phase_non_nan = np.nan_to_num(companions['phase'],
+                                                 nan=-99)
+        bad = np.where((companions_phase_non_nan > 5) &
+                       (companions_phase_non_nan < 101) &
+                       (companions_phase_non_nan != -99))
+        if self.verbose:
+            print("Running the changing phase on companions")
+            for ii in range(len(bad[0])):
+                print('WARNING: changing phase {0} to 5'.format(companions_phase_non_nan[bad[0][ii]]))
+            companions['phase'][bad] = 5
+        # Get rid of the columns designation and and bad_system
+        star_systemsPrime.remove_columns(['bad_system', 'designation', 'IFMR_it'])
+        companions.remove_columns(['bad_system', 'IFMR_it'])
+        # Following is commented out as I will need to rethink deletion.
+        # if self.verbose:
+        #.   print("{} non-single star systems".format(str(rejected_prims)) + 
+        #.   " had to be deleted" +
+        #.    " before IFMR application")
+        #.    print("{} companions".format(str(rejected_companions)) +
+        #.   " had to be deleted before" +
+        #.   " IFMR was applied")
+        # For testing purposes we can make rejected_system and rejected_comapnions
+        # be returned too.
+        return companions, star_systemsPrime
+
+    def _remove_bad_systems(self, star_systems, companions=None):
+        """
+        Helper function to remove stars with masses outside the isochrone
+        mass range from the cluster. These stars are identified by having 
+        a Teff = 0, as set up by _make_star_systems_table_interp.
+        If self.ifmr == None, then both high and low-mass bad systems are 
+        removed. If self.ifmr != None, then we will save the high mass systems 
+        since they will be plugged into an ifmr later.
+        
+        Unlike this function's equivalent in the ResolvedCluster, I directly use the minimum
+        and maximum mass of the isochrone to see whether a star is outside of
+        the isochrone mass range.
+        
+        Parameters
+        -----------
+        star_systems: AstroPy Table
+            Table for the single stars, primary stars, or secondary stars in the cluster.
+        companions: AstroPy Table
+            Table for the companion stars of the synthetic star cluster.
+            (equals None iff star_systems table is not the table for primary stars of
+            non-single-star systems)
+        
+        """
+        N_systems = len(star_systems)
+
+        # Get rid of the bad ones
+        # Convert nan_to_num to avoid errors on greater than, less than comparisons
+        star_systems_mass_non_nan = np.nan_to_num(star_systems['mass'], nan=0)
+        star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=0)
+        if self.ifmr == None:
+            # Trim out bad systems; specifically, stars with masses outside those provided
+            # by the model isochrone (except for compact objects, which is where I check
+            # phases and allow stars with 101 + phase to not get filtered out.
+            idx = np.where(((star_systems_mass_non_nan >= self.iso.min_mass) &
+                           (star_systems_mass_non_nan <= self.iso.max_mass)) |
+                           (star_systems_phase_non_nan >= 101))[0]
+            # As in the old _remove_bad_systems we make sure that the for the
+            # very massive stars, the log_g is applied
+        else:
+            # We want to trim out bad systems; specifically, stars with masses outside
+            # those provided by the model isochrone (except for compact objects,
+            # which is where I check phases and allow stars with 101 + phase to not get
+            # filtered out.
+            idx = np.where((star_systems_mass_non_nan >= self.iso.min_mass)|
+                           (star_systems_phase_non_nan >= 101))[0]
+
+        if len(idx) != N_systems and self.verbose:
+            print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))        
+        star_systems = star_systems[idx]
+        # In the case IFMR!=None, we must designate stars with
+        # mass above max_mass of isochrone to be inputted into the
+        # IFMR.
+        to_still_apply_IFMR = np.where(star_systems['mass'] > self.iso.max_mass)[0]
+        if to_still_apply_IFMR and self.ifmr != None:
+            star_systems['IFMR_it'][to_still_apply_IFMR] = True
+        N_systems = len(star_systems)
+
+        if companions!=None:
+            # Clean up companion stuff (which we haven't handled yet)
+            # Delete stars that are companions of primaries we deleted
+            companions = companions[np.where(np.isin(star_systems['designation'], companions['system_idx']))[0]]
+            # Now get rid of the 
+        
+        return star_systems, companions
+
 class ResolvedCluster(Cluster):
     """
     Cluster sub-class that produces a *resolved* stellar cluster.
     A table is output with the synthetic photometry and intrinsic 
     properties of the individual stars (or stellar systems, if 
     mutliplicity is used in the IMF object).
-
     If multiplicity is used, than a second table is produced that 
     contains the properties of the companion stars independent of their
     primary stars.
@@ -111,20 +1002,16 @@ class ResolvedCluster(Cluster):
     
     imf: imf object
         SPISEA IMF object
-
     cluster_mass: float
         Total initial mass of the cluster, in M_sun
-
     ifmr: ifmr object or None
         If ifmr object is defined, will create compact remnants
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
-
     seed: int
         If set to non-None, all random sampling will be seeded with the
         specified seed, forcing identical output.
         Default None
-
     vebose: boolean
         True for verbose output.
     """
@@ -223,7 +1110,7 @@ class ResolvedCluster(Cluster):
         star_systems['isWR'] = np.round(self.iso_interps['isWR'](star_systems['mass']))
         star_systems['mass_current'] = self.iso_interps['mass_current'](star_systems['mass'])
         star_systems['phase'] = np.round(self.iso_interps['phase'](star_systems['mass']))
-        star_systems['metallicity'] = np.ones(N_systems)*self.iso.metallicity
+        star_systems['metallicity'] = np.ones(N_systems) * self.iso.metallicity
 
         # For a very small fraction of stars, the star phase falls on integers in-between
         # the ones we have definition for, as a result of the interpolation. For these
@@ -233,7 +1120,8 @@ class ResolvedCluster(Cluster):
         # effect is so small
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+        bad = np.where((star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) &
+                       (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
         # Print warning, if desired
         verbose=False
         if verbose:
@@ -317,9 +1205,11 @@ class ResolvedCluster(Cluster):
             
             for ii in range(len(companions)):
                 companions['log_a'][ii] = self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx'][ii]])
-            
             companions['e'] = self.imf._multi_props.random_e(np.random.rand(N_comp_tot))
-            companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(np.random.rand(N_comp_tot),np.random.rand(N_comp_tot),np.random.rand(N_comp_tot))
+            companions['i'], companions['Omega'], companions['omega'] = \
+            self.imf._multi_props.random_keplarian_parameters(np.random.rand(N_comp_tot),
+                                                              np.random.rand(N_comp_tot),
+                                                              np.random.rand(N_comp_tot))
 
 
         # Make an array that maps system index (ii), companion index (cc) to
@@ -362,7 +1252,8 @@ class ResolvedCluster(Cluster):
                 # then round it down to 5, rather than up to 101).
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
                 star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-                bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+                bad = np.where((star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) &
+                               (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
                 # Print warning, if desired
                 verbose=False
                 if verbose:
@@ -469,9 +1360,10 @@ class ResolvedCluster(Cluster):
             compMass = [compMass[ii] for ii in idx]
         
         return star_systems, compMass
-
-
+    
 class ResolvedClusterDiffRedden(ResolvedCluster):
+    
+    
     """
     Sub-class of ResolvedCluster that applies differential
     extinction to the synthetic photometry.
@@ -510,6 +1402,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
                  ifmr=None, verbose=False, seed=None):
 
+        
         ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
                                      seed=seed)
 
@@ -561,7 +1454,10 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         #print 'Diff redden: {0}'.format(t2 - t1)
         return
     
+    
 class UnresolvedCluster(Cluster):
+    
+    
     """
     Cluster sub-class that produces an *unresolved* stellar cluster.
     Output is a combined spectrum that is the sum of the individual 
@@ -657,7 +1553,10 @@ class UnresolvedCluster(Cluster):
 
         return
         
+        
 class Isochrone(object):
+    
+    
     """
     Base Isochrone class. 
 
@@ -710,6 +1609,8 @@ class Isochrone(object):
         resolution as the Castelli+04 atmospheres. Default is False,
         which is often sufficient synthetic photometry in most cases.
     """
+    
+    
     def __init__(self, logAge, AKs, distance, metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
@@ -753,7 +1654,7 @@ class Isochrone(object):
         evol = evol[::mass_sampling]
 
         # Give luminosity, temperature, mass, radius units (astropy units).
-        L_all = 10**evol['logL'] * c.L_sun # luminsoity in W
+        L_all = 10**evol['logL'] * constants.L_sun # luminsoity in W
         T_all = 10**evol['logT'] * units.K
         R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * T_all**4))
         mass_all = evol['mass'] * units.Msun # masses in solar masses
@@ -821,6 +1722,8 @@ class Isochrone(object):
         return
 
     def plot_HR_diagram(self, savefile=None):
+        
+        
         """
         Make a standard HR diagram for this isochrone.
 
@@ -848,6 +1751,8 @@ class Isochrone(object):
         return
 
     def plot_mass_luminosity(self, savefile=None):
+        
+        
         """
         Make a standard mass-luminosity relation plot for this isochrone.
 
@@ -872,6 +1777,583 @@ class Isochrone(object):
         
         return
 
+
+class Isochrone_Binary(Isochrone):
+    """
+    Base Isochrone class.
+
+    Parameters
+    ----------
+    logAge : float
+        The age of the isochrone, in log(years)
+    AKs : float
+        The total extinction in Ks filter, in magnitudes
+    distance : float
+        The distance of the isochrone, in pc
+    metallicity : float, optional
+        The metallicity of the isochrone, in [M/H].
+        Default is 0.
+    evo_model: model evolution class, optional
+        Set the stellar evolution model class.
+        Default is evolution.MISTv1().
+    atm_func: model atmosphere function, optional
+        Set the stellar atmosphere models for the stars.
+        Default is get_merged_atmosphere.
+    wd_atm_func: white dwarf model atmosphere function, optional
+        Set the stellar atmosphere models for the white dwafs.
+        Default is get_wd_atmosphere
+    mass_sampling : int, optional
+        Sample the raw isochrone every `mass_sampling` steps. The default
+        is mass_sampling = 0, which is the native isochrone mass sampling
+        of the evolution model.
+    wave_range : list, optional
+        length=2 list with the wavelength min/max of the final spectra.
+        Units are Angstroms. Default is [3000, 52000].
+    min_mass : float or None, optional
+        If float, defines the minimum mass in the isochrone.
+        Unit is solar masses. Default is None
+    max_mass : float or None, optional
+        If float, defines the maxmimum mass in the isochrone.
+        Units is solar masses. Default is None.
+    rebin : boolean, optional
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.
+    Important Attributes:
+    Primaries-- AstroPy Table containing the following columns:
+    -----------------------------------------------------------
+    mass -- in units of Solar Masses. Contains the initial mass of the primary
+    star
+    log_a -- in cgs. log10(separation of the star with the secondary in AU)
+    mass_current = in units of solar masses. Contains the initial mass of
+    the primary star
+    L -- in Watts. Luminosity of the primary star 
+    Teff -- in Kelvin. Effective temperature of the primary star
+    R -- in units of solar radii. Radius of the primary star.
+    phase -- integer indicating whether a secondary star is a
+    white dwarf (101), neutron star (102), black hole, already merged star,
+    or is none of the previous (5)
+    gravity -- log10(acceleration of gravity at the primary star's surface
+    in m/s^2)
+    isWR -- boolean indicating whether a primary star is a WR Star
+    ------------------------------------------------------------
+    singles-- AstroPy Table containing the following columns:
+    -----------------------------------------------------------
+    mass -- solar masses. Contains the initial mass
+    of the single star
+    mass_current -- in units of solar masses. Contains the
+    initial mass of the single star
+    L -- in Watts. Luminosity of the single star 
+    Teff -- in Kelvin. Effective temperature of the single star
+    R -- in units of solar radii. Radius of the single star.
+    phase -- integer indicating whether a secondary star is a
+    white dwarf (101), neutron star (102), black hole, already merged star,
+    or is none of the previous (5)
+    gravity -- log10(acceleration of gravity at the single
+    star's surface in m/s^2)
+    isWR -- boolean indicating whether a single star is a WR Star
+    ------------------------------------------------------------
+    secondaries -- AstroPy Table containing the following columns:
+    -----------------------------------------------------------
+    mass -- in solar masses. Contains the initial mass
+    of the secondary star
+    mass_current -- in solar masses. Contains the initial
+    mass of the secondary star
+    L -- Luminosity of the secondary star in Watts
+    Teff -- in Kelvin. Effective temperature of the single star
+    R -- in units of solar radii. Radius of the secondary star.
+    phase -- integer. Indicates whether a secondary star is a
+    white dwarf (101), neutron star (102), black hole, already merged star,
+    or is none of the previous (5)
+    logg -- log10(acceleration of gravity at the
+    secondary star's surface in m/s^2)
+    isWR -- boolean. Indicates whether a secondary star is a WR Star
+    merged -- whether the corresponding primary star (WHICH IS AT THE
+    SAME INDEX in the primaries table as is the secondary star),
+    has actually incorporated the secondary.
+
+    If merged is true, the L, T_eff, gravity, mass_current will be set
+    to np.nan along with any magnitudes.
+    ------------------------------------------------------------
+    """
+
+    def __init__(self, logAge, AKs, distance, metallicity,
+                 evo_model=evolution.BPASS(), atm_func=default_atm_func,
+                 wd_atm_func=default_wd_atm_func, wave_range=[3000, 52000],
+                 red_law=default_red_law, mass_sampling=1, iso_dir='./',
+                 min_mass=None, max_mass=None,
+                 rebin=True, recomp=True,
+                 filters=['ubv,U', 'ubv,V', 'ubv,B', 'ubv,R', 'ubv,I']):
+        t1=time.time()
+        self.metallicity = metallicity
+        self.logage = logAge
+        # Accounting for the definition of metallicity of the
+        # evolution object's
+        # Isochrone function.
+        # Changes by Ryota: make atm_func and wd_atm_func instance vars
+        self.atm_func = atm_func
+        self.wd_atm_func = wd_atm_func
+        self.distance = distance
+        self.wave_range = wave_range
+        self.AKs = AKs
+        self.red_law = red_law
+        self.filters = filters
+        self.filt_names_table = []
+        self.verbose = True
+        
+        if not os.path.exists(iso_dir):
+            os.mkdir(iso_dir)
+
+        # Assert that the wavelength ranges are within the limits of the
+        # VEGA model (0.1 - 10 microns)
+        try:
+            assert wave_range[0] > 1000
+            assert wave_range[1] < 100000
+        except AssertionError:
+            print('Desired wavelength range invalid. Limit to 1000 - 10000 A')
+            return
+        # See if there is a saved isochrone
+        if metallicity < 0:
+            metal_pre = 'm'
+        else:
+            metal_pre = 'p'
+        metal_flag = int(abs(metallicity) * 10)
+        # The files name minus file type and whether the star is a single
+        # primary or secondary star
+        save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_{4}{5:2s}_IB'
+        self.save_file = save_file_fmt.format(iso_dir, logAge, AKs,
+                                              str(distance).zfill(5), metal_pre,
+                                              str(metal_flag).zfill(2))
+        # Expected filters
+        self.filters = filters
+        # Recalculate isochrone if save_file doesn't exist or recomp == True
+        # otherwise retrieve it!
+        file_exists = self.check_save_file(evo_model, atm_func, red_law)
+        if file_exists[0] and not recomp:
+            print("We won't recompute the Isochrone Object!")
+            self.recalc = False
+            self.singles = file_exists[1]
+            self.primaries = file_exists[2]
+            self.secondaries = file_exists[3]
+            self.max_mass = np.max([np.max(self.singles['mass']),
+                                    np.max(self.secondaries['mass']),
+                                    np.max(self.primaries['mass'])])
+            self.min_mass = np.min([np.min(self.singles['mass']),
+                                    np.min(self.secondaries['mass']),
+                                    np.min(self.primaries['mass'])])
+            
+            return
+        # Get solar metallicity models for a population at a specific age.
+        # Takes about 0.1 seconds.
+        print("We (re)compute")
+        evol = evo_model.isochrone(age=10 ** logAge,
+                                   metallicity=metallicity)
+
+        # Eliminate cases where log g is less than 0
+        idx = np.where(evol['logg'] > 0)
+        evol = evol[idx]
+
+        # Trim to desired mass range
+        if min_mass:
+            idx = np.where((evol['mass'] >= min_mass) & (evol['mass2'] >= min_mass))
+            evol = evol[idx]
+        if max_mass:
+            idx = np.where((evol['mass'] <= max_mass) & (evol['mass2'] <= min_mass))
+            evol = evol[idx]
+        self.max_mass = np.max([np.max(evol['mass']), np.max(evol['mass2'])])
+        self.min_mass = np.min([np.min(evol['mass']), np.min(evol['mass2'])])
+        # Give luminosity, temperature, mass, radius units (astropy units).
+        L_all = 10 ** evol['logL'] * constants.L_sun  # luminsoity in W
+        T_all = 10 ** evol['logT'] * units.K
+        # TO DO: Conditionals to make sure I am using valid values
+
+        R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * T_all ** 4))
+        # masses in solar masses
+        mass_all = evol['mass'] * units.Msun
+        logg_all = evol['logg']
+        mass_curr_all = evol['mass_current'] * units.Msun
+        # We will keep track of the phase of the BPASS primary/
+        # single star system
+        phase_all = evol['phase']
+        # We will keep track of the phase of the BPASS secondary
+        phase_all2 = evol['phase2']
+        # We will keep track of whether the star is WR or not
+        isWR_all = evol['isWR']
+        isWR2 = evol['isWR2']
+        # Actual temperature of secondary in Kelvins
+        Tef2 = (10 ** evol['log(T2)']) * units.K
+        R2 = (10 ** evol['log(R2)']) * constants.R_sun
+        L2 = (10 ** evol['log(L2)']) * constants.L_sun
+        singles = Table([mass_all, L_all, T_all, R_all, logg_all, isWR_all,
+                        mass_curr_all, phase_all, evol['single'], evol['source']],
+                        names=['mass', 'L', 'Teff', 'R', 'logg',
+                               'isWR', 'mass_current', 'phase', 'single', 'source'])
+        # Also have inserted conversion factor to deal with the units of
+        # log(a)
+        primaries = Table([mass_all,
+                           L_all, T_all, R_all, logg_all, isWR_all,
+                           mass_curr_all, phase_all, evol['single'], evol['source']],
+                          names=['mass', 'L', 'Teff', 'R', 'logg',
+                                 'isWR', 'mass_current', 'phase',  'single', 'source'])
+        # Note that we keep information regarding whether
+        # a star corresponds to a merger.
+        # This will help us decide whether we should not account
+        # for the L2, Tef_2 during atmosphere creation
+        # Yes I do unit conversions for log(a) column
+        # as that is in log(a/R_sun)
+        secondaries = Table([evol['mass2'] * units.Msun,
+                            evol['log(a)'] + np.log10(constants.R_sun/constants.au),
+                            L2, Tef2, R2,
+                            evol['logg2'], isWR2,
+                            evol['mass_current2'] * units.Msun,
+                            phase_all2,
+                            evol['single'],
+                            evol['mergered?'], evol['source']],
+                            names=['mass', 'log_a', 'L', 'Teff',
+                                   'R', 'logg', 'isWR', 'mass_current',
+                                   'phase', 'single', 'merged', 'source'])
+        # Make sure that we are only looking at stars with companions when
+        # examining the secondaries and primaries.
+        secondaries = secondaries[np.where(~secondaries['single'])[0]]
+        secondaries.remove_column('single')
+        singles = singles[np.where(singles['single'])[0]]
+        singles.remove_column('single')
+        primaries = primaries[np.where(~primaries['single'])[0]]
+        primaries.remove_column('single')
+        # Trim down the table by selecting every Nth point where
+        # N = mass sampling factor.
+        singles = singles[::mass_sampling]
+        primaries = primaries[::mass_sampling]
+        secondaries = secondaries[::mass_sampling]
+        # Inserting before I forget
+        # I try to make sure that we have a queue
+        # of atm_function results to process
+        # If we have null values
+        self.spec_list_si = [None for x in range(len(singles))]  # For single Stars
+        self.spec_list2_pri = [None for x in range(len(primaries))]  # For primary stars
+        self.spec_list3_sec = [None for x in range(len(secondaries))]  # For secondary stars
+        # Turns into an attribute since we will access this in another function
+        self.pairings2 = {"Singles": self.spec_list_si,
+                          "Primaries": self.spec_list2_pri,
+                          "Secondaries": self.spec_list3_sec}
+        pairings = {"Singles": singles, "Primaries": primaries,
+                    "Secondaries": secondaries}
+        codes = {"Singles": 0, "Primaries": 1,
+                    "Secondaries": 2}
+        self.codes2 = {0: singles, 1: primaries,
+                       2: secondaries}
+        self.pairings = pairings
+        self.singles = singles
+        self.primaries = primaries
+        self.secondaries = secondaries
+        # For each temperature extract the synthetic photometry.
+        for x in pairings:
+            tab = pairings[x]
+            atm_list = self.pairings2[x]
+            # Workaround for a glitch encountered with units not showing up.
+            # may need to come back and get rid of it since it looks silly.
+            R_all = tab['R'] * units.m/units.m
+            gravity_table = tab['logg']
+            # a little issue with the compact remnant primaries from
+            # the secondary star
+            if x == 'Secondaries':
+                merged = np.where(tab['merged'])
+                tab['mass_current'][merged] = np.nan
+                tab['Teff'][merged] = np.nan
+                tab['R'][merged] = np.nan
+                tab['logg'][merged] = np.nan
+                tab['isWR'][merged] = False
+                tab['phase'][merged] = -99
+                                 
+            cond = np.where(np.isfinite(tab['logg']) & (tab['logg'] != 0.0) &
+                            np.isfinite(tab['L']) & (tab['L'] > 0.0) &
+                            np.isfinite(tab['Teff']) & (tab['Teff'] > 0.0) &
+                            np.isfinite(tab['R']) & (tab['R']> 0.0) &
+                            (tab['phase'] <= 101) & (tab['phase'] != -99))[0]
+            
+            wrapper = BypasserContainer()
+            wrapper.wave_range = wave_range
+            wrapper.distance = distance
+            wrapper.lis = atm_list
+            vectorized_atm_maker = np.vectorize(self.atm_generator_to_vectorize)
+            vectorized_atm_maker(cond, wrapper, wrapper, metallicity, atm_func,
+                                 wd_atm_func, red_law, AKs, rebin, codes[x])
+            bad_starcond = np.where(~ (np.isfinite(tab['logg']) &
+                                       (tab['logg'] != 0.0) &
+                                       np.isfinite(tab['L']) &
+                                       (tab['L'] > 0.0) &
+                                       np.isfinite(tab['Teff']) &
+                                       (tab['Teff'] > 0.0) &
+                                       np.isfinite(tab['R']) & (tab['R'] > 0.0) &
+                                       (tab['phase'] <= 101) &
+                                       (tab['phase'] != -99)))[0]
+            tab['Teff'][bad_starcond] = np.nan
+            tab['L'][bad_starcond] = np.nan
+            tab['R'][bad_starcond] = np.nan
+            tab['logg'][bad_starcond] = np.nan
+        # I hope to change the next few lines to this as this will make
+        # more thorough use of numpy and decrease the number of for-loop
+        # iterations that are used.
+                      
+        self.singles = singles
+        self.primaries = primaries
+        self.secondaries = secondaries
+        # Append all the meta data to the summary table.
+        for tab in (singles, primaries, secondaries):
+            tab.meta['REDLAW'] = red_law.name
+            tab.meta['ATMFUNC'] = atm_func.__name__
+            tab.meta['EVOMODEL'] = 'BPASS'
+            tab.meta['LOGAGE'] = logAge
+            tab.meta['AKS'] = AKs
+            tab.meta['DISTANCE'] = distance
+            tab.meta['METAL_IN'] = evol.meta['metallicity_in']
+            tab.meta['METAL_ACT'] = evol.meta['metallicity_act']
+            tab.meta['WAVEMIN'] = wave_range[0]
+            tab.meta['WAVEMAX'] = wave_range[1]
+        self.make_photometry()
+        t2 = time.time()
+        print('Isochrone generation took {0:f} s.'.format(t2-t1))
+        return
+
+    def atm_generator_to_vectorize(self, c_ind, w_wrapper, list_wrapper, met,
+                                   atm_func, wd_atm_func, red_law, AKs, rebin,
+                                   code):
+        """
+        - Input -
+        c_ind: 
+        w_wrapper:
+        list_wrapper:
+        met: 
+        rebin: 
+        atm_func: atmosphere function inputted into the constructor of
+        Isochrone_Binary
+        red_law: Extinction law object inputted into constructor of isochrone
+        binary
+        AKs: extinction at the Ks band inputted 
+        """
+        tab = self.codes2[code]
+        wave_range = w_wrapper.wave_range
+        distance = w_wrapper.distance
+        atm_list = list_wrapper.lis
+        R_all = tab['R'] * units.m / units.m
+        R = float( R_all[c_ind].to('pc') / units.pc) 
+
+        if (tab[c_ind]['phase'] < 101):
+            star =  atm_func(temperature=tab['Teff'][c_ind],
+                             gravity=tab['logg'][c_ind],
+                             metallicity=met,
+                             rebin=rebin)
+        else:
+            star =  wd_atm_func(temperature=tab['Teff'][c_ind],
+                                gravity=tab['logg'][c_ind],
+                                metallicity=met,
+                                verbose=False)
+        # Trim wavelength range down to
+        # JHKL range (0.5 - 5.2 microns)
+        star = spectrum.trimSpectrum(star, wave_range[0],
+                                             wave_range[1])
+        # Convert into flux observed at Earth (unreddened)
+        R = float(R_all[c_ind].to("pc") / units.pc)
+        star *= (R / distance) ** 2 # in erg s^-1 cm^-2 A^-1
+        # Redden the spectrum. This doesn't take much time at all.
+        red = red_law.reddening(AKs).resample(star.wave)
+        star *= red
+        # Save the final spectrum to our spec_list for later use.
+        atm_list[c_ind] = star
+        return
+
+    def plot_HR_diagram(self, savefile=None):
+        
+        
+        """
+        Make a standard HR diagram for this isochrone.
+        Took the code from the Isochrone base class and
+        adapted it to work on the isochrone binary object
+        Parameters
+        -----------
+        savefile: path or None, optional
+             Path to file plot too, if desired. 
+             Default is None
+        """
+        plt.clf()
+        plt.loglog(self.singles['Teff'], self.singles['L'],
+                   color='black', linestyle='solid', marker='+')
+        plt.loglog(self.primaries['Teff'], self.primaries['L'],
+                   color='black', linestyle='solid', marker='+')
+        plt.loglog(self.secondaries['Teff'], self.secondaries['L'],
+                   color='black', linestyle='solid', marker='+')
+        plt.gca().invert_xaxis()
+        plt.xlabel(r'T$_{\mathrm{eff}}$ (K)')
+        plt.ylabel('Luminosity (erg / s)')
+        
+        fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
+        plt.title(fmt_title.format(self.singles.meta['LOGAGE'],
+                                  self.singles.meta['DISTANCE']/1e3,
+                                  self.singles.meta['AKS']))
+
+        if savefile != None:
+            plt.savefig(savefile)
+        
+        return
+
+    def plot_mass_luminosity(self, savefile=None):
+        
+        
+        """
+        Make a standard mass-luminosity relation plot for this isochrone.
+        Took the code from the Isochrone base class and
+        adapted it to work on the isochrone binary object
+        Parameters
+        -----------
+        savefile: path or None, optional
+             Path to file plot too, if desired. 
+             Default is None
+        """
+        plt.clf()
+        plt.loglog(self.singles['mass'], self.singles['L'], 'k.')
+        plt.loglog(self.primaries['mass'], self.primaries['L'], 'k.')
+        plt.loglog(self.secondaries['mass'], self.secondaries['L'], 'k.')
+        plt.xlabel(r'Mass (M$_\odot$)')
+        plt.ylabel('Luminosity (erg / s)')
+        
+        fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
+        plt.title(fmt_title.format(self.singles.meta['LOGAGE'],
+                                  self.singles.meta['DISTANCE']/1e3,
+                                  self.singles.meta['AKS']))
+        
+        if savefile != None:
+            plt.savefig(savefile)
+        
+        return
+
+    def make_photometry(self, rebin=True, vega=vega):
+        """
+        Make synthetic photometry for the specified filters. This function
+        udpates the self.points table to include new columns with the
+        photometry.
+        """
+        startTime = time.time()
+
+        meta = self.singles.meta
+
+        print('Making photometry for isochrone: log(t) = %.2f  AKs = %.2f  dist = %d' %(meta['LOGAGE'], meta['AKS'], meta['DISTANCE']))
+        print('     Starting at: ', datetime.datetime.now(),
+              '  Usually takes ~5 minutes')
+        # npoints = len(self.points)
+        verbose_fmt = 'M = {0:7.3f} Msun  T = {1:5.0f} K  m_{2:s} = {3:4.2f}'
+
+        # Loop through the filters, get filter info, make photometry for
+        # all stars in this filter.
+        for ii in self.filters:
+            prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
+            print(prt_fmt.format(ii, time.time() - startTime))
+            filt = get_filter_info(ii, rebin=rebin, vega=vega)
+            filt_name = get_filter_col_name(ii)
+            # Make the column to hold magnitudes
+            # in this filter. Add to points table.
+            col_name = 'm_' + filt_name
+            self.filt_names_table.append(col_name)
+            mag_col = Column(np.zeros(len(self.singles), dtype=float),
+                             name=col_name)
+            self.singles.add_column(mag_col)
+            mag_col = Column(np.zeros(len(self.secondaries), dtype=float),
+                             name=col_name)
+            self.secondaries.add_column(mag_col)
+            mag_col = Column(np.zeros(len(self.primaries), dtype=float),
+                             name=col_name)
+            self.primaries.add_column(mag_col)
+            # Loop through each star in the isochrone and
+            # do the filter integration
+            print('Starting synthetic photometry')
+            for x in self.pairings:
+                listofStars = self.pairings2[x]
+                table = self.pairings[x]
+                length_of_list = len(listofStars)
+                for ss in range(length_of_list):
+                    star = listofStars[ss]
+                    # Nada used to be a fill in value.
+                    # I thought that None would be more intuitive
+                    # So we will be using None
+                    if star:
+                        # These are already extincted, observed spectra.
+                        star_mag = mag_in_filter(star, filt)
+                    else:
+                        # We want nan to stand in place
+                        # for stars that do not have valid T
+                        # or radius or L.
+                        star_mag = np.nan
+                    table[col_name][ss] = star_mag
+                    if (self.verbose and (ss % 100) == 0):
+                        print(verbose_fmt.format(table['mass'][ss],
+                                                 table['Teff'][ss],
+                                                 filt_name, star_mag))
+        endTime = time.time()
+        print('      Time taken: {0:.2f} seconds'.format(endTime - startTime))
+        if self.save_file != None:
+            with warnings.catch_warnings():
+                warnings.simplefilter('ignore')
+                self.singles.write(self.save_file +
+                                   "single.fits", overwrite=True)
+                self.primaries.write(self.save_file +
+                                     "primary.fits", overwrite=True)
+                self.secondaries.write(self.save_file +
+                                       "secondary.fits", overwrite=True)
+        return
+
+    def check_save_file(self, evo_model, atm_func, red_law):
+        """
+        Checks to see if a fits file with name the same as the value of
+        self.save_file exists.
+        If the filename exists, check the
+        meta-data as well. We make sure all three necessary tables
+        are there.
+        returns a tuple: 
+        first element: True is file exists, false otherwise
+        tmp1: single star table (if file exists)
+        tmp2: primary star table (if file exists)
+        tmp3: secondary star table (if file exists)
+        """ 
+        if os.path.exists(self.save_file + "single.fits"):
+            tmp1 = Table.read(self.save_file + "single.fits")
+        else:
+            return (False, None, None, None)
+        if os.path.exists(self.save_file + "primary.fits"):
+            tmp2 = Table.read(self.save_file + "primary.fits")
+        else:
+            return (False, None, None, None)
+        if os.path.exists(self.save_file + "secondary.fits"):
+            tmp3 = Table.read(self.save_file + "secondary.fits")
+        else:
+            return (False, None, None, None)
+            # See if the meta-data matches: evo model, atm_func, redlaw
+        out_bool1 = ( (tmp1.meta['EVOMODEL'] == type(evo_model).__name__) &
+                     (tmp1.meta['ATMFUNC'] == atm_func.__name__) &
+                     (tmp1.meta['REDLAW'] == red_law.name) )
+        out_bool2 = ( (tmp2.meta['EVOMODEL'] == type(evo_model).__name__) &
+                     (tmp2.meta['ATMFUNC'] == atm_func.__name__) &
+                     (tmp2.meta['REDLAW'] == red_law.name) )
+        out_bool3 = ( (tmp3.meta['EVOMODEL'] == type(evo_model).__name__) &
+                     (tmp3.meta['ATMFUNC'] == atm_func.__name__) &
+                     (tmp3.meta['REDLAW'] == red_law.name) )
+        ret_tuple = ((out_bool1 and out_bool2 and out_bool3), tmp1, tmp2, tmp3)
+        if ret_tuple[0]:
+            print("We found files from which we can create our isochrone")
+            print("Evolution Models of potential saved " +
+                  "isochrone and desired isochrone")
+            print(tmp1.meta['EVOMODEL'] )
+            print(type(evo_model).__name__)
+            print("Atmosphereic Models of potential saved" +
+                  " isochrone and desired isochrone")
+            print(tmp1.meta['ATMFUNC'])
+            print(atm_func.__name__)
+            print("Reddening Laws of potential saved" +
+              " isochrone and desired isochrone")
+            print(tmp1.meta['REDLAW'])
+            print(red_law.name)
+        else:
+            print("Need to Recompute")
+        return ret_tuple
+
 class IsochronePhot(Isochrone):
     """
     Make an isochrone with synthetic photometry in various filters. 
@@ -889,7 +2371,7 @@ class IsochronePhot(Isochrone):
         The distance of the isochrone, in pc
 
     metallicity : float, optional
-        The metallicity of the isochrone, in [M/H].
+        The metallicity of the isochrone, in [Z/Z_solar].
         Default is 0.
 
     evo_model: model evolution class, optional
@@ -979,7 +2461,8 @@ class IsochronePhot(Isochrone):
             else:
                 metal_pre = 'p'
             metal_flag = int(abs(metallicity)*10)
-            
+  
+                                                                                     
             save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_{4}{5:2s}.fits'
             self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
             self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
@@ -1246,15 +2729,11 @@ class iso_table(object):
 
         # Initialize output for stellar spectra
         self.spec_list = []
-
         # For each temperature extract the synthetic photometry.
         for ii in range(len(tab['Teff'])):
             # Loop is currently taking about 0.11 s per iteration
 
-            gravity = float( logg_all[ii] )
-            L = float( L_all[ii].cgs / (units.erg / units.s)) # in erg/s
-            T = float( T_all[ii] / units.K)               # in Kelvin
-            R = float( R_all[ii].to('pc') / units.pc)              # in pc
+            
 
             # Get the atmosphere model now. Wavelength is in Angstroms
             # This is the time-intensive call... everything else is negligable.
@@ -1681,23 +3160,11 @@ def match_model_mass(isoMasses,theMass):
     dm = np.abs(isoMasses - theMass)
     mdx = dm.argmin()
 
-    # Model mass has to be within 2% of the desired mass
+    # Model mass has to be within 10% of the desired mass
     if (dm[mdx] / theMass) > 0.1:
         return None
     else:
         return mdx
-
-def match_model_masses(isoMasses, starMasses):
-    kdt = KDTree( isoMasses.reshape((len(isoMasses), 1)) )
-    q_results = kdt.query(starMasses.reshape((len(starMasses), 1)), k=1)
-    indices = q_results[1]
-
-    dm_frac = np.abs(starMasses - isoMasses[indices]) / starMasses
-
-    idx = np.where(dm_frac > 0.1)[0]
-    indices[idx] = -1
-    
-    return indices
 
     
 def get_evo_model_by_string(evo_model_string):
