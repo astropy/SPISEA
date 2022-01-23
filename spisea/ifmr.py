@@ -7,7 +7,17 @@
 #IFMR_Spera15 comes from Spera et al. 2015 appendix C and includes metallicity dependence
 #https://ui.adsabs.harvard.edu/abs/2015MNRAS.451.4086S/abstract
 #
-#Both IFMRs rely on Kalirai et al. 2008 WD IFMR on the low mass end < 9 M_sun for Raitehl18, and < 7 M_sun for Spera15
+#IFMR_N20_Sukhbold combines the follwing
+#BH/NS IFMR based on Sukhbold & Woosley 2014 for zero-Z models:
+#https://ui.adsabs.harvard.edu/abs/2014ApJ...783...10S/abstract
+#BH/NS IFMR based on Sukhbold et al. 2016 for solar-Z models::
+#https://ui.adsabs.harvard.edu/abs/2016ApJ...821...38S/abstract
+#PPISN based on Woosley 2017: 
+#https://ui.adsabs.harvard.edu/abs/2017ApJ...836..244W/abstract
+#PPSIN based on Woosley et al. 2020:
+#https://ui.adsabs.harvard.edu/abs/2020ApJ...896...56W/abstract
+#
+#All IFMRs rely on Kalirai et al. 2008 WD IFMR on the low mass end < 9 M_sun for Raitehl18 and N20_Sukhbold, and < 7 M_sun for Spera15
 #https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
 #
 #########################################################
@@ -21,6 +31,7 @@ class IFMR(object):
     def get_Z(self, Fe_H):
         """
         This function converts metallicity given as [Fe/H] into Z values assuming Z_solar = 0.014.
+        Ekstrom+12 https://ui.adsabs.harvard.edu/abs/2012A%26A...537A.146E/abstract
 
         """
         return 10**(Fe_H - 1.85387)
@@ -50,11 +61,12 @@ class IFMR(object):
 
 class IFMR_Spera15(IFMR):
     """
-    This IFMR comes from Spera et. al. 2015 Appendix C (Used for all MZAMS>= 7 M_sun)
-    https://ui.adsabs.harvard.edu/abs/2015MNRAS.451.4086S/abstract
-
+    The BH/NS IFMR (used for MZAMS>= 7 M_sun) comes from
+    `Spera et. al. (2015) Appendix C <https://ui.adsabs.harvard.edu/abs/2015MNRAS.451.4086S/abstract>`_.
     The WD IFMR (used for MZAMS< 7_Msun) comes from 
-    `Kalirai et al. (2008) <https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract>`_
+    `Kalirai et al. (2008) <https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract>`_.
+
+    See Rose et al. (submitted) for more details.
     
     """
     
@@ -660,15 +672,17 @@ class IFMR_Spera15(IFMR):
 
 class IFMR_Raithel18(IFMR):
     """
-    This IFMR comes from Raithel et al. 2018
-    https://ui.adsabs.harvard.edu/abs/2018ApJ...856...35R/abstract
-    The IFMR is a combination of the 
-    WD IFMR from 
+    The IFMR is a combination of the WD IFMR from 
     `Kalirai et al. (2008) <https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract>`_
     and the NS/BH IFMR from
     `Raithel et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018ApJ...856...35R/abstract>`_.
+    Note that the NS masses are NOT assigned based on the above results. 
+    We do take the NS/BH formation ratio and the BH masses.
+    NS masses are assigned based on random draws from a Gaussian (see NS_mass function). 
 
-    See Lam et al. (submitted) for more details.
+    See 
+    `Lam et al. (2020) <https://ui.adsabs.harvard.edu/abs/2020ApJ...889...31L/abstract>`_
+    and Rose et al. (submitted)  for more details.
     """
 
     def BH_mass_core_low(self, MZAMS):
@@ -705,15 +719,15 @@ class IFMR_Raithel18(IFMR):
 
     def NS_mass(self, MZAMS):
         """                                                                                                      
-        Paper: 9 < MZAMS 120                                                                                     
-        Drawing the mass from gaussian created using observational data
-         Done by Emily Ramey and Sergiy Vasylyev at University of Caifornia, Berkeley
-        sample oF NS from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020), 
+        Drawing the NS mass from a Gaussian distrobuton based on observational data.
+
+        Gaussian fit by Emily Ramey and Sergiy Vasylyev of University of Caifornia, Berkeley using a
+        sample of NSs from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020), 
         J2302+4442 Kirichenko et al. (2018), J2215+5135 Linares et al. (2018), 
         J1913+1102 Ferdman & Collaboration (2017), J1411+2551 Martinez et al. (2017), 
         J1757+1854 Cameron et al. (2018), J0030+0451 Riley et al. (2019), J1301+0833 Romani et al. (2016)
-        The gaussian distribution was created using this data and a Bayesian MCMC method adapted from
-        Kiziltan et al. (2010)
+        The Gaussian distribution was fit using this data and a Bayesian MCMC method adapted from
+        Kiziltan et al. (2010).
         
         """
         return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
@@ -828,5 +842,218 @@ class IFMR_Raithel18(IFMR):
         id_array10_NS = np.where((mass_array >= 60) & (mass_array < 120) & (random_array <= 400))
         output_array[0][id_array10_NS] = self.NS_mass(mass_array[id_array10_NS])
         output_array[1][id_array10_NS] = codes['NS']
+
+        return(output_array)
+
+class IFMR_N20_Sukhbold(IFMR):
+    """
+    The BH/NS IFMR for zero metallicity progenitors comes from
+    `Sukhbold & Woosley (2014) <https://ui.adsabs.harvard.edu/abs/2014ApJ...783...10S/abstract>`_.
+    The BH/NS IFMR for solar metallicity progenitors comes from
+    `Sukhbold et al. (2016) <https://ui.adsabs.harvard.edu/abs/2016ApJ...821...38S/abstract>`_.
+    The PPISN models are from 
+    `Woosley (2017) <https://ui.adsabs.harvard.edu/abs/2017ApJ...836..244W/abstract>`_
+    and
+    `Woosley et al. (2020) <https://ui.adsabs.harvard.edu/abs/2020ApJ...896...56W/abstract>`_.
+    The WD IFMR is from 
+    `Kalirai et al. (2008) <https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract>`_.
+    Note that the NS masses are NOT assigned based on the above results.
+    We do take the NS/BH formation ratio and the BH masses.
+    NS masses are assigned based on random draws from a Gaussian (see NS_mass function).
+
+    See Rose et al. (submitted) for more details.
+    """
+    # Linear fits to Sukhbold simulations.
+
+    def zero_BH_mass(self, MZAMS):
+        #zero_coeff = [0.46522639, -3.29170817]
+        #func = np.poly1d(zero_coeff)
+        #result = func(MZAMS)
+        return 0.46522639*MZAMS + -3.29170817
+    
+    def solar_BH_mass(self, MZAMS):
+        #solar_coeff = [-0.27079245, 24.74320755]
+        #func = np.poly1d(solar_coeff)
+        return -0.27079245*MZAMS + 24.74320755
+
+    # Solar metallicity (what Sam is using)
+    Zsun = 0.014
+
+    def NS_mass(self, MZAMS):
+        """                                                                                                      
+        Drawing the NS mass from a Gaussian distrobuton based on observational data.
+
+        Gaussian fit by Emily Ramey and Sergiy Vasylyev of University of Caifornia, Berkeley using a
+        sample of NSs from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020), 
+        J2302+4442 Kirichenko et al. (2018), J2215+5135 Linares et al. (2018), 
+        J1913+1102 Ferdman & Collaboration (2017), J1411+2551 Martinez et al. (2017), 
+        J1757+1854 Cameron et al. (2018), J0030+0451 Riley et al. (2019), J1301+0833 Romani et al. (2016)
+        The Gaussian distribution was fit using this data and a Bayesian MCMC method adapted from
+        Kiziltan et al. (2010).
+        
+        """
+        if isinstance(MZAMS, np.ndarray):
+            return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
+        else:
+            return np.random.normal(loc=1.36, scale=0.09, size=1)[0]
+ 
+ 
+    def BH_mass_low(self, MZAMS):
+        """
+        9 < MZAMS < 40 Msun
+        """
+        mBH = self.zero_BH_mass(MZAMS)
+
+        return mBH
+
+
+    def BH_mass_high(self, MZAMS, Z):
+        """
+        39.6 Msun < MZAMS < 120 Msun
+        """
+        # Solar metallicity (what Sam is using)
+        Zsun = 0.014
+        
+        zfrac = Z/Zsun
+
+        # super-solar Z gives identical results as solar Z
+        above_idx = np.where(zfrac > 1)
+        if len(above_idx) > 1:
+            zfrac[above_idx] = 1.0
+
+        bad_idx = np.where(zfrac < 0)
+        if len(bad_idx) > 1:
+            raise ValueError('Z must be non-negative')
+
+        # Linearly interpolate
+        mBH = (1 - zfrac) * self.zero_BH_mass(MZAMS) + zfrac*self.solar_BH_mass(MZAMS)
+
+        return mBH
+
+
+    def prob_BH_high(self, Z):
+        """
+        Probability of BH formation for 60 < Mzams < 120 Msun
+        """
+        # Solar metallicity (what Sam is using)
+        Zsun = 0.014
+        
+        zfrac = Z/Zsun
+        
+        # super-solar Z gives identical results as solar Z
+        if zfrac > 1:
+            zfrac = 1.0
+
+        if zfrac < 0:
+            raise ValueError('Z must be non-negative')
+
+        pBH = 1 - 0.8*zfrac
+
+        return pBH
+
+
+    def generate_death_mass(self, mass_array, metallicity_array):
+        """
+        The top-level function that assigns the remnant type 
+        and mass based on the stellar initial mass. 
+        
+        Parameters
+        ----------
+        mass_array: array of floats
+            Array of initial stellar masses. Units are
+            M_sun.
+        metallicity_array: array of floats
+            Array of metallicities in terms of [Fe/H]
+        Notes
+        ------
+        The output typecode tells what compact object formed:
+        
+        * WD: typecode = 101
+        * NS: typecode = 102
+        * BH: typecode = 103
+        A typecode of value -1 means you're outside the range of 
+        validity for applying the ifmr formula. 
+        A remnant mass of -99 means you're outside the range of 
+        validity for applying the ifmr formula.
+        Range of validity: MZAMS > 0.5 
+        
+        Returns
+        -------
+        output_arr: 2-element array
+            output_array[0] contains the remnant mass, and 
+            output_array[1] contains the typecode
+        """
+        #output_array[0] holds the remnant mass
+        #output_array[1] holds the remnant type
+        output_array = np.zeros((2, len(mass_array)))
+
+        codes = {'WD': 101, 'NS': 102, 'BH': 103}
+
+        # Array to store the remnant masses
+        rem_mass_array = np.zeros(len(mass_array))
+
+        # Convert from [Fe/H] to Z
+        # FIXME: if have Fe/H = nan that makes Z = 0. Is that the behavior we want?
+        Z_array = np.zeros((len(metallicity_array)))
+        metal_idx = np.where(metallicity_array != np.nan)
+        Z_array[metal_idx] = self.get_Z(metallicity_array[metal_idx])
+
+        # Random array to get probabilities for what type of object will form
+        random_array = np.random.randint(1, 101, size = len(mass_array))
+
+        id_array0 = np.where((mass_array < 0.5) | (mass_array >= 120))
+        output_array[0][id_array0] = -99 * np.ones(len(id_array0))
+        output_array[1][id_array0]  = -1 * np.ones(len(id_array0))
+
+        id_array1 = np.where((mass_array >= 0.5) & (mass_array < 9))
+        output_array[0][id_array1] = self.Kalirai_mass(mass_array[id_array1])
+        output_array[1][id_array1]= codes['WD']
+
+        id_array2 = np.where((mass_array >= 9) & (mass_array < 15))
+        output_array[0][id_array2] = self.NS_mass(mass_array[id_array2])
+        output_array[1][id_array2] = codes['NS']
+
+        id_array3_BH = np.where((mass_array >= 15) & (mass_array < 21.8) & (random_array > 75))
+        output_array[0][id_array3_BH] = self.BH_mass_low(mass_array[id_array3_BH])
+        output_array[1][id_array3_BH] = codes['BH']
+
+        id_array3_NS = np.where((mass_array >= 15) & (mass_array < 21.8) & (random_array <= 75))
+        output_array[0][id_array3_NS] = self.NS_mass(mass_array[id_array3_NS])
+        output_array[1][id_array3_NS] = codes['NS']
+
+        id_array4 = np.where((mass_array >= 21.8) & (mass_array < 25.2))
+        output_array[0][id_array4] = self.BH_mass_low(mass_array[id_array4])
+        output_array[1][id_array4] = codes['BH']
+
+        id_array5 = np.where((mass_array >= 25.2) & (mass_array < 27.4))
+        output_array[0][id_array5] = self.NS_mass(mass_array[id_array5])
+        output_array[1][id_array5] = codes['NS']
+
+        id_array6 = np.where((mass_array >= 27.4) & (mass_array < 39.6))
+        output_array[0][id_array6] = self.BH_mass_low(mass_array[id_array6])
+        output_array[1][id_array6] = codes['BH']
+
+        id_array7 = np.where((mass_array >= 39.6) & (mass_array < 60))
+        output_array[0][id_array7] = self.BH_mass_high(mass_array[id_array7],
+                                                       Z_array[id_array7])
+        output_array[1][id_array7] = codes['BH']
+
+        id_array8 = np.where((mass_array >= 60) & (mass_array < 120))
+        for i in range(0, len(id_array8[0])):
+            pBH = self.prob_BH_high(Z_array[id_array8][i])
+            if random_array[id_array8][i] > 100*pBH:
+                output_array[0][id_array8[0][i]] = self.BH_mass_high(mass_array[id_array8][i],
+                                                                    Z_array[id_array8][i])
+                output_array[1][id_array8[0][i]] = codes['BH']
+                
+            else:
+                output_array[0][id_array8[0][i]] = self.NS_mass(mass_array[id_array8][i])
+                output_array[1][id_array8[0][i]] = codes['NS']
+        #this is where sam's janky fix for unphysical BH massses goes
+        #any BH with mass less then 3 M_sun is reassigned as a NS
+        #and given a mass from the NS mass dist instead
+        id_array9 = np.where((output_array[1] == codes['BH']) & (output_array[0] < 3.0))
+        output_array[0][id_array9] = self.NS_mass(mass_array[id_array9])
+        output_array[1][id_array9] = codes['NS']
 
         return(output_array)
