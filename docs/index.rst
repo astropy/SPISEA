@@ -1,7 +1,12 @@
-.. sampledoc documentation master file, created by
+.. sampledoc documentation main file, created by
    sphinx-quickstart on Tue Aug 11 05:04:40 2009.
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
+
+.. figure:: ../SPISEA_logo_final.png
+	    :width: 380
+            :height: 336
+	    :align: center
 
 ==========================================================================
 SPISEA: Stellar Population Interface for Stellar Evolution and Atmospheres
@@ -66,6 +71,7 @@ Contributions
 We encourage contributions to SPISEA, particular
 those that add support for star formation histories,
 new models, higher spectral resolution, etc.
+<<<<<<< HEAD
 For feature additions, we ask that users make their
 own fork of the repository, make their changes, and then submit a pull
 request to the "dev" branch.
@@ -89,3 +95,11 @@ Change Log
 
   * First Release
 
+=======
+For feature additions, we ask that users fork or
+branch off of the development repository, make their changes,
+and then submit merge and pull requests.
+
+
+Logo by Natasha Abrams
+>>>>>>> main
