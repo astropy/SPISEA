@@ -1091,6 +1091,156 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
 
         return A_at_wave
 
+class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
+    """
+    Extinction object that is a broken power-law extinction law: 
+    :math:`A_{\lambda} \propto \lambda^{\alpha[n]}`
+
+    for: 
+    :math: `\lambda_{limits}[n] < \lambda <= \lambda_{limits}[n+1]`
+
+    Note: lambda_limits must be continuous in wavelength and K_wave must be 
+    within one of the section defined by the lambda_limits array. 
+    Extinction law is only defined over lambda_limits
+    
+    Units of lambda_limits array is microns.
+
+    Parameters
+    ----------
+    lambda_limits : numpy array
+        Array of length (N + 1) with lower and upper wavelength limits of 
+        the power-law segments. Units are microns.
+
+    alpha_vals : numpy array
+        Array of length N that contains the powers for each
+        power-law segment.
+
+    K_wave : float
+        Extinction law is normalized such that AKs = 1 at `K_wave`.
+    """
+    def __init__(self, lambda_limits, alpha_vals, K_wave):
+        # Fetch the extinction curve, pre-interpolate across defined wavelength range
+        wave = np.arange(np.min(lambda_limits), np.max(lambda_limits), 0.01)
+
+        # Deal with pesky floating point issues that can artificially push the upper
+        # value of wave above the max(lambda_limit)
+        wave[-1] = np.max(lambda_limits)
+
+        # Assert that K_wave is within lambda_limits
+        try:
+            assert (K_wave >= np.min(lambda_limits)) & (K_wave <= np.max(lambda_limits))
+        except:
+            raise Exception('K_wave not within lambda_limits bounds')
+
+        # This will eventually be scaled by AK when you
+        # call reddening(). Right now, calc for AKs=1
+        Alambda_scaled = RedLawBrokenPowerLaw._derive_broken_powerlaw(wave, lambda_limits, alpha_vals, K_wave)
+
+        # Convert wavelength to angstrom
+        wave *= 10 ** 4
+
+        pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
+                                                  waveunits='angstrom',
+                                                  Avscaled=Alambda_scaled,
+                                                  name='Broken Power law')
+
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+        self.name = 'broken_pl,{0},{1},{2}'.format(lambda_limits,alpha_vals, K_wave)
+
+    @staticmethod
+    def _derive_broken_powerlaw(wave, lambda_limits, alpha_vals, K_wave):
+        """
+        Calculate the resulting extinction for an array of wavelengths.
+        The extinction is normalized with A_Ks.
+
+        Parameters
+        ----------
+        wavelength : float
+            in microns
+
+        alpha: float
+            -1.0 * (power law exponent) 
+             
+        K_wave: float
+            Desired K-band wavelength, in microns
+        """
+        # Create extinction law in segments
+        law = np.ones(len(wave)) * np.nan
+        for ii in range(len(alpha_vals)):
+            wave_max = lambda_limits[ii]
+            wave_min = lambda_limits[ii+1]
+            alpha = alpha_vals[ii]
+
+            # Find elements of wavelength array in this segment
+            idx = np.where( (wave >= wave_min) & (wave <= wave_max))
+
+            # Calculate coefficient for this segment to ensure
+            # law is continuous
+            coeff = 1
+            if ii > 0:
+                for jj in range(ii):
+                    wave_connect = lambda_limits[jj+1]
+                    val = (wave_connect ** (-1*alpha_vals[jj])) / (wave_connect ** (-1*alpha_vals[jj+1]))
+
+                    #print('ii = {0}'.format(ii))
+                    #print('wave_connect = {0}'.format(wave_connect))
+                    #print('alph_num = {0}'.format(alpha_vals[jj]))
+                    #print('alpha_den = {0}'.format(alpha_vals[jj+1]))
+        
+                    coeff *= val
+                    
+            law[idx] = coeff * (wave[idx]**(-1.0 * alpha))
+
+        # Let's make sure we didn't miss updating any parts of the law
+        assert np.sum(np.isnan(law)) == 0
+        
+        # We'll identify K-band as 2.14 microns
+        idx = np.where(abs(wave - K_wave) == min(abs(wave - K_wave)))
+        A_AKs_at_wave = law / law[idx]
+
+        return A_AKs_at_wave
+
+    def broken_powerlaw(self, wavelength, AKs):
+        """ 
+        Return the extinction at a given wavelength assuming the 
+        extinction law and an overall `AKs` value.
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to return extinction for, in microns
+        AKs : float
+            Total extinction in AKs, in mags
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
+
+        return A_at_wave
+
 class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
     """
     Defines extinction law from `Fritz et al. 2011 

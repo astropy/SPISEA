@@ -71,7 +71,7 @@ Contributions
 We encourage contributions to SPISEA, particular
 those that add support for star formation histories,
 new models, higher spectral resolution, etc.
-<<<<<<< HEAD
+
 For feature additions, we ask that users make their
 own fork of the repository, make their changes, and then submit a pull
 request to the "dev" branch.
@@ -92,14 +92,12 @@ Change Log
   * Bug fix for photometric column headers for some filters, added new tests regarding total cluster mass, small documentation edits
 
 1.0.0 (2019-12-01)
-
-  * First Release
-
 =======
 For feature additions, we ask that users fork or
 branch off of the development repository, make their changes,
 and then submit merge and pull requests.
 
 
+
+=======
 Logo by Natasha Abrams
->>>>>>> main
