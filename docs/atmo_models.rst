@@ -35,8 +35,6 @@ The atmosphere model grids currently supported are:
 * get_wdKoester_atmosphere
 * get_kurucz_atmosphere
 * get_phoenix_atmosphere
-* get_nextgen_atmosphere
-* get_amesdusty_atmosphere
 
 
 Model Atmosphere Classes
