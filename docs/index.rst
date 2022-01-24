@@ -111,5 +111,4 @@ Change Log
   * Initial release
 
 
-=======
 Logo by Natasha Abrams
