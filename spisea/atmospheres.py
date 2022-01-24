@@ -8,6 +8,7 @@ from astropy.table import Table, Column
 import pysynphot
 import time
 import pdb
+import warnings
 
 log = logging.getLogger('atmospheres')
 
@@ -905,14 +906,41 @@ def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False
                                             gravity=gravity)
     
     except pysynphot.exceptions.ParameterOutOfBounds:
-        if verbose:
-            print('BB atmosphere')
-                
-        # Use a blackbody.
-        bbspec = pysynphot.spectrum.BlackBody(temperature)
-        bbspec.convert('flam')
-        bbspec *= (1000 * 3.08e18 / 6.957e10)**2
+        # Use a black-body atmosphere.
+        bbspec = get_bb_atmosphere(temperature=temperature, verbose=verbose)
         return bbspec
+
+def get_bb_atmosphere(metallicity=None, temperature=20000, gravity=None,
+                      verbose=False, rebin=None):
+    """
+    Return a blackbody spectrum
+
+    Parameters
+    ----------
+    temperature: float
+        The stellar temperature, in units of K
+    
+    """
+    if ((metallicity is not None) or (gravity is not None) or
+        (rebin is not None)):
+        warnings.warn('Only `temperature` keyword is used for black-body atmosphere')
+    
+    if verbose:
+        print('Black-body atmosphere')
+    
+    # Get black-body atmosphere for specified temperature from pysynphot
+    bbspec = pysynphot.spectrum.BlackBody(temperature) 
+    
+    # pysynphot `BlackBody` generates spectrum in `photlam`, need in `flam`
+    bbspec.convert('flam')
+    
+    # `BlackBody` spectrum is normalized to solar radius star at 1 kiloparsec.
+    # Need to remove this normalization for SPISEA by multiplying bbspec
+    # by (1000 * 1 parsec / 1 Rsun)**2 = (1000 * 3.08e18 cm / 6.957e10 cm)**2
+    bbspec *= (1000 * 3.086e18 / 6.957e10)**2
+    
+    return bbspec
+
     
 #--------------------------------------#
 # Atmosphere formatting functions
