@@ -26,7 +26,6 @@ Available extinction laws:
 * RedLawDamineli16
 * RedLawDeMarchi16
 * RedLawFitzpatrick09
-* RedLawFritz11
 * RedLawHosek18 (deprecated)
 * RedLawHosek18b
 * RedLawNishiyama09 (default)
