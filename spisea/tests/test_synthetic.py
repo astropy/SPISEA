@@ -627,9 +627,13 @@ def test_compact_object_companions():
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
     
     clust_multiplicity = multiplicity.MultiplicityResolvedDK()
-    clust_imf_Mult = imf.Kroupa_2001(multiplicity=clust_multiplicity)
+
+    massLimits = np.array([0.2, 0.5, 1, 120]) # mass segments
+    powers = np.array([-1.3, -2.3, -2.3]) # power-law exponents
+    clust_imf_Mult = imf.IMF_broken_powerlaw(massLimits, powers, multiplicity=clust_multiplicity)
+    #clust_imf_Mult = imf.Kroupa_2001(multiplicity=clust_multiplicity)
     clust_Mult = syn.ResolvedCluster(iso, clust_imf_Mult, cluster_mass, ifmr=ifmr.IFMR_Raithel18())
-    
+
     # Makes sure compact object companions not including MIST WDs
     #(i.e. those with no luminosity) are being given phases
     nan_lum_companions = clust_Mult.companions[np.isnan(clust_Mult.companions['L'])]
