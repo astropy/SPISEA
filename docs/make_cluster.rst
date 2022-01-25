@@ -39,7 +39,7 @@ has already been created::
   massLimits = np.array([0.08, 0.5, 1, 120]) # mass segments
   powers = np.array([-1.3, -2.3, -2.3]) # power-law exponents 
   my_imf = imf.IMF_broken_powerlaw(massLimits, powers, 
-  imf_multi)
+  multiplicity=imf_multi)
 
   # Define the cluster mass
   mass = 10**5 # Units: solar masses
