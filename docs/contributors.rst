@@ -9,7 +9,8 @@ Matthew Hosek Jr -- Lead Developer; collaboratively developed all aspects of cod
 
 Casey Lam -- implemented first IFMR module (IFMR_Raithel18)
 
-Abhimat Gautam -- implemented non-solar metallicity evolution model support for MIST models
+Abhimat Gautam -- implemented non-solar metallicity evolution model
+support for MIST models as well as blackbody atmosphere function
 
 Kelly Lockhart -- helped develop UnresolvedCluster class
 
