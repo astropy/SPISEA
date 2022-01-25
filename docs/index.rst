@@ -82,7 +82,7 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
-2.1.0 (2022-01-24
+2.1.0 (2022-01-24)
 
   * Added ability to create resolved multiple systems, with orbital
     elements assigned to each companion (see :ref:`multi_obj`)
@@ -98,9 +98,7 @@ Change Log
 2.0.0 (2020-07-09)
 
   * Top-level software name change from PyPopStar to SPISEA (see
-    :ref:`version` for instructions to do this). This version of
-	 code was released in `Hosek et al. (2020)
-	 <https://ui.adsabs.harvard.edu/abs/2020arXiv200606691H/abstract>`_. 
+    :ref:`version` for instructions to do this). This version of code was released in `Hosek et al. (2020) <https://ui.adsabs.harvard.edu/abs/2020arXiv200606691H/abstract>`_. 
 
 1.0.1 (2020-06-24)
 
