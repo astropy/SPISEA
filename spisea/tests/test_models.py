@@ -75,7 +75,7 @@ def test_atmosphere_models():
                 
         print('Done {0}'.format(atm_func))
         
-    # One last test: get_merged_atmospheres at different temps
+    # Test get_merged_atmospheres at different temps
     temp_range = [2000, 3500, 4000, 5250, 6000, 12000]
     atm_func = atm.get_merged_atmosphere
     for ii in metals_range:
@@ -87,7 +87,19 @@ def test_atmosphere_models():
 
 
     print('get_merged_atmosphere: all temps/metallicities passed')
-
+    
+    # Test get_bb_atmosphere at different temps
+    # This func only requests temp
+    temp_range = [2000, 3500, 4000, 5250, 6000, 12000]
+    atm_func = atm.get_bb_atmosphere
+    for jj in temp_range:
+        try:
+            test = atm_func(temperature=jj, verbose=True)
+        except:
+            raise Exception('ATM TEST FAILED: {0}, temp = {2}'.format(atm_func, jj))
+    
+    print('get_bb_atmosphere: all temps passed')
+    
     return
 
 def test_filters():
@@ -122,7 +134,8 @@ def test_filters():
                      'ps1,g', 'ps1,r','ps1,i', 'ps1,y',
                      'ukirt,J', 'ukirt,H', 'ukirt,K',
                      'vista,Y', 'vista,Z', 'vista,J',
-                     'vista,H',  'vista,Ks', 'ztf,g', 'ztf,r', 'ztf,i']
+                     'vista,H',  'vista,Ks', 'ztf,g', 'ztf,r', 'ztf,i',
+                     'hawki,J', 'hawki,H', 'hawki,Ks']
 
     # Loop through filters to test that they work: get_filter_info
     for ii in filt_list:

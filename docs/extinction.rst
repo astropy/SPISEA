@@ -21,11 +21,11 @@ for an example.
 Available extinction laws:
 
 * RedLawPowerLaw
+* RedLawBrokenPowerLaw
 * RedLawCardelli
 * RedLawDamineli16
 * RedLawDeMarchi16
 * RedLawFitzpatrick09
-* RedLawFritz11
 * RedLawHosek18 (deprecated)
 * RedLawHosek18b
 * RedLawNishiyama09 (default)
@@ -42,6 +42,9 @@ Extinction Law Classes
 .. autoclass:: reddening.RedLawPowerLaw
 	       :members: powerlaw
 
+.. autoclass:: reddening.RedLawBrokenPowerLaw
+	       :members: broken_powerlaw
+			 
 .. autoclass:: reddening.RedLawCardelli
 	       :members: Cardelli89
 

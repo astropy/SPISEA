@@ -8,6 +8,7 @@ from astropy.table import Table, Column
 import pysynphot
 import time
 import pdb
+import warnings
 
 log = logging.getLogger('atmospheres')
 
@@ -33,7 +34,7 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
 
     # Filter by metallicity. Will chose the closest metallicity to desired input
     metal_list = np.unique(np.array(z_arr))
-    metal_idx = np.where( (abs(metal_list - metallicity)) == min(abs(metal_list - metallicity)))
+    metal_idx = np.argmin(np.abs(metal_list - metallicity))
     
     z_filt = np.where(z_arr == metal_list[metal_idx])
     teff_arr = teff_arr[z_filt]
@@ -87,7 +88,7 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     
     return (temperature_new, gravity_new)
 
-def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4):
+def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=False):
     """
     Return atmosphere from the Kurucz pysnphot grid 
     (`Kurucz 1993 <http://www.stsci.edu/hst/observatory/crds/k93models.html>`_).
@@ -110,9 +111,7 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4):
         The stellar gravity, in cgs units
         
     rebin: boolean
-        If true, rebins the atmospheres so that they are the same
-        resolution as the Castelli+04 atmospheres. Default is False,
-        which is often sufficient synthetic photometry in most cases.
+        Always false for this particular function
     """
     try:
         sp = pysynphot.Icat('k93models', temperature, metallicity, gravity)
@@ -318,9 +317,9 @@ def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4
     """
     # Set up the proper root directory
     if rebin == True:
-        root_dir = '/g/lu/models/cdbs/grid/cmfgen_rot_rebin'
+        root_dir = os.environ['PYSYN_CDBS'] + '/cmfgen_rot_rebin/'
     else:
-        root_dir = '/g/lu/models/cdbs/grid/cmfgen_rot'
+        root_dir = os.environ['PYSYN_CDBS'] + '/cmfgen_rot/'
 
     # Read in catalog, extract atmosphere info
     cat = Table.read('{0}/catalog.fits'.format(root_dir), format='fits')
@@ -907,14 +906,41 @@ def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False
                                             gravity=gravity)
     
     except pysynphot.exceptions.ParameterOutOfBounds:
-        if verbose:
-            print('BB atmosphere')
-                
-        # Use a blackbody.
-        bbspec = pysynphot.spectrum.BlackBody(temperature)
-        bbspec.convert('flam')
-        bbspec *= (1000 * 3.08e18 / 6.957e10)**2
+        # Use a black-body atmosphere.
+        bbspec = get_bb_atmosphere(temperature=temperature, verbose=verbose)
         return bbspec
+
+def get_bb_atmosphere(metallicity=None, temperature=20000, gravity=None,
+                      verbose=False, rebin=None):
+    """
+    Return a blackbody spectrum
+
+    Parameters
+    ----------
+    temperature: float
+        The stellar temperature, in units of K
+    
+    """
+    if ((metallicity is not None) or (gravity is not None) or
+        (rebin is not None)):
+        warnings.warn('Only `temperature` keyword is used for black-body atmosphere')
+    
+    if verbose:
+        print('Black-body atmosphere')
+    
+    # Get black-body atmosphere for specified temperature from pysynphot
+    bbspec = pysynphot.spectrum.BlackBody(temperature) 
+    
+    # pysynphot `BlackBody` generates spectrum in `photlam`, need in `flam`
+    bbspec.convert('flam')
+    
+    # `BlackBody` spectrum is normalized to solar radius star at 1 kiloparsec.
+    # Need to remove this normalization for SPISEA by multiplying bbspec
+    # by (1000 * 1 parsec / 1 Rsun)**2 = (1000 * 3.08e18 cm / 6.957e10 cm)**2
+    bbspec *= (1000 * 3.086e18 / 6.957e10)**2
+    
+    return bbspec
+
     
 #--------------------------------------#
 # Atmosphere formatting functions
@@ -1584,7 +1610,7 @@ def organize_BTSettl_2015_atmospheres(path_to_dir):
     path_to_dir is the path to the directory containing all of the downloaded
     files
 
-    Saves cdbs-ready atmospheres into /g/lu/models/cdbs/grid/BTSettl_2015
+    Saves cdbs-ready atmospheres into os.environ['PYSYN_CDBS']/grid/BTSettl_2015
     (assumes this directory exists)
     """
     # Save current directory for return later, move into working dir
@@ -1627,7 +1653,7 @@ def organize_BTSettl_2015_atmospheres(path_to_dir):
         hdu_new = fits.HDUList([prihdu, tbhdu])
         
         # Write new fits table in cdbs directory
-        hdu_new.writeto('/g/lu/models/cdbs/grid/BTSettl_2015/'+i, overwrite=True)
+        hdu_new.writeto(os.environ['PYSYN_CDBS']+'grid/BTSettl_2015/'+i, overwrite=True)
 
         hdu.close()
         hdu_new.close()
@@ -1676,7 +1702,7 @@ def make_BTSettl_2015_catalog(path_to_dir):
     
     return
 
-def rebin_BTSettl_2015(cdbs_path='/g/lu/models/cdbs/'):
+def rebin_BTSettl_2015(cdbs_path=os.environ['PYSYN_CDBS']):
     """
     Rebin BTSettle_CIFITS2011_2015 models to atlas ck04 resolution; this makes
     spectrophotometry MUCH faster
@@ -1986,7 +2012,7 @@ def organize_WDKoester_atmospheres(path_to_dir):
     path_to_dir is the path to the directory containing all of the downloaded
     files
 
-    Saves cdbs-ready atmospheres into /g/lu/models/cdbs/grid/wdKoeseter
+    Saves cdbs-ready atmospheres into os.environ['PYSYN_CDBS']/wdKoeseter
     (assumes this directory exists)
     """
     # Save current directory for return later, move into working dir
@@ -2017,7 +2043,7 @@ def organize_WDKoester_atmospheres(path_to_dir):
         hdu_new = fits.HDUList([prihdu, tbhdu])
         
         # Write new fits table in cdbs directory
-        hdu_new.writeto('/g/lu/models/cdbs/grid/wdKoester/'+i.replace('.txt', '.fits'), overwrite=True)
+        hdu_new.writeto(os.environ['PYSYN_CDBS']+'/grid/wdKoester/'+i.replace('.txt', '.fits'), overwrite=True)
 
         hdu_new.close()
     
@@ -2066,7 +2092,7 @@ def make_WDKoester_catalog(path_to_dir):
     
     return
 
-def rebin_WDKoester(cdbs_path='/g/lu/models/cdbs/'):
+def rebin_WDKoester(cdbs_path=os.environ['PYSYN_CDBS']):
     """
     Rebin wdKoester models to atlas ck04 resolution; this makes
     spectrophotometry MUCH faster

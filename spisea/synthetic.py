@@ -26,6 +26,8 @@ import time
 import warnings
 import pdb
 from scipy.spatial import cKDTree as KDTree
+import inspect
+import astropy.modeling
 
 default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
@@ -207,6 +209,7 @@ class ResolvedCluster(Cluster):
         star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='isWR') )
         star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='mass_current') )
         star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='phase') )
+        star_systems.add_column( Column(np.empty(N_systems, dtype=float), name='metallicity') )
 
         # Add the filter columns to the table. They are empty so far.
         # Keep track of the filter names in : filt_names
@@ -220,6 +223,7 @@ class ResolvedCluster(Cluster):
         star_systems['isWR'] = np.round(self.iso_interps['isWR'](star_systems['mass']))
         star_systems['mass_current'] = self.iso_interps['mass_current'](star_systems['mass'])
         star_systems['phase'] = np.round(self.iso_interps['phase'](star_systems['mass']))
+        star_systems['metallicity'] = np.ones(N_systems)*self.iso.metallicity
 
         # For a very small fraction of stars, the star phase falls on integers in-between
         # the ones we have definition for, as a result of the interpolation. For these
@@ -254,7 +258,11 @@ class ResolvedCluster(Cluster):
             
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
-            r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(star_systems['mass'][idx_rem])
+            if 'metallicity_array' in inspect.getfullargspec(self.ifmr.generate_death_mass).args:
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=star_systems['mass'][idx_rem],
+                                                                     metallicity_array=star_systems['metallicity'][idx_rem])
+            else:
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=star_systems['mass'][idx_rem])
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
@@ -296,8 +304,23 @@ class ResolvedCluster(Cluster):
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='isWR') )
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='mass_current') )
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='phase') )
+        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='metallicity') )
         for filt in self.filt_names:
             companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
+            
+        if isinstance(self.imf._multi_props, multiplicity.MultiplicityResolvedDK):
+            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='log_a') )
+            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='e') )
+            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='i', description = 'degrees') )
+            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Omega') )
+            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='omega') )
+            
+            for ii in range(len(companions)):
+                companions['log_a'][ii] = self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx'][ii]])
+            
+            companions['e'] = self.imf._multi_props.random_e(np.random.rand(N_comp_tot))
+            companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(np.random.rand(N_comp_tot),np.random.rand(N_comp_tot),np.random.rand(N_comp_tot))
+
 
         # Make an array that maps system index (ii), companion index (cc) to
         # the place in the 1D companions array.
@@ -331,6 +354,7 @@ class ResolvedCluster(Cluster):
                 companions['isWR'][cdx] = np.round(self.iso_interps['isWR'](comp_mass))
                 companions['mass_current'] = self.iso_interps['mass_current'](companions['mass'])
                 companions['phase'] = np.round(self.iso_interps['phase'](companions['mass']))
+                companions['metallicity'] = np.ones(N_comp_tot)*self.iso.metallicity
 
                 # For a very small fraction of stars, the star phase falls on integers in-between
                 # the ones we have definition for, as a result of the interpolation. For these
@@ -375,12 +399,16 @@ class ResolvedCluster(Cluster):
         if self.ifmr != None:
             # Identify compact objects as those with Teff = 0 or with masses above the max iso mass
             highest_mass_iso = self.iso.points['mass'].max()
-            cdx_rem = np.where((companions['Teff'] == 0) &
+            cdx_rem = np.where(np.isnan(companions['Teff']) &
                                 (companions['mass'] > highest_mass_iso))[0]
-            
+
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
-            r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(companions['mass'][cdx_rem])
+            if 'metallicity_array' in inspect.getfullargspec(self.ifmr.generate_death_mass).args:
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=star_systems['mass'][cdx_rem],
+                                                                     metallicity_array=star_systems['metallicity'][cdx_rem])
+            else:
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=star_systems['mass'][cdx_rem])
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
@@ -415,7 +443,7 @@ class ResolvedCluster(Cluster):
         a Teff = 0, as set up by _make_star_systems_table_interp.
         If self.ifmr == None, then both high and low-mass bad systems are 
         removed. If self.ifmr != None, then we will save the high mass systems 
-        since they will be pluggedd into an ifmr later.
+        since they will be plugged into an ifmr later.
         """
         N_systems = len(star_systems)
 
@@ -928,6 +956,8 @@ class IsochronePhot(Isochrone):
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
                           'ubv,R', 'ubv,I']):
 
+        self.metallicity = metallicity
+
         # Make the iso_dir, if it doesn't already exist
         if not os.path.exists(iso_dir):
             os.mkdir(iso_dir)
@@ -1421,6 +1451,9 @@ def get_filter_info(name, vega=vega, rebin=True):
     elif name.startswith('gaia'):
         version = tmp[1]
         filt = filters.get_gaia_filt(version, filterName)
+
+    elif name.startswith('hawki'):
+        filt = filters.get_hawki_filt(filterName)
         
     else:
         filt = ObsBandpass(name)
@@ -1536,7 +1569,10 @@ def get_obs_str(col):
                  'ctio_osiris_H': 'ctio_osiris,H', 'ctio_osiris_K': 'ctio_osiris,K',
                  'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i',
                  'gaiaDR2_G': 'gaia,dr2_rev,G', 'gaiaDR2_Gbp':'gaia,dr2_rev,Gbp',
-                 'gaiaDR2_Grp':'gaia,dr2_rev,Grp'}
+                 'gaiaDR2_Grp':'gaia,dr2_rev,Grp',
+                 'hawki_J': 'hawki,J',
+                 'hawki_H': 'hawki,H',
+                 'hawki_Ks': 'hawki,Ks'}
 
     obs_str = filt_list[name]
         
