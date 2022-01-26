@@ -637,8 +637,8 @@ def test_compact_object_companions():
     # Makes sure compact object companions not including MIST WDs
     #(i.e. those with no luminosity) are being given phases
     nan_lum_companions = clust_Mult.companions[np.isnan(clust_Mult.companions['L'])]
-    
-    assert all(np.isnan(nan_lum_companions['phase'])) == False
+
+    assert (len(nan_lum_companions) == 0) | (all(np.isnan(nan_lum_companions['phase'])) == False)
 
 #=================================#
 # Additional timing functions
