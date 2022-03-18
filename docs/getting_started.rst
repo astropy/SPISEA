@@ -205,7 +205,7 @@ Requirements
 Installation
 -----------------------
 
-To create the container image, clone this repository and build the container:
+To create the container image, clone this repository and build the container::
 
     git clone https://github.com/astropy/SPISEA.git
     cd SPISEA
@@ -213,11 +213,11 @@ To create the container image, clone this repository and build the container:
     
 Usage
 -----------------------
-To open a shell ready play with SPISEA:
+To open a shell ready play with SPISEA::
 
     docker run -ti spisea bash
 
-To execute a script you have in your current folder: 
+To execute a script you have in your current folder:: 
 
     docker run -ti -v $PWD:/scripts/ spisea python /scripts/myscript.py
 
@@ -225,15 +225,15 @@ To execute a script you have in your current folder:
 Deploy from DockerHub
 ==========================
 
-If you don't want to build the image from scratch you can use a pre-build container image from `DockerHub <https://hub.docker.com/r/amigahub/spisea>` using the following commands:
+If you don't want to build the image from scratch you can use a pre-build container image from `DockerHub <https://hub.docker.com/r/amigahub/spisea>` using the following commands::
 
     docker pull amigahub/spisea:v1
 
-Then, to open a shell ready to play with SPISEA:
+Then, to open a shell ready to play with SPISEA::
 
     docker run -ti amigahub/spisea:v1 bash
 
-To execute a script you have in your current folder: 
+To execute a script you have in your current folder::
 
     docker run -ti -v $PWD:/scripts/ amigahub/spisea:v1 python /scripts/myscript.py
 
@@ -241,11 +241,11 @@ To execute a script you have in your current folder:
 Deploy from Singularity Containers
 ==========================
 
-Download the image from DockerHub and convert it into a ``.sif`` image for Singularity.
+Download the image from DockerHub and convert it into a ``.sif`` image for Singularity.::
 
     singularity pull spisea.sif docker://amigahub/spisea:v1
     
-After downloading the image, you can use it in singularity by opening a shell on SPISEA image:
+After downloading the image, you can use it in singularity by opening a shell on SPISEA image::
 
     singularity shell spisea.sif 
 
