@@ -225,7 +225,7 @@ To execute a script you have in your current folder::
 Deploy from DockerHub
 ==========================
 
-If you don't want to build the image from scratch you can use a pre-build container image from `DockerHub <https://hub.docker.com/r/amigahub/spisea>` using the following commands::
+If you don't want to build the image from scratch you can use a pre-build container image from `DockerHub <https://hub.docker.com/r/amigahub/spisea>`_ using the following commands::
 
     docker pull amigahub/spisea:v1
 
@@ -238,7 +238,7 @@ To execute a script you have in your current folder::
     docker run -ti -v $PWD:/scripts/ amigahub/spisea:v1 python /scripts/myscript.py
 
 ==========================
-Deploy from Singularity Containers
+Deploy from Singularity containers
 ==========================
 
 Download the image from DockerHub and convert it into a ``.sif`` image for Singularity.::
