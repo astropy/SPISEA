@@ -59,8 +59,8 @@ the values in the cluster output table:
 
 
 .. figure:: images/cluster_table.png
-	    :width: 332
-            :height: 450
+	    :width: 405
+            :height: 550
 	    :align: center
 
 Tips and Tricks: The Cluster Object
