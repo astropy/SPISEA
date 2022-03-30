@@ -360,8 +360,8 @@ class ResolvedCluster(Cluster):
                 # stars, round phase down to nearest defined phase (e.g., if phase is 71,
                 # then round it down to 5, rather than up to 101).
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
-                star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-                bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+                companions_phase_non_nan = np.nan_to_num(companions['phase'], nan=-99)
+                bad = np.where( (companions_phase_non_nan > 5) & (companions_phase_non_nan < 101) & (companions_phase_non_nan != 9) & (companions_phase_non_nan != -99))
                 # Print warning, if desired
                 verbose=False
                 if verbose:
