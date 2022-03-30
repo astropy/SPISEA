@@ -51,8 +51,8 @@ object output. Here is a table from Hosek et al. 2020 that describes
 the values in the isochrone output table:
 
 .. figure:: images/isochrone_table.png
-	    :width: 250
-            :height: 293
+	    :width: 293
+            :height: 250
 	    :align: center
 
 
