@@ -89,7 +89,7 @@ Change Log
     (ResolvedCluster and associated subclasses: applies when
     multiplicity + IFMR are used)
 
-   * Minor additions to docs
+  * Minor additions to docs
 
 2.1.0 (2022-01-24)
 
