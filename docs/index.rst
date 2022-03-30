@@ -82,6 +82,15 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+
+2.1.1 (2022-03-30)
+
+  * Bugfix: fixed application of IFMR to objects in companions table
+    (ResolvedCluster and associated subclasses: applies when
+    multiplicity + IFMR are used)
+
+   * Minor additions to docs
+
 2.1.0 (2022-01-24)
 
   * Added ability to create resolved multiple systems, with orbital
