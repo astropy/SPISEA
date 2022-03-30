@@ -51,10 +51,13 @@ object output. Here is a table from Hosek et al. 2020 that describes
 the values in the isochrone output table:
 
 .. figure:: images/isochrone_table.png
-	    :width: 352
-            :height: 235
-	    :align: left
+	    :width: 250
+            :height: 293
+	    :align: center
 
+
+
+		    
 
 Tips and Tricks: The IsochronePhot Object
 -----------------------------------------
