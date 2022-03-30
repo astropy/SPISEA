@@ -132,7 +132,6 @@ class ResolvedCluster(Cluster):
                      seed=None):
         Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
                              seed=seed)
-
         # Provide a user warning is random seed is set
         if seed is not None:
             print('WARNING: random seed set to %i' % seed)
@@ -361,8 +360,8 @@ class ResolvedCluster(Cluster):
                 # stars, round phase down to nearest defined phase (e.g., if phase is 71,
                 # then round it down to 5, rather than up to 101).
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
-                star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-                bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+                companions_phase_non_nan = np.nan_to_num(companions['phase'], nan=-99)
+                bad = np.where( (companions_phase_non_nan > 5) & (companions_phase_non_nan < 101) & (companions_phase_non_nan != 9) & (companions_phase_non_nan != -99))
                 # Print warning, if desired
                 verbose=False
                 if verbose:
@@ -405,10 +404,10 @@ class ResolvedCluster(Cluster):
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
             if 'metallicity_array' in inspect.getfullargspec(self.ifmr.generate_death_mass).args:
-                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=star_systems['mass'][cdx_rem],
-                                                                     metallicity_array=star_systems['metallicity'][cdx_rem])
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem],
+                                                                     metallicity_array=companions['metallicity'][cdx_rem])
             else:
-                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=star_systems['mass'][cdx_rem])
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem])
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)

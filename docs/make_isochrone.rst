@@ -45,9 +45,19 @@ An example of making an IsochronePhot object::
 			    iso_dir=iso_dir)
 
 See `Quick Start Example
-<https://github.com/astropy/SPISEA/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb>`_
-for a detailed example showing how to interact with the isochrone object output.
+<https://github.com/astropy/SPISEA/blob/main/docs/Quick_Start_Make_Cluster.ipynb>`_
+for a detailed example showing how to interact with the isochrone
+object output. Here is a table from Hosek et al. 2020 that describes
+the values in the isochrone output table:
 
+.. figure:: images/isochrone_table.png
+	    :width: 468
+            :height: 400
+	    :align: center
+
+
+
+		    
 
 Tips and Tricks: The IsochronePhot Object
 -----------------------------------------

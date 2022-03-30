@@ -51,10 +51,17 @@ has already been created::
 
 
 See `Quick Start Example
-<https://github.com/astropy/SPISEA/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb>`_
+<https://github.com/astropy/SPISEA/blob/main/docs/Quick_Start_Make_Cluster.ipynb>`_
 for a detailed example for how to make different
 cluster sub-classes and interact with the resulting output.
+Here is a table from Hosek et al. 2020 that describes
+the values in the cluster output table:
 
+
+.. figure:: images/cluster_table.png
+	    :width: 405
+            :height: 550
+	    :align: center
 
 Tips and Tricks: The Cluster Object
 -----------------------------------------
