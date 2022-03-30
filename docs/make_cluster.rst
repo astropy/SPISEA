@@ -51,7 +51,7 @@ has already been created::
 
 
 See `Quick Start Example
-<https://github.com/astropy/SPISEA/blob/new_doc/docs/Quick_Start_Make_Cluster.ipynb>`_
+<https://github.com/astropy/SPISEA/blob/main/docs/Quick_Start_Make_Cluster.ipynb>`_
 for a detailed example for how to make different
 cluster sub-classes and interact with the resulting output.
 
