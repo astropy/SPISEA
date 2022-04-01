@@ -219,8 +219,8 @@ To open a shell ready play with SPISEA::
 
 To execute a script you have in your current folder:: 
 
-    docker run -ti -v $PWD:/scripts/ spisea python /scripts/myscript.py
-
+    docker run -ti -v $PWD:$PWD -w $PWD spisea  python myscript.py
+    
 ==========================
 Deploy from DockerHub
 ==========================
@@ -235,7 +235,7 @@ Then, to open a shell ready to play with SPISEA::
 
 To execute a script you have in your current folder::
 
-    docker run -ti -v $PWD:/scripts/ amigahub/spisea:v1 python /scripts/myscript.py
+    docker run -ti -v $PWD:$PWD -w $PWD spisea  python myscript.py
 
 ==========================
 Deploy from Singularity containers
