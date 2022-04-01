@@ -83,6 +83,11 @@ releases will be co-authors in future SPISEA software papers.
 Change Log
 ----------
 
+2.1.2 (2022-04-01)
+
+  * New installation methods using Docker containers and Singularity
+
+
 2.1.1 (2022-03-30)
 
   * Bugfix: fixed application of IFMR to objects in companions table
