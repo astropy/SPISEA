@@ -28,3 +28,6 @@ Sam Rose -- developed metallicity-dependent IFMRs (IFMR_Spera15 and IFMR_N20_Suk
 
 Rebecca Lewis -- added HAWK-I filter support, code testing/debugging
 
+Manuel Parra-Royón -- installation using Docker containers and Singularity
+
+Javier Moldón -- installation using Docker containers and Singularity
