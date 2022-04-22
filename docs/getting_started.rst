@@ -170,9 +170,12 @@ To test the full range of
 evolution models, atmosphere models, and photometric filters,
 run the test functions by going into the ``SPISEA/spisea`` directory and running::
 
-    py.test
+    pytest
 
-This will trigger the test functions we have implemented. If all is
+Note that this uses the python
+`pytest
+<https://docs.pytest.org/en/7.1.x/>`_
+package. This will trigger the test functions we have implemented. If all is
 well, you shouldn't get any errors. Warnings are (generally) fine.
 
 TroubleShooting
