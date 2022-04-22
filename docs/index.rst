@@ -68,9 +68,8 @@ Advanced Documentation
 
 Contributions
 ---------------
-We encourage contributions to SPISEA, particular
-those that add support for star formation histories,
-new models, higher spectral resolution, etc.
+Have an idea? We'd love to have you join our team!
+We strongly encourage contributions to SPISEA.
 
 For feature additions, we ask that users make their
 own fork of the repository, make their changes, and then submit a pull
