@@ -189,4 +189,69 @@ either or both of the following warnings::
     UserWarning: PYSYN_CDBS is undefined; functionality will be SEVERELY crippled.
     
     UserWarning: SPISEA_MODELS is undefined; functionality will be SEVERELY crippled.
+      
+==========================
+Build and deploy from Docker
+==========================
+
+Build your own SPISEA image for Docker Containers. This installation form contains SPISEA deployed in a container and includes the data sets, models and all the necessary paths and code.
+
+Requirements
+-----------------------
+
+- Linux, Windows or MacOS with Docker installed.
+- At least 2 CPUs and 4 GB of RAM and 16 GB of storage.
+
+Installation
+-----------------------
+
+To create the container image, clone this repository and build the container::
+
+    git clone https://github.com/astropy/SPISEA.git
+    cd SPISEA
+    docker build -t spisea .
     
+Usage
+-----------------------
+To open a shell ready play with SPISEA::
+
+    docker run -ti spisea bash
+
+To execute a script you have in your current folder:: 
+
+    docker run -ti -v $PWD:$PWD -w $PWD spisea  python myscript.py
+    
+==========================
+Deploy from DockerHub
+==========================
+
+If you don't want to build the image from scratch you can use a pre-build container image from `DockerHub <https://hub.docker.com/r/amigahub/spisea>`_ using the following commands::
+
+    docker pull amigahub/spisea:v1
+
+Then, to open a shell ready to play with SPISEA::
+
+    docker run -ti amigahub/spisea:v1 bash
+
+To execute a script you have in your current folder::
+
+    docker run -ti -v $PWD:$PWD -w $PWD spisea  python myscript.py
+
+==========================
+Deploy from Singularity containers
+==========================
+
+Download the image from DockerHub and convert it into a ``.sif`` image for Singularity.::
+
+    singularity pull spisea.sif docker://amigahub/spisea:v1
+    
+After downloading the image, you can use it in singularity by opening a shell on SPISEA image::
+
+    singularity shell spisea.sif 
+
+
+
+
+
+    
+
