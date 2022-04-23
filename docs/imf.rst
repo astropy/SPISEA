@@ -9,14 +9,15 @@ Initial Mass Functions (IMFs) are defined as classes in
   from spisea.imf import imf
   imf_obj = imf.<class_name>
 
+Currently, the IMF is implemented as a power-law:
+dn / dm ~ m^-alpha. The Broken Power-Law IMF object
+gives users the flexibility to define the mass range
+and exponents of the IMF. 
+
 The IMF object is an input for the :ref:`cluster_objects`, and will
 be used to draw the inital stellar mass distribution for the cluster.
 A :ref:`multi_obj` may be passed to the IMF object to
 form multiple star systems.
-
-The IMFs are defined as broken power laws. Additional functional forms
-may be implemented as sub-classes off of the base IMF class.
-
 
 Base IMF Class
 --------------
