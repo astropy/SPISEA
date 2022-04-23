@@ -1452,7 +1452,7 @@ class RedLawHosek18b(pysynphot.reddening.CustomRedLaw):
     """
     Defines extinction law from `Hosek et al. 2019 
     <https://ui.adsabs.harvard.edu/abs/2019ApJ...870...44H/abstract>`_
-    for the Arches cluster and Wd1. This should be used over RedLawHosek18b.
+    for the Arches cluster and Wd1.
     The law is derived between 0.7 - 3.54 microns
     """
     def __init__(self):
