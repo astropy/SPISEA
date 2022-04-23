@@ -26,7 +26,6 @@ Available extinction laws:
 * RedLawDamineli16
 * RedLawDeMarchi16
 * RedLawFitzpatrick09
-* RedLawHosek18 (deprecated)
 * RedLawHosek18b
 * RedLawNishiyama09 (default)
 * RedLawNoguerasLara18
@@ -59,10 +58,6 @@ Extinction Law Classes
 
 .. autoclass:: reddening.RedLawFritz11
 	       :members: Fritz11
-
-.. _Hosek_old:
-.. autoclass:: reddening.RedLawHosek18
-	       :members: Hosek18
 
 .. _Hosek_new:
 .. autoclass:: reddening.RedLawHosek18b

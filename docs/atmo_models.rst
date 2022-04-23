@@ -28,6 +28,7 @@ The atmosphere model grids currently supported are:
 
 * get_merged_atmosphere (default for stars)
 * get_wd_atmospheres (default for white dwarfs)
+* get_bb_atmosphere
 * get_castelli_atmosphere
 * get_phoenixv16_atmosphere
 * get_BTSettl_2015_atmosphere
@@ -43,6 +44,8 @@ Model Atmosphere Classes
 
 .. autofunction:: atmospheres.get_wd_atmosphere
 
+.. autofunction:: atmospheres.get_bb_atmosphere
+   
 .. autofunction:: atmospheres.get_castelli_atmosphere
 
 .. autofunction:: atmospheres.get_phoenixv16_atmosphere

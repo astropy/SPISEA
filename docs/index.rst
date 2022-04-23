@@ -68,20 +68,24 @@ Advanced Documentation
 
 Contributions
 ---------------
-We encourage contributions to SPISEA, particular
-those that add support for star formation histories,
-new models, higher spectral resolution, etc.
+Have an idea? We'd love to have you join our team!
+We welcome and encourage contributions to SPISEA.
 
 For feature additions, we ask that users make their
 own fork of the repository, make their changes, and then submit a pull
 request to the "dev" branch.
 
-All contributions will be acknowledged on the :ref:`contributors` page. Contributors with features used in code
+All contributions will be acknowledged on the :ref:`contributors` page
+(with permission). Contributors with features used in code
 releases will be co-authors in future SPISEA software papers.
 
 
 Change Log
 ----------
+2.1.3 (2022-04-23)
+
+  * Updates to documentation and Quick-Start Guide
+  * Fully depreciated Hosek18 extinction law to avoid confusion with Hosek18b
 
 2.1.2 (2022-04-01)
 
