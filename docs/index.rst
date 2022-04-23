@@ -82,6 +82,10 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.1.3 (2022-04-23)
+
+  * Updates to documentation and Quick-Start Guide
+  * Fully depreciated Hosek18 extinction law to avoid confusion with Hosek18b
 
 2.1.2 (2022-04-01)
 
