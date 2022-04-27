@@ -31,18 +31,6 @@ Below is a table of atmosphere model grids currently supported by SPISEA
             :height: 204
 	    :align: center
 
-* get_merged_atmosphere (default for stars)
-* get_wd_atmospheres (default for white dwarfs)
-* get_bb_atmosphere
-* get_castelli_atmosphere
-* get_phoenixv16_atmosphere
-* get_BTSettl_2015_atmosphere
-* get_BTSettl_atmosphere
-* get_wdKoester_atmosphere
-* get_kurucz_atmosphere
-* get_phoenix_atmosphere
-
-
 Model Atmosphere Classes
 -------------------------
 .. autofunction:: atmospheres.get_merged_atmosphere
