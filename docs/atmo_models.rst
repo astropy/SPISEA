@@ -24,7 +24,12 @@ spectrum of each star in the isochrone model.
 PopStar uses the pysynphot framework to extract the model atmosphere,
 and the the output spectrum is a `pysynphot.Icat object <https://pysynphot.readthedocs.io/en/latest/ref_api.html#pysynphot.catalog.Icat>`_.
 
-The atmosphere model grids currently supported are:
+Below is a table of atmosphere model grids currently supported by SPISEA
+
+.. figure:: images/atm_models.png
+	    :width: 900
+            :height: 204
+	    :align: center
 
 * get_merged_atmosphere (default for stars)
 * get_wd_atmospheres (default for white dwarfs)
