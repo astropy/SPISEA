@@ -20,6 +20,10 @@ while the ``dev`` branch is for code development.
 
 Dependencies
 ----------------
+The basic SPISEA installation requires ~20 GB of memory, which is
+primarily for the suite of stellar evolution and atmosphere models.
+Other dependencies:
+
 * python (>=3.7; preferably via AstroConda, as it includes some necessary
   packages, like astropy and pysynphot)
 * astropy
@@ -95,8 +99,9 @@ You will need to download 2 files:
 
 * `spisea_cdbs.tar.gz <http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs.tar.gz>`_  (142 MB; 248 MB unzipped)
 
-You can also optionally download a third file, which contains
-higher-resolution stellar atmospheres:
+You may **optionally** download a third file, which contains
+higher-resolution stellar atmospheres. Note that this file is quite
+large, and is not necessary for most SPISEA use cases:
 
 * `spisea_cdbs_highres.tar.gz <http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs_highres.tar.gz>`_ (50 GB; 74 GB unzipped)
 
