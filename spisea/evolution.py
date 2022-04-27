@@ -942,25 +942,25 @@ class MISTv1(StellarEvolution):
         and 4/2019 (other metallicities). Default is 1.2.
     """
     def __init__(self, version=1.2):
-        # define metallicity parameters for Parsec models
-        self.z_list = [0.0000015,   # [Fe/H] = -4.00
-                       0.0000047,   # [Fe/H] = -3.50
-                       0.000015,    # [Fe/H] = -3.00
-                       0.000047,    # [Fe/H] = -2.50
-                       0.00015, # [Fe/H] = -2.00
-                       0.00026, # [Fe/H] = -1.75
-                       0.00047, # [Fe/H] = -1.50
-                       0.00084, # [Fe/H] = -1.25
-                       0.0015,  # [Fe/H] = -1.00
-                       0.0026,  # [Fe/H] = -0.75
-                       0.0046,  # [Fe/H] = -0.50
-                       0.0082,  # [Fe/H] = -0.25
-                       0.015,   # [Fe/H] = 0.00
-                       0.024,   # [Fe/H] = 0.25
-                       0.041]   # [Fe/H] = 0.50
+        # define metallicity parameters for MIST models
+        self.z_list = [0.0000014,   # [Fe/H] = -4.00
+                       0.0000045,   # [Fe/H] = -3.50
+                       0.000014,    # [Fe/H] = -3.00
+                       0.000045,    # [Fe/H] = -2.50
+                       0.00014, # [Fe/H] = -2.00
+                       0.00025, # [Fe/H] = -1.75
+                       0.00045, # [Fe/H] = -1.50
+                       0.00080, # [Fe/H] = -1.25
+                       0.0014,  # [Fe/H] = -1.00
+                       0.0025,  # [Fe/H] = -0.75
+                       0.0045,  # [Fe/H] = -0.50
+                       0.0080,  # [Fe/H] = -0.25
+                       0.014,   # [Fe/H] = 0.00
+                       0.025,   # [Fe/H] = 0.25
+                       0.045]   # [Fe/H] = 0.50
         
         # populate list of isochrone ages (log scale)
-        self.age_list = np.arange(5.01, 10.30+0.005, 0.01)
+        self.age_list = np.arange(5.01, 10.15+0.005, 0.01)
 
         # Set version directory
         self.version = version
