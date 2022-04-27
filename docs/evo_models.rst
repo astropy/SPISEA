@@ -12,8 +12,13 @@ Stellar evolution models are defined as classes in
 
 The evolution object is an input for the :ref:`isochrone_objects`. 
   
-The stellar evolution model classes currently supported by SPISEA
-are:
+Below is a table of the evolution models currently supported by SPISEA.
+
+.. figure:: images/evo_models.png
+	    :width: 900
+            :height: 179
+	    :align: center
+
 
 * MISTv1 (default)
 * MergedBaraffePisaEkstromParsec
