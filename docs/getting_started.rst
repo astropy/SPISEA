@@ -110,8 +110,8 @@ SPISEA uses the low-resolution atmospheres (R = 250) in
 it is then much faster for synthetic photometry and
 is sufficient in most applications. However, the user can change
 this default; see  :ref:`atmo_models` for
-more details. Unless you change this default,
-``spisea_cdbs_highres.tar.gz`` is not required.
+more details. **Unless you change this default,**
+``spisea_cdbs_highres.tar.gz`` **is not required.**
 
 Once downloaded, ``spisea_cdbs.tar.gz`` (and
 ``spisea_cdbs_highres.tar.gz``, if desired) should be
