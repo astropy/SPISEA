@@ -12,25 +12,15 @@ Stellar evolution models are defined as classes in
 
 The evolution object is an input for the :ref:`isochrone_objects`. 
   
-Below is a table of the evolution models currently supported by SPISEA.
+Below is a table of the evolution model grids currently supported by SPISEA.
 
 .. figure:: images/evo_models.png
 	    :width: 900
             :height: 179
 	    :align: center
 
-
-* MISTv1 (default)
-* MergedBaraffePisaEkstromParsec
-* MergedPisaEkstromParsec
-* Baraffe15
-* Ekstrom12
-* Parsec
-* Pisa
-
-Currently, only the MISTv1 grid offers non-solar metallicity models
-(-4 < [Fe/H] <0.5). All other grids have solar metallicity only.
-If you require other evolution models or need to
+Please note the stellar mass, age, and metallicity range of the evolution
+model grid you choose. If you require other evolution models or need to
 expand the existing grids, please see
 :ref:`add_evo_models`. 
 
