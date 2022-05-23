@@ -37,10 +37,10 @@ def test_evolution_models():
 
     
     # Array of age_ranges for the specific evolution models to test
-    age_vals = [age_all_arr, age_all_arr, age_all_arr, age_all_arr, age_young_arr, age_young_arr, age_young_arr]
+    age_vals = [age_all_arr, age_all_arr, age_all_arr, age_young_arr, age_young_arr, age_young_arr]
 
     # Array of metallicities for the specific evolution models to test
-    metal_vals = [metal_range, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar]
+    metal_vals = [metal_range, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar]
 
     assert len(evo_models) == len(age_vals) == len(metal_vals)
 
