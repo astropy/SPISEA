@@ -24,6 +24,21 @@ model grid you choose. If you require other evolution models or need to
 expand the existing grids, please see
 :ref:`add_evo_models`. 
 
+ModelMismatch Error
+-----------------------------------------
+Since SPISEA v2.1.4, we began tracking the version of the evolution
+model grid (e.g., the evolution models stored in
+``<SPISEA_MODELS>/evolution``).
+Each evolution model class has a required model grid
+version assigned to it. If your evolution model grid
+does not match the minimum version required by
+your desired evolution model, a ``ModelMismatch``
+exception will be raised.
+
+To resolve the ``ModelMismatch`` error, please
+re-download the latest version of the evolution
+model grid in the installation instructions (:ref:`models`).
+     
 
 Base Evolution Model Class
 ------------------------------------
