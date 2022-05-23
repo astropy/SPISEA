@@ -89,7 +89,7 @@ Change Log
     now a ModelMismatch
     exception will be raised if evolution model object requires a
     higher version of the model grid than the user has installed. See
-     :ref:`evo_models` for details
+    :ref:`evo_models` for details
   * Fixed MISTv1  sub-directory names so proper Z_solar value
     of 0.0142 is used (only naming convention, does not effect output
     results)
