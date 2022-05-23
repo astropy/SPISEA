@@ -34,14 +34,10 @@ Specific Evolution Model Classes
 --------------------------------------
 .. autoclass:: evolution.MISTv1
 	       :show-inheritance:
-
-
+		  
 .. autoclass:: evolution.MergedBaraffePisaEkstromParsec
 	       :show-inheritance:
-		  
-.. autoclass:: evolution.MergedPisaEkstromParsec
-	       :show-inheritance:	       
-		  
+		  		  
 .. autoclass:: evolution.Baraffe15
 	       :show-inheritance:
 		  
