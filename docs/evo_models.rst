@@ -31,7 +31,7 @@ model grid (e.g., the evolution models stored in
 ``<SPISEA_MODELS>/evolution``).
 Each evolution model class has a required model grid
 version assigned to it. If your evolution model grid
-does not match the minimum version required by
+does not match or exceed the minimum version required by
 your desired evolution model, a ``ModelMismatch``
 exception will be raised.
 
