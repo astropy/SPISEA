@@ -84,18 +84,7 @@ class StellarEvolution(object):
         self.z_list = z_list
         self.mass_list = mass_list
         self.age_list = age_list
-
-        # Define the installed model grid number
-        file_name = models_dir + '/grid_version.txt'
-        
-        # Read in the file. In the case where it doesn't
-        # exist, then grid version is assumed to be 1.0
-        try:
-            file1 = open(file_name, 'r')
-            self.evo_grid_num = float(file1[1])
-        except FileNotFoundError:
-            self.evo_grid_num = 1.0
-        
+      
         return
     
 class Geneva(StellarEvolution):
