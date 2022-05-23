@@ -82,6 +82,22 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.1.4 (2022-05-24)
+
+  * Expanded MISTv1 evolution model grid age range to logAge = 10.30
+  * Begun version tracking for evolution model grid; correspondingly,
+    now a ModelMismatch
+    exception will be raised if evolution model object requires a
+    higher version of the model grid than the user has installed. See
+     :ref:`evo_models` for details
+  * Fixed MISTv1  sub-directory names so proper Z_solar value
+    of 0.0142 is used (only naming convention, does not effect output
+    results)
+  * Updated evolution model and atmosphere model doc pages with tables
+    describing properties of installed options
+  * Small tweaks to installation instructions for clarity
+  * Updated test functions and removed outdated dependence on nose package
+ 
 2.1.3 (2022-04-23)
 
   * Updates to documentation and Quick-Start Guide
