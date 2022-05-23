@@ -28,7 +28,7 @@ Below is a table of atmosphere model grids currently supported by SPISEA
 
 .. figure:: images/atm_models.png
 	    :width: 900
-            :height: 204
+            :height: 196
 	    :align: center
 
 Model Atmosphere Classes

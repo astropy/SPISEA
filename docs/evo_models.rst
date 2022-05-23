@@ -16,7 +16,7 @@ Below is a table of the evolution model grids currently supported by SPISEA.
 
 .. figure:: images/evo_models.png
 	    :width: 900
-            :height: 179
+            :height: 172
 	    :align: center
 
 Please note the stellar mass, age, and metallicity range of the evolution
