@@ -1,6 +1,22 @@
 # Test functions for the different stellar evolution and atmosphere models
 import pdb
 
+def test_evo_model_grid_num():
+    """
+    Make sure evolution models have both evo_grid_num 
+    and evo_grid_min (e.g., make sure these functions
+    are working). Try it on one evolution model here;
+    we'll test on all evo models in another function.
+    """
+    from spisea import evolution
+    
+    # Make MIST evolution model, check variables
+    evo = evolution.MISTv1()
+    assert isinstance(evo.evo_grid_num, float)
+    assert isinstance(evo.evo_grid_min, float)
+    
+    return
+
 def test_evolution_models():
     """
     Test to make sure the different evolution models work
@@ -16,7 +32,7 @@ def test_evolution_models():
     metal_solar = [0]
 
     # Array of evolution models to test
-    evo_models = [evolution.MISTv1(version=1.2), evolution.MergedBaraffePisaEkstromParsec(), evolution.MergedSiessGenevaPadova(),
+    evo_models = [evolution.MISTv1(version=1.2), evolution.MergedBaraffePisaEkstromParsec(), 
                       evolution.Parsec(), evolution.Baraffe15(), evolution.Ekstrom12(), evolution.Pisa()]
 
     
