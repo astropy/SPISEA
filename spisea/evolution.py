@@ -1151,7 +1151,7 @@ class MISTv1(StellarEvolution):
 
         return iso
         
-    def format_isochrones(self, input_iso_dir, metallicity_list):
+    def format_isochrones(self):
         r"""
         Parse isochrone file downloaded from MIST web server,
         create individual isochrone files for the different ages.
@@ -1166,6 +1166,10 @@ class MISTv1(StellarEvolution):
             List of metallicity directories to check (i.e. z015 is solar)
 
         """
+        # Get input iso dir, metallicity list from evo object
+        input_iso_dir = self.model_dir
+        metallicity_list = list(self.z_file_map.values())
+        
         # Store current directory for later
         start_dir = os.getcwd()
 
@@ -1177,6 +1181,7 @@ class MISTv1(StellarEvolution):
             # More into metallicity directory, read isochrone file
             os.chdir(metal)
 
+            # Read all available iso files, stack them together
             isoFile = glob.glob('MIST_iso*')
             print( 'Read Input: this is slow')
             iso_f = Table()
