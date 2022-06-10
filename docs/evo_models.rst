@@ -14,9 +14,9 @@ The evolution object is an input for the :ref:`isochrone_objects`.
   
 Below is a table of the evolution model grids currently supported by SPISEA.
 
-.. figure:: images/evo_models_f.png
+.. figure:: images/evo_models_f2.png
 	    :width: 900
-            :height: 212
+            :height: 210
 	    :align: center
 
 Please note the stellar mass range, age range, and metallicity values of the evolution
