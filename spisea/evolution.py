@@ -1072,7 +1072,7 @@ class MISTv1(StellarEvolution):
                            0.045: 'z045/'}
 
         # Define required evo_grid number
-        self.evo_grid_min = 2.0
+        self.evo_grid_min = 1.1
         
         # Error check to see if installed evolution model
         # grid is compatible with code version. Also return
