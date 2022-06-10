@@ -31,7 +31,8 @@ model grid you choose:
 * SPISEA will throw an error if you request an age outside of the
   evolution model age range
 
-* SPISEA will use the evolution model with the closest available metallicity to the user input value
+* SPISEA will use the evolution model with the closest available
+  metallicity to the requested value
 
 If you require other evolution models or need to
 expand the existing grids, please see
