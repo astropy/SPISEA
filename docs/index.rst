@@ -88,7 +88,7 @@ Change Log
     10.30
   * Begun version tracking for evolution model grid; updated grid
     (with new MISTv1 age range) is grid 1.1
-  *A new ModelMismatch
+  * A new ModelMismatch
     exception will be raised if evolution model object requires a
     higher version of the model grid than the user has installed. See
     :ref:`evo_models` for details
