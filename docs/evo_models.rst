@@ -19,8 +19,21 @@ Below is a table of the evolution model grids currently supported by SPISEA.
             :height: 212
 	    :align: center
 
-Please note the stellar mass, age, and metallicity range of the evolution
-model grid you choose. If you require other evolution models or need to
+Please note the stellar mass range, age range, and metallicity values of the evolution
+model grid you choose:
+
+* Stars generated from the :ref:`imf_objects` (controlled by the
+  `massLimits` variable) that fall outside of the mass range of the
+  evolution model will be dropped from the final cluster table, unless
+  the IFMR is defined (which will catch all the high mass stars and
+  get their compact object values)
+
+* SPISEA will throw an error if you request an age outside of the
+  evolution model age range
+
+* SPISEA will use the evolution model with the closest available metallicity to the user input value
+
+If you require other evolution models or need to
 expand the existing grids, please see
 :ref:`add_evo_models`. 
 
