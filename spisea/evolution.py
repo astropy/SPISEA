@@ -1167,9 +1167,9 @@ class MISTv1(StellarEvolution):
 
         """
         # Get input iso dir, metallicity list from evo object
-        input_iso_dir = self.model_dir
+        input_iso_dir = '{0}/iso'.format(self.model_dir)
         metallicity_list = list(self.z_file_map.values())
-        
+
         # Store current directory for later
         start_dir = os.getcwd()
 
