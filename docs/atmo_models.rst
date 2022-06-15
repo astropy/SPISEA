@@ -24,19 +24,17 @@ spectrum of each star in the isochrone model.
 PopStar uses the pysynphot framework to extract the model atmosphere,
 and the the output spectrum is a `pysynphot.Icat object <https://pysynphot.readthedocs.io/en/latest/ref_api.html#pysynphot.catalog.Icat>`_.
 
-The atmosphere model grids currently supported are:
+Below is a table of atmosphere model grids currently supported by
+SPISEA. Note that the resolution column reports the original
+resolution of the atmosphere model grid. These are available in the
+`spisea_cdbs_highres.tar.gz` file on the installation page. However, the default grid SPISEA
+uses has degraded the resolution of all atmosphere grids to R = 250
+(the `spisea_cdbs.tar.gz` file). 
 
-* get_merged_atmosphere (default for stars)
-* get_wd_atmospheres (default for white dwarfs)
-* get_bb_atmosphere
-* get_castelli_atmosphere
-* get_phoenixv16_atmosphere
-* get_BTSettl_2015_atmosphere
-* get_BTSettl_atmosphere
-* get_wdKoester_atmosphere
-* get_kurucz_atmosphere
-* get_phoenix_atmosphere
-
+.. figure:: images/atm_models.png
+	    :width: 900
+            :height: 196
+	    :align: center
 
 Model Atmosphere Classes
 -------------------------

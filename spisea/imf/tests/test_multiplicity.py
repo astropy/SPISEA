@@ -1,5 +1,4 @@
 import numpy as np
-import nose.tools
 import time
     
 def test_create_MultiplicityUnresolved():
@@ -45,13 +44,13 @@ def test_multiplicity_fraction():
     mu1 = multiplicity.MultiplicityUnresolved()
 
     mf1_1 = mu1.multiplicity_fraction(1.0)
-    nose.tools.assert_almost_equal(mf1_1, 0.44, places=2)
+    np.testing.assert_almost_equal(mf1_1, 0.44, decimal=2)
 
     mf1_2 = mu1.multiplicity_fraction(10.0)
-    nose.tools.assert_almost_equal(mf1_2, 1.0, places=2)
+    np.testing.assert_almost_equal(mf1_2, 1.0, decimal=2)
 
     mf1_3 = mu1.multiplicity_fraction(0.1)
-    nose.tools.assert_almost_equal(mf1_3, 0.136, places=2)
+    np.testing.assert_almost_equal(mf1_3, 0.136, decimal=2)
 
     # Second set of multiplicity parameters
     mu2 = multiplicity.MultiplicityUnresolved(MF_amp=0.4, MF_power=0.4,
@@ -59,13 +58,13 @@ def test_multiplicity_fraction():
                                              q_power=0.4, q_min=0.04)
 
     mf2_1 = mu1.multiplicity_fraction(1.0)
-    nose.tools.assert_almost_equal(mf2_1, 0.44, places=2)
+    np.testing.assert_almost_equal(mf2_1, 0.44, decimal=2)
 
     mf2_2 = mu1.multiplicity_fraction(10.0)
-    nose.tools.assert_almost_equal(mf2_2, 1.0, places=2)
+    np.testing.assert_almost_equal(mf2_2, 1.0, decimal=2)
 
     mf2_3 = mu1.multiplicity_fraction(0.1)
-    nose.tools.assert_almost_equal(mf2_3, 0.136, places=2)
+    np.testing.assert_almost_equal(mf2_3, 0.136, decimal=2)
 
 
 def test_multiplicity_fraction_array():
@@ -81,9 +80,9 @@ def test_multiplicity_fraction_array():
     mass_array = np.array([1.0, 10.0, 0.1])
     mf_array = mu1.multiplicity_fraction(mass_array)
 
-    nose.tools.assert_almost_equal(mf_array[0], 0.44, places=2)
-    nose.tools.assert_almost_equal(mf_array[1], 1.0, places=2)
-    nose.tools.assert_almost_equal(mf_array[2], 0.136, places=2)
+    np.testing.assert_almost_equal(mf_array[0], 0.44, decimal=2)
+    np.testing.assert_almost_equal(mf_array[1], 1.0, decimal=2)
+    np.testing.assert_almost_equal(mf_array[2], 0.136, decimal=2)
     
     
 def test_companion_star_fraction():
@@ -96,13 +95,13 @@ def test_companion_star_fraction():
     mu1 = multiplicity.MultiplicityUnresolved()
 
     csf1_1 = mu1.companion_star_fraction(1.0)
-    nose.tools.assert_almost_equal(csf1_1, 0.5, places=2)
+    np.testing.assert_almost_equal(csf1_1, 0.5, decimal=2)
 
     csf1_2 = mu1.companion_star_fraction(70.0)
-    nose.tools.assert_almost_equal(csf1_2, 3.0, places=2)
+    np.testing.assert_almost_equal(csf1_2, 3.0, decimal=2)
 
     csf1_3 = mu1.companion_star_fraction(0.1)
-    nose.tools.assert_almost_equal(csf1_3, 0.177, places=2)
+    np.testing.assert_almost_equal(csf1_3, 0.177, decimal=2)
 
     # Second set of multiplicity parameters
     mu2 = multiplicity.MultiplicityUnresolved(MF_amp=0.4, MF_power=0.4,
@@ -110,13 +109,13 @@ def test_companion_star_fraction():
                                               q_power=0.4, q_min=0.04)
 
     # csf2_1 = mu1.companion_star_fraction(1.0)
-    # nose.tools.assert_almost_equal(csf2_1, 0.4, places=2)
+    # np.testing.assert_almost_equal(csf2_1, 0.4, decimal=2)
 
     # csf2_2 = mu1.companion_star_fraction(70.0)
-    # nose.tools.assert_almost_equal(csf2_2, 2.0, places=2)
+    # np.testing.assert_almost_equal(csf2_2, 2.0, decimal=2)
 
     # csf2_3 = mu1.companion_star_fraction(0.1)
-    # nose.tools.assert_almost_equal(csf2_3, 0.159, places=2)
+    # np.testing.assert_almost_equal(csf2_3, 0.159, decimal=2)
 
 
 def test_resolvedmult():

@@ -9,7 +9,10 @@ instructions below. If you had already downloaded version 1 of the
 code and are switching to version 2, please see :ref:`version`. 
 
 SPISEA is hosted on `GitHub <https://github.com/astropy/SPISEA>`_.
-To begin, clone the git repository.
+To begin, clone the git repository in your desired code directory::
+
+   git clone https://github.com/astropy/SPISEA.git
+
 The ``main`` branch contains the current release,
 while the ``dev`` branch is for code development.
 
@@ -17,6 +20,10 @@ while the ``dev`` branch is for code development.
 
 Dependencies
 ----------------
+The basic SPISEA installation requires ~20 GB of memory, which is
+primarily for the suite of stellar evolution and atmosphere models.
+Other dependencies:
+
 * python (>=3.7; preferably via AstroConda, as it includes some necessary
   packages, like astropy and pysynphot)
 * astropy
@@ -92,8 +99,9 @@ You will need to download 2 files:
 
 * `spisea_cdbs.tar.gz <http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs.tar.gz>`_  (142 MB; 248 MB unzipped)
 
-You can also optionally download a third file, which contains
-higher-resolution stellar atmospheres:
+You may **optionally** download a third file, which contains
+higher-resolution stellar atmospheres. Note that this file is quite
+large, and is not necessary for most SPISEA use cases:
 
 * `spisea_cdbs_highres.tar.gz <http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs_highres.tar.gz>`_ (50 GB; 74 GB unzipped)
 
@@ -102,8 +110,8 @@ SPISEA uses the low-resolution atmospheres (R = 250) in
 it is then much faster for synthetic photometry and
 is sufficient in most applications. However, the user can change
 this default; see  :ref:`atmo_models` for
-more details. Unless you change this default,
-``spisea_cdbs_highres.tar.gz`` is not required.
+more details. **Unless you change this default,**
+``spisea_cdbs_highres.tar.gz`` **is not required.**
 
 Once downloaded, ``spisea_cdbs.tar.gz`` (and
 ``spisea_cdbs_highres.tar.gz``, if desired) should be
