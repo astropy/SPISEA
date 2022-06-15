@@ -1,6 +1,22 @@
 # Test functions for the different stellar evolution and atmosphere models
 import pdb
 
+def test_evo_model_grid_num():
+    """
+    Make sure evolution models have both evo_grid_num 
+    and evo_grid_min (e.g., make sure these functions
+    are working). Try it on one evolution model here;
+    we'll test on all evo models in another function.
+    """
+    from spisea import evolution
+    
+    # Make MIST evolution model, check variables
+    evo = evolution.MISTv1()
+    assert isinstance(evo.evo_grid_num, float)
+    assert isinstance(evo.evo_grid_min, float)
+    
+    return
+
 def test_evolution_models():
     """
     Test to make sure the different evolution models work
@@ -10,21 +26,22 @@ def test_evolution_models():
     # Age ranges to test
     age_young_arr = [6.7, 7.9]
     age_all_arr = [6.7, 8.0, 9.7]
+    age_all_MIST_arr = [5.2, 6.7, 9.7, 10.13]
 
     # Metallicity ranges to test (if applicable)
-    metal_range = [-2.5, 0, 0.4]
+    metal_range = [-2.5, -1.5, 0, 0.25, 0.4]
     metal_solar = [0]
 
     # Array of evolution models to test
-    evo_models = [evolution.MISTv1(version=1.2), evolution.MergedBaraffePisaEkstromParsec(), evolution.MergedSiessGenevaPadova(),
+    evo_models = [evolution.MISTv1(version=1.2), evolution.MergedBaraffePisaEkstromParsec(), 
                       evolution.Parsec(), evolution.Baraffe15(), evolution.Ekstrom12(), evolution.Pisa()]
 
     
     # Array of age_ranges for the specific evolution models to test
-    age_vals = [age_all_arr, age_all_arr, age_all_arr, age_all_arr, age_young_arr, age_young_arr, age_young_arr]
+    age_vals = [age_all_MIST_arr, age_all_arr, age_all_arr, age_young_arr, age_young_arr, age_young_arr]
 
     # Array of metallicities for the specific evolution models to test
-    metal_vals = [metal_range, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar]
+    metal_vals = [metal_range, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar]
 
     assert len(evo_models) == len(age_vals) == len(metal_vals)
 

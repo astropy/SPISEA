@@ -1,5 +1,4 @@
 import numpy as np
-import nose.tools
 import time
 import pdb
 

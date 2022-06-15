@@ -523,8 +523,20 @@ def test_metallicity():
                             red_law=red_law, filters=filt_list,
                             mass_sampling=10)
 
-    metal_act = np.log10(0.00047 / 0.0142) # For Mist isochrones
+    # MIST model sub-directory names changed in SPISEA v2.1.4 update;
+    # changing what "metal_act" value was. version 1 of MIST grid
+    # names mistakenly used 0.015 for Zsolar, which was fixed for
+    # version 2 onward. Note that this only effects this variable,
+    # and not the grid output itself.
+    # So, here the expected value for metal_act changes depending
+    # on the grid value
+    grid_version = evolution.get_installed_grid_num('{0}/evolution/'.format(os.environ['SPISEA_MODELS']))
 
+    if grid_version == 1:
+        metal_act = np.log10(0.00047 / 0.0142) # For Mist isochrones
+    else:
+        metal_act = np.log10(0.00045 / 0.0142) # For Mist isochrones
+        
     # Test isochrone properties
     assert my_iso.points.meta['METAL_IN'] == -1.5
     assert my_iso.points.meta['METAL_ACT'] == metal_act

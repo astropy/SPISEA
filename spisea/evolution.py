@@ -10,6 +10,7 @@ from astropy.table import Table, vstack, Column
 from scipy import interpolate
 import pylab as py
 from spisea.utils import objects
+from spisea import exceptions
 
 logger = logging.getLogger('evolution')
 
@@ -21,7 +22,45 @@ except KeyError:
     warnings.warn("SPISEA_MODELS is undefined; functionality "
                   "will be SEVERELY crippled.")
     models_dir = ''
+
+# Function to get installed evo grid number
+def get_installed_grid_num(input_models_dir):
+    """
+    Get installed grid number
+    """
+    # Define the installed model grid number
+    file_name = input_models_dir + '/grid_version.txt'
+        
+    # Read in the file. In the case where it doesn't
+    # exist, then grid version is assumed to be 1.0
+    # (since this didn't always exist)
+    try:
+        file1 = open(file_name, 'r')
+        read = file1.readlines()
+        evo_grid_num = float(read[1])
+    except FileNotFoundError:
+        evo_grid_num = 1.0
+
+    return evo_grid_num
+
+# Function to check evo grid version number
+def check_evo_grid_number(required_num, input_models_dir):
+    """
+    Check if installed grid meets the required
+    grid version number. Installed grid number must
+    be greater than or equal to this number
+    """
+        
+    # Get installed gridnumber
+    grid_num = get_installed_grid_num(input_models_dir)
     
+    # Check: is installed grid number < required_num?
+    # If not, raise mismatch error
+    if grid_num < required_num:
+        raise exceptions.ModelMismatch(required_num, grid_num, 'evolution')
+        
+    return grid_num
+
 class StellarEvolution(object):
     """
     Base Stellar evolution class.
@@ -45,7 +84,7 @@ class StellarEvolution(object):
         self.z_list = z_list
         self.mass_list = mass_list
         self.age_list = age_list
-        
+      
         return
     
 class Geneva(StellarEvolution):
@@ -73,6 +112,14 @@ class Geneva(StellarEvolution):
 
         self.z_solar = 0.02
         self.z_file_map = {0.01: 'z01/', 0.02: 'z02/', 0.03: 'z03/'}
+
+        # Define required evo_grid number
+        self.evo_grid_min = 1.0
+        
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -136,6 +183,14 @@ class Ekstrom12(StellarEvolution):
 
         # Specify rotation or not
         self.rot = rot
+
+        # Define required evo_grid number
+        self.evo_grid_min = 1.0
+        
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -361,6 +416,14 @@ class Parsec(StellarEvolution):
         # Specifying metallicity
         self.z_solar = 0.015
         self.z_file_map = {0.005: 'z005/', 0.015: 'z015/', 0.04: 'z04/'}
+
+        # Define required evo_grid number
+        self.evo_grid_min = 1.0
+        
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
         
         
     def isochrone(self, age=1.e8, metallicity=0.0):
@@ -504,6 +567,14 @@ class Pisa(StellarEvolution):
         # Specifying metallicity
         self.z_solar = 0.015
         self.z_file_map = {0.015: 'z015/'}
+
+        # Define required evo_grid number
+        self.evo_grid_min = 1.0
+        
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -658,6 +729,14 @@ class Baraffe15(StellarEvolution):
         # Specifying metallicity
         self.z_solar = 0.015
         self.z_file_map = {0.015: 'z015/'}
+
+        # Define required evo_grid number
+        self.evo_grid_min = 1.0
+        
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
         
     
     def isochrone(self, age=5.e7, metallicity=0.0):
@@ -942,22 +1021,22 @@ class MISTv1(StellarEvolution):
         and 4/2019 (other metallicities). Default is 1.2.
     """
     def __init__(self, version=1.2):
-        # define metallicity parameters for Parsec models
-        self.z_list = [0.0000015,   # [Fe/H] = -4.00
-                       0.0000047,   # [Fe/H] = -3.50
-                       0.000015,    # [Fe/H] = -3.00
-                       0.000047,    # [Fe/H] = -2.50
-                       0.00015, # [Fe/H] = -2.00
-                       0.00026, # [Fe/H] = -1.75
-                       0.00047, # [Fe/H] = -1.50
-                       0.00084, # [Fe/H] = -1.25
-                       0.0015,  # [Fe/H] = -1.00
-                       0.0026,  # [Fe/H] = -0.75
-                       0.0046,  # [Fe/H] = -0.50
-                       0.0082,  # [Fe/H] = -0.25
-                       0.015,   # [Fe/H] = 0.00
-                       0.024,   # [Fe/H] = 0.25
-                       0.041]   # [Fe/H] = 0.50
+        # define metallicity parameters for MIST models
+        self.z_list = [0.0000014,   # [Fe/H] = -4.00
+                       0.0000045,   # [Fe/H] = -3.50
+                       0.000014,    # [Fe/H] = -3.00
+                       0.000045,    # [Fe/H] = -2.50
+                       0.00014, # [Fe/H] = -2.00
+                       0.00025, # [Fe/H] = -1.75
+                       0.00045, # [Fe/H] = -1.50
+                       0.00080, # [Fe/H] = -1.25
+                       0.0014,  # [Fe/H] = -1.00
+                       0.0025,  # [Fe/H] = -0.75
+                       0.0045,  # [Fe/H] = -0.50
+                       0.0080,  # [Fe/H] = -0.25
+                       0.014,   # [Fe/H] = 0.00
+                       0.025,   # [Fe/H] = 0.25
+                       0.045]   # [Fe/H] = 0.50
         
         # populate list of isochrone ages (log scale)
         self.age_list = np.arange(5.01, 10.30+0.005, 0.01)
@@ -976,23 +1055,30 @@ class MISTv1(StellarEvolution):
 
         # Specifying metallicity
         self.z_solar = 0.0142
-        self.z_file_map = {0.0000015: 'z0000015/',
-                           0.0000047: 'z0000047/',
-                           0.000015: 'z000015/',
-                           0.000047: 'z000047/',
-                           0.00015: 'z00015/',
-                           0.00026: 'z00026/',
-                           0.00047: 'z00047/',
-                           0.00084: 'z00084/',
-                           0.0015: 'z0015/',
-                           0.0026: 'z0026/',
-                           0.0046: 'z0046/',
-                           0.0082: 'z0082/',
-                           0.015: 'z015/',
-                           0.024: 'z024/',
-                           0.041: 'z041/'}
+        self.z_file_map = {0.0000014: 'z0000014/',
+                           0.0000045: 'z0000045/',
+                           0.000014: 'z000014/',
+                           0.000045: 'z000045/',
+                           0.00014: 'z00014/',
+                           0.00025: 'z00025/',
+                           0.00045: 'z00045/',
+                           0.00080: 'z00080/',
+                           0.0014: 'z0014/',
+                           0.0025: 'z0025/',
+                           0.0045: 'z0045/',
+                           0.0080: 'z0080/',
+                           0.014: 'z014/',
+                           0.025: 'z025/',
+                           0.045: 'z045/'}
+
+        # Define required evo_grid number
+        self.evo_grid_min = 1.1
         
-        
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
+                
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the MISTv1
@@ -1065,7 +1151,7 @@ class MISTv1(StellarEvolution):
 
         return iso
         
-    def format_isochrones(self, input_iso_dir, metallicity_list):
+    def format_isochrones(self):
         r"""
         Parse isochrone file downloaded from MIST web server,
         create individual isochrone files for the different ages.
@@ -1080,6 +1166,10 @@ class MISTv1(StellarEvolution):
             List of metallicity directories to check (i.e. z015 is solar)
 
         """
+        # Get input iso dir, metallicity list from evo object
+        input_iso_dir = '{0}/iso'.format(self.model_dir)
+        metallicity_list = list(self.z_file_map.values())
+
         # Store current directory for later
         start_dir = os.getcwd()
 
@@ -1091,6 +1181,7 @@ class MISTv1(StellarEvolution):
             # More into metallicity directory, read isochrone file
             os.chdir(metal)
 
+            # Read all available iso files, stack them together
             isoFile = glob.glob('MIST_iso*')
             print( 'Read Input: this is slow')
             iso_f = Table()
@@ -1176,6 +1267,14 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
             self.z_file_map = {0.015: 'z015_rot/'}
         else:
             self.z_file_map = {0.015: 'z015_norot/'}
+
+        # Define required evo_grid number
+        self.evo_grid_min = 1.0
+        
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
         
     
     def isochrone(self, age=1.e8, metallicity=0.0):
@@ -1261,6 +1360,14 @@ class MergedPisaEkstromParsec(StellarEvolution):
             self.z_file_map = {0.015: 'z015_rot/'}
         else:
             self.z_file_map = {0.015: 'z015_norot/'}
+
+        # Define required evo_grid number
+        self.evo_grid_min = 1.0
+        
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
         
     
     def isochrone(self, age=1.e8, metallicity=0.0):
@@ -1364,6 +1471,14 @@ class MergedSiessGenevaPadova(StellarEvolution):
         
         # Metallicity map
         self.z_file_map = {0.02: 'z02/'}
+
+        # Define required evo_grid number
+        self.evo_grid_min = 1.0
+        
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
         
     
     def isochrone(self, age=1.e8, metallicity=0.0):
