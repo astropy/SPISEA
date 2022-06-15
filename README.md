@@ -28,13 +28,12 @@ demonstrating how to use SPISEA.
 
 If you use SPISEA in your research, please cite [Hosek et al. (2020)](https://ui.adsabs.harvard.edu/abs/2020arXiv200606691H/abstract).
 
-## Version Update
-Version 1 of this software package was called PyPopStar. Due to a naming conflict,
-we have renamed the package of SPISEA for version 2 and beyond.
-For reference, v2.0.0 has the same functionality as v1.0.1.
-
-Instructions for updating from version 1 to version 2 are provided in
-the documentation [here](https://spisea.readthedocs.io/en/latest/version_switch.html#version).
+## Change Log
+SPISEA is actively supported and is growing in functionality, and
+subsequently has had several updates since its
+initial release. See the
+[main documentation page](https://spisea.readthedocs.io/en/mist_update/index.html)
+for the change log describing each of the updates. 
 
 ## Contributions
 We welcome and encourage contributions to SPISEA!
