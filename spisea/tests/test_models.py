@@ -10,9 +10,8 @@ def test_evo_model_grid_num():
     """
     from spisea import evolution
     
-    # Make MIST evolution model, check variables
+    # Make MIST evolution model, check evo grid variables
     evo = evolution.MISTv1()
-    assert isinstance(evo.evo_grid_num, float)
     assert isinstance(evo.evo_grid_min, float)
     
     return
