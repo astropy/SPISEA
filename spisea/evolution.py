@@ -115,16 +115,16 @@ class Geneva(StellarEvolution):
 
         # Define required evo_grid number
         self.evo_grid_min = 1.0
-        
-        # Error check to see if installed evolution model
-        # grid is compatible with code version. Also return
-        # current grid num
-        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
-    
+            
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the Geneva collection.
         """
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
+        
         # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity
         
@@ -186,16 +186,16 @@ class Ekstrom12(StellarEvolution):
 
         # Define required evo_grid number
         self.evo_grid_min = 1.0
-        
-        # Error check to see if installed evolution model
-        # grid is compatible with code version. Also return
-        # current grid num
-        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the Ekstrom+12 Geneva collection.
         """
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
+        
         # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity
 
@@ -418,19 +418,18 @@ class Parsec(StellarEvolution):
         self.z_file_map = {0.005: 'z005/', 0.015: 'z015/', 0.04: 'z04/'}
 
         # Define required evo_grid number
-        self.evo_grid_min = 1.0
-        
-        # Error check to see if installed evolution model
-        # grid is compatible with code version. Also return
-        # current grid num
-        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
-        
+        self.evo_grid_min = 1.0        
         
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the Parsec version 1.2s
         collection.
         """
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
+        
         # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity
 
@@ -570,17 +569,17 @@ class Pisa(StellarEvolution):
 
         # Define required evo_grid number
         self.evo_grid_min = 1.0
-        
-        # Error check to see if installed evolution model
-        # grid is compatible with code version. Also return
-        # current grid num
-        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the Pisa (Tognelli+11)
         collection.
         """
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
+        
         # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity
 
@@ -732,19 +731,18 @@ class Baraffe15(StellarEvolution):
 
         # Define required evo_grid number
         self.evo_grid_min = 1.0
-        
-        # Error check to see if installed evolution model
-        # grid is compatible with code version. Also return
-        # current grid num
-        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
-        
     
     def isochrone(self, age=5.e7, metallicity=0.0):
         r"""
         Extract an individual isochrone from the Baraffe+15
         collection.
         """
-       # convert metallicity to mass fraction
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
+        
+        # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity
 
         log_age = math.log10(age)
@@ -1073,17 +1071,17 @@ class MISTv1(StellarEvolution):
 
         # Define required evo_grid number
         self.evo_grid_min = 1.1
-        
-        # Error check to see if installed evolution model
-        # grid is compatible with code version. Also return
-        # current grid num
-        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
                 
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the MISTv1
         collection.
         """
+        # First, error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
+        
         # convert metallicity to mass fraction
         z_defined = self.z_solar * (10.**metallicity)
 
@@ -1271,17 +1269,17 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         # Define required evo_grid number
         self.evo_grid_min = 1.0
         
-        # Error check to see if installed evolution model
-        # grid is compatible with code version. Also return
-        # current grid num
-        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
-        
     
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
         Extract an individual isochrone from the Baraffe-Pisa-Ekstrom-Parsec 
         collection
         """
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
+        
         # convert metallicity to mass fraction
         z_defined = self.z_solar*10.**metallicity
 
