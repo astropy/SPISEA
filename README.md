@@ -33,7 +33,7 @@ SPISEA is actively supported and is growing in functionality, and
 subsequently has had several updates since its
 initial release. See the
 [main documentation page](https://spisea.readthedocs.io/en/mist_update/index.html)
-for the change log describing each of the updates. 
+for the change log describing the updates in each release.
 
 ## Contributions
 We welcome and encourage contributions to SPISEA!
