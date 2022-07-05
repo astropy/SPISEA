@@ -166,8 +166,9 @@ class ResolvedCluster(Cluster):
         
         # Trim out bad systems; specifically, stars with masses outside those provided
         # by the model isochrone (except for compact objects).
-        star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
-
+        ###======================TEST
+        #star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
+        print('test_removeBadSystems')
         ##### 
         # Make a table to contain all the information about companions.
         #####
