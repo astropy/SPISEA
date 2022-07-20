@@ -82,6 +82,11 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.1.5 (2022-07-20)
+  * Added additional parameters to get_bb_atmosphere function to give
+    user control over the min and max wavelength values, as well as
+    wavelength sampling. See :ref:`atmo_models` for details.
+
 2.1.4 (2022-05-24)
 
   * Expanded MISTv1 evolution model grid age range to logAge = 5.01 --
