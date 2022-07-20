@@ -910,26 +910,42 @@ def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False
         bbspec = get_bb_atmosphere(temperature=temperature, verbose=verbose)
         return bbspec
 
-def get_bb_atmosphere(metallicity=None, temperature=20000, gravity=None,
-                      verbose=False, rebin=None):
+def get_bb_atmosphere(metallicity=None, temperature=20_000, gravity=None,
+                      verbose=False, rebin=None,
+                      wave_min=500, wave_max=50_000, wave_num=20_000):
     """
     Return a blackbody spectrum
 
     Parameters
     ----------
-    temperature: float
+    temperature: float, default=20_000
         The stellar temperature, in units of K
-    
+    wave_min: float, default=500
+        Sets the minimum wavelength (in Angstroms) of the wavelength range
+        for the blackbody spectrum
+    wave_max: float, default=50_000
+        Sets the maximum wavelength (in Angstroms) of the wavelength range
+        for the blackbody spectrum
+    wave_num: int, default=20_000
+        Sets the number of wavelength points in the wavelength range
+        Note: the wavelength range is evenly spaced in log space
     """
     if ((metallicity is not None) or (gravity is not None) or
         (rebin is not None)):
-        warnings.warn('Only `temperature` keyword is used for black-body atmosphere')
+        warnings.warn(
+            'Only `temperature` keyword is used for black-body atmosphere'
+        )
     
     if verbose:
         print('Black-body atmosphere')
     
+    # Modify pysynphot's default waveset to specified bounds
+    pysynphot.refs.set_default_waveset(
+        minwave=wave_min, maxwave=wave_max, num=wave_num
+    )
+        
     # Get black-body atmosphere for specified temperature from pysynphot
-    bbspec = pysynphot.spectrum.BlackBody(temperature) 
+    bbspec = pysynphot.spectrum.BlackBody(temperature)
     
     # pysynphot `BlackBody` generates spectrum in `photlam`, need in `flam`
     bbspec.convert('flam')
