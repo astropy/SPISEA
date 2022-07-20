@@ -926,6 +926,9 @@ def get_bb_atmosphere(metallicity=None, temperature=20_000, gravity=None,
     wave_max: float, default=50_000
         Sets the maximum wavelength (in Angstroms) of the wavelength range
         for the blackbody spectrum
+    wave_num: int, default=20_000
+        Sets the number of wavelength points in the wavelength range
+        Note: the wavelength range is evenly spaced in log space
     """
     if ((metallicity is not None) or (gravity is not None) or
         (rebin is not None)):
