@@ -7,8 +7,10 @@ Reddening laws.
 import pylab as py
 import numpy as np
 from scipy import interpolate
+from astropy.table import Table
 import pysynphot
 from scipy.linalg import solve_banded
+import os
 import pdb
 
 
@@ -1241,108 +1243,186 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
 
         return A_at_wave
 
-#---------------------------#
-# Note: Fritz+11 law removed due to unstable spline interpolation
-# at longer wavelengths. Fixing this function
-# is a to-do item
-#---------------------------#
-#class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
-#    """
-#    Defines extinction law from `Fritz et al. 2011 
-#    <https://ui.adsabs.harvard.edu/abs/2011ApJ...737...73F/abstract>`_
-#    for the Galactic Center. The law is defined from 1.0 -- 19 microns.
-#    """
-#    def __init__(self):
-#        # Fetch the extinction curve, pre-interpolate across 3-8 microns
-#        wave = np.arange(1.0, 19, 0.001)
-#        
-#        # This will eventually be scaled by AKs when you
-#        # call reddening(). Right now, calc for AKs=1
-#        Alambda_scaled = RedLawFritz11._derive_Fritz11(wave)
-#
-#        # Convert wavelength to angstrom
-#        wave *= 10 ** 4
-#
-#        pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
-#                                                  waveunits='angstrom',
-#                                                  Avscaled=Alambda_scaled,
-#                                                  name='Fritz09',
-#                                                  litref='Fritz+2011')
-#        
-#        # Set the upper/lower wavelength limits of law (in angstroms)
-#        self.low_lim = min(wave)
-#        self.high_lim = max(wave)
-#        self.name = 'F11'
-#        
-#    @staticmethod
-#    def _derive_Fritz11(wavelength):
-#        """
-#        Calculate the resulting extinction for an array of wavelengths.
-#        The extinction is normalized to A_Ks = 1
-#
-#        Data pulled from Fritz+11, Table 2
-#
-#        Parameters
-#        ----------
-#        wavelength : float
-#            Wavelength range to derive extinction law over, in microns
-#        """
-#        # Extinction law definition
-#        wave = np.array([1.282, 1.736, 2.166, 2.625, 2.758, 2.873, 3.039, 3.297, 3.74, 3.819, 3.907, 4.052,
-#                             4.376, 5.128, 5.908, 6.772, 7.459, 7.502, 8.76, 12.371, 19.062])
-#        A_AKs = np.array([7.91, 4.30, 2.49, 1.83, 1.51, 1.84, 2.07, 1.66, 1.19, 1.19, 1.09, 1.01, 1.09, 0.99,
-#                              1.04, 0.84, 0.81, 0.79, 2.04, 1.34, 1.34])
-#
-#
-#        # Interpolate over the curve
-#        spline_interp = interpolate.splrep(wave, A_AKs, k=3, s=0)
-#        A_at_wave = interpolate.splev(wavelength, spline_interp)
-#
-#        # We'll call 2.14 microns the K-band
-#        idx = np.where( abs(wavelength - 2.14) == min(abs(wavelength - 2.14)) )
-#        A_AKs_at_wave = A_at_wave / A_at_wave[idx] 
-#
-#        return A_AKs_at_wave
-#
-#    def Fritz11(self, wavelength, AKs):
-#        """ 
-#        Return the extinction at a given wavelength assuming the 
-#        extinction law and an overall `AKs` value.
-#
-#        Parameters
-#        ----------
-#        wavelength : float or array
-#            Wavelength to return extinction for, in microns
-#        AKs : float
-#            Total extinction in AKs, in mags
-#        """
-#        # If input entry is a single float, turn it into an array
-#        try:
-#            len(wavelength)
-#        except:
-#            wavelength = [wavelength]
-#
-#        # Return error if any wavelength is beyond interpolation range of
-#        # extinction law
-#        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
-#            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
-#            
-#        # Extract wave and A/AKs from law, turning wave into micron units
-#        wave = self.wave * (10**-4)
-#        law = self.obscuration
-#
-#        # Find the value of the law at the closest points
-#        # to wavelength
-#        A_AKs_at_wave = []
-#        for ii in wavelength:
-#            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-#            A_AKs_at_wave.append(law[idx][0])
-#
-#        # Now multiply by AKs (since law assumes AKs = 1)
-#        A_at_wave = np.array(A_AKs_at_wave) * AKs
-#
-#        return A_at_wave
+class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
+    """
+    Defines extinction law from `Fritz et al. 2011 
+    <https://ui.adsabs.harvard.edu/abs/2011ApJ...737...73F/abstract>`_
+    for the Galactic Center. The law is defined from 1.0 -- 26 microns.
 
+    By default, law is scaled such that A_lambda / A_2.166 microns = 1.
+    According to Fritz+11, A_2.166 microns = 2.62 +/- 0.11 mag is the total
+    extinction towards the inner 14"x20" of the MW.
+
+    Parameters:
+    -----------
+    scale_labmda: float
+        Wavelength at which extinction law is scaled (A_lambda / A_scale_lambda = 1),
+        in microns. Default is 2.166 microns
+
+    """
+    def __init__(self, scale_lambda=2.166):
+        # Read in the interpolated extinction curve from Fritz+11,
+        # based on their Table 8. Wavelengths in microns, extinction in mags
+        wave, ext, ext_err = RedLawFritz11._read_Fritz11()
+
+        # Convert wave to angstromgs
+        wave *= 10**4
+
+        # Rescale extinction law such that A_lambda / A_2.166 microns = 1
+        idx = np.where( abs(wave - (scale_lambda*10**4)) ==
+                            min(abs(wave - (scale_lambda*10**4))) )
+        ext_scale = ext / ext[idx]
+
+        # Make custom reddening law
+        pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
+                                                  waveunits='angstrom',
+                                                  Avscaled=ext_scale,
+                                                  name='Fritz11',
+                                                  litref='Fritz+2011')
+        
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+
+        # Other useful variables
+        self.scale_lambda = scale_lambda
+        self.name = 'F11'
+
+        return
+    
+    @staticmethod
+    def _read_Fritz11():
+        """
+        Return the interpolated extinction curve from Fritz+11, 
+        as defined in their Table 8. 
+        
+        Output:
+        ------
+        wave: array
+            Wavelength in microns
+
+        ext: array
+            Extinction in mags
+
+        ext_err: array
+            Extinction error, in mags
+        """
+        # Read in file with Table 8 info (published with Fritz+11 paper)
+        sep = '/'
+        inpath = sep.join(__file__.split('/')[:-1])
+        infile = '{0}/el_files/fritz11_EL_table8.fits'.format(inpath)
+
+        t = Table.read(infile, format='fits')
+        wave = t['lambda']
+        ext = t['A']
+        ext_err = t['e_A']
+
+        return wave, ext, ext_err
+
+    @staticmethod
+    def _read_Fritz11_obs():
+        """
+        Return the Fritz+11 observed values, from their Table 2
+        
+        Output:
+        -------
+        wave: array
+            Wavelength in microns
+
+        ext: array
+            Extinction in mags
+
+        ext_err: array
+            Extinction error, in mags
+        """
+        # Read in file with Table 8 info (published with Fritz+11 paper)
+        sep = '/'
+        inpath = sep.join(__file__.split('/')[:-1])
+        infile = '{0}/el_files/fritz11_EL_table2.txt'.format(inpath)
+
+        t = Table.read(infile, format='ascii')
+        wave = t['wave']
+        ext = t['ext']
+        ext_err = t['ext_err']
+
+        return wave, ext, ext_err
+
+    def plot_Fritz11(self):
+        """
+        Plot Fritz+11 interpolated extinciton curve (their Fig 8)
+        versus their actual measured values (their Table 2).
+        This is similar to their Figure 8.
+
+        Saves plot as fritz11_el.png in cwd
+        """
+        # Read in the Fritz+11 table 8
+        wave, ext, ext_err = RedLawFritz11._read_Fritz11()
+
+        # Read in Fritz+11 measurements (Table 2)
+        wave_obs, ext_obs, ext_obs_err = RedLawFritz11._read_Fritz11_obs()
+
+        # Now plot the scaled extinction law, scaled to the Fritz+11
+        # extinction at 2.166 microns. Remember that this produces
+        # throughput = 10^-0.4*Alambda
+        ext_scaled = self.reddening(2.62)
+        
+        # Make plot
+        py.figure(figsize=(10,10))
+        py.plot(wave, ext, 'r-', label='Interpolated EL')
+        py.fill_between(wave, ext+ext_err, ext-ext_err, color='red',
+                            alpha=0.3)
+        py.errorbar(wave_obs, ext_obs, yerr=ext_obs_err, fmt='k.', ms=10,
+                        label='Measured')
+        py.plot(ext_scaled.wave*10**-4, np.log10(ext_scaled.throughput)/-0.4, 'b-', label='Scaled EL')
+        py.xlabel('Wavelength (microns)')
+        py.ylabel('Extinction (A$_{\lambda}$)')
+        py.title('Fritz+11 EL')
+        py.gca().set_xscale('log')
+        py.gca().set_yscale('log')
+        py.legend()
+        py.savefig('fritz11_el.png')
+
+        return
+
+    def Fritz11(self, wavelength, A_scale_lambda):
+        """ 
+        Return the extinction at a given wavelength assuming the 
+        extinction law and a total extinction at the scale_lambda
+        (the wavelength where the extinction law = 1)
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to return extinction for, in microns
+        A_scale_lambda : float
+            Total extinction at scale_lambda, in mags
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/A_scale_lambda from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_Ascale_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_Ascale_at_wave.append(law[idx][0])
+
+        # Now multiply by A_scale_lambda (since law assumes A_scale_lambda = 1)
+        A_at_wave = np.array(A_Ascale_at_wave) * A_scale_lambda
+
+        return A_at_wave
 
 #==============================================#
 # This redlaw is now depreciated: use Hosek18b
