@@ -2004,16 +2004,24 @@ class RedLawNoguerasLara18(RedLawPowerLaw):
     """
     Defines extinction law from `Nogueras-Lara et al. 2018 
     <https://ui.adsabs.harvard.edu/abs/2018A%26A...610A..83N/abstract>`_
-    for the Galactic Center. It is defined between 0.8 - 2.5 microns.
+    for the Galactic Center.  It is defined between 1.0 - 3.0 microns.
+    Measurements were made in JHK, with effective wavelengths 
+    of 1.2685, 1.6506, and 2.1629 microns, respectively.
+
+    Reddening law is scaled such that A_lambda / A_Ks = 1 at 
+    lambda = 2.163 microns (the observed K-band)
     """
     def __init__(self):
-        wave_min = 0.8
-        wave_max = 2.8
-        RedLawPowerLaw.__init__(self, 2.30, 2.15, wave_min=wave_min, wave_max=wave_max)
+        wave_min = 1.0
+        wave_max = 3.0
+        K_wave = 2.163
+        RedLawPowerLaw.__init__(self, 2.30, K_wave, wave_min=wave_min, wave_max=wave_max)
         
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = wave_min*10**4
         self.high_lim = wave_max*10**4
+
+        self.scale_lambda = 2.163
         self.name = 'NL18'
 
     def NoguerasLara18(self, wavelength, AKs):
@@ -2059,7 +2067,7 @@ class RedLawNoguerasLara20(RedLawBrokenPowerLaw):
     """
     Defines extinction law from `Nogueras-Lara et al. 2020
     <https://ui.adsabs.harvard.edu/abs/2020A%26A...641A.141N/abstract`_
-    for the Galactic Center. It is defined between 1.15 - 2.3 microns.
+    for the Galactic Center. It is defined between 1.0 -- 3 microns.
     Measurements were made in JHK, with effective wavelengths 
     of 1.2685, 1.6506, and 2.1629 microns, respectively
 
@@ -2074,7 +2082,7 @@ class RedLawNoguerasLara20(RedLawBrokenPowerLaw):
     lambda = 2.163 microns (the observed K-band)
     """
     def __init__(self):
-        lambda_limits = [2.3, 1.6505, 1.15]
+        lambda_limits = [3.0, 1.6505, 1.0]
         alpha_vals = [2.44, 2.23]
         K_wave = 2.163
         RedLawBrokenPowerLaw.__init__(self, lambda_limits, alpha_vals, K_wave)
