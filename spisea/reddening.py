@@ -70,10 +70,22 @@ def get_red_law(str):
 
 class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
     """
-    Defines extinction law from `Nishiyama et al. 2009 
-    <https://ui.adsabs.harvard.edu/abs/2009ApJ...696.1407N/abstract>`_
-    toward the Galactic Center. This is the default extinction law. 
-    The law is defined between 0.5 -- 8 microns.
+    The extinction law towards the Galactic Center 
+    from `Nishiyama et al. 2009 
+    <https://ui.adsabs.harvard.edu/abs/2009ApJ...696.1407N/abstract>`_,
+    combined with the Av / AKs value from `Nishiyama et al. 2008 
+    <https://ui.adsabs.harvard.edu/abs/2008ApJ...680.1174N/abstract>`_.    
+    This law is defined between 0.5 - 8.0 microns. 
+
+    This law is constructed in 3 segments:
+    * 0.5 -- 1.24 microns: a linear interpolation in log(1/lambda) vs log(A/AKs) space
+      between the Av/AKs and AJ/AKs values
+    * 1.25 -- 2.14 microns: a power law with index of 2.0
+    * 2.14 -- 8.0 microns: a spline interpolation between the observed extinction values
+
+    A_lambda / A_Ks = 1 when lambda = 2.14 microns
+
+    This is the default extinction law.
     """
     def __init__(self):
         # Fetch the extinction curve, pre-interpolate across 3-8 microns
@@ -95,6 +107,9 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave_vals)
         self.high_lim = max(wave_vals)
+
+        # Other info
+        self.scale_lambda = 2.14
         self.name = 'N09'
     
     @staticmethod
@@ -189,7 +204,39 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         A_at_wave = np.array(A_AKs_at_wave) * AKs
 
         return A_at_wave
-        
+
+    def plot_Nishiyama09(self):
+        """
+        Plot Nishiayama+09 law vs. the observed measurements
+        from their Table 1.
+        """
+        # Extract the law
+        wave = self.wave # angstroms
+        law = self.obscuration
+
+        # Convert wave to microns
+        wave *= 10**-4
+
+        # Measured extinction values from Nishiyama+09, Table 1
+        wave_obs = np.array([0.551, 1.25, 1.63, 2.14, 3.545, 4.442, 5.675, 7.760])
+        A_AKs = np.array([16.13, 3.02, 1.73, 1.00, 0.500, 0.390, 0.360, 0.430])
+        A_AKs_err = np.array([1.3, 0.04, 0.03, 0.0, 0.01, 0.01, 0.01, 0.01])
+
+        # Make plot
+        py.figure(figsize=(10,10))
+        py.plot(wave, law, 'r-', label='EL Function')
+        py.errorbar(wave_obs, A_AKs, yerr=A_AKs_err, fmt='k.', ms=10,
+                        label='Measured')
+        py.xlabel('Wavelength (microns)')
+        py.ylabel('Extinction (A$_{\lambda}$)')
+        py.title('Nishiyama+09 EL')
+        py.gca().set_xscale('log')
+        py.gca().set_yscale('log')
+        py.legend()
+        py.savefig('nishiyama09_el.png')
+
+        return
+    
 class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
     """
     Defines the extinction law from  
