@@ -271,6 +271,9 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         # Set the upper/lower wavelength limits of law (in angstroms)
         self.low_lim = min(wave)
         self.high_lim = max(wave)
+
+        # other info
+        self.scale_lambda = 2.174 
         self.name = 'C89,{0}'.format(Rv)
 
     @staticmethod
@@ -386,8 +389,12 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
     """
     Defines extinction law from `Roman-Zuniga et al. 2007
     <https://ui.adsabs.harvard.edu/abs/2007ApJ...664..357R/abstract>`_
-    for the dense cloud core Barnard 59. It is defined between 1.0 - 8.0
+    for the dense cloud core Barnard 59. The law is a cubic spline fit 
+    to the values of A_lambda / A_Ks derived using the color-color
+    diagrams slopes in their Table 1. It is defined between 1.0 - 8.0
     microns.
+
+    A_lambda / A_Ks = 1 when lambda = 2.164 microns
     """
     def __init__(self):
         # Fetch the extinction curve, pre-interpolate across 1-8 microns
@@ -413,6 +420,9 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
 
     @staticmethod
     def _derive_romanzuniga07(wavelength):
+        """
+        Measurements taken from C-C column in Table 1 of RZ07
+        """
         filters = ['J', 'H', 'Ks', '[3.6]', '[4.5]', '[5.8]', '[8.0]']
         wave =      np.array([1.240, 1.664, 2.164, 3.545, 4.442, 5.675, 7.760])
         A_AKs =     np.array([2.299, 1.550, 1.000, 0.618, 0.525, 0.462, 0.455])
@@ -462,6 +472,35 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
         A_at_wave = np.array(A_AKs_at_wave) * AKs
 
         return A_at_wave
+
+    def plot_RomanZuniga07(self):
+        """
+        Plot law against measured values from Roman-Zuniga+07
+        """
+        wave = self.wave # Angstroms
+        law = self.obscuration
+
+        # Change wavelengths to microns
+        wave *= 10**-4
+
+        # Get the observed values
+        wave_obs = np.array([1.240, 1.664, 2.164, 3.545, 4.442, 5.675, 7.760])
+        A_AKs = np.array([2.299, 1.550, 1.000, 0.618, 0.525, 0.462, 0.455])
+        A_AKs_err = np.array([0.530, 0.080, 0.000, 0.077, 0.063, 0.055, 0.059])
+
+        # Make plot
+        py.figure(figsize=(10,10))
+        py.plot(wave, law, 'r-', label='EL Function')
+        py.errorbar(wave_obs, A_AKs, yerr=A_AKs_err, fmt='k.', ms=10,
+                        label='Measured')
+        py.xlabel('Wavelength (microns)')
+        py.ylabel('Extinction (A$_{\lambda}$)')
+        py.title('Roman-Zuniga+07 EL')
+        py.gca().set_xscale('log')
+        py.gca().set_yscale('log')
+        py.legend()
+        py.savefig('romanzuniga07_el.png')
+        return
     
 class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
     """

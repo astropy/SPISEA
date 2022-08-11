@@ -199,8 +199,8 @@ def test_red_law_IsochronePhot():
     # Define reddening laws and associated AKs vals
     redlaw_arr = [reddening.RedLawFritz11(), reddening.RedLawSchoedel10(),
                       reddening.RedLawNoguerasLara20(), reddening.RedLawIndebetouw05(),
-                      reddening.RedLawNishiyama09()]
-    aks_arr = [2.62, 2.46, 1.67, 2.3, 2.3]
+                      reddening.RedLawNishiyama09(), reddening.RedLawRomanZuniga07()]
+    aks_arr = [2.62, 2.46, 1.67, 2.3, 2.3, 2.3]
     for ii in range(len(redlaw_arr)):
         redlaw = redlaw_arr[ii]
         aks = aks_arr[ii]
@@ -209,7 +209,7 @@ def test_red_law_IsochronePhot():
         iso_test = synthetic.IsochronePhot(logAge, aks, dist, metallicity=0,
                                                evo_model=evo_model, atm_func=atm_func,
                                                red_law=redlaw, filters=filt_list,
-                                               mass_sampling=20)
+                                               min_mass=0.95, max_mass=1.05)
         # Now remove the iso file to make sure we recalc each time
         cmd = 'rm iso_6.70_*_08000_p00.fits'
         os.system(cmd)
