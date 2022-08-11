@@ -43,10 +43,12 @@ def get_red_law(str):
                      'F09': RedLawFitzpatrick09,
                      'S16': RedLawSchlafly16,
                      'pl': RedLawPowerLaw,
-#                     'F11': RedLawFritz11,
-#                     'H18': RedLawHosek18,
+                     'F11': RedLawFritz11,
                      'H18b': RedLawHosek18b,
-                     'NL18': RedLawNoguerasLara18}
+                     'NL18': RedLawNoguerasLara18,
+                     'NL20': RedLawNogerasLara20,
+                     'S10': RedLawSchoedel10,
+                     'I05': RedLawIndebetouw05}
 
     # Make reddening law object, including params if necessary.
     # This is not great coding, but I really strugged to generalize this...
@@ -978,6 +980,124 @@ class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
         A_at_wave = np.array(A_AKs_at_wave) * AKs
 
         return A_at_wave
+
+class RedLawIndebetouw05(pysynphot.reddening.CustomRedLaw):
+    """
+    Defines the extinction law from `Indebetouw et al. 2005 
+    <https://ui.adsabs.harvard.edu/abs/2005ApJ...619..931I/abstract>`_.
+    The law is defined between 1.25 - 8 microns using Equation 4
+    in their paper.
+
+    Note that A_lambda / A_K = 1 when lambda = 2.164 microns.
+    """
+    def __init__(self):
+        # Get A_lambda / A_K values from Indebetouw+05
+        wave = np.arange(1.25, 8.0, 0.001) # microns
+        Alambda_scaled = RedLawIndebetouw05._derive_Indebetouw05(wave)
+
+        # Convert wavelength to angstrom
+        wave *= 10 ** 4
+
+        pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave, 
+                                                  waveunits='angstrom',
+                                                  Avscaled=Alambda_scaled,
+                                                  name='Indebetouw05',
+                                                  litref='Indebetouw+ 2005')
+
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+
+        # Other info
+        self.scale_lambda = 2.164
+        self.name = 'I05'
+
+    @staticmethod
+    def _derive_Indebetouw05(wave):
+        """
+        Calculate Indebetouw+05 extinction law using equation 4 of their
+        paper.
+        """
+        log_Alambda_AK = 0.61 - 2.22*np.log10(wave) + 1.21 * np.log10(wave)**2.
+
+        # Return output in terms of A_lambda / A_K
+        Alambda_AK = 10**log_Alambda_AK
+        return Alambda_AK
+
+    def Indebetouw05(self, wavelength, AK):
+        """ 
+        Return the extinction at a given wavelength assuming the 
+        extinction law and an overall extinction at AK (2.164 microns)
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to return extinction for, in microns
+        AKs : float
+            Total extinction in AKs, in mags
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+            
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
+
+        return A_at_wave
+
+    def plot_Indebetouw05(self):
+        """
+        Plot Indebetouw+05 extinciton curve versus their 
+        actual measured values (their Table 1).
+        This is similar to their Figure 6.
+
+        Saves plot as indebetouw05_el.png in cwd
+        """
+        # Get the extinction law
+        wave = self.wave # Angstroms
+        law = self.obscuration # A_lambda / AK
+
+        # Convert wave to microns for plot
+        wave *= 10**-4
+        
+        # Their average measurements across sight lines
+        # from Table 1
+        wave_arr = [1.240, 1.664, 2.164, 3.545, 4.442, 5.675, 7.760]
+        law_obs_arr = [2.50, 1.55, 1.0, 0.56, 0.43, 0.43, 0.43]
+        law_obs_err_arr = [0.15, 0.08, 0.0, 0.06, 0.08, 0.10, 0.10]
+        
+        # Make plot
+        py.figure(figsize=(10,10))
+        py.plot(wave, law, 'r-', label='EL Function')
+        py.errorbar(wave_arr, law_obs_arr, yerr=law_obs_err_arr, fmt='k.', ms=10,
+                        label='Measured')
+        py.xlabel('Wavelength (microns)')
+        py.ylabel('Extinction (A$_{\lambda}$)')
+        py.title('Indebetouw+05 EL')
+        py.gca().set_xscale('log')
+        py.gca().set_yscale('log')
+        py.legend()
+        py.savefig('indebetouw05_el.png')
+
+        return
         
 class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
     """

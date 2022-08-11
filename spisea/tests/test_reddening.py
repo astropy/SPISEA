@@ -198,8 +198,8 @@ def test_red_law_IsochronePhot():
 
     # Define reddening laws and associated AKs vals
     redlaw_arr = [reddening.RedLawFritz11(), reddening.RedLawSchoedel10(),
-                      reddening.RedLawNoguerasLara20()]
-    aks_arr = [2.62, 2.46, 1.67]
+                      reddening.RedLawNoguerasLara20(), reddening.RedLawIndebetouw05()]
+    aks_arr = [2.62, 2.46, 1.67, 2.3]
     for ii in range(len(redlaw_arr)):
         redlaw = redlaw_arr[ii]
         aks = aks_arr[ii]
