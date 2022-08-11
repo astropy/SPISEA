@@ -1,6 +1,7 @@
 import numpy as np
-from spisea import reddening, synthetic
+from spisea import reddening, synthetic, evolution, atmospheres
 import pylab as py
+import os
 import pdb
 
 
@@ -179,3 +180,37 @@ def test_RedLawBrokenPowerLaw(plots=False):
 
     return
 
+def test_red_law_IsochronePhot():
+    """
+    Make sure each reddening law can run with IsochronePhot
+    """
+    # Define properties of stellar pop to models
+    logAge = np.log10(5*10**6.) # Age in log(years)
+    dist = 8000 # distance in parsec
+    metallicity = 0 # Metallicity in [M/H]
+
+    # Define evolution/atmosphere models and extinction law
+    evo_model = evolution.MISTv1() 
+    atm_func = atmospheres.get_merged_atmosphere
+    
+    # Also specify filters for synthetic photometry.
+    filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f153m', 'nirc2,H', 'nirc2,Kp']
+
+    # Define reddening laws and associated AKs vals
+    redlaw_arr = [reddening.RedLawFritz11(), reddening.RedLawSchoedel10(),
+                      reddening.RedLawNoguerasLara20()]
+    aks_arr = [2.62, 2.46, 1.67]
+    for ii in range(len(redlaw_arr)):
+        redlaw = redlaw_arr[ii]
+        aks = aks_arr[ii]
+
+        # Try to run isochrone phot
+        iso_test = synthetic.IsochronePhot(logAge, aks, dist, metallicity=0,
+                                               evo_model=evo_model, atm_func=atm_func,
+                                               red_law=redlaw, filters=filt_list,
+                                               mass_sampling=10)
+        # Now remove the iso file to make sure we recalc each time
+        cmd = 'rm iso_6.70_*_08000_p00.fits'
+        os.system(cmd)
+        
+    return
