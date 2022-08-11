@@ -197,15 +197,13 @@ def test_red_law_IsochronePhot():
     filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f153m', 'nirc2,H', 'nirc2,Kp']
 
     # Define reddening laws and associated AKs vals
-    redlaw_arr = [reddening.RedLawFritz11(), reddening.RedLawSchoedel10(),
-                      reddening.RedLawNoguerasLara20(), reddening.RedLawIndebetouw05(),
-                      reddening.RedLawNishiyama09(), reddening.RedLawRomanZuniga07(),
-                      reddening.RedLawRiekeLebofsky(), reddening.RedLawDamineli16(),
-                      reddening.RedLawFitzpatrick09(2.5, 3), reddening.RedLawSchlafly16(1.55, 0),
-                      reddening.RedLawHosek18b(), reddening.RedLawNoguerasLara18()]
+    redlaw_arr = ['F11', 'S10', 'NL20', 'I05', 'N09', 'RZ07',
+                      'RL85', 'D16', 'F09,2.5,3', 'S16,1.55,0',
+                      'H18b', 'NL18']
     aks_arr = [2.62, 2.46, 1.67, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3]
     for ii in range(len(redlaw_arr)):
-        redlaw = redlaw_arr[ii]
+        redlaw = reddening.get_red_law(redlaw_arr[ii])
+        #redlaw_arr[ii]
         aks = aks_arr[ii]
 
         # Try to run isochrone phot

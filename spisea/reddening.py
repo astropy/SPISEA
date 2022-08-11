@@ -46,7 +46,7 @@ def get_red_law(str):
                      'F11': RedLawFritz11,
                      'H18b': RedLawHosek18b,
                      'NL18': RedLawNoguerasLara18,
-                     'NL20': RedLawNogerasLara20,
+                     'NL20': RedLawNoguerasLara20,
                      'S10': RedLawSchoedel10,
                      'I05': RedLawIndebetouw05}
 
