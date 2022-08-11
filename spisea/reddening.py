@@ -1623,6 +1623,79 @@ class RedLawHosek18b(pysynphot.reddening.CustomRedLaw):
 
         return A_at_wave
 
+class RedLawSchoedel10(RedLawBrokenPowerLaw):
+    """
+    Defines extinction law from `Schoedel et al. 2010
+    <https://ui.adsabs.harvard.edu/abs/2010A%26A...511A..18S/abstract`_
+    for the Galactic Center. It is defined between 1.5 - 3.8 microns.
+
+    Power law indices: 
+    1.677 - 2.168 microns ---> alpha = 2.21 +/- 0.24
+    2.168 - 3.636 microns ---> alpha = 1.34 +/- 0.29
+
+    Wavelengths come from effective wavelengths of observations (some buffer 
+    is added to either side of these values).
+    
+    Reddening law is scaled such that A_lambda / A_Ks = 1 at 
+    lambda = 2.168 microns.
+    """
+    def __init__(self):
+        lambda_limits = [3.8, 2.168, 1.5]
+        alpha_vals = [1.34, 2.21]
+        K_wave = 2.168
+        RedLawBrokenPowerLaw.__init__(self, lambda_limits, alpha_vals, K_wave)
+        
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = np.min(lambda_limits)*10**4
+        self.high_lim = np.max(lambda_limits)*10**4
+
+        # Other useful variables
+        self.scale_lambda = K_wave
+        self.name = 'S10'
+
+        return
+
+    def Schoedel10(self, wavelength, AKs):
+        """ 
+        Return the extinction at a given wavelength assuming the 
+        extinction law and a total extinction at scale_lambda
+        (the wavelength where the extinction law = 1)
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to return extinction for, in microns
+        AKs : float
+            Total extinction at scale_lambda, in mags
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))    
+
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
+
+        return A_at_wave  
+
+    
 class RedLawNoguerasLara18(RedLawPowerLaw):
     """
     Defines extinction law from `Nogueras-Lara et al. 2018 
@@ -1676,7 +1749,81 @@ class RedLawNoguerasLara18(RedLawPowerLaw):
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
 
-        return A_at_wave    
+        return A_at_wave
+
+class RedLawNoguerasLara20(RedLawBrokenPowerLaw):
+    """
+    Defines extinction law from `Nogueras-Lara et al. 2020
+    <https://ui.adsabs.harvard.edu/abs/2020A%26A...641A.141N/abstract`_
+    for the Galactic Center. It is defined between 1.15 - 2.3 microns.
+    Measurements were made in JHK, with effective wavelengths 
+    of 1.2685, 1.6506, and 2.1629 microns, respectively
+
+    Measured power law indices: 
+    1.2685 - 1.6505 microns ---> alpha = 2.44 +/- 0.05
+    1.6505 - 2.1629 microns ---> alpha = 2.23 +/- 0.05
+
+    Wavelengths come from effective wavelengths of observations (some buffer 
+    is added to either side of these values).
+    
+    Reddening law is scaled such that A_lambda / A_Ks = 1 at 
+    lambda = 2.163 microns (the observed K-band)
+    """
+    def __init__(self):
+        lambda_limits = [2.3, 1.6505, 1.15]
+        alpha_vals = [2.44, 2.23]
+        K_wave = 2.163
+        RedLawBrokenPowerLaw.__init__(self, lambda_limits, alpha_vals, K_wave)
+        
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = np.min(lambda_limits)*10**4
+        self.high_lim = np.max(lambda_limits)*10**4
+
+        # Other useful variables
+        self.scale_lambda = K_wave
+        self.name = 'NL20'
+
+        return
+
+    def NoguerasLara20(self, wavelength, AKs):
+        """ 
+        Return the extinction at a given wavelength assuming the 
+        extinction law and a total extinction at scale_lambda
+        (the wavelength where the extinction law = 1)
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to return extinction for, in microns
+        AKs : float
+            Total extinction at scale_lambda, in mags
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))    
+
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
+
+        return A_at_wave  
 
 #---------------------------#
 # Cubic spline function from Schalfly+16 appendix
