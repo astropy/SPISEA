@@ -544,7 +544,9 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
 
         Data pulled from Rieke+Lebofsky 1985, Table 3. Note that their
         Table contains values from 0.3 - 13 microns, but only 1 - 5 microns
-        is measured directly.
+        is measured directly. 
+
+        Wavelengths for filters I - M are from Rieke+89, table 4.
         """
         # Arrays with the values from the paper
         filters = ['U', 'B', 'V', 'R', 'I', 'J', 'H', 'K', 'L', 'M', 
@@ -628,13 +630,14 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
         wave *= 10**-4
 
         # Get the observed values from their Table 3. Note only JHKLM is
-        # measured directly by RL85, other values come from elsewhere
+        # measured directly by RL85, other values come from elsewhere.
+        # Wavelengths are from Rieke+89, Table 4
         filters = ['U', 'B', 'V', 'R', 'I', 'J', 'H', 'K', 'L', 'M', 
                    '[8.0]', '[8.5]', '[9.0]', '[9.5]', '[10.0]', '[10.5]', 
                    '[11.0]', '[11.5]', '[12.0]', '[12.5]', '[13.0]']
-        wave_obs = np.array([0.365, 0.445, 0.551, 0.658, 0.806, 1.17, 1.57, 2.12, 
-                         3.40, 4.75, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0,
-                        11.5, 12.0, 12.5, 13.0])
+        wave_obs = np.array([0.365, 0.445, 0.551, 0.658, 0.9, 1.25, 1.60, 2.2, 
+                         3.50, 4.8, 8.0, 8.5, 9.0, 9.5, 10.0, 10.5, 11.0,
+                        11.5, 12.0, 12.5, 13.0]) 
         A_Av = np.array([1.531, 1.324, 1.00, 0.748, 0.482, 0.282, 0.175, 0.112,
                          0.058, 0.023, 0.02, 0.043, 0.074, 0.087, 0.083,
                          0.074, 0.060, 0.047, 0.037, 0.030, 0.027])
@@ -646,10 +649,17 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
 
         A_Ak = A_Av * Av_Ak
 
+        # RL law is only defined between I and M. Restrict to this range
+        idx1 = np.where(np.array(filters) == 'I')[0][0]
+        idx2 = np.where(np.array(filters) == 'M')[0][0]
+
+        wave_obs_f = wave_obs[idx1:idx2+1]
+        A_Ak_f = A_Ak[idx1:idx2+1]
+
         # Make plot
         py.figure(figsize=(10,10))
         py.plot(wave, law, 'r-', label='EL Function')
-        py.plot(wave_obs, A_Ak, 'k.', ms=10,
+        py.plot(wave_obs_f, A_Ak_f, 'k.', ms=10,
                         label='Measured')
         py.xlabel('Wavelength (microns)')
         py.ylabel('Extinction (A$_{\lambda}$)')
