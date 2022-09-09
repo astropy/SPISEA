@@ -130,12 +130,15 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         """
         #-----Define power law extinction law between JHK----#
         jhk_idx = np.where( (wavelength >= 1.25) & (wavelength <= 2.14) )
+        #jhk_idx = np.where( (wavelength >= 1.25) & (wavelength <= 2.3) )
         
         alpha = 2.0
         wave_jhk = wavelength[jhk_idx]
+        idx_scale = np.where(abs(wave_jhk - 2.14) == min(abs(wave_jhk - 2.14)) )
 
         A_jhk = wave_jhk**(-1.0*alpha)
         A_Ks_jhk = A_jhk / A_jhk[-1]
+        #A_Ks_jhk = A_jhk / A_jhk[idx_scale]
 
         #----Now do a linear interpolation (in log(1/lambda) vs log(A/AKs) space) between 1.25 microns and 0.551 microns---#
         jv_idx = np.where( (wavelength < 1.25) & (wavelength > 0.551) )
@@ -152,8 +155,13 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         long_idx = np.where(wavelength > 2.14)
         wave = np.array([0.551, 1.25, 1.63, 2.14, 3.545, 4.442, 5.675, 7.760])
         A_AKs = np.array([16.13, 3.02, 1.73, 1.00, 0.500, 0.390, 0.360, 0.430])
+        interp_idx = np.where(wave > 2.1)
+        #long_idx = np.where(wavelength > 2.3)
+        #wave = np.array([0.551, 1.25, 1.63, 2.14, wave_jhk[-1], 3.545, 4.442, 5.675, 7.760])
+        #A_AKs = np.array([16.13, 3.02, 1.73, 1.00, A_Ks_jhk[-1], 0.500, 0.390, 0.360, 0.430])
+        #interp_idx = np.where(wave > 2.2)
         
-        spline_interp = interpolate.splrep(wave, A_AKs, k=3, s=0)
+        spline_interp = interpolate.splrep(wave[interp_idx], A_AKs[interp_idx], k=3, s=0)
         A_AKs_long = interpolate.splev(wavelength[long_idx], spline_interp)
         
         # Stitch together sections for the final law
@@ -220,7 +228,7 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         # Measured extinction values from Nishiyama+09, Table 1
         wave_obs = np.array([0.551, 1.25, 1.63, 2.14, 3.545, 4.442, 5.675, 7.760])
         A_AKs = np.array([16.13, 3.02, 1.73, 1.00, 0.500, 0.390, 0.360, 0.430])
-        A_AKs_err = np.array([1.3, 0.04, 0.03, 0.0, 0.01, 0.01, 0.01, 0.01])
+        A_AKs_err = np.array([0.21, 0.04, 0.03, 0.0, 0.01, 0.01, 0.01, 0.01])
 
         # Make plot
         py.figure(figsize=(10,10))
