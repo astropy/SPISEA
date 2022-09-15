@@ -82,6 +82,16 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.1.6 (2022-09-15)
+  * Bugfix in how evolution object identifies what age and metallicity
+    model to pull from the grid of available models. Previously, it used
+    first grid model where grid model value >
+    requested value (numpy.searchsorted routine). Now, is takes grid model
+    where the difference betwen the grid model value and requested
+    value is minimized. This is most relevant for metallicity
+    selection for MIST isochrones, where the model grid metallicities are
+    spaced out. 
+
 2.1.5 (2022-07-20)
   * Added additional parameters to get_bb_atmosphere function to give
     user control over the min and max wavelength values, as well as
