@@ -87,7 +87,7 @@ Change Log
     model to pull from the grid of available models. Previously, it used
     first grid model where grid model value >
     requested value (numpy.searchsorted routine). Now, is takes grid model
-    where the difference betwen the grid model value and requested
+    where the difference between the grid model value and requested
     value is minimized. This is most relevant for metallicity
     selection for MIST isochrones, where the model grid metallicities are
     spaced out. 
