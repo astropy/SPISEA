@@ -1,6 +1,6 @@
 import math
 import logging
-from numpy import searchsorted, genfromtxt
+from numpy import genfromtxt
 import numpy as np
 import os
 import glob
@@ -137,11 +137,13 @@ class Geneva(StellarEvolution):
             logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # convert age (in yrs) to log scale and find nearest value in grid
-        age_idx = searchsorted(self.age_list, math.log10(age), side='right')
+        log_age = np.log10(age)
+
+        age_idx = np.where(abs(np.array(self.age_list) - log_age) == min(abs(np.array(self.age_list) - log_age)) )[0][0]
         iso_file = 'iso_' + str(self.age_list[age_idx]) + '.fits'
         
         # find closest metallicity value
-        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)) )[0][0]
         z_dir = self.z_file_map[self.z_list[z_idx]]
         
         # generate isochrone file string
@@ -210,14 +212,11 @@ class Ekstrom12(StellarEvolution):
             logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # Find nearest age in grid to input grid
-        if log_age != self.age_list[0]:
-            age_idx = searchsorted(self.age_list, log_age, side='right')
-        else:
-            age_idx = searchsorted(self.age_list, log_age, side='left')
+        age_idx = np.where(abs(np.array(self.age_list) - log_age) == min(abs(np.array(self.age_list) - log_age)) )[0][0]
         iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)) )[0][0]
         z_dir = self.z_file_map[self.z_list[z_idx]]
         
         # generate isochrone file string
@@ -444,14 +443,11 @@ class Parsec(StellarEvolution):
             logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # Find nearest age in grid to input grid
-        if log_age != self.age_list[0]:
-            age_idx = searchsorted(self.age_list, log_age, side='right')
-        else:
-            age_idx = searchsorted(self.age_list, log_age, side='left')
+        age_idx = np.where(abs(np.array(self.age_list) - log_age) == min(abs(np.array(self.age_list) - log_age)) )[0][0]
         iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)) )[0][0]
         z_dir = self.z_file_map[self.z_list[z_idx]]
         
         # generate isochrone file string
@@ -594,14 +590,11 @@ class Pisa(StellarEvolution):
             logger.error('Requested metallicity {0} is out of bounds for evolution model. Available z-vals: {1}.'.format(z_defined, self.z_list))
         
         # Find nearest age in grid to input grid
-        if log_age != self.age_list[0]:
-            age_idx = searchsorted(self.age_list, log_age, side='right')
-        else:
-            age_idx = searchsorted(self.age_list, log_age, side='left')
+        age_idx = np.where(abs(np.array(self.age_list) - log_age) == min(abs(np.array(self.age_list) - log_age)) )[0][0]
         iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)) )[0][0]
         z_dir = self.z_file_map[self.z_list[z_idx]]
         
         # generate isochrone file string
@@ -756,14 +749,11 @@ class Baraffe15(StellarEvolution):
             logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
         # Find nearest age in grid to input grid
-        if log_age != self.age_list[0]:
-            age_idx = searchsorted(self.age_list, log_age, side='right')
-        else:
-            age_idx = searchsorted(self.age_list, log_age, side='left')
+        age_idx = np.where(abs(np.array(self.age_list) - log_age) == min(abs(np.array(self.age_list) - log_age)) )[0][0]
         iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)) )[0][0]
         z_dir = self.z_file_map[self.z_list[z_idx]]
         
         # generate isochrone file string
@@ -1096,18 +1086,13 @@ class MISTv1(StellarEvolution):
             logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
 
         # Find nearest age in grid to input grid
-        if log_age != self.age_list[0]:
-            age_idx = searchsorted(self.age_list, log_age, side='right')
-        else:
-            age_idx = searchsorted(self.age_list, log_age, side='left')
+        age_idx = np.where(abs(np.array(self.age_list) - log_age) == min(abs(np.array(self.age_list) - log_age)) )[0][0]
         iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        z_idx = searchsorted(self.z_list, z_defined, side='left')
-        if z_idx == len(self.z_list):   # in case just over last index
-            z_idx = z_idx - 1
+        z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)) )[0][0]
         z_dir = self.z_file_map[self.z_list[z_idx]]
-        
+            
         # generate isochrone file string
         full_iso_file = self.model_dir + 'iso/' + z_dir + iso_file
         
@@ -1292,13 +1277,13 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         if ((z_defined < np.min(self.z_list)) or
                 (z_defined > np.max(self.z_list))):
             logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
-        
-        # convert age (in yrs) to log scale and find nearest value in grid
-        age_idx = searchsorted(self.age_list, log_age, side='right')
+
+        # Find nearest age in grid to input grid
+        age_idx = np.where(abs(np.array(self.age_list) - log_age) == min(abs(np.array(self.age_list) - log_age)) )[0][0]
         iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)) )[0][0]
         z_dir = self.z_file_map[self.z_list[z_idx]]
 
         # generate isochrone file string
@@ -1384,12 +1369,12 @@ class MergedPisaEkstromParsec(StellarEvolution):
         if not z_defined in self.z_list:
             logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
-        # convert age (in yrs) to log scale and find nearest value in grid
-        age_idx = searchsorted(self.age_list, log_age, side='right')
+        # Find nearest age in grid to input grid
+        age_idx = np.where(abs(np.array(self.age_list) - log_age) == min(abs(np.array(self.age_list) - log_age)) )[0][0]
         iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)) )[0][0]
         z_dir = self.z_file_map[self.z_list[z_idx]]
 
         # generate isochrone file string
@@ -1495,12 +1480,12 @@ class MergedSiessGenevaPadova(StellarEvolution):
         if not z_defined in self.z_list:
             logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
-        # convert age (in yrs) to log scale and find nearest value in grid
-        age_idx = searchsorted(self.age_list, log_age, side='right')
-        iso_file = 'iso_{0:.2f}.dat'.format(self.age_list[age_idx])
+        # Find nearest age in grid to input grid
+        age_idx = np.where(abs(np.array(self.age_list) - log_age) == min(abs(np.array(self.age_list) - log_age)) )[0][0]
+        iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
         # find closest metallicity value
-        z_idx = searchsorted(self.z_list, z_defined, side='left')
+        z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)) )[0][0]
         z_dir = self.z_file_map[self.z_list[z_idx]]
 
         # generate isochrone file string
