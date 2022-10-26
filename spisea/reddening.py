@@ -1968,8 +1968,9 @@ class RedLawSchoedel10(RedLawBrokenPowerLaw):
     for the Galactic Center. It is defined between 1.5 - 3.8 microns.
 
     Power law indices: 
-    1.677 - 2.168 microns ---> alpha = 2.21 +/- 0.24
-    2.168 - 3.636 microns ---> alpha = 1.34 +/- 0.29
+
+    * 1.677 - 2.168 microns ---> alpha = 2.21 +/- 0.24
+    * 2.168 - 3.636 microns ---> alpha = 1.34 +/- 0.29
 
     Wavelengths come from effective wavelengths of observations (some buffer 
     is added to either side of these values).
@@ -2042,6 +2043,9 @@ class RedLawNoguerasLara18(RedLawPowerLaw):
     Measurements were made in JHK, with effective wavelengths 
     of 1.2685, 1.6506, and 2.1629 microns, respectively.
 
+    This extinction law is a single power law with exponent 
+    of alpha = -2.3.
+
     Reddening law is scaled such that A_lambda / A_Ks = 1 at 
     lambda = 2.163 microns (the observed K-band)
     """
@@ -2106,8 +2110,9 @@ class RedLawNoguerasLara20(RedLawBrokenPowerLaw):
     of 1.2685, 1.6506, and 2.1629 microns, respectively
 
     Measured power law indices: 
-    1.2685 - 1.6505 microns ---> alpha = 2.44 +/- 0.05
-    1.6505 - 2.1629 microns ---> alpha = 2.23 +/- 0.05
+ 
+    * 1.2685 - 1.6505 microns ---> alpha = 2.44 +/- 0.05
+    * 1.6505 - 2.1629 microns ---> alpha = 2.23 +/- 0.05
 
     Wavelengths come from effective wavelengths of observations (some buffer 
     is added to either side of these values).
