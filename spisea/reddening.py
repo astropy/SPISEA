@@ -2044,7 +2044,7 @@ class RedLawNoguerasLara18(RedLawPowerLaw):
     of 1.2685, 1.6506, and 2.1629 microns, respectively.
 
     This extinction law is a single power law with exponent 
-    of alpha = -2.3.
+    of alpha = -2.3 +/- 0.08.
 
     Reddening law is scaled such that A_lambda / A_Ks = 1 at 
     lambda = 2.163 microns (the observed K-band)
