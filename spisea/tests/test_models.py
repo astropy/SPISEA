@@ -1,4 +1,5 @@
 # Test functions for the different stellar evolution and atmosphere models
+import numpy as np
 import pdb
 
 def test_evo_model_grid_num():
@@ -54,6 +55,16 @@ def test_evolution_models():
             for kk in age_vals[ii]:
                 try:
                     test = evo.isochrone(age=10**kk, metallicity=jj)
+
+                    # Make sure the actual isochrone metallicity taken is
+                    # indeed the closest to the desired metallicity (e.g., closest point
+                    # in evo grid)
+                    z_ratio = np.log10(np.array(evo.z_list) / evo.z_solar)
+                    closest_idx = np.where( abs(z_ratio - jj) == min(abs(z_ratio - jj)) )[0][0]
+                    expected_val = z_ratio[closest_idx]
+
+                    assert np.isclose(test.meta['metallicity_act'], expected_val, atol=0.01)
+
                 except:
                     raise Exception('EVO TEST FAILED: {0}, age = {1}, metal = {2}'.format(evo, kk, jj))
 
