@@ -25,9 +25,9 @@ copyright = '2020, Matthew Hosek Jr, Jessica R. Lu, Casey Y. Lam.'
 author = 'Matthew Hosek Jr, Jessica R. Lu, Casey Y. Lam'
 
 # The short X.Y version
-version = '2.1.5'
+version = '2.1.7'
 # The full version, including alpha/beta/rc tags
-release = '2.1.5'
+release = '2.1.7'
 
 
 # -- General configuration ---------------------------------------------------
