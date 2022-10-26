@@ -77,6 +77,11 @@ def test_RedLawBrokenPowerLaw(plots=False):
         py.gca().invert_xaxis()
         py.title('2-segment Extlaw: should match')
 
+    # Additional test here: make sure get_red_law is working
+    # for broken power law as intended
+    red_law_test = reddening.get_red_law('broken_pl,{0},{1},{2}'.format(lambda_limits, alpha_vals, K_wave))
+    assert np.all(red_law_test.obscuration == red_law.obscuration)
+
     #===============================#
     # Test 1: 4-segment law
     #===============================#
@@ -198,9 +203,11 @@ def test_red_law_IsochronePhot():
 
     # Define reddening laws and associated AKs vals
     redlaw_arr = ['F11', 'S10', 'NL20', 'I05', 'N09', 'RZ07',
-                      'RL85', 'D16', 'F09,2.5,3', 'S16,1.55,0',
-                      'H18b', 'NL18']
-    aks_arr = [2.62, 2.46, 1.67, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3]
+                      'RL85', 'D16', 'F09,2.5,3', 'S16,1.55,0', 'DM16',
+                      'H18b', 'NL18', 'C89,3.1', 'pl,2.12,0.9,2.4',
+                      'broken_pl,[2.3,1.63,0.9],[2.23, 3.0],2.12']
+        
+    aks_arr = [2.62, 2.46, 1.67, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3]
     for ii in range(len(redlaw_arr)):
         redlaw = reddening.get_red_law(redlaw_arr[ii])
         #redlaw_arr[ii]
@@ -214,5 +221,6 @@ def test_red_law_IsochronePhot():
         # Now remove the iso file to make sure we recalc each time
         cmd = 'rm iso_6.70_*_08000_p00.fits'
         os.system(cmd)
+        print('----EL {0} works OK!-----'.format(redlaw_arr[ii]))
         
     return
