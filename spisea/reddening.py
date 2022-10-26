@@ -1963,7 +1963,7 @@ class RedLawHosek18b(pysynphot.reddening.CustomRedLaw):
 class RedLawSchoedel10(RedLawBrokenPowerLaw):
     """
     Defines extinction law from `Schoedel et al. 2010
-    <https://ui.adsabs.harvard.edu/abs/2010A%26A...511A..18S/abstract`_
+    <https://ui.adsabs.harvard.edu/abs/2010A%26A...511A..18S/abstract>`_
     for the Galactic Center. It is defined between 1.5 - 3.8 microns.
 
     Power law indices: 
@@ -2099,7 +2099,7 @@ class RedLawNoguerasLara18(RedLawPowerLaw):
 class RedLawNoguerasLara20(RedLawBrokenPowerLaw):
     """
     Defines extinction law from `Nogueras-Lara et al. 2020
-    <https://ui.adsabs.harvard.edu/abs/2020A%26A...641A.141N/abstract`_
+    <https://ui.adsabs.harvard.edu/abs/2020A%26A...641A.141N/abstract>`_
     for the Galactic Center. It is defined between 1.0 -- 3 microns.
     Measurements were made in JHK, with effective wavelengths 
     of 1.2685, 1.6506, and 2.1629 microns, respectively
