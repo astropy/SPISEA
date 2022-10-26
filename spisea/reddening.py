@@ -10,6 +10,7 @@ from scipy import interpolate
 from astropy.table import Table
 import pysynphot
 from scipy.linalg import solve_banded
+import ast
 import os
 import pdb
 
@@ -28,10 +29,23 @@ def get_red_law(str):
     # Parse the string, extracting redlaw name and other params
     tmp = str.split(',')
     name = tmp[0]
-    params = ()
-    if len(tmp) > 1:
-        for ii in range(len(tmp) - 1):
-            params = params + (float(tmp[ii+1]),)
+    
+    # How we split this up changes for the broken power law EL
+    # versus the other ELs (since we have arrays for broken power law EL)
+    if name == 'broken_pl':
+        # resplit the str, given that arrays are in it
+        tmp = str.split('[')
+        tmp2 = str.split(']')
+        param1 = ast.literal_eval('[{0}'.format(tmp[1][:-1])) # Funny formatting to remove ,
+        param2 = ast.literal_eval('{0}]'.format(tmp2[1][1:])) # Funny formatting to remove ,
+        param3 = float(str.split(',')[-1])
+
+        params = (param1, param2, param3)
+    else:
+        params = ()
+        if len(tmp) > 1:
+            for ii in range(len(tmp) - 1):
+                params = params + (float(tmp[ii+1]),)
 
     # Define dictionary connecting redlaw names to the redlaw classes
     name_dict = {'N09':RedLawNishiyama09,
@@ -43,6 +57,7 @@ def get_red_law(str):
                      'F09': RedLawFitzpatrick09,
                      'S16': RedLawSchlafly16,
                      'pl': RedLawPowerLaw,
+                     'broken_pl': RedLawBrokenPowerLaw,
                      'F11': RedLawFritz11,
                      'H18b': RedLawHosek18b,
                      'NL18': RedLawNoguerasLara18,
