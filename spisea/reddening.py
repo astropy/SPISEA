@@ -93,6 +93,7 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
     This law is defined between 0.5 - 8.0 microns. 
 
     This law is constructed in 3 segments:
+
     * 0.5 -- 1.24 microns: a linear interpolation in log(1/lambda) vs log(A/AKs) space
       between the Av/AKs and AJ/AKs values
     * 1.25 -- 2.14 microns: a power law with index of 2.0
