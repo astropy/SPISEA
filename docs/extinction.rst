@@ -22,19 +22,22 @@ Available extinction laws:
 
 * RedLawPowerLaw
 * RedLawBrokenPowerLaw
+* RedLawRiekeLebofsky
 * RedLawCardelli
+* RedLawIndebetouw05
+* RedLawRomanZuniga07
+* RedLawFitzpatrick09
+* RedLawNishiyama09 (default)
+* RedLawSchoedel10
+* RedLawFritz11
 * RedLawDamineli16
 * RedLawDeMarchi16
-* RedLawFitzpatrick09
-* RedLawHosek18b
-* RedLawNishiyama09 (default)
-* RedLawNoguerasLara18
-* RedLawRomanZuniga07
-* RedLawRiekeLebofsky
 * RedLawSchlafly16
+* RedLawHosek18b
+* RedLawNoguerasLara18
+* RedLawNoguerasLara20
 
 
-  
 Extinction Law Classes
 --------------------------
 
@@ -43,37 +46,48 @@ Extinction Law Classes
 
 .. autoclass:: reddening.RedLawBrokenPowerLaw
 	       :members: broken_powerlaw
+
+.. autoclass:: reddening.RedLawRiekeLebofsky
+	       :members: RiekeLebofsky85
 			 
 .. autoclass:: reddening.RedLawCardelli
 	       :members: Cardelli89
 
+.. autoclass:: reddening.RedLawIndebetouw05
+	       :members: Indebetouw05
+
+.. autoclass:: reddening.RedLawRomanZuniga07
+	       :members: RomanZuniga07
+
+.. autoclass:: reddening.RedLawFitzpatrick09
+	       :members: Fitzpatrick09			 
+
+.. autoclass:: reddening.RedLawNishiyama09
+	       :members: Nishiyama09
+
+.. autoclass:: reddening.RedLawSchoedel10
+	       :members: Schoedel10
+
+.. autoclass:: reddening.RedLawFritz11
+	       :members: Fritz11
+			 
 .. autoclass:: reddening.RedLawDamineli16
 	       :members: Damineli16
 
 .. autoclass:: reddening.RedLawDeMarchi16
 	       :members: DeMarchi16
 			 
-.. autoclass:: reddening.RedLawFitzpatrick09
-	       :members: Fitzpatrick09
-
-.. autoclass:: reddening.RedLawFritz11
-	       :members: Fritz11
+.. autoclass:: reddening.RedLawSchlafly16
+	       :members: Schlafly16
 
 .. _Hosek_new:
 .. autoclass:: reddening.RedLawHosek18b
 	       :members: Hosek18b
 
-.. autoclass:: reddening.RedLawNishiyama09
-	       :members: Nishiyama09
-
 .. autoclass:: reddening.RedLawNoguerasLara18
 	       :members: NoguerasLara18
 
-.. autoclass:: reddening.RedLawRomanZuniga07
-	       :members: RomanZuniga07
+.. autoclass:: reddening.RedLawNoguerasLara20
+	       :members: NoguerasLara20
 
-.. autoclass:: reddening.RedLawRiekeLebofsky
-	       :members: RiekeLebofsky85
 
-.. autoclass:: reddening.RedLawSchlafly16
-	       :members: Schlafly16

@@ -82,6 +82,17 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+
+2.1.7 (2022-10-26)
+  * Made several updates to the extinction law objects, including:
+    
+    * Added Indebetouw05, Schoedel10, Fritz11, and NoguerasLara20 laws
+    * Improved docs and added plotting functions for Nishiyama09 and RomanZuniga07 laws
+    * Updated K-band scale wavelength for Fitzpatrick07 and NoguerasLara18 to match published values
+    * Updated assorted "under the hood" functions to handle new laws
+    * Added more test functions for the extinction laws
+    * Updated :ref:`ext_law` page so laws are in chronological order
+
 2.1.6 (2022-09-15)
   * Bugfix in how evolution object identifies what age and metallicity
     model to pull from the grid of available models. Previously, it used
