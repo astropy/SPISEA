@@ -82,6 +82,7 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+
 2.1.7 (2022-10-26)
   * Made several updates to the extinction law objects, including:
     
