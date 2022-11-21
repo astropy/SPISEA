@@ -428,3 +428,26 @@ def get_hawki_filt(name):
                                        name='hawki_{0}'.format(name))
 
     return spectrum
+
+
+def get_liger_filt(name):
+    """
+    Define the Liger filters as a pysynphot spectrum object
+    """
+    # Read in filter info
+    try:
+        t = Table.read('{0}/liger/liger_filter_{1}.dat'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find Liger filter file {0}/liger/liger_filter_{1}.dat'.format(filters_dir, name))
+
+    wavelength = t[t.keys()[0]]
+    transmission = t[t.keys()[1]] # Already in fraction
+
+    # Convert wavelength to Angstroms
+    wavelength = wavelength * 10**4
+
+    # Make spectrum object
+    spectrum = pysynphot.ArrayBandpass(wavelength, transmission, waveunits='angstrom',
+                                       name='hawki_{0}'.format(name))
+
+    return spectrum

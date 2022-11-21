@@ -1453,6 +1453,9 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('hawki'):
         filt = filters.get_hawki_filt(filterName)
+
+    elif name.startswith('liger'):
+        filt = filters.get_liger_filt(filterName)
         
     else:
         filt = ObsBandpass(name)
@@ -1571,7 +1574,12 @@ def get_obs_str(col):
                  'gaiaDR2_Grp':'gaia,dr2_rev,Grp',
                  'hawki_J': 'hawki,J',
                  'hawki_H': 'hawki,H',
-                 'hawki_Ks': 'hawki,Ks'}
+                 'hawki_Ks': 'hawki,Ks',
+                 'liger_Z': 'liger,Z',
+                 'liger_Z': 'liger,Y',
+                 'liger_Z': 'liger,J',
+                 'liger_H': 'liger,H',
+                 'liger_K': 'liger,K',}
 
     obs_str = filt_list[name]
         
