@@ -12,12 +12,20 @@ if astropy_version < '3.0':
     from astropy.tests.pytest_plugins import *  # noqa
     del pytest_report_header
     ASTROPY_HEADER = True
-else:
+elif astropy_version >= '3.0' and astropy_version < '5.1':
     try:
         from pytest_astropy_header.display import PYTEST_HEADER_MODULES, TESTED_VERSIONS
         ASTROPY_HEADER = True
     except ImportError:
         ASTROPY_HEADER = False
+        
+else:
+    # As of Astropy 5.1, the pytest plugins provided by Astropy have been removed
+    # and are instead provided by pytest-astropy-header 
+    # (https://github.com/astropy/pytest-astropy-header)
+    from pytest_astropy_header.display import PYTEST_HEADER_MODULES, TESTED_VERSIONS
+    ASTROPY_HEADER = True
+
 
 
 def pytest_configure(config):
