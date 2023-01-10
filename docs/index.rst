@@ -85,6 +85,7 @@ Change Log
 2.1.9 (2023-01-10)
   * Small bugfix: updating pytest setup.cfg and conftest.py files to
     work with latest python/astropy versions
+  * Added additional print statements in verbose condition flags
 
 
 2.1.8 (2023-01-09)
