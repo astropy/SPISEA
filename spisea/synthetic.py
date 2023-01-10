@@ -133,7 +133,7 @@ class ResolvedCluster(Cluster):
         Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
                              seed=seed)
         # Provide a user warning is random seed is set
-        if seed is not None:
+        if seed is not None and verbose:
             print('WARNING: random seed set to %i' % seed)
 
         t1 = time.time()
@@ -361,7 +361,10 @@ class ResolvedCluster(Cluster):
                 # then round it down to 5, rather than up to 101).
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
                 companions_phase_non_nan = np.nan_to_num(companions['phase'], nan=-99)
-                bad = np.where( (companions_phase_non_nan > 5) & (companions_phase_non_nan < 101) & (companions_phase_non_nan != 9) & (companions_phase_non_nan != -99))
+                bad = np.where( (companions_phase_non_nan > 5) &
+                                (companions_phase_non_nan < 101) &
+                                (companions_phase_non_nan != 9) &
+                                (companions_phase_non_nan != -99))
                 # Print warning, if desired
                 verbose=False
                 if verbose:

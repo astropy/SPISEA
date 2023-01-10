@@ -82,6 +82,15 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.1.9 (2023-01-10)
+  * Small bugfix: updating pytest setup.cfg and conftest.py files to
+    work with latest python/astropy versions
+  * Added additional print statements in verbose condition flags
+
+
+2.1.8 (2023-01-09)
+  * Small bugfix: Updating numpy array definitions to use
+    dtype='objects' instead of depreciated dtype='np.object'
 
 2.1.7 (2022-10-26)
   * Made several updates to the extinction law objects, including:
