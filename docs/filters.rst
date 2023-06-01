@@ -53,7 +53,9 @@ Filter Sets
    
 **2MASS**
 
-`Two-Micron Sky Survey <https://old.ipac.caltech.edu/2mass/>`_ Filters: J, H, Ks
+`Two-Micron Sky Survey <https://old.ipac.caltech.edu/2mass/>`_
+
+Filters: J, H, Ks
 
 Example: ``'2mass,H'``
 
@@ -62,7 +64,9 @@ Example: ``'2mass,H'``
 
 `OSIRIS imager
 <http://www.ctio.noao.edu/soar/content/ohio-state-infrared-imagerspectrograph-osiris>`_
-on the CTIO telescope. Filters: H, K
+on the CTIO telescope.
+
+Filters: H, K
 
 Example: ``'ctio_osiris,H'``
 
@@ -70,6 +74,7 @@ Example: ``'ctio_osiris,H'``
 **DeCam**
 
 `Dark Energy Camera <http://www.ctio.noao.edu/noao/content/DECam-filter-information>`_
+
 Filters: u, g, r, i, z, Y
 
 Example: ``'decam,r'``
@@ -111,14 +116,17 @@ Example: ``'wfc3,ir,f125w'``
 **Johnson-Cousins**
 
 Johnson-Cousin filters (downloaded from
-http://www.aip.de/en/research/facilities/stella/instruments/data/johnson-ubvri-filter-curves). Filters:
-U, B, V, R, I
+http://www.aip.de/en/research/facilities/stella/instruments/data/johnson-ubvri-filter-curves).
+
+Filters: U, B, V, R, I
 
 Example: ``'ubv,B'``
 
 **Johnson-Glass**
 
-Johnson-Glass passbands taken from `Bessell et al. 1988 <https://ui.adsabs.harvard.edu//#abs/1988PASP..100.1134B/abstract>`_
+Johnson-Glass passbands taken from `Bessell et al. 1988
+<https://ui.adsabs.harvard.edu//#abs/1988PASP..100.1134B/abstract>`_
+
 Filters: J, H, K
 
 Example: ``'jg,K'``
@@ -134,7 +142,9 @@ Example: ``'jwst,F356W'``
 
 **Keck NIRC**
 
-`NIRC1 filters <https://www2.keck.hawaii.edu/inst/nirc/>`_ on the Keck Telescope
+`NIRC1 filters <https://www2.keck.hawaii.edu/inst/nirc/>`_ on the Keck
+Telescope
+
 Filters: H, K
 
 Example: ``'nirc1,H'``
@@ -144,6 +154,7 @@ Example: ``'nirc1,H'``
 
 `NIRC2 filters <https://www2.keck.hawaii.edu/inst/nirc2/filters.html>`_
 on the Keck Telescope ()
+
 Filters: J, H, Hcont, K, Kp, Ks, Kcont, Lp, Ms, Brgamma, FeII
 
 Example: ``'nirc2,Ks'``
@@ -152,6 +163,7 @@ Example: ``'nirc2,Ks'``
 **NACO**
 
 `ESO NACO filters <https://www.eso.org/sci/facilities/paranal/instruments/naco/inst/filters.html>`_
+
 Filters: J, H, Ks
 
 Example: ``'naco,H'``
@@ -160,6 +172,7 @@ Example: ``'naco,H'``
 **PanStarrs1**
 
 PanStarrs 1 filters from `Tonry et al. 2012 <https://ui.adsabs.harvard.edu/#abs/arXiv:1203.0297>`_
+
 Filters: g, r, i, z, y
 
 Example: ``'ps1, g'``
@@ -182,7 +195,8 @@ Example: ``'roman,wfi,f062'``
 
 **UKIRT**
 
-UKIRT Telescope (http://www.ukidss.org/technical/photom/photom.html)
+`UKIRT Telescope filters <http://www.ukidss.org/technical/photom/photom.html>`_
+
 Filters: J, H, K
 
 Example: ``'ukirt,K'``
@@ -191,6 +205,7 @@ Example: ``'ukirt,K'``
 **VISTA**
 
 `VISTA Telescope <http://casu.ast.cam.ac.uk/surveys-projects/vista/technical/filter-set>`_
+
 Filters: Z, Y, J, H, K
 
 Example: ``'vista,Y'``
@@ -198,6 +213,7 @@ Example: ``'vista,Y'``
 **ZTF**
 
 `ZTF Telescope <https://www.ztf.caltech.edu/page/technical>`_
+
 Filters: g, r, i
 
 Example: ``'ztf,g'``
