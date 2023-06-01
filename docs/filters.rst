@@ -41,6 +41,7 @@ Available filters:
 * Keck NIRC2
 * NACO 
 * PanStarrs 1
+* Roman Space Telescope
 * UKIRT
 * VISTA
 * ZTF
@@ -100,7 +101,9 @@ Example: ``'hawki,J'``
 
 **Hubble Space Telescope**
 
-HST filters are defined by their `pysynphot OBSMODE strings <https://pysynphot.readthedocs.io/en/latest/appendixb.html#pysynphot-appendixb>`_. 
+HST filters are defined by their `pysynphot OBSMODE strings
+<https://pysynphot.readthedocs.io/en/latest/appendixb.html#pysynphot-appendixb>`_. These
+are defined in the ``cdbs/mtab/`` and ``cdbs/comp/`` directories.
 
 Example: ``'wfc3,ir,f125w'``
 
@@ -161,6 +164,14 @@ Filters: g, r, i, z, y
 
 Example: ``'ps1, g'``
 
+
+**Roman Space Telescope**
+Roman Space Telescope WFI filters are defined by their `pysynphot
+OBSMODE strings
+<https://pysynphot.readthedocs.io/en/latest/appendixb.html#non-hst-filter-systems>`_.
+These are defined in the ``cdbs/mtab/`` and ``cdbs/comp/`` directories.
+
+Example: ``'roman,wfi,f062'``
 
 **UKIRT**
 
