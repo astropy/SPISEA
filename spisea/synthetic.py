@@ -1485,6 +1485,7 @@ def get_filter_info(name, vega=vega, rebin=True):
     diff = np.diff(vega_obs.binwave)
     diff = np.append(diff, diff[-1])
     vega_flux = np.sum(vega_obs.binflux * diff)
+    #vega_flux =  np.sum(vega_obs.binflux * vega_obs.binwave * diff)
     
     vega_mag = 0.03
 
@@ -1676,7 +1677,8 @@ def mag_in_filter(star, filt):
     diff = np.diff(star_in_filter.binwave)
     diff = np.append(diff, diff[-1])
     star_flux = np.sum(star_in_filter.binflux * diff)
-    
+    #star_flux =  np.sum(star_in_filter.binflux * star_in_filter.binwave * diff)
+
     star_mag = -2.5 * math.log10(star_flux / filt.flux0) + filt.mag0
     return star_mag
 
