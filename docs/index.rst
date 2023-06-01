@@ -84,6 +84,9 @@ Change Log
 ----------
 2.1.10 (2023-06-01)
   * Added support for Roman Space Telescope filters (via pysynphot)
+    * Note: this requires the pysynphot ``cdbs/mtab`` and
+      ``cdbs/comp/`` directories to be at least 2021-07-16 version or
+      later. See :ref:`getting_started` for how to download these files
 
 2.1.9 (2023-01-10)
   * Small bugfix: updating pytest setup.cfg and conftest.py files to
