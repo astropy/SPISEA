@@ -162,7 +162,10 @@ def test_filters():
                      'ukirt,J', 'ukirt,H', 'ukirt,K',
                      'vista,Y', 'vista,Z', 'vista,J',
                      'vista,H',  'vista,Ks', 'ztf,g', 'ztf,r', 'ztf,i',
-                     'hawki,J', 'hawki,H', 'hawki,Ks']
+                     'hawki,J', 'hawki,H', 'hawki,Ks', 'roman,wfi,f062',
+                     'roman,wfi,f087', 'roman,wfi,f106', 'roman,wfi,f129',
+                     'roman,wfi,f158', 'roman,wfi,w146', 'roman,wfi,f213',
+                     'roman,wfi,f184']
 
     # Loop through filters to test that they work: get_filter_info
     for ii in filt_list:
