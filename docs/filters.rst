@@ -127,7 +127,7 @@ Example: ``'jg,K'``
 
 JWST NIRCam filters, downloaded from `NIRCam website <https://jwst-docs.stsci.edu/display/JTI/NIRCam+Filters#NIRCamFilters-filt_trans>`_. The filter functions in the nircam_throughputs/modAB_mean/nrc_plus_ote folder is used.
 
-Filters: F070W, F090W,  F115W, F140M, F150W, F150W2, F162M, F164N, F182M, F187N, F200W, F210M, F212N, F250M, F277W, F300M, F322W2, F323N, F335M, F356W, F360M, F405N, F410M, F430M,  F444W, F460M, F466N, F470N, F480M, 
+Filters: F070W, F090W,  F115W, F140M, F150W, F150W2, F162M, F164N, F182M, F187N, F200W, F210M, F212N, F250M, F277W, F300M, F322W2, F323N, F335M, F356W, F360M, F405N, F410M, F430M,  F444W, F460M, F466N, F470N, F480M 
 
 Example: ``'jwst,F356W'``
 						
@@ -169,7 +169,10 @@ Example: ``'ps1, g'``
 Roman Space Telescope WFI filters are defined by their `pysynphot
 OBSMODE strings
 <https://pysynphot.readthedocs.io/en/latest/appendixb.html#non-hst-filter-systems>`_.
-These are defined in the ``cdbs/mtab/`` and ``cdbs/comp/`` directories.
+These are defined in the ``cdbs/mtab/`` and ``cdbs/comp/``
+directories.
+
+Filters: F062, F087, F106, F129, F158, W146, F184, F213
 
 Example: ``'roman,wfi,f062'``
 
