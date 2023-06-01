@@ -82,6 +82,9 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.1.10 (2023-06-01)
+  * Added support for Roman Space Telescope filters (via pysynphot)
+
 2.1.9 (2023-01-10)
   * Small bugfix: updating pytest setup.cfg and conftest.py files to
     work with latest python/astropy versions
