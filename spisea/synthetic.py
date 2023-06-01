@@ -1512,6 +1512,8 @@ def get_filter_col_name(obs_str):
         # Catch Gaia filter cases. Otherwise, it is HST filter
         if 'dr2_rev' in tmp:
             filt_name = 'gaiaDR2_{0}'.format(tmp[-1])
+        elif 'roman' in tmp:
+            filt_name = 'roman_{0}'.format(tmp[-1])
         else:
             filt_name = 'hst_{0}'.format(tmp[-1])
     else:
@@ -1579,7 +1581,15 @@ def get_obs_str(col):
                  'gaiaDR2_Grp':'gaia,dr2_rev,Grp',
                  'hawki_J': 'hawki,J',
                  'hawki_H': 'hawki,H',
-                 'hawki_Ks': 'hawki,Ks'}
+                 'hawki_Ks': 'hawki,Ks',
+                 'roman_f062': 'roman,wfi,f062',
+                 'roman_f087': 'roman,wfi,f087',
+                 'roman_f106': 'roman,wfi,f106',
+                 'roman_f129': 'roman,wfi,f129',
+                 'roman_f158': 'roman,wfi,f158',
+                 'roman_w146': 'roman,wfi,w146',
+                 'roman_f213': 'roman,wfi,f213',
+                 'roman_f184': 'roman,wfi,f184'}
 
     obs_str = filt_list[name]
         
