@@ -1722,6 +1722,47 @@ class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
 
         return
 
+    def test_Fritz11(self):
+        """
+        Internal test function to compare our synthetic photometry results
+        with the Fritz+11 law with Table 9 from Fritz+11
+        """
+        from spisea import atmospheres, synthetic
+        import copy
+        
+        # Start with a 9480 K blackbody spectrum
+        star = atmospheres.get_bb_atmosphere(temperature=9480)
+        star_orig = copy.deepcopy(star)
+
+        # Apply extinction via F11 extinction law (A_brgamma = 2.62)
+        A_brgamma = 2.63
+        red = self.reddening(A_brgamma).resample(star.wave)
+        star *= red
+
+        # calculate synthetic photometry in NIRC2 H', K', and L' filters
+        vega = synthetic.Vega()
+        nirc2_h = synthetic.get_filter_info('nirc2,H', rebin=True, vega=vega)
+        nirc2_kp = synthetic.get_filter_info('nirc2,Kp', rebin=True, vega=vega)
+        nirc2_lp = synthetic.get_filter_info('nirc2,Lp', rebin=True, vega=vega)
+
+        h_mag = synthetic.mag_in_filter(star, nirc2_h)
+        kp_mag = synthetic.mag_in_filter(star, nirc2_kp)
+        lp_mag = synthetic.mag_in_filter(star, nirc2_lp)
+        h_orig = synthetic.mag_in_filter(star_orig, nirc2_h)
+        kp_orig = synthetic.mag_in_filter(star_orig, nirc2_kp)
+        lp_orig = synthetic.mag_in_filter(star_orig, nirc2_lp)
+
+        AH = h_mag - h_orig
+        AKp = kp_mag - kp_orig
+        ALp = lp_mag - lp_orig
+
+        print('Predicted AH: {0}'.format(AH))
+        print('Predicted AKp: {0}'.format(AKp))
+        print('Predicted ALp: {0}'.format(ALp))
+        
+        pdb.set_trace()
+        return
+
     def Fritz11(self, wavelength, A_scale_lambda):
         """ 
         Return the extinction at a given wavelength assuming the 
