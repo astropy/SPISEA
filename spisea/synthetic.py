@@ -1459,7 +1459,11 @@ def get_filter_info(name, vega=vega, rebin=True):
         filt = filters.get_hawki_filt(filterName)
         
     else:
-        filt = ObsBandpass(name)
+        # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
+        try:
+            filt = ObsBandpass(name)
+        except:
+            raise Exception('Filter {0} not understood. Check spelling and make sure cdbs/mtab and cdbs/comp files are up to date'.format(name))
         
         # Convert to ArraySpectralElement for resampling.
         filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
