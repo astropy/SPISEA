@@ -170,7 +170,10 @@ Roman Space Telescope WFI filters are defined by their `pysynphot
 OBSMODE strings
 <https://pysynphot.readthedocs.io/en/latest/appendixb.html#non-hst-filter-systems>`_.
 These are defined in the ``cdbs/mtab/`` and ``cdbs/comp/``
-directories.
+directories. Note that the 2021-07-16 version of these directories
+must be downloaded from from the `STScI reference atlases
+<https://archive.stsci.edu/hlsp/reference-atlases>`_ for these to
+work. See :ref:`getting_started` for how to download these files.
 
 Filters: F062, F087, F106, F129, F158, W146, F184, F213
 
