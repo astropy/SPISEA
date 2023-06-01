@@ -166,6 +166,7 @@ Example: ``'ps1, g'``
 
 
 **Roman Space Telescope**
+
 Roman Space Telescope WFI filters are defined by their `pysynphot
 OBSMODE strings
 <https://pysynphot.readthedocs.io/en/latest/appendixb.html#non-hst-filter-systems>`_.
