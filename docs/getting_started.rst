@@ -31,6 +31,7 @@ Other dependencies:
 * scipy
 * numpy (>= v1.17)
 * matplotlib
+* `pytest-astropy-header <https://github.com/astropy/pytest-astropy-header>`_
 * STScI CDBS data package (See :ref:`set-up-cdbs` below for instructions)
 
 .. _Build:
