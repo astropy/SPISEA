@@ -224,3 +224,28 @@ def test_red_law_IsochronePhot():
         print('----EL {0} works OK!-----'.format(redlaw_arr[ii]))
         
     return
+
+def test_all_EL():
+    """
+    Test to make sure all expected ELs are callable
+    and work OK.
+
+    (except for the broken power law, which is tested elsewhere)
+    """
+    # Will crash if any of these calls crash
+    red_law = reddening.RedLawNishiyama09()
+    red_law = reddening.RedLawCardelli(3.1)
+    red_law = reddening.RedLawRomanZuniga07()
+    red_law = reddening.RedLawRiekeLebofsky()
+    red_law = reddening.RedLawDamineli16()
+    red_law = reddening.RedLawDeMarchi16()
+    red_law = reddening.RedLawFitzpatrick09(1.8, 5)
+    red_law = reddening.RedLawSchlafly16(1.55, 3.3)
+    red_law = reddening.RedLawIndebetouw05()
+    red_law = reddening.RedLawFritz11()
+    red_law = reddening.RedLawHosek18b()
+    red_law = reddening.RedLawSchoedel10()
+    red_law = reddening.RedLawNoguerasLara18()
+    red_law = reddening.RedLawNoguerasLara20()
+
+    return
