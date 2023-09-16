@@ -1646,10 +1646,9 @@ class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
             Extinction error, in mags
         """
         # Read in file with Table 8 info (published with Fritz+11 paper)
-        sep = '/'
-        inpath = sep.join(__file__.split('/')[:-1])
-        infile = '{0}/el_files/fritz11_EL_table8.fits'.format(inpath)
-
+        inpath = os.path.dirname(os.path.abspath(__file__))
+        infile = os.path.join(inpath, 'el_files', 'fritz11_EL_table8.fits')
+        
         t = Table.read(infile, format='fits')
         wave = t['lambda']
         ext = t['A']

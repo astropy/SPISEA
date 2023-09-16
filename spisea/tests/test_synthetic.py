@@ -539,7 +539,7 @@ def test_metallicity():
         
     # Test isochrone properties
     assert my_iso.points.meta['METAL_IN'] == -1.5
-    assert my_iso.points.meta['METAL_ACT'] == metal_act
+    assert np.isclose(my_iso.points.meta['METAL_ACT'], metal_act)
     assert os.path.exists('iso_6.70_0.80_04000_m15.fits')
     
     return

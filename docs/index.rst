@@ -82,6 +82,10 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.1.11 (2023-09-15)
+  * Small bugfix to RedLawFritz11 so paths work regardless of
+    operating system used
+
 2.1.10 (2023-06-01)
   * Added support for Roman Space Telescope filters (via pysynphot)
     
