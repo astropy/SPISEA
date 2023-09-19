@@ -31,3 +31,6 @@ Rebecca Lewis -- added HAWK-I filter support, code testing/debugging
 Manuel Parra-Royón -- installation using Docker containers and Singularity
 
 Javier Moldón -- installation using Docker containers and Singularity
+
+Winston Zhang -- bugfix to make redlaw paths correct regardless of
+what operating system is used
