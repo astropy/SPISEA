@@ -942,7 +942,8 @@ class IsochronePhot(Isochrone):
 
     recomp : boolean, optional
         If true, recalculate the isochrone photometry even if 
-        the savefile exists
+        the savefile exists. You should recompute anytime you change
+        the filter set (see filters below).
 
     filters : array of strings, optional
         Define what filters the synthetic photometry
