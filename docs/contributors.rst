@@ -18,7 +18,7 @@ Dongwon Kim -- code testing/debugging
 
 Siyao Jia -- helped with early code and documentation development
 
-Natasha Adams -- developed resolved multiplicity capabilities
+Natasha Abrams -- developed resolved multiplicity capabilities
 (ResolvedMultiplicityDK class)
 
 Michael Medford -- developed resolved multiplicity capabilities
