@@ -9,6 +9,13 @@ version: 2
 #conda:
 #  environment: .environment.yml
 
+# Set the version of Python and other tools you might need
+build:
+  os: ubuntu-22.04
+  tools:
+    python: "3.7"
+
+
 # Build documentation in the docs/ directory with Sphinx
 sphinx:
   configuration: docs/conf.py
@@ -16,9 +23,8 @@ sphinx:
 # Optionally build your docs in additional formats such as PDF and ePub
 formats: all
 
-# Optionally set the version of Python and requirements required to build your docs
+# Set the requirements required to build your docs
 python:
-  version: 3.7
   install:
-      - requirements: docs/requirements.txt
+  - requirements: docs/requirements.txt
 
