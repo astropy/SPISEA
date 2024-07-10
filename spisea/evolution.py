@@ -1232,7 +1232,7 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
     """
     def __init__(self, rot=True):
         # populate list of model masses (in solar masses)
-        mass_list = [(0.1 + i*0.005) for i in range(181)]
+        mass_list = [(0.01 + i*0.005) for i in range(181)] # generates masses from 0.01 - 1 M_sun
         
         # define metallicity parameters for Geneva models
         z_list = [0.015]
@@ -1306,9 +1306,15 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         isWR[idx_WR] = True
         iso.add_column(isWR)
         
+        # Assume mass of brown dwarfs does not change over their lifetime
+        bd_idx = iso['mass'] < 0.08
+        iso['mass_current'][bd_idx] = iso['mass'][bd_idx]
+
+        
         iso.meta['log_age'] = log_age
         iso.meta['metallicity_in'] = metallicity
         iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
+
         
         return iso
 
