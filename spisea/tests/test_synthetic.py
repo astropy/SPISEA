@@ -487,6 +487,9 @@ def test_ifmr_multiplicity():
     assert len(idx[0]) == 0
     
     # Ensure no substellar mass compact objects are generated
+    """
+    07/2024: Added more testing criteria for brown dwarf stars to ensure they are labeled appropriately for masses from 0.01 - 0.08 M_sun.
+    """
     # For cluster objects
     MIN_MASS = 0.1
     BD_MIN_MASS = 0.01
