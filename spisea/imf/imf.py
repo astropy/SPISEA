@@ -684,7 +684,7 @@ class Weidner_Kroupa_2004(IMF_broken_powerlaw):
     Mass range is 0.01 M_sun - inf M_sun.
     """
     def __init__(self, multiplicity=None):
-        massLimits = np.array([0.01, 0.08, 0.5, 1, np.inf])
+        massLimits = np.array([0.01, 0.08, 0.5, 1, 120])
         powers = np.array([-0.3, -1.3, -2.3, -2.35])
 
         IMF_broken_powerlaw.__init__(self, massLimits, powers,

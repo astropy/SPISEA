@@ -1215,7 +1215,7 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
     
 
     For logAge < 7.4:
-
+    * 0.01 - 0.08 M_sun: assume mass does not change over time
     * Baraffe: 0.08 - 0.4 M_sun
     * Baraffe/Pisa transition: 0.4 - 0.5 M_sun 
     * Pisa: 0.5 M_sun to the highest mass in Pisa isochrone (typically 5 - 7 Msun)
@@ -1310,6 +1310,11 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         bd_idx = iso['mass'] < 0.08
         iso['mass_current'][bd_idx] = iso['mass'][bd_idx]
 
+
+        # Handling NaN effectvie temperatures
+        nan_teff_idx = np.isnan(iso['logT'])
+        if np.any(nan_teff_idx):
+            iso['logT'][nan_teff_idx] = self.estimate_teff(iso['mass'][nan_teff_idx])
         
         iso.meta['log_age'] = log_age
         iso.meta['metallicity_in'] = metallicity
