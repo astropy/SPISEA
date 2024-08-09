@@ -1310,8 +1310,7 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         bd_idx = iso['mass'] < 0.08
         iso['mass_current'][bd_idx] = iso['mass'][bd_idx]
 
-
-        # Handling NaN effectvie temperatures
+        # Handling NaN effective temperatures
         nan_teff_idx = np.isnan(iso['logT'])
         if np.any(nan_teff_idx):
             iso['logT'][nan_teff_idx] = self.estimate_teff(iso['mass'][nan_teff_idx])

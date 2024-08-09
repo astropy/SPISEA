@@ -499,6 +499,8 @@ def test_ifmr_multiplicity():
     ns_idx = np.where(clust1['phase'] == 102)
     bh_idx = np.where(clust1['phase'] == 103)
     bd_idx = np.where(clust1['phase'] == 99)
+    
+    assert len(clust1[bd_idx]) != 0
     assert np.all(clust1['mass'][wd_idx] > MIN_MASS)
     assert np.all(clust1['mass'][ns_idx] > MIN_MASS)
     assert np.all(clust1['mass'][bh_idx] > MIN_MASS)
@@ -530,8 +532,6 @@ def test_ifmr_multiplicity():
                                (comps2['mass'] >= BD_MIN_MASS) & 
                                (comps2['mass'] <= BD_MAX_MASS))
     assert len(comp_non_bd_idx[0]) == 0  # asserting no non-brown dwarf companions in BD mass range
-
-return
     return
 
 def test_metallicity():
@@ -1011,3 +1011,20 @@ def test_Raithel18_IFMR_5():
     assert len(WD_idx) == 2 , "There are not the right number of WDs for the Raithel18 IFMR"
 
     return
+
+# need to test Raithel18 phase designations, as there are anomalies with white dwarves and neutron stars
+def test_Raithel18_phase_designation():
+    """
+    Check that the correct phases are returned for white dwarves and neutron stars when given several test MZAMS
+    """
+    Raithel = ifmr.IFMR_Raithel18()
+
+    #create an MZAMS array to cover all potential phase designations, and the expected phase designations
+    test_MZAMS = np.array([0.06, 0.3, 1.0, 3.0, 6.0, 10.0, 14.0, 15.0, 25.0, 100.0])
+    expected_phases = np.array([99, 101, 101, 101, 101, 102, 102, 103, 103, 103])
+
+    #confirm that the expected phases match the ones assigned by the model
+    assert np.array_equal(actual_types, expected_types), \
+        f"Phase designation mismatch. Expected: {expected_types}, Got: {actual_types}"
+
+    print(f"Test passed. Actual types match expected types: {actual_types}")

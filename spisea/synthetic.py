@@ -232,7 +232,7 @@ class ResolvedCluster(Cluster):
         # effect is so small
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 99) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
         # Print warning, if desired
         verbose=False
         if verbose:
@@ -251,9 +251,10 @@ class ResolvedCluster(Cluster):
         # Remnants have flux = 0 in all bands if they are generated here.
         ##### 
         if self.ifmr != None:
-            # Identify compact objects as those with Teff = 0 or with phase > 100.
+            # Identify compact objects as those with Teff = 0 or with phase > 100 or BDs
             highest_mass_iso = self.iso.points['mass'].max()
-            idx_rem = np.where((np.isnan(star_systems['Teff'])) & (star_systems['mass'] > highest_mass_iso))[0]
+            idx_rem = np.where((np.isnan(star_systems['Teff'])) & (star_systems['mass'] > highest_mass_iso) | 
+                           (star_systems['mass'] < 0.08))[0]
             
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
@@ -274,6 +275,11 @@ class ResolvedCluster(Cluster):
             # Give remnants a magnitude of nan, so they can be filtered out later when calculating flux.
             for filt in self.filt_names:
                 star_systems[filt][idx_rem_good] = np.full(len(idx_rem_good), np.nan)
+
+            # Handle brown dwarfs separately
+            idx_bd = np.where(star_systems['phase'] == 99)[0]
+            for filt in self.filt_names:
+                star_systems[filt][idx_bd] = np.full(len(idx_bd), np.nan)
 
         return star_systems
         
@@ -362,7 +368,7 @@ class ResolvedCluster(Cluster):
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
                 companions_phase_non_nan = np.nan_to_num(companions['phase'], nan=-99)
                 bad = np.where( (companions_phase_non_nan > 5) &
-                                (companions_phase_non_nan < 101) &
+                                (companions_phase_non_nan < 99) &
                                 (companions_phase_non_nan != 9) &
                                 (companions_phase_non_nan != -99))
                 # Print warning, if desired
@@ -459,7 +465,8 @@ class ResolvedCluster(Cluster):
             idx = np.where(star_systems_teff_non_nan > 0)[0]
         else:
             # Keep stars (with Teff) and any other compact objects (with phase info). 
-            idx = np.where( (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) )[0]
+            idx = np.where( (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) | 
+                           (star_systems_phase_non_nan == 99) )[0]
 
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
