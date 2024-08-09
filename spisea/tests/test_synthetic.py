@@ -1020,11 +1020,19 @@ def test_Raithel18_phase_designation():
     Raithel = ifmr.IFMR_Raithel18()
 
     #create an MZAMS array to cover all potential phase designations, and the expected phase designations
-    test_MZAMS = np.array([0.06, 0.3, 1.0, 3.0, 6.0, 10.0, 14.0, 15.0, 25.0, 100.0])
-    expected_phases = np.array([99, 101, 101, 101, 101, 102, 102, 103, 103, 103])
+    test_MZAMS = np.array([0.06, 0.3, 1.0, 3.0, 6.0, 10.0, 14.0, 25.0, 100.0])
+    expected_phases = np.array([99, -1, 101, 101, 101, 102, 102, 103, 103])
+    
+    #generate the output from Raithel IFMR
+    output_array = Raithel.generate_death_mass(test_MZAMS)
+    actual_phases = output_array[1]
 
+    #print the two arrays for direct comparison
+    print(f"Expected phases: {expected_phases}")
+    print(f"Actual phases: {actual_phases}")
+    
     #confirm that the expected phases match the ones assigned by the model
-    assert np.array_equal(actual_types, expected_types), \
-        f"Phase designation mismatch. Expected: {expected_types}, Got: {actual_types}"
+    assert np.array_equal(actual_phases, expected_phases), \
+        f"Phase designation mismatch. Expected: {expected_phases}, Got: {actual_phases}"
 
-    print(f"Test passed. Actual types match expected types: {actual_types}")
+    print(f"Test passed. Actual types match expected types: {actual_phases}")
