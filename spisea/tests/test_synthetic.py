@@ -1020,8 +1020,8 @@ def test_Raithel18_phase_designation():
     Raithel = ifmr.IFMR_Raithel18()
 
     #create an MZAMS array to cover all potential phase designations, and the expected phase designations
-    test_MZAMS = np.array([0.06, 0.3, 1.0, 3.0, 6.0, 10.0, 14.0, 25.0, 100.0])
-    expected_phases = np.array([99, -1, 101, 101, 101, 102, 102, 103, 103])
+    test_MZAMS = np.array([0.06, 0.3, 0.6, 1.0, 3.0, 6.0, 10.0, 14.0, 25.0, 100.0])
+    expected_phases = np.array([99, -1, 101, 101, 101, 101, 102, 102, 103, 103])
     
     #generate the output from Raithel IFMR
     output_array = Raithel.generate_death_mass(test_MZAMS)
