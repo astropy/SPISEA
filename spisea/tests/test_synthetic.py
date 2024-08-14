@@ -421,7 +421,7 @@ def test_ifmr_multiplicity():
 
     startTime = time.time()
     
-    evo = evolution.MISTv1()
+    evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
     ifmr_obj = ifmr.IFMR_Raithel18()
 
@@ -435,8 +435,8 @@ def test_ifmr_multiplicity():
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
     # Now to create the cluster.
-    imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
-    imf_powers = np.array([-1.3, -2.3, -2.3])
+    imf_mass_limits = np.array([0.01, 0.07, 0.5, 1, np.inf])
+    imf_powers = np.array([-0.3, -1.3, -2.3, -2.3])
 
     ##########
     # Start without multiplicity and IFMR
@@ -474,16 +474,19 @@ def test_ifmr_multiplicity():
     assert len(np.where(clust2['phase'] == 102)) > 0
     assert len(np.where(clust1['phase'] == 103)) > 0   # BH
     assert len(np.where(clust2['phase'] == 103)) > 0
+    assert len(np.where(clust1['phase'] == 99)) > 0   # BD
+    assert len(np.where(clust2['phase'] == 99)) > 0
 
     # Now check that we have companions that are WDs, NSs, and BHs
     assert len(np.where(comps2['phase'] == 101)) > 0
     assert len(np.where(comps2['phase'] == 102)) > 0
     assert len(np.where(comps2['phase'] == 103)) > 0
+    assert len(np.where(comps2['phase'] == 99)) > 0
 
     # Make sure no funky phase designations (due to interpolation effects)
     # slipped through
-    idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 101) & (clust1['phase'] != 9) )
-    idx2 = np.where( (comps2['phase'] > 5) & (comps2['phase'] < 101) & (comps2['phase'] != 9) )
+    idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 99) & (clust1['phase'] != 9) )
+    idx2 = np.where( (comps2['phase'] > 5) & (comps2['phase'] < 99) & (comps2['phase'] != 9) )
     assert len(idx[0]) == 0
     
     # Ensure no substellar mass compact objects are generated
@@ -510,7 +513,7 @@ def test_ifmr_multiplicity():
     comp_wd_idx = np.where(comps2['phase'] == 101)
     comp_ns_idx = np.where(comps2['phase'] == 102)
     comp_bh_idx = np.where(comps2['phase'] == 103)
-    comp_bd_idx = np.where(comps2['phase'] == 103)
+    comp_bd_idx = np.where(comps2['phase'] == 99)
     assert np.all(comps2['mass'][comp_wd_idx] > MIN_MASS)
     assert np.all(comps2['mass'][comp_ns_idx] > MIN_MASS)
     assert np.all(comps2['mass'][comp_bh_idx] > MIN_MASS)
