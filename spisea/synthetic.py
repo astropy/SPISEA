@@ -359,7 +359,7 @@ class ResolvedCluster(Cluster):
                 companions['isWR'][cdx] = np.round(self.iso_interps['isWR'](comp_mass))
                 companions['mass_current'] = self.iso_interps['mass_current'](companions['mass'])
                 companions['phase'] = np.round(self.iso_interps['phase'](companions['mass']))
-                companions['metallicity'] = np.ones(N_comp_tot)*self.iso.metallicity
+                companions['metallicity'] = np.ones(N_comp_tot)*self.iso.metallicity   #****
 
                 # For a very small fraction of stars, the star phase falls on integers in-between
                 # the ones we have definition for, as a result of the interpolation. For these
@@ -401,14 +401,21 @@ class ResolvedCluster(Cluster):
                     star_systems[filt][idx[good]] = -2.5 * np.log10(f1[good] + f2[good])
                     star_systems[filt][idx[bad]] = np.nan
 
+        """# Assigning brown dwarf companions the correct phase/properties
+        bd_idx = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
+        companions['phase'][bd_idx] = 99
+        companions['Teff'][bd_idx] = np.nan
+        for filt in self.filt_names:
+            companions[filt][bd_idx] = np.full(len(bd_idx), np.nan)"""
+                
         #####
         # Make Remnants with flux = 0 in all bands.
         ##### 
         if self.ifmr != None:
-            # Identify compact objects as those with Teff = 0 or with masses above the max iso mass
+            # Identify compact objects as those with Teff = 0 or with masses above the max iso mass, or BDs
             highest_mass_iso = self.iso.points['mass'].max()
-            cdx_rem = np.where(np.isnan(companions['Teff']) &
-                                (companions['mass'] > highest_mass_iso))[0]
+            cdx_rem = np.where((np.isnan(companions['Teff']) &
+                                (companions['mass'] > highest_mass_iso)) | (companions['mass'] < 0.08))[0]
 
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
@@ -417,11 +424,11 @@ class ResolvedCluster(Cluster):
                                                                      metallicity_array=companions['metallicity'][cdx_rem])
             else:
                 r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem])
-            
+# SEPERATE BDS IN OWN FUNCTION            
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
-            good = np.where(r_id_tmp > 0)
+            good = np.where(r_id_tmp > 0) #****
             cdx_rem_good = cdx_rem[good]
 
             companions['mass_current'][cdx_rem_good] = r_mass_tmp[good]
@@ -431,7 +438,14 @@ class ResolvedCluster(Cluster):
             for filt in self.filt_names:
                 companions[filt][cdx_rem_good] = np.full(len(cdx_rem_good), np.nan)
 
-
+            # Assigning brown dwarf companions the correct phase/properties
+            bd_idx = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
+            companions['phase'][bd_idx] = 99
+            companions['mass_current'][bd_idx] = companions['mass'][bd_idx]
+            for filt in self.filt_names:
+                companions[filt][bd_idx] = np.full(len(bd_idx), np.nan)
+        
+                #BD INITIAL PHASE   
         # Notify if we have a lot of bad ones.
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         companions_teff_non_nan = np.nan_to_num(companions['Teff'], nan=-99)
@@ -439,6 +453,7 @@ class ResolvedCluster(Cluster):
         if len(idx) != N_comp_tot and self.verbose:
             print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
 
+            #BD FINAL PHASE
         # Double check that everything behaved properly.
         assert companions['mass'][idx].min() > 0
 
@@ -465,8 +480,8 @@ class ResolvedCluster(Cluster):
             idx = np.where(star_systems_teff_non_nan > 0)[0]
         else:
             # Keep stars (with Teff) and any other compact objects (with phase info). 
-            idx = np.where( (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) | 
-                           (star_systems_phase_non_nan == 99) )[0]
+            idx = np.where((star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) | 
+                           (star_systems_phase_non_nan == 99))[0]
 
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))

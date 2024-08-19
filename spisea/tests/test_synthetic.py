@@ -477,7 +477,7 @@ def test_ifmr_multiplicity():
     assert len(np.where(clust1['phase'] == 99)) > 0   # BD
     assert len(np.where(clust2['phase'] == 99)) > 0
 
-    # Now check that we have companions that are WDs, NSs, and BHs
+    # Now check that we have companions that are WDs, NSs, BHs, and BDs
     assert len(np.where(comps2['phase'] == 101)) > 0
     assert len(np.where(comps2['phase'] == 102)) > 0
     assert len(np.where(comps2['phase'] == 103)) > 0
@@ -535,6 +535,10 @@ def test_ifmr_multiplicity():
                                (comps2['mass'] >= BD_MIN_MASS) & 
                                (comps2['mass'] <= BD_MAX_MASS))
     assert len(comp_non_bd_idx[0]) == 0  # asserting no non-brown dwarf companions in BD mass range
+
+    #print statements for debugging:
+    print(comps2['mass'][comp_bd_idx])
+    print(np.unique(comps2['phase'][comp_bd_idx]))
     return
 
 def test_metallicity():
