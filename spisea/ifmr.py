@@ -732,7 +732,7 @@ class IFMR_Raithel18(IFMR):
         """                                                                                                      
         Drawing the NS mass from a Gaussian distrobuton based on observational data.
 
-        Gaussian fit by Emily Ramey and Sergiy Vasylyev of University of Caifornia, Berkeley using a
+        Gaussian fit by Emily Ramey and Sergiy Vasylyev of University of California, Berkeley using a
         sample of NSs from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020), 
         J2302+4442 Kirichenko et al. (2018), J2215+5135 Linares et al. (2018), 
         J1913+1102 Ferdman & Collaboration (2017), J1411+2551 Martinez et al. (2017), 

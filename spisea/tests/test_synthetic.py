@@ -538,7 +538,13 @@ def test_ifmr_multiplicity():
 
     #print statements for debugging:
     print(comps2['mass'][comp_bd_idx])
-    print(np.unique(comps2['phase'][comp_bd_idx]))
+    print(np.unique(comps2['phase']))
+    comp_phase_nan = np.where(comps2['phase'] == np.nan)
+    print(comps2[comp_phase_nan])
+    comp_phase_1 = np.where(comps2['phase'] == 1.0)
+    print(comps2[comp_phase_1])
+    comps_bds = np.where((comps2['mass'] >= 0.01) & (comps2['mass'] < 0.08))
+    print(comps2[comps_bds])
     return
 
 def test_metallicity():

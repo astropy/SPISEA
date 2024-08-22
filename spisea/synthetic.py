@@ -437,6 +437,11 @@ class ResolvedCluster(Cluster):
             # Give remnants a magnitude of nan, so they can be filtered out later when calculating flux.
             for filt in self.filt_names:
                 companions[filt][cdx_rem_good] = np.full(len(cdx_rem_good), np.nan)
+                
+            """# Debugging print before and after assigning brown dwarf phase
+            print("Before assigning BD phase:")
+            bd_idx_before = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
+            print(f"Brown dwarfs before phase assignment (mass, phase): {list(zip(companions['mass'][bd_idx_before], companions['phase'][bd_idx_before]))}")"""
 
             # Assigning brown dwarf companions the correct phase/properties
             bd_idx = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
@@ -445,7 +450,10 @@ class ResolvedCluster(Cluster):
             for filt in self.filt_names:
                 companions[filt][bd_idx] = np.full(len(bd_idx), np.nan)
         
-                #BD INITIAL PHASE   
+            """print("After assigning BD phase:")
+            print(f"Brown dwarfs after phase assignment (mass, phase): {list(zip(companions['mass'][bd_idx], companions['phase'][bd_idx]))}")"""
+
+  
         # Notify if we have a lot of bad ones.
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         companions_teff_non_nan = np.nan_to_num(companions['Teff'], nan=-99)
@@ -453,7 +461,11 @@ class ResolvedCluster(Cluster):
         if len(idx) != N_comp_tot and self.verbose:
             print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
 
-            #BD FINAL PHASE
+        # Final check for brown dwarf phase
+        bd_idx_final = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
+        print("Final BD phase check:")
+        """print(f"Brown dwarfs final phase check (mass, phase): {list(zip(companions['mass'][bd_idx_final], companions['phase'][bd_idx_final]))}")"""
+
         # Double check that everything behaved properly.
         assert companions['mass'][idx].min() > 0
 
@@ -469,6 +481,13 @@ class ResolvedCluster(Cluster):
         removed. If self.ifmr != None, then we will save the high mass systems 
         since they will be plugged into an ifmr later.
         """
+        """ # Print companion masses and phases before any filtering
+        bd_idx_initial = [np.where((np.array(cm) >= 0.01) & (np.array(cm) < 0.08))[0] for cm in compMass]
+        print("Before filtering - CompMass (brown dwarfs):")
+        for i, bdi in enumerate(bd_idx_initial):
+            if len(bdi) > 0:
+                print(f"System {i}: Masses: {np.array(compMass[i])[bdi]}, Phases: {np.full(len(bdi), 99)}")"""
+
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
@@ -492,6 +511,12 @@ class ResolvedCluster(Cluster):
         if self.imf.make_multiples:
             # Clean up companion stuff (which we haven't handled yet)
             compMass = [compMass[ii] for ii in idx]
+            
+            """bd_idx_after = [np.where((np.array(cm) >= 0.01) & (np.array(cm) < 0.08))[0] for cm in compMass]
+            print("After filtering - CompMass (brown dwarfs):")
+            for i, bdi in enumerate(bd_idx_after):
+                if len(bdi) > 0:
+                    print(f"System {i}: Masses: {np.array(compMass[i])[bdi]}, Phases: {np.full(len(bdi), 99)}")"""
         
         return star_systems, compMass
 
