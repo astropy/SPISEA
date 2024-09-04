@@ -488,6 +488,8 @@ def test_ifmr_multiplicity():
     idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 99) & (clust1['phase'] != 9) )
     idx2 = np.where( (comps2['phase'] > 5) & (comps2['phase'] < 99) & (comps2['phase'] != 9) )
     assert len(idx[0]) == 0
+
+    # Make sure BD temperatures are assigned correctly
     
     # Ensure no substellar mass compact objects are generated
     """
@@ -536,6 +538,10 @@ def test_ifmr_multiplicity():
                                (comps2['mass'] <= BD_MAX_MASS))
     assert len(comp_non_bd_idx[0]) == 0  # asserting no non-brown dwarf companions in BD mass range
 
+    # Ensure BD temperature assignment is working correctly
+    assert np.all(clust1['Teff'][bd_idx] != np.nan)
+    assert np.all(comps2['Teff'][comp_bd_idx] != np.nan)
+
     #print statements for debugging:
     print(comps2['mass'][comp_bd_idx])
     print(np.unique(comps2['phase']))
@@ -545,6 +551,10 @@ def test_ifmr_multiplicity():
     print(comps2[comp_phase_1])
     comps_bds = np.where((comps2['mass'] >= 0.01) & (comps2['mass'] < 0.08))
     print(comps2[comps_bds])
+
+    #make sure that bd temps are being assigned
+    print(clust1[bd_idx]['Teff'])
+    print(comps2[comp_bd_idx]['Teff'])
     return
 
 def test_metallicity():

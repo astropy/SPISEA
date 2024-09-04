@@ -192,6 +192,7 @@ class ResolvedCluster(Cluster):
                 filt_names.append(col_name)
 
         return filt_names
+
         
     def _make_star_systems_table(self, mass, isMulti, sysMass):
         """
@@ -276,8 +277,24 @@ class ResolvedCluster(Cluster):
             for filt in self.filt_names:
                 star_systems[filt][idx_rem_good] = np.full(len(idx_rem_good), np.nan)
 
-            # Handle brown dwarfs separately
+
+            # Handle brown dwarfs separately and assign temperatures
             idx_bd = np.where(star_systems['phase'] == 99)[0]
+            
+            # Define the class for BDs
+            evo_model = evolution.MergedBaraffePisaEkstromParsec()
+
+            # Use the instance to call get_temperature
+            masses = star_systems[idx_bd]['mass_current']
+            ages = np.full(len(masses), self.iso.points.meta['LOGAGE'])
+            temperatures = evo_model.get_temperature(masses, ages)
+
+            # Convert the numpy array to an astropy Column
+            temperatures_column = Column(temperatures)
+            
+            # Assign temperatures to the Table column
+            star_systems['Teff'][idx_bd] = temperatures_column
+
             for filt in self.filt_names:
                 star_systems[filt][idx_bd] = np.full(len(idx_bd), np.nan)
 
@@ -401,12 +418,6 @@ class ResolvedCluster(Cluster):
                     star_systems[filt][idx[good]] = -2.5 * np.log10(f1[good] + f2[good])
                     star_systems[filt][idx[bad]] = np.nan
 
-        """# Assigning brown dwarf companions the correct phase/properties
-        bd_idx = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
-        companions['phase'][bd_idx] = 99
-        companions['Teff'][bd_idx] = np.nan
-        for filt in self.filt_names:
-            companions[filt][bd_idx] = np.full(len(bd_idx), np.nan)"""
                 
         #####
         # Make Remnants with flux = 0 in all bands.
@@ -423,8 +434,7 @@ class ResolvedCluster(Cluster):
                 r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem],
                                                                      metallicity_array=companions['metallicity'][cdx_rem])
             else:
-                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem])
-# SEPERATE BDS IN OWN FUNCTION            
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem])           
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
@@ -437,11 +447,6 @@ class ResolvedCluster(Cluster):
             # Give remnants a magnitude of nan, so they can be filtered out later when calculating flux.
             for filt in self.filt_names:
                 companions[filt][cdx_rem_good] = np.full(len(cdx_rem_good), np.nan)
-                
-            """# Debugging print before and after assigning brown dwarf phase
-            print("Before assigning BD phase:")
-            bd_idx_before = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
-            print(f"Brown dwarfs before phase assignment (mass, phase): {list(zip(companions['mass'][bd_idx_before], companions['phase'][bd_idx_before]))}")"""
 
             # Assigning brown dwarf companions the correct phase/properties
             bd_idx = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
@@ -449,9 +454,20 @@ class ResolvedCluster(Cluster):
             companions['mass_current'][bd_idx] = companions['mass'][bd_idx]
             for filt in self.filt_names:
                 companions[filt][bd_idx] = np.full(len(bd_idx), np.nan)
-        
-            """print("After assigning BD phase:")
-            print(f"Brown dwarfs after phase assignment (mass, phase): {list(zip(companions['mass'][bd_idx], companions['phase'][bd_idx]))}")"""
+
+            # Define the class for BDs
+            evo_model = evolution.MergedBaraffePisaEkstromParsec()
+
+            # Use the instance to call get_temperature
+            c_masses = companions[bd_idx]['mass_current']
+            c_ages = np.full(len(c_masses), self.iso.points.meta['LOGAGE'])
+            c_temperatures = evo_model.get_temperature(c_masses, c_ages)
+
+            # Convert the numpy array to an astropy Column
+            c_temperatures_column = Column(c_temperatures)
+            
+            # Assign temperatures to the Table column
+            companions['Teff'][bd_idx] = c_temperatures_column
 
   
         # Notify if we have a lot of bad ones.
@@ -463,8 +479,7 @@ class ResolvedCluster(Cluster):
 
         # Final check for brown dwarf phase
         bd_idx_final = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
-        print("Final BD phase check:")
-        """print(f"Brown dwarfs final phase check (mass, phase): {list(zip(companions['mass'][bd_idx_final], companions['phase'][bd_idx_final]))}")"""
+        
 
         # Double check that everything behaved properly.
         assert companions['mass'][idx].min() > 0
@@ -511,12 +526,6 @@ class ResolvedCluster(Cluster):
         if self.imf.make_multiples:
             # Clean up companion stuff (which we haven't handled yet)
             compMass = [compMass[ii] for ii in idx]
-            
-            """bd_idx_after = [np.where((np.array(cm) >= 0.01) & (np.array(cm) < 0.08))[0] for cm in compMass]
-            print("After filtering - CompMass (brown dwarfs):")
-            for i, bdi in enumerate(bd_idx_after):
-                if len(bdi) > 0:
-                    print(f"System {i}: Masses: {np.array(compMass[i])[bdi]}, Phases: {np.full(len(bdi), 99)}")"""
         
         return star_systems, compMass
 
