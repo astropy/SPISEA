@@ -1338,8 +1338,14 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
             Array of interpolated temperatures.
         """
     
+        # Set the project root two levels up from 'spisea/evolution.py'
+        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
+
+        # Construct the full path to the CSV file in 'changes/bd_evo_csv'
+        csv_path = os.path.join(project_root, 'SPISEA', 'changes', 'bd_evo_csv', 'baraffe2003.csv')
+
         # Load the CSV file
-        data = pd.read_csv('/u/caitlinbegbie/code/SPISEA/changes/bd_evo_csv/baraffe2003.csv')
+        data = pd.read_csv(csv_path)
     
         # Create columns of relevant data
         mass_grid = np.unique(data['mass'].values)
