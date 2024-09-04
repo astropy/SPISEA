@@ -43,8 +43,6 @@ class IFMR(object):
         But we use this function for anything between 0.5 and 9 depending on the IFMR.
         FIXME: need to extend these ranges... explain extension somewhere? Paper maybe?
         """
-        #debugging print statement
-        print(f"Input MZAMS: {MZAMS}")
         
         result = 0.109*MZAMS + 0.394
 
@@ -56,7 +54,6 @@ class IFMR(object):
         good_idx = np.where((MZAMS >= 0.5) & (MZAMS < 9))
         final[good_idx] = result[good_idx]
 
-        print(f"Final masses: {final}")  # Debugging print statement
 
         return final
         
@@ -796,7 +793,6 @@ class IFMR_Raithel18(IFMR):
         id_array_BD = np.where((mass_array >= 0.01) & (mass_array < 0.08))
         output_array[0][id_array_BD] = mass_array[id_array_BD]
         output_array[1][id_array_BD] = codes['BD']
-        print(f'Brown dwarf indices: {id_array_BD}, Masses: {mass_array[id_array_BD]}')   #for debugging
 
         #classifying invalid mass ranges
         id_array0 = np.where((mass_array < 0.01) | ((mass_array >= 0.08) & (mass_array < 0.5)) | (mass_array >= 120))
