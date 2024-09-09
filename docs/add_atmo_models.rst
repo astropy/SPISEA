@@ -19,11 +19,11 @@ a template for how to make a new one. Some general notes:
   atmospheres in your grid) and then the atmosphere model files
   themselves.
   
-* The ``catalog.fits`` file MUST follow the format where one column labeled
-'INDEX', which gives the '<teff>,<metallicity>,<logg>' for each atmosphere, and then one column labeled 'FILENAME',
-which gives the path to the file containing that atmosphere.
+* The ``catalog.fits`` file MUST follow the format where one column
+  labeled 'INDEX', which gives the '<teff>,<metallicity>,<logg>' for
+  each atmosphere, and then one column labeled 'FILENAME', which gives the path to the file containing that atmosphere.
 
-* There is some flexibility as to how the actual atmosphere model
+* There is some flexibility as to how the atmosphere model
   files are organized. In ``BTSettle_2015_rebin``, you'll see that each
   file is simply stored in the same directory as the ``catalog.fits``
   file, with one model per file. In ``phoenix_v16_rebin``, the files are
