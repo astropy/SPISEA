@@ -233,7 +233,7 @@ class ResolvedCluster(Cluster):
         # effect is so small
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 99) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 90) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
         # Print warning, if desired
         verbose=False
         if verbose:
@@ -279,7 +279,7 @@ class ResolvedCluster(Cluster):
 
 
             # Handle brown dwarfs separately and assign temperatures
-            idx_bd = np.where(star_systems['phase'] == 99)[0]
+            idx_bd = np.where(star_systems['phase'] == 90)[0]
             
             # Define the class for BDs
             evo_model = evolution.MergedBaraffePisaEkstromParsec()
@@ -385,7 +385,7 @@ class ResolvedCluster(Cluster):
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
                 companions_phase_non_nan = np.nan_to_num(companions['phase'], nan=-99)
                 bad = np.where( (companions_phase_non_nan > 5) &
-                                (companions_phase_non_nan < 99) &
+                                (companions_phase_non_nan < 90) &
                                 (companions_phase_non_nan != 9) &
                                 (companions_phase_non_nan != -99))
                 # Print warning, if desired
@@ -450,7 +450,7 @@ class ResolvedCluster(Cluster):
 
             # Assigning brown dwarf companions the correct phase/properties
             bd_idx = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
-            companions['phase'][bd_idx] = 99
+            companions['phase'][bd_idx] = 90
             companions['mass_current'][bd_idx] = companions['mass'][bd_idx]
             for filt in self.filt_names:
                 companions[filt][bd_idx] = np.full(len(bd_idx), np.nan)
@@ -496,12 +496,6 @@ class ResolvedCluster(Cluster):
         removed. If self.ifmr != None, then we will save the high mass systems 
         since they will be plugged into an ifmr later.
         """
-        """ # Print companion masses and phases before any filtering
-        bd_idx_initial = [np.where((np.array(cm) >= 0.01) & (np.array(cm) < 0.08))[0] for cm in compMass]
-        print("Before filtering - CompMass (brown dwarfs):")
-        for i, bdi in enumerate(bd_idx_initial):
-            if len(bdi) > 0:
-                print(f"System {i}: Masses: {np.array(compMass[i])[bdi]}, Phases: {np.full(len(bdi), 99)}")"""
 
         N_systems = len(star_systems)
 
@@ -515,7 +509,7 @@ class ResolvedCluster(Cluster):
         else:
             # Keep stars (with Teff) and any other compact objects (with phase info). 
             idx = np.where((star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) | 
-                           (star_systems_phase_non_nan == 99))[0]
+                           (star_systems_phase_non_nan == 90))[0]
 
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))

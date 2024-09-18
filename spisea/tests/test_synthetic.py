@@ -474,19 +474,19 @@ def test_ifmr_multiplicity():
     assert len(np.where(clust2['phase'] == 102)) > 0
     assert len(np.where(clust1['phase'] == 103)) > 0   # BH
     assert len(np.where(clust2['phase'] == 103)) > 0
-    assert len(np.where(clust1['phase'] == 99)) > 0   # BD
-    assert len(np.where(clust2['phase'] == 99)) > 0
+    assert len(np.where(clust1['phase'] == 90)) > 0   # BD
+    assert len(np.where(clust2['phase'] == 90)) > 0
 
     # Now check that we have companions that are WDs, NSs, BHs, and BDs
     assert len(np.where(comps2['phase'] == 101)) > 0
     assert len(np.where(comps2['phase'] == 102)) > 0
     assert len(np.where(comps2['phase'] == 103)) > 0
-    assert len(np.where(comps2['phase'] == 99)) > 0
+    assert len(np.where(comps2['phase'] == 90)) > 0
 
     # Make sure no funky phase designations (due to interpolation effects)
     # slipped through
-    idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 99) & (clust1['phase'] != 9) )
-    idx2 = np.where( (comps2['phase'] > 5) & (comps2['phase'] < 99) & (comps2['phase'] != 9) )
+    idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 90) & (clust1['phase'] != 9) )
+    idx2 = np.where( (comps2['phase'] > 5) & (comps2['phase'] < 90) & (comps2['phase'] != 9) )
     assert len(idx[0]) == 0
 
     # Make sure BD temperatures are assigned correctly
@@ -503,7 +503,7 @@ def test_ifmr_multiplicity():
     wd_idx = np.where(clust1['phase'] == 101)
     ns_idx = np.where(clust1['phase'] == 102)
     bh_idx = np.where(clust1['phase'] == 103)
-    bd_idx = np.where(clust1['phase'] == 99)
+    bd_idx = np.where(clust1['phase'] == 90)
     
     assert len(clust1[bd_idx]) != 0
     assert np.all(clust1['mass'][wd_idx] > MIN_MASS)
@@ -515,7 +515,7 @@ def test_ifmr_multiplicity():
     comp_wd_idx = np.where(comps2['phase'] == 101)
     comp_ns_idx = np.where(comps2['phase'] == 102)
     comp_bh_idx = np.where(comps2['phase'] == 103)
-    comp_bd_idx = np.where(comps2['phase'] == 99)
+    comp_bd_idx = np.where(comps2['phase'] == 90)
     assert np.all(comps2['mass'][comp_wd_idx] > MIN_MASS)
     assert np.all(comps2['mass'][comp_ns_idx] > MIN_MASS)
     assert np.all(comps2['mass'][comp_bh_idx] > MIN_MASS)
@@ -528,12 +528,12 @@ def test_ifmr_multiplicity():
                   (comps2['mass'][comp_bd_idx] <= BD_MAX_MASS))
     
     # Ensure no other objects are in the brown dwarf mass range
-    non_bd_idx = np.where((clust1['phase'] != 99) & 
+    non_bd_idx = np.where((clust1['phase'] != 90) & 
                           (clust1['mass'] >= BD_MIN_MASS) & 
                           (clust1['mass'] <= BD_MAX_MASS))
     assert len(non_bd_idx[0]) == 0  # asserting no non-brown dwarf objects in BD mass range
     
-    comp_non_bd_idx = np.where((comps2['phase'] != 99) & 
+    comp_non_bd_idx = np.where((comps2['phase'] != 90) & 
                                (comps2['mass'] >= BD_MIN_MASS) & 
                                (comps2['mass'] <= BD_MAX_MASS))
     assert len(comp_non_bd_idx[0]) == 0  # asserting no non-brown dwarf companions in BD mass range
