@@ -33,6 +33,7 @@ default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
 default_wd_atm_func = atm.get_wd_atmosphere
+default_bd_atm_func = atm.get_bd_atmosphere
 
 def Vega():
     # Use Vega as our zeropoint... assume V=0.03 mag and all colors = 0.0
@@ -765,7 +766,7 @@ class Isochrone(object):
     """
     def __init__(self, logAge, AKs, distance, metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
-                 wd_atm_func = default_wd_atm_func,
+                 wd_atm_func = default_wd_atm_func, bd_atm_func = default_bd_atm_func,
                  red_law=default_red_law, mass_sampling=1,
                  wave_range=[3000, 52000], min_mass=None, max_mass=None,
                  rebin=True):
@@ -837,6 +838,10 @@ class Isochrone(object):
             # pull from WD atmospheres
             if phase == 101:
                 star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                                       verbose=False)
+            elif phase == 90:
+                print(f"Applying brown dwarf model to object {ii}")
+                star = bd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
                                        verbose=False)
             else:
                 star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
@@ -954,8 +959,12 @@ class IsochronePhot(Isochrone):
         Default is atmospheres.get_merged_atmosphere.
 
     wd_atm_func: white dwarf model atmosphere function, optional
-        Set the stellar atmosphere models for the white dwafs. 
+        Set the stellar atmosphere models for the white dwarfs. 
         Default is atmospheres.get_wd_atmosphere   
+
+    bd_atm_func: brown dwarf model atmosphere function, optimal
+        Set the stellar atmosphere models for the brown dwarfs.
+        Default is atmospheres.get_bd_atmosphere
 
     red_law : reddening law object, optional
         Define the reddening law for the synthetic photometry.
@@ -1003,7 +1012,7 @@ class IsochronePhot(Isochrone):
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
-                 wd_atm_func = default_wd_atm_func,
+                 wd_atm_func = default_wd_atm_func, bd_atm_func = default_bd_atm_func,
                  wave_range=[3000, 52000],
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
