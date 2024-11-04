@@ -79,13 +79,16 @@ def test_atmosphere_models():
     from spisea import atmospheres as atm
 
     # Array of atmospheres
-    atm_arr = [atm.get_merged_atmosphere, atm.get_castelli_atmosphere, atm.get_phoenixv16_atmosphere, atm.get_BTSettl_2015_atmosphere,
-                   atm.get_BTSettl_atmosphere, atm.get_kurucz_atmosphere, atm.get_phoenix_atmosphere, atm.get_wdKoester_atmosphere]
+    atm_arr = [atm.get_merged_atmosphere, atm.get_castelli_atmosphere, atm.get_phoenixv16_atmosphere, 
+               atm.get_BTSettl_2015_atmosphere, atm.get_BTSettl_atmosphere, atm.get_kurucz_atmosphere, 
+               atm.get_phoenix_atmosphere, atm.get_wdKoester_atmosphere, atm.get_Meisner2023_atmosphere]
 
     # Array of metallicities
     metals_range = [-2.0, 0, 0.15]
+    bd_metals_range = [-1.0, -0.5, 0, 0.3]
     metals_solar = [0]
-    metals_arr = [metals_solar, metals_range, metals_range, metals_solar, metals_range, metals_range, metals_range, metals_solar]
+    metals_arr = [metals_solar, metals_range, metals_range, metals_solar, metals_range, metals_range, metals_range, 
+                  metals_solar, bd_metals_range]
 
     assert len(atm_arr) == len(metals_arr)
 
@@ -126,6 +129,18 @@ def test_atmosphere_models():
             raise Exception('ATM TEST FAILED: {0}, temp = {2}'.format(atm_func, jj))
     
     print('get_bb_atmosphere: all temps passed')
+
+    # Test get_bd_atmosphere at different temps
+    # This func only requests temp
+    temp_range = [250, 400, 500, 750, 950, 1200]
+    atm_func = atm.get_bd_atmosphere
+    for jj in temp_range:
+        try:
+            test = atm_func(temperature=jj, verbose=True)
+        except:
+            raise Exception('ATM TEST FAILED: {0}, temp = {1}'.format(atm_func, jj))
+    
+    print('get_bd_atmosphere: all temps passed')
     
     return
 
