@@ -724,6 +724,45 @@ def get_Meisner2023_atmosphere(metallicity=0, temperature=1000, gravity=4.5, reb
         print( '  log gravity = %.1f' % gravity)
 
     return sp
+
+def get_Phillips2020_atmosphere(metallicity=0, temperature=1000, gravity=4.5, rebin=True):
+    """
+        Return atmosphere from Phillips et al., 2020 using ATMO model
+        (`Phillips et al. 2020 <https://ui.adsabs.harvard.edu/abs/2020A%26A...637A..38P/abstract>`_)
+
+        Grid originally downloaded `here <https://noctis.erc-atmo.eu/fsdownload/zyU96xA6o/phillips2020>`_
+        
+        Grid Range:
+        
+        * Teff: 200 - 3000 K
+        * gravity: 2.5 - 5.5 cgs
+        * [M/H] = 0
+    """
+    if rebin == True:
+        atm_name = 'Phillips2020_rebin'
+    else:
+        atm_name = 'Phillips2020'
+
+    try:
+        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+    except:
+        # Check atmosphere catalog bounds
+        (temperature, gravity) = get_atmosphere_bounds(atm_name,
+                                                   metallicity=metallicity,
+                                                   temperature=temperature,
+                                                   gravity=gravity)
+    
+        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+
+    # Do some error checking
+    idx = np.where(sp.flux != 0)[0]
+    if len(idx) == 0:
+        print( 'Could not find Phillips2020 atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
+
+    return sp
         
 def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
     """
@@ -859,8 +898,8 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
     * T < 3800, logg < 2.5: PHOENIX v16
     * 3200 <= T < 3800, logg > 2.5: BTSettl_CIFITS2011_2015/PHOENIXV16 merge
     * 3200 < T <= 1200, logg > 2.5: BTSettl_CIFITS2011_2015
-    * 1200 < T <= 1000, logg > 2.5: BTSettl_CIFITS2011_2015/Meisner2023 merge
-    * 1000 < T <= 250, logg > 2.5: Meisner2023
+    * 1200 < T <= 1000, logg > 2.5: BTSettl_CIFITS2011_2015/Phillips2020 merge
+    * 1000 < T <= 250, logg > 2.5: Phillips2020
 
     Otherwise, if T < 3800 and [M/H] != 0:
     
@@ -894,6 +933,14 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
     # If solar metallicity, use BTSettl 2015 grid. Only solar metallicity is
     # currently available here, so if non-solar metallicity, just stick with
     # the Phoenix grid
+    if (temperature <= 1200) & (metallicity == 0):
+        if verbose:
+            print( 'Phillips2020 atmosphere')
+        return get_Phillips2020_atmosphere(metallicity=metallicity,
+                                                temperature=temperature,
+                                                gravity=gravity,
+                                                rebin=rebin)
+        
     if (temperature <= 3800) & (metallicity == 0):
         # High gravity are in BTSettl regime
         if (temperature <= 3200) & (gravity > 2.5):
@@ -1005,7 +1052,7 @@ def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False
         bbspec = get_bb_atmosphere(temperature=temperature, verbose=verbose)
         return bbspec
 
-def get_bd_atmosphere(metallicity=0, temperature=1500, gravity=4, verbose=False):
+def get_bd_atmosphere(metallicity=0, temperature=1000, gravity=4, verbose=False):
     """
     Return the brown dwarf atmosphere from 
     `Meisner et al. 2020 <https://ui.adsabs.harvard.edu/abs/2023AJ....166...57M/abstract>`_. 
@@ -1033,9 +1080,9 @@ def get_bd_atmosphere(metallicity=0, temperature=1500, gravity=4, verbose=False)
     """
     try:
         if verbose:
-            print('Meisner2023 atmosphere')
+            print('Phillips2020 atmosphere')
 
-        return get_Meisner2023_atmosphere(metallicity=metallicity,
+        return get_Phillips2020_atmosphere(metallicity=metallicity,
                                             temperature=temperature,
                                             gravity=gravity)
     
@@ -2176,7 +2223,7 @@ def organize_all_Meisner2023_atmospheres():
             # Open each .fits file and read the data
             with fits.open(jj) as hdul:
                 data = hdul[1].data
-                wavelength = data['Wavelength']  # Assuming these columns exist
+                wavelength = data['Wavelength']
                 flux = data['Flux']
 
             # Create new columns with desired format

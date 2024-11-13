@@ -29,16 +29,15 @@ def test_Muzic():
 
     return
 
-"""
-def test_CombinedBD():
+def test_CombinedWeidnerKroupaKirkpatrick_2024():
     from .. import imf
     from .. import multiplicity
-
+    
     # Make multiplicity object
     imf_multi = multiplicity.MultiplicityUnresolved()
 
-    # Use the  IMF class from imf.py
-    my_imf = imf.CombinedBD_2024(multiplicity=imf_multi)
+    # Make IMF object; we'll use a broken power law with the parameters from Muzic+17
+    my_imf = imf.CombinedWeidnerKroupaKirkpatrick_2024(multiplicity=imf_multi)
 
     # Define total cluster mass
     M_cl = 10**5.
@@ -54,5 +53,5 @@ def test_CombinedBD():
     mdx = np.where(isMulti)[0]
     for mm in mdx:
         assert len(compMass[mm]) > 0
-        
-    return"""
+
+    return

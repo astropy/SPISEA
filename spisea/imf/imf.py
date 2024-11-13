@@ -689,30 +689,19 @@ class Weidner_Kroupa_2004(IMF_broken_powerlaw):
 
         IMF_broken_powerlaw.__init__(self, massLimits, powers,
                                      multiplicity=multiplicity)
-
-#added for brown dwarfs
-class Muzic_2017(IMF_broken_powerlaw):
-    """
-    Define IMF from `Mužić (2017)
-<https://ui.adsabs.harvard.edu/abs/2017MNRAS.471.3699M/abstract>`_.
-    Mass range is 0.01 M_sun - inf M_sun.
-    """
-    def __init__(self, multiplicity=None):
-        massLimits = np.array([0.01, 0.5, 1, np.inf])
-        powers = np.array([-0.71, -0.81, -1.60])
-
-        IMF_broken_powerlaw.__init__(self, massLimits, powers,
-                                     multiplicity=multiplicity)
         
-class CombinedBD_2024(IMF_broken_powerlaw):
+class CombinedWeidnerKroupaKirkpatrick_2024(IMF_broken_powerlaw):
     """
-    Define IMF from several papers considering brown dwarf mass ranges
-    Derivation given in SPISEA/changes/BD_IMF
-    Mass range: 0.1 M_sun - 0.8 M_sun
+    Define combined IMF from several papers considering brown dwarf mass ranges.
+    Mass range: 
+        * 0.01 M_sun - 8 M_sun: Kirkpatrick 2024
+        <https://ui.adsabs.harvard.edu/abs/2024ApJS..271...55K/abstract>`_.
+        * 8 M_sun - 120 M_sun: Weidner & Kroupa 2004
+        <https://ui.adsabs.harvard.edu/abs/2004MNRAS.348..187W/abstract>`_.
     """
     def __init__(self, multiplicity=None):
-        massLimits = np.array([0.01, 0.08])
-        powers = np.array([-0.56])
+        massLimits = np.array([0.01, 0.05, 0.22, 0.55, 8, 120])
+        powers = np.array([-0.6, -0.25, -1.3, -2.3, -2.35])
     
         IMF_broken_powerlaw.__init__(self, massLimits, powers,
                                      multiplicity=multiplicity)

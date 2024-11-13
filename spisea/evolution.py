@@ -1320,6 +1320,7 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         nan_teff_idx = np.isnan(iso['logT'])
         if np.any(nan_teff_idx):
             iso['logT'][nan_teff_idx] = self.estimate_teff(iso['mass'][nan_teff_idx])
+        return iso
 
     def get_temperature(self, masses, ages):
         """

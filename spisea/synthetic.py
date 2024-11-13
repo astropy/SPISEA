@@ -789,6 +789,7 @@ class Isochrone(object):
         # Takes about 0.1 seconds.
         evol = evo_model.isochrone(age=10**logAge,
                                    metallicity=metallicity)
+        
 
         # Eliminate cases where log g is less than 0
         idx = np.where(evol['logg'] > 0)
@@ -841,7 +842,7 @@ class Isochrone(object):
                                        verbose=False)
             elif phase == 90:
                 print(f"Applying brown dwarf model to object {ii}")
-                star = bd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                star = bd_atm_func(temperature=T, gravity=gravity, metallicity=0,
                                        verbose=False)
             else:
                 star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
@@ -1059,6 +1060,8 @@ class IsochronePhot(Isochrone):
                                metallicity=metallicity,
                                evo_model=evo_model, atm_func=atm_func,
                                wd_atm_func=wd_atm_func,
+                               bd_atm_func=bd_atm_func,
+                               
                                wave_range=wave_range,
                                red_law=red_law, mass_sampling=mass_sampling,
                                min_mass=min_mass, max_mass=max_mass, rebin=rebin)
