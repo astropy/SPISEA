@@ -109,7 +109,7 @@ def test_atmosphere_models():
     # Test get_merged_atmospheres at different temps
     temp_range = [200, 1000, 2000, 3500, 4000, 5250, 6000, 12000]
     atm_func = atm.get_merged_atmosphere
-    for ii in metals_range:
+    for ii in bd_metals_range:
         for jj in temp_range:
             try:
                 test = atm_func(metallicity=ii, temperature=jj, verbose=True)

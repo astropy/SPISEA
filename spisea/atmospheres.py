@@ -933,10 +933,10 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
     # If solar metallicity, use BTSettl 2015 grid. Only solar metallicity is
     # currently available here, so if non-solar metallicity, just stick with
     # the Phoenix grid
-    if (temperature <= 1200) & (metallicity == 0):
+    if (temperature <= 1200):
         if verbose:
-            print( 'Phillips2020 atmosphere')
-        return get_Phillips2020_atmosphere(metallicity=metallicity,
+            print( 'Meisner2023 atmosphere')
+        return get_Meisner2023_atmosphere(metallicity=metallicity,
                                                 temperature=temperature,
                                                 gravity=gravity,
                                                 rebin=rebin)
@@ -1080,9 +1080,9 @@ def get_bd_atmosphere(metallicity=0, temperature=1000, gravity=4, verbose=False)
     """
     try:
         if verbose:
-            print('Phillips2020 atmosphere')
+            print('Meisner2023 atmosphere')
 
-        return get_Phillips2020_atmosphere(metallicity=metallicity,
+        return get_Meisner2023_atmosphere(metallicity=metallicity,
                                             temperature=temperature,
                                             gravity=gravity)
     
@@ -2226,9 +2226,12 @@ def organize_all_Meisner2023_atmospheres():
                 wavelength = data['Wavelength']
                 flux = data['Flux']
 
+            # Make flux independent of R&D
+            flux_new = flux / 5e-20
+
             # Create new columns with desired format
             c0 = fits.Column(name='Wavelength', format='D', array=wavelength)
-            c1 = fits.Column(name='Flux', format='E', array=flux)
+            c1 = fits.Column(name='Flux', format='E', array=flux_new)
 
             cols = fits.ColDefs([c0, c1])
             tbhdu = fits.BinTableHDU.from_columns(cols)
@@ -2346,7 +2349,7 @@ def rebin_Meisner2023(make_unique=False):
         # Fetch the Meisner2023 spectrum and rebin its flux
         try:
             sp = pysynphot.Icat('Meisner2023', temp, metal, logg)
-            flux_rebin = rebin_spec(sp.wave, sp.flux, sp_meisner.wave)
+            flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
 
             # Create the output FITS file
             c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
