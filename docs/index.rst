@@ -82,6 +82,9 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.1.12 (2024-12-02)
+  * Added support for Rubin Observatory filters
+
 2.1.11 (2023-09-15)
   * Small bugfix to RedLawFritz11 so paths work regardless of
     operating system used

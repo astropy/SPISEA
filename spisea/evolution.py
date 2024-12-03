@@ -38,6 +38,7 @@ def get_installed_grid_num(input_models_dir):
         file1 = open(file_name, 'r')
         read = file1.readlines()
         evo_grid_num = float(read[1])
+        file1.close()
     except FileNotFoundError:
         evo_grid_num = 1.0
 
