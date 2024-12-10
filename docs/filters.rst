@@ -43,6 +43,7 @@ Available filters:
 * PanStarrs 1
 * Roman Space Telescope
 * UKIRT
+* Vera C. Rubin Observatory
 * VISTA
 * ZTF
 
@@ -200,6 +201,14 @@ Example: ``'roman,wfi,f062'``
 Filters: J, H, K
 
 Example: ``'ukirt,K'``
+
+**Vera C. Rubin Observatory**
+
+`Rubin Telescope filters <https://github.com/lsst/throughputs/tree/main/baseline>`_
+
+Filters: u, g, r, i, z, y
+
+Example: ``'rubin,g'``
 
 
 **VISTA**

@@ -165,7 +165,8 @@ def test_filters():
                      'hawki,J', 'hawki,H', 'hawki,Ks', 'roman,wfi,f062',
                      'roman,wfi,f087', 'roman,wfi,f106', 'roman,wfi,f129',
                      'roman,wfi,f158', 'roman,wfi,w146', 'roman,wfi,f213',
-                     'roman,wfi,f184']
+                     'roman,wfi,f184', 'rubin,g', 'rubin,i', 'rubin,r',
+                     'rubin,u', 'rubin,z', 'rubin,y']
 
     # Loop through filters to test that they work: get_filter_info
     for ii in filt_list:

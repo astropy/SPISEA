@@ -1566,6 +1566,9 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('hawki'):
         filt = filters.get_hawki_filt(filterName)
+     
+    elif name.startswith('rubin'):
+        filt = filters.get_rubin_filt(filterName)
         
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
@@ -1605,6 +1608,7 @@ def get_filter_info(name, vega=vega, rebin=True):
     filt.mag0 = vega_mag
 
     return filt
+
 
 def get_filter_col_name(obs_str):
     """
@@ -1698,7 +1702,13 @@ def get_obs_str(col):
                  'roman_f158': 'roman,wfi,f158',
                  'roman_w146': 'roman,wfi,w146',
                  'roman_f213': 'roman,wfi,f213',
-                 'roman_f184': 'roman,wfi,f184'}
+                 'roman_f184': 'roman,wfi,f184',
+                 'rubin_g':'rubin,g',
+                 'rubin_i':'rubin,i',
+                 'rubin_r':'rubin,r',
+                 'rubin_u':'rubin,u',
+                 'rubin_z':'rubin,z',
+                 'rubin_y':'rubin,y'}
 
     obs_str = filt_list[name]
         
