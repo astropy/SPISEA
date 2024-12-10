@@ -170,6 +170,12 @@ class ResolvedCluster(Cluster):
         #####
         if self.imf.make_multiples:
             companions = self._make_companions_table(star_systems, compMass)
+
+        ###
+        # Remove black hole binaries that had been broken apart
+        ###
+        if self.imf.make_multiples:
+            star_systems, companions = self._remove_broken_black_hole_binaries(star_systems, companions, self.filt_names)
             
         #####
         # Save our arrays to the object
@@ -472,6 +478,108 @@ class ResolvedCluster(Cluster):
             compMass = [compMass[ii] for ii in idx]
         
         return star_systems, compMass
+
+def _remove_broken_black_hole_binaries(self, star_systems, companions, filt_name):
+        """
+        Function to remove black hole binaries that no longer have a stable orbit after the change in mass in evolution. 
+        """
+        cluster_b = star_systems[star_systems['phase']==103]
+        cluster_b_idx = np.array(list(range(0, len(star_systems))))[star_systems['phase']==103] 
+        f=[]
+        for row in companions:
+            if row['system_idx'] in cluster_b_idx:
+                f.append(True)
+            else:
+                f.append(False)
+        cluster_b_c = companions[f] #Find all black hole binaries
+        cluster_b_c_idx = np.arange(len(companions))[f]
+        a = (10**cluster_b_c['log_a'])
+        a.name='a'
+        temp_m = []
+        for row in cluster_b_c:
+            temp_m.append(star_systems[row['system_idx']]['systemMass']/(star_systems[row['system_idx']]['mass_current']+row['mass_current']))
+        temp_m = np.array(temp_m)
+        
+        max_r = 2*a*(temp_m-1)/temp_m    # Calculate the maximum radius that the companion star could be at when the loss of mass occurrs
+        
+        random_M = np.random.uniform(0, 2 * np.pi, len(temp_m)) # Generate random mean anomaly
+
+        # Mean anomaly to eccentric anomaly. Iterative method with 10 iterations maximum and allowed error 1e-6
+        def M_to_E(M, e):
+            E = M
+            for _ in range(10):
+                delta_E = (M - E + e * np.sin(E)) / (e * np.cos(E) - 1)
+                E_next = E - delta_E
+                if abs(E_next - E) < 1e-6:
+                    return E_next
+                E = E_next
+            return E_next
+        
+        M_to_E_vector = np.vectorize(M_to_E)
+        E = M_to_E_vector(random_M, cluster_b_c['e'])
+        r = a*(1-cluster_b_c['e']*np.cos(E)) # The current radius from the random mean anomaly
+        need_break =  max_r > r
+        
+        
+        # need_break =  max_r > a*(1+0.5*cluster_b_c['e']**2)    # Time-averaged radius there, need fix
+        break_companions = cluster_b_c[need_break]
+        break_companions_idx = cluster_b_c_idx[need_break]
+        
+        temp_row = star_systems[0] # Placeholder
+        
+        for row in break_companions:
+            
+            # Add the companion star as an independent star in star_system
+            #Added in the end so do not affect the system_idx of companion star list
+            temp_row['mass'] = row['mass']
+            temp_row['isMultiple'] = False
+            temp_row['systemMass'] = row['mass']
+            temp_row['Teff'] = row['Teff']
+            temp_row['L'] = row['L']
+            temp_row['logg'] = row['logg']
+            temp_row['isWR'] = row['isWR']
+            temp_row['mass_current'] = row['mass_current']
+            temp_row['phase'] = row['phase']
+            temp_row['metallicity'] = row['metallicity']
+            for filt in filt_name:
+                temp_row[filt] = row[filt]
+            
+            star_systems.add_row(temp_row)
+            
+            idx = row['system_idx']
+            
+            # Modify the original star system to reflect the loss of companion star
+            star_systems[idx]['systemMass']-=row['mass']
+            star_systems[idx]['N_companions']-=1
+            if star_systems[idx]['N_companions'] == 0:
+                star_systems[idx]['isMultiple']=False
+                star_systems[idx]['m_nirc2_J']=np.nan
+                star_systems[idx]['m_nirc2_Kp']=np.nan
+            else:
+                for filt in filt_name:
+
+                    mag_s = star_systems[filt][idx]
+                    mag_c = row[filt]
+
+                    # Add companion flux to system flux.
+                    f1 = 10**(-mag_s / 2.5)
+                    f2 = 10**(-mag_c / 2.5)
+
+                    # For dark objects, turn the np.nan fluxes into zeros.
+                    f1 = np.nan_to_num(f1)
+                    f2 = np.nan_to_num(f2)
+                    if (f1 != 0) | (f2 != 0):
+                        star_systems[idx][filt] = -2.5 * np.log10(f1 - f2)
+                    else:
+                        star_systems[idx][filt] = np.nan
+            
+                        
+        # Remove the companion stars from the companion star table
+        need_break_companions = ~np.isin(range(len(companions)), break_companions_idx)
+        companions = companions[need_break_companions]
+            
+        
+        return star_systems, companions
 
 
 class ResolvedClusterDiffRedden(ResolvedCluster):
