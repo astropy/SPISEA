@@ -36,3 +36,6 @@ Winston Zhang -- bugfix to make redlaw paths correct regardless of
 what operating system is used
 
 Sage Hironaka Remulla -- added Rubin Observatory filters
+
+Lingfeng Wei -- bugfix to improve creation of iso_dir in IsochronePhot
+(mkdir to makedirs)
