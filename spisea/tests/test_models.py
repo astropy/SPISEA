@@ -34,14 +34,14 @@ def test_evolution_models():
 
     # Array of evolution models to test
     evo_models = [evolution.MISTv1(version=1.2), evolution.MergedBaraffePisaEkstromParsec(), 
-                      evolution.Parsec(), evolution.Baraffe15(), evolution.Ekstrom12(), evolution.Pisa()]
+                      evolution.Parsec(), evolution.Baraffe15(), evolution.Ekstrom12(), evolution.Pisa(), evolution.Phillips2020()]
 
     
     # Array of age_ranges for the specific evolution models to test
-    age_vals = [age_all_MIST_arr, age_all_arr, age_all_arr, age_young_arr, age_young_arr, age_young_arr]
+    age_vals = [age_all_MIST_arr, age_all_arr, age_all_arr, age_young_arr, age_young_arr, age_young_arr, age_all_arr]
 
     # Array of metallicities for the specific evolution models to test
-    metal_vals = [metal_range, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar]
+    metal_vals = [metal_range, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar]
 
     assert len(evo_models) == len(age_vals) == len(metal_vals)
 
