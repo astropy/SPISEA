@@ -280,10 +280,10 @@ class IMF_broken_powerlaw(IMF):
         if len(mass_limits) != len(powers) + 1:
             msg = 'Incorrect specification of multi-part powerlaw.\n'
             msg += '    len(massLimts) != len(powers)+1\n'
-            msg += '    len(massLimits) = \n' + len(massLimits)
+            msg += '    len(massLimits) = \n' + len(mass_limits)
             msg += '    len(powers) = \n' + len(powers)
 
-            raise RuntimeException(msg)
+            raise RuntimeError(msg)
 
         self._mass_limits = np.atleast_1d(mass_limits)
         self._m_limits_low = mass_limits[0:-1]
