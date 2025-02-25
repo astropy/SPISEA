@@ -31,17 +31,19 @@ def test_evolution_models():
     # Metallicity ranges to test (if applicable)
     metal_range = [-2.5, -1.5, 0, 0.25, 0.4]
     metal_solar = [0]
+    metal_Marley = [-0.5, 0.0, 0.5]
 
     # Array of evolution models to test
     evo_models = [evolution.MISTv1(version=1.2), evolution.MergedBaraffePisaEkstromParsec(), 
-                      evolution.Parsec(), evolution.Baraffe15(), evolution.Ekstrom12(), evolution.Pisa(), evolution.Phillips2020()]
+                      evolution.Parsec(), evolution.Baraffe15(), evolution.Ekstrom12(), evolution.Pisa(), 
+                      evolution.Phillips2020(), evolution.Marley2021()]
 
     
     # Array of age_ranges for the specific evolution models to test
-    age_vals = [age_all_MIST_arr, age_all_arr, age_all_arr, age_young_arr, age_young_arr, age_young_arr, age_all_arr]
+    age_vals = [age_all_MIST_arr, age_all_arr, age_all_arr, age_young_arr, age_young_arr, age_young_arr, age_all_arr, age_all_arr]
 
     # Array of metallicities for the specific evolution models to test
-    metal_vals = [metal_range, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar]
+    metal_vals = [metal_range, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar, metal_Marley]
 
     assert len(evo_models) == len(age_vals) == len(metal_vals)
 

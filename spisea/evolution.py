@@ -667,7 +667,7 @@ class Phillips2020(StellarEvolution):
         return
         
 
-class Marley(StellarEvolution):
+class Marley2021(StellarEvolution):
     """
     Evolution models from 
     `Marley et al. 2021 <https://ui.adsabs.harvard.edu/abs/2021ApJ...920...85M/abstract>`_.
@@ -687,30 +687,34 @@ class Marley(StellarEvolution):
         """
         # populate list of model masses (in solar masses)
         #mass_list = [(0.1 + i*0.005) for i in range(181)]
-
-        # populate list of isochrone ages (log scale)
-        self.age_list = np.arange(6.0, 10.0+0.176, 0.01)
         
         # define metallicity parameters for Parsec models
-        self.z_list = [-0.5, 0.0, 0.5]
+        self.z_solar = 0.0142
+        self.z_list = [self.z_solar * (10.**m) for m in [-0.5, 0.0, 0.5]]
+        
+        # populate list of isochrone ages (log scale)
+        self.age_list = [10.0, 7.0, 8.0, 9.0, 6.0, 7.176091259055681, 8.176091259055681, 9.176091259055681, 6.301029995663981, 
+                         7.301029995663981, 8.301029995663981, 9.301029995663981, 6.477121254719663, 7.477121254719663, 
+                         8.477121254719663, 9.477121254719663, 6.6020599913279625, 7.6020599913279625, 8.602059991327963, 
+                         9.602059991327963, 6.778151250383644, 7.778151250383644, 8.778151250383644, 9.778151250383644, 
+                         6.903089986991944, 7.903089986991944, 8.903089986991944, 9.903089986991944]
         
         # Specify location of model files
         self.model_dir = models_dir+'Marley2021/'
 
         # Specifying metallicity
-        self.z_solar = 0.0
         self.z_file_map = {
-            -0.5: 'nc-0.5_co1.0_mass_age', 
-            0.0: 'nc+0.0_co1.0_mass_age', 
-            0.5: 'nc+0.5_co1.0_mass_age'
+            self.z_list[0]: 'zm05/', 
+            self.z_list[1]: 'zp00/', 
+            self.z_list[2]: 'zp05/'
         }
 
         # Define required evo_grid number
-        self.evo_grid_min = 1.0
+        self.evo_grid_min = 1.0      
 
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
-        Extract an individual isochrone from the Marley collection.
+        Extract an individual isochrone from the Marley2021 collection.
         """
         # Error check to see if installed evolution model
         # grid is compatible with code version. Also return
@@ -730,59 +734,53 @@ class Marley(StellarEvolution):
                 (z_defined > np.max(self.z_list))):
             logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
         
-        # find closest metallicity value
         z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)) )[0][0]
         z_dir = self.z_file_map[self.z_list[z_idx]]
 
-        # Find the corresponding file
-        file_name = self.model_dir + self.z_file_map[z_closest]
+        # Find closest age in grid
+        age_idx = np.where(abs(np.array(self.age_list) - log_age) == min(abs(np.array(self.age_list) - log_age)) )[0][0]
+        iso_file = f'iso_{self.age_list[age_idx]}.fits'
 
-        # Load the metallicity file
-        iso_table = Table.read(metallicity_file, format='ascii')
-        iso_table = isotable[['Mass', 'log age', 'Teff', 'log g', 'Radius', 'log L']]
+        # Create path to iso file
+        full_iso_file = os.path.join(self.model_dir, 'iso', z_dir, iso_file)
 
-        # Filter for the specific age
-        good = np.where(np.isclose(iso_table["log age"], log_age, atol=0.01))[0]
-        if len(good) == 0:
-            raise ValueError(f"No data found for requested age {log_age:.2f} in file {metallicity_file}.")
-
-        iso = iso_table[good]
-
-        # put temperature into logT
-        iso['Teff'] = np.log10(iso['Teff'])
+        print(f"Found nearest age file as {full_iso_file} for requested age of {log_age}")
+        
+        # Make sure the closest file exists
+        #if not os.path.exists(close_file):
+            #raise FileNotFoundError(f"Isochrone file not found: {close_file}.")
         
         # return isochrone data
-        iso.rename_column('Mass', 'mass_current')
-        iso.rename_column('log age', 'logAge')
-        iso.rename_column('Teff', '')
-        iso.rename_column('log g', 'logg')
-        iso.rename_column('Radius', 'logL')
-        iso.rename_column('col6', 'logT')
-        iso.rename_column('col7', 'logg')
-        iso.rename_column('col15', 'phase')
+        iso = Table.read(full_iso_file, format='fits')
+        iso.rename_column('Z', 'Z')
+        iso.rename_column('Age', 'logAge')
+        iso.rename_column('Mass', 'mass')
+        iso.rename_column('Mass_current', 'mass_current')
+        iso.rename_column('log_L', 'logL')
+        iso.rename_column('Teff', 'logT')
+        iso.rename_column('logg', 'logg')
+        iso.rename_column('Radius', 'radius')
         iso['logT_WR'] = iso['logT']
 
-        # Parsec doesn't identify WR stars, so identify all as "False"
+        # Marley doesn't identify WR stars, so identify all as "False"
         isWR = Column([False] * len(iso), name='isWR')
         iso.add_column(isWR)
         
         iso.meta['log_age'] = log_age
         iso.meta['metallicity_in'] = metallicity
-        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
+        iso.meta['metallicity_act'] = np.log10(z_defined / self.z_solar)
 
         return iso
 
     def format_isochrones(input_iso_dir, metallicity_list):
         r"""
-        Parse isochrone file downloaded from Parsec version 1.2 for different
+        Parse isochrone files downloaded from Marley 2021 for different
         metallicities, create individual isochrone files for the different ages.
     
-        input_iso_dir: points to ParsecV1.2s/iso directory. Assumes metallicity
+        input_iso_dir: points to Marley2021/iso directory. Assumes metallicity
         subdirectories already exist with isochrone files downloaded in them
         (isochrones files expected to start with "output*")
 
-        metallicity_list format: absolute (vs. relative to solar),
-        z + <digits after decimal>: e.g. Z = 0.014 --> z014
         """
         # Store current directory for later
         start_dir = os.getcwd()
@@ -800,7 +798,7 @@ class Marley(StellarEvolution):
             iso = Table.read(isoFile[0], format='fits')
             print( 'Done')
     
-            ages_all = iso['col2']
+            ages_all = iso['Age']
 
             # Extract the unique ages
             age_arr = np.unique(ages_all)
