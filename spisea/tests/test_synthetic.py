@@ -421,7 +421,7 @@ def test_ifmr_multiplicity():
 
     startTime = time.time()
     
-    evo = evolution.MISTv1()
+    evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
     ifmr_obj = ifmr.IFMR_Raithel18()
 
@@ -435,8 +435,8 @@ def test_ifmr_multiplicity():
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
     # Now to create the cluster.
-    imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
-    imf_powers = np.array([-1.3, -2.3, -2.3])
+    imf_mass_limits = np.array([0.01, 0.07, 0.5, 1, np.inf])
+    imf_powers = np.array([-0.3, -1.3, -2.3, -2.3])
 
     ##########
     # Start without multiplicity and IFMR
@@ -474,18 +474,87 @@ def test_ifmr_multiplicity():
     assert len(np.where(clust2['phase'] == 102)) > 0
     assert len(np.where(clust1['phase'] == 103)) > 0   # BH
     assert len(np.where(clust2['phase'] == 103)) > 0
+    assert len(np.where(clust1['phase'] == 90)) > 0   # BD
+    assert len(np.where(clust2['phase'] == 90)) > 0
 
-    # Now check that we have companions that are WDs, NSs, and BHs
+    # Now check that we have companions that are WDs, NSs, BHs, and BDs
     assert len(np.where(comps2['phase'] == 101)) > 0
     assert len(np.where(comps2['phase'] == 102)) > 0
     assert len(np.where(comps2['phase'] == 103)) > 0
+    assert len(np.where(comps2['phase'] == 90)) > 0
 
     # Make sure no funky phase designations (due to interpolation effects)
     # slipped through
-    idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 101) & (clust1['phase'] != 9) )
-    idx2 = np.where( (comps2['phase'] > 5) & (comps2['phase'] < 101) & (comps2['phase'] != 9) )
+    idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 90) & (clust1['phase'] != 9) )
+    idx2 = np.where( (comps2['phase'] > 5) & (comps2['phase'] < 90) & (comps2['phase'] != 9) )
     assert len(idx[0]) == 0
 
+    # Make sure BD temperatures are assigned correctly
+    
+    # Ensure no substellar mass compact objects are generated
+    """
+    07/2024: Added more testing criteria for brown dwarf stars to ensure they are labeled appropriately for masses from 0.01 - 0.08 M_sun.
+    """
+    # For cluster objects
+    MIN_MASS = 0.1
+    BD_MIN_MASS = 0.01
+    BD_MAX_MASS = 0.08
+    
+    wd_idx = np.where(clust1['phase'] == 101)
+    ns_idx = np.where(clust1['phase'] == 102)
+    bh_idx = np.where(clust1['phase'] == 103)
+    bd_idx = np.where(clust1['phase'] == 90)
+    
+    assert len(clust1[bd_idx]) != 0
+    assert np.all(clust1['mass'][wd_idx] > MIN_MASS)
+    assert np.all(clust1['mass'][ns_idx] > MIN_MASS)
+    assert np.all(clust1['mass'][bh_idx] > MIN_MASS)
+    assert np.all(clust1['mass'][bd_idx] < MIN_MASS)
+    
+    # For companion objects
+    comp_wd_idx = np.where(comps2['phase'] == 101)
+    comp_ns_idx = np.where(comps2['phase'] == 102)
+    comp_bh_idx = np.where(comps2['phase'] == 103)
+    comp_bd_idx = np.where(comps2['phase'] == 90)
+    assert np.all(comps2['mass'][comp_wd_idx] > MIN_MASS)
+    assert np.all(comps2['mass'][comp_ns_idx] > MIN_MASS)
+    assert np.all(comps2['mass'][comp_bh_idx] > MIN_MASS)
+    assert np.all(comps2['mass'][comp_bd_idx] < MIN_MASS)
+
+    # Ensure brown dwarfs are within 0.01 and 0.08 solar masses
+    assert np.all((clust1['mass'][bd_idx] >= BD_MIN_MASS) & 
+                  (clust1['mass'][bd_idx] <= BD_MAX_MASS))
+    assert np.all((comps2['mass'][comp_bd_idx] >= BD_MIN_MASS) & 
+                  (comps2['mass'][comp_bd_idx] <= BD_MAX_MASS))
+    
+    # Ensure no other objects are in the brown dwarf mass range
+    non_bd_idx = np.where((clust1['phase'] != 90) & 
+                          (clust1['mass'] >= BD_MIN_MASS) & 
+                          (clust1['mass'] <= BD_MAX_MASS))
+    assert len(non_bd_idx[0]) == 0  # asserting no non-brown dwarf objects in BD mass range
+    
+    comp_non_bd_idx = np.where((comps2['phase'] != 90) & 
+                               (comps2['mass'] >= BD_MIN_MASS) & 
+                               (comps2['mass'] <= BD_MAX_MASS))
+    assert len(comp_non_bd_idx[0]) == 0  # asserting no non-brown dwarf companions in BD mass range
+
+    # Ensure BD temperature assignment is working correctly
+    assert np.all(clust1['Teff'][bd_idx] != np.nan)
+    assert np.all(comps2['Teff'][comp_bd_idx] != np.nan)
+
+    #print statements for debugging:
+    print(comps2['mass'][comp_bd_idx])
+    print(np.unique(comps2['phase']))
+    comp_phase_nan = np.where(comps2['phase'] == np.nan)
+    print(comps2[comp_phase_nan])
+    comp_phase_1 = np.where(comps2['phase'] == 1.0)
+    print(comps2[comp_phase_1])
+    comps_bds = np.where((comps2['mass'] >= 0.01) & (comps2['mass'] < 0.08))
+    print(comps2[comps_bds])
+
+    #make sure that bd temps are being assigned
+    print(clust1[bd_idx]['Teff'])
+    print(comps2[comp_bd_idx]['Teff'])
     return
 
 def test_metallicity():
@@ -965,3 +1034,28 @@ def test_Raithel18_IFMR_5():
     assert len(WD_idx) == 2 , "There are not the right number of WDs for the Raithel18 IFMR"
 
     return
+
+# need to test Raithel18 phase designations, as there are anomalies with white dwarves and neutron stars
+def test_Raithel18_phase_designation():
+    """
+    Check that the correct phases are returned for white dwarves and neutron stars when given several test MZAMS
+    """
+    Raithel = ifmr.IFMR_Raithel18()
+
+    #create an MZAMS array to cover all potential phase designations, and the expected phase designations
+    test_MZAMS = np.array([0.06, 0.3, 0.6, 1.0, 3.0, 6.0, 10.0, 14.0, 25.0, 100.0])
+    expected_phases = np.array([99, -1, 101, 101, 101, 101, 102, 102, 103, 103])
+    
+    #generate the output from Raithel IFMR
+    output_array = Raithel.generate_death_mass(test_MZAMS)
+    actual_phases = output_array[1]
+
+    #print the two arrays for direct comparison
+    print(f"Expected phases: {expected_phases}")
+    print(f"Actual phases: {actual_phases}")
+    
+    #confirm that the expected phases match the ones assigned by the model
+    assert np.array_equal(actual_phases, expected_phases), \
+        f"Phase designation mismatch. Expected: {expected_phases}, Got: {actual_phases}"
+
+    print(f"Test passed. Actual types match expected types: {actual_phases}")

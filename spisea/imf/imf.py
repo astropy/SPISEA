@@ -47,7 +47,7 @@ class IMF(object):
         If None, no multiplicity is assumed. Otherwise, use 
         multiplicity object to create multiple star systems.
     """
-    def __init__(self, massLimits=np.array([0.1,150]), multiplicity=None):
+    def __init__(self, massLimits=np.array([0.01,150]), multiplicity=None):
         self._multi_props = multiplicity
         self._mass_limits = massLimits
 
@@ -684,12 +684,28 @@ class Weidner_Kroupa_2004(IMF_broken_powerlaw):
     Mass range is 0.01 M_sun - inf M_sun.
     """
     def __init__(self, multiplicity=None):
-        massLimits = np.array([0.01, 0.08, 0.5, 1, np.inf])
+        massLimits = np.array([0.01, 0.08, 0.5, 1, 120])
         powers = np.array([-0.3, -1.3, -2.3, -2.35])
 
         IMF_broken_powerlaw.__init__(self, massLimits, powers,
                                      multiplicity=multiplicity)
-
+        
+class CombinedWeidnerKroupaKirkpatrick_2024(IMF_broken_powerlaw):
+    """
+    Define combined IMF from several papers considering brown dwarf mass ranges.
+    Mass range: 
+        * 0.01 M_sun - 8 M_sun: Kirkpatrick 2024
+        <https://ui.adsabs.harvard.edu/abs/2024ApJS..271...55K/abstract>`_.
+        * 8 M_sun - 120 M_sun: Weidner & Kroupa 2004
+        <https://ui.adsabs.harvard.edu/abs/2004MNRAS.348..187W/abstract>`_.
+    """
+    def __init__(self, multiplicity=None):
+        massLimits = np.array([0.01, 0.05, 0.22, 0.55, 8, 120])
+        powers = np.array([-0.6, -0.25, -1.3, -2.3, -2.35])
+    
+        IMF_broken_powerlaw.__init__(self, massLimits, powers,
+                                     multiplicity=multiplicity)
+        
 ##################################################
 # 
 # Generic functions -- see if we can move these up.
