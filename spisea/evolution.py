@@ -1495,6 +1495,106 @@ class MISTv1(StellarEvolution):
 #==============================#
 # Merged model classes
 #==============================#
+class MergedPhillipsBaraffePisaEkstromParsec(StellarEvolution):
+    """
+    All merge -- only young and solar metals right now. 
+
+    Parameters
+    ----------
+    rot: boolean, optional
+        If true, then use rotating Ekstrom models. Default is true.
+    """
+    def __init__(self, rot=True):
+        # populate list of model masses (in solar masses)
+        mass_list = [(0.01 + i*0.005) for i in range(181)] # generates masses from 0.01 - 1 M_sun
+        
+        # define metallicity parameters for Geneva models
+        z_list = [0.015]
+        
+        # populate list of isochrone ages (log scale)
+        age_list = np.arange(6.0, 7.4, 0.01).tolist()
+        
+        # specify location of model files
+        model_dir = models_dir + 'merged/phillips_baraffe_pisa_ekstrom_parsec/'
+        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+        self.z_solar = 0.015
+        
+        # Switch to specify rotating/non-rotating models
+        if rot:
+            self.z_file_map = {0.015: 'z015_rot/'}
+        else:
+            self.z_file_map = {0.015: 'z015_norot/'}
+
+        # Define required evo_grid number
+        self.evo_grid_min = 1.0
+        
+    
+    def isochrone(self, age=1.e8, metallicity=0.0):
+        r"""
+        Extract an individual isochrone from the Baraffe-Pisa-Ekstrom-Parsec 
+        collection
+        """
+        # Error check to see if installed evolution model
+        # grid is compatible with code version. Also return
+        # current grid num
+        self.evo_grid_num = check_evo_grid_number(self.evo_grid_min, models_dir)
+        
+        # convert metallicity to mass fraction
+        z_defined = self.z_solar*10.**metallicity
+
+        log_age = math.log10(age)
+        
+        # check age and metallicity are within bounds
+        if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
+            logger.error('Requested age {0} is out of bounds.'.format(log_age))
+            
+        if ((z_defined < np.min(self.z_list)) or
+                (z_defined > np.max(self.z_list))):
+            logger.error('Requested metallicity {0} is out of bounds.'.format(z_defined))
+
+        # Find nearest age in grid to input grid
+        age_idx = np.where(abs(np.array(self.age_list) - log_age) == min(abs(np.array(self.age_list) - log_age)) )[0][0]
+        iso_file = 'iso_{0:.2f}.dat'.format(self.age_list[age_idx])
+        
+        # find closest metallicity value
+        z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)) )[0][0]
+        z_dir = self.z_file_map[self.z_list[z_idx]]
+
+        # generate isochrone file string
+        full_iso_file = self.model_dir + z_dir + iso_file
+
+        # return isochrone data
+        iso = Table.read(full_iso_file, format='ascii')
+        iso.rename_column('col1', 'mass')
+        iso.rename_column('col2', 'logT')
+        iso.rename_column('col3', 'logL')
+        iso.rename_column('col4', 'logg')
+        iso.rename_column('col5', 'logT_WR')
+        iso.rename_column('col6', 'mass_current')
+        iso.rename_column('col7', 'phase')
+        iso.rename_column('col8', 'model_ref')
+
+        # Define "isWR" column based on phase info
+        isWR = Column([False] * len(iso), name='isWR')
+        idx_WR = np.where(iso['logT'] != iso['logT_WR'])
+        isWR[idx_WR] = True
+        iso.add_column(isWR)
+
+        iso.meta['log_age'] = log_age
+        iso.meta['metallicity_in'] = metallicity
+        iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
+        
+        # Assume mass of brown dwarfs does not change over their lifetime
+        #bd_idx = iso['mass'] < 0.08
+        #iso['mass_current'][bd_idx] = iso['mass'][bd_idx]
+
+        # Handling NaN effective temperatures
+        #nan_teff_idx = np.isnan(iso['logT'])
+        #if np.any(nan_teff_idx):
+        #    iso['logT'][nan_teff_idx] = self.estimate_teff(iso['mass'][nan_teff_idx])
+            
+        return iso
+
 class MergedBaraffePisaEkstromParsec(StellarEvolution):
     """
     This is a combination of several different evolution models:
