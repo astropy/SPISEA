@@ -165,7 +165,8 @@ Example: ``'nirc2,Ks'``
 
 `ESO NACO filters <https://www.eso.org/sci/facilities/paranal/instruments/naco/inst/filters.html>`_
 
-Filters: J, H, Ks
+Filters: J, H, Ks, IB_2.00, IB_2.03, IB_2.06, IB_2.24, IB_2.27,
+IB_2.30, IB_2.33, IB_2.36
 
 Example: ``'naco,H'``
 

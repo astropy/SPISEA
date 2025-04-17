@@ -82,6 +82,9 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.1.13 (2024-12-10)
+  * Small bugfix to make iso_dir creation more robust
+    
 2.1.12 (2024-12-02)
   * Added support for Rubin Observatory filters
 
