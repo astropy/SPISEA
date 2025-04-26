@@ -25,8 +25,9 @@
 import numpy as np
 
 class IFMR(object):
-    def __init__(self):
-        pass
+    def __init__(self, seed=None):
+        self.seed = seed
+        self.rng = np.random.default_rng(seed)
 
     def get_Z(self, Fe_H):
         """
@@ -48,11 +49,9 @@ class IFMR(object):
 
         final = np.zeros(len(MZAMS))
         
-        bad_idx = np.where(MZAMS < 0.5)
-        final[bad_idx] = -99
-        
-        good_idx = np.where(MZAMS >= 0.5)
+        good_idx = MZAMS >= 0.5
         final[good_idx] = result[good_idx]
+        final[~good_idx] = -99
 
         return final
         
@@ -730,7 +729,7 @@ class IFMR_Raithel18(IFMR):
         Kiziltan et al. (2010).
         
         """
-        return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
+        return self.rng.normal(loc=1.36, scale=0.09, size=len(MZAMS))
 
     def generate_death_mass(self, mass_array):
         """
@@ -772,7 +771,7 @@ class IFMR_Raithel18(IFMR):
         output_array = np.zeros((2, len(mass_array)))
 
         #Random array to get probabilities for what type of object will form
-        random_array = np.random.randint(1, 1001, size = len(mass_array))
+        random_array = self.rng.intergers(1, 1001, size = len(mass_array))
 
         codes = {'WD': 101, 'NS': 102, 'BH': 103}
         
@@ -893,9 +892,9 @@ class IFMR_N20_Sukhbold(IFMR):
         
         """
         if isinstance(MZAMS, np.ndarray):
-            return np.random.normal(loc=1.36, scale=0.09, size=len(MZAMS))
+            return self.rng.normal(loc=1.36, scale=0.09, size=len(MZAMS))
         else:
-            return np.random.normal(loc=1.36, scale=0.09, size=1)[0]
+            return self.rng.normal(loc=1.36, scale=0.09, size=1)[0]
  
  
     def BH_mass_low(self, MZAMS):
@@ -914,8 +913,7 @@ class IFMR_N20_Sukhbold(IFMR):
         # Solar metallicity (what Sam is using)
         Zsun = 0.014
         
-        zfrac = Z/Zsun
-
+        zfrac = np.atleast_1d(Z/Zsun)
         # super-solar Z gives identical results as solar Z
         above_idx = np.where(zfrac > 1)
         if len(above_idx) > 1:
@@ -938,15 +936,14 @@ class IFMR_N20_Sukhbold(IFMR):
         # Solar metallicity (what Sam is using)
         Zsun = 0.014
         
-        zfrac = Z/Zsun
+        Z = np.atleast_1d(Z)
+        # Convert from [Fe/H] to Z
+        zfrac = Z / Zsun
         
         # super-solar Z gives identical results as solar Z
-        if zfrac > 1:
-            zfrac = 1.0
-
-        if zfrac < 0:
-            raise ValueError('Z must be non-negative')
-
+        zfrac[zfrac > 1] = 1.0
+        zfrac[zfrac < 0] = np.nan
+        
         pBH = 1 - 0.8*zfrac
 
         return pBH
@@ -985,75 +982,83 @@ class IFMR_N20_Sukhbold(IFMR):
         """
         #output_array[0] holds the remnant mass
         #output_array[1] holds the remnant type
+        mass_array = np.atleast_1d(mass_array)
+        metallicity_array = np.atleast_1d(metallicity_array)
+        
         output_array = np.zeros((2, len(mass_array)))
 
         codes = {'WD': 101, 'NS': 102, 'BH': 103}
 
+
         # Array to store the remnant masses
-        rem_mass_array = np.zeros(len(mass_array))
+        # rem_mass_array = np.zeros(len(mass_array))
 
         # Convert from [Fe/H] to Z
         # FIXME: if have Fe/H = nan that makes Z = 0. Is that the behavior we want?
         Z_array = np.zeros((len(metallicity_array)))
-        metal_idx = np.where(metallicity_array != np.nan)
+        metal_idx = ~np.isnan(metallicity_array)
         Z_array[metal_idx] = self.get_Z(metallicity_array[metal_idx])
 
         # Random array to get probabilities for what type of object will form
-        random_array = np.random.randint(1, 101, size = len(mass_array))
+        random_array = self.rng.integers(1, 101, size=len(mass_array))
 
-        id_array0 = np.where((mass_array < 0.5) | (mass_array >= 120))
-        output_array[0][id_array0] = -99 * np.ones(len(id_array0))
-        output_array[1][id_array0]  = -1 * np.ones(len(id_array0))
+        id_array0 = (mass_array < 0.5) | (mass_array >= 120)
+        output_array[0][id_array0] = -99
+        output_array[1][id_array0]  = -1
 
-        id_array1 = np.where((mass_array >= 0.5) & (mass_array < 9))
+        id_array1 = (mass_array >= 0.5) & (mass_array < 9)
         output_array[0][id_array1] = self.Kalirai_mass(mass_array[id_array1])
         output_array[1][id_array1]= codes['WD']
 
-        id_array2 = np.where((mass_array >= 9) & (mass_array < 15))
+        id_array2 = (mass_array >= 9) & (mass_array < 15)
         output_array[0][id_array2] = self.NS_mass(mass_array[id_array2])
         output_array[1][id_array2] = codes['NS']
 
-        id_array3_BH = np.where((mass_array >= 15) & (mass_array < 21.8) & (random_array > 75))
+        id_array3_BH = (mass_array >= 15) & (mass_array < 21.8) & (random_array > 75)
         output_array[0][id_array3_BH] = self.BH_mass_low(mass_array[id_array3_BH])
         output_array[1][id_array3_BH] = codes['BH']
 
-        id_array3_NS = np.where((mass_array >= 15) & (mass_array < 21.8) & (random_array <= 75))
+        id_array3_NS = (mass_array >= 15) & (mass_array < 21.8) & (random_array <= 75)
         output_array[0][id_array3_NS] = self.NS_mass(mass_array[id_array3_NS])
         output_array[1][id_array3_NS] = codes['NS']
 
-        id_array4 = np.where((mass_array >= 21.8) & (mass_array < 25.2))
+        id_array4 = (mass_array >= 21.8) & (mass_array < 25.2)
         output_array[0][id_array4] = self.BH_mass_low(mass_array[id_array4])
         output_array[1][id_array4] = codes['BH']
 
-        id_array5 = np.where((mass_array >= 25.2) & (mass_array < 27.4))
+        id_array5 = (mass_array >= 25.2) & (mass_array < 27.4)
         output_array[0][id_array5] = self.NS_mass(mass_array[id_array5])
         output_array[1][id_array5] = codes['NS']
 
-        id_array6 = np.where((mass_array >= 27.4) & (mass_array < 39.6))
+        id_array6 = (mass_array >= 27.4) & (mass_array < 39.6)
         output_array[0][id_array6] = self.BH_mass_low(mass_array[id_array6])
         output_array[1][id_array6] = codes['BH']
 
-        id_array7 = np.where((mass_array >= 39.6) & (mass_array < 60))
+        id_array7 = (mass_array >= 39.6) & (mass_array < 60)
         output_array[0][id_array7] = self.BH_mass_high(mass_array[id_array7],
                                                        Z_array[id_array7])
         output_array[1][id_array7] = codes['BH']
 
-        id_array8 = np.where((mass_array >= 60) & (mass_array < 120))
-        for i in range(0, len(id_array8[0])):
-            pBH = self.prob_BH_high(Z_array[id_array8][i])
-            if random_array[id_array8][i] > 100*pBH:
-                output_array[0][id_array8[0][i]] = self.BH_mass_high(mass_array[id_array8][i],
-                                                                    Z_array[id_array8][i])
-                output_array[1][id_array8[0][i]] = codes['BH']
-                
-            else:
-                output_array[0][id_array8[0][i]] = self.NS_mass(mass_array[id_array8][i])
-                output_array[1][id_array8[0][i]] = codes['NS']
-        #this is where sam's janky fix for unphysical BH massses goes
-        #any BH with mass less then 3 M_sun is reassigned as a NS
-        #and given a mass from the NS mass dist instead
-        id_array9 = np.where((output_array[1] == codes['BH']) & (output_array[0] < 3.0))
+        BH_or_NS = np.where((mass_array >= 60) & (mass_array < 120))[0]
+        pBH = self.prob_BH_high(Z_array[BH_or_NS])
+        is_BH = random_array[BH_or_NS] > 100 * pBH
+        
+        id_array8 = BH_or_NS[is_BH]
+        id_array9 = BH_or_NS[~is_BH]
+        
+        # Assign BH masses and types for BH-forming indices
+        output_array[0][id_array8] = self.BH_mass_high(mass_array[id_array8], Z_array[id_array8])
+        output_array[1][id_array8] = codes['BH']
+        
+        # Assign NS masses and types for NS-forming indices
         output_array[0][id_array9] = self.NS_mass(mass_array[id_array9])
         output_array[1][id_array9] = codes['NS']
 
-        return(output_array)
+        #this is where sam's janky fix for unphysical BH massses goes
+        #any BH with mass less then 3 M_sun is reassigned as a NS
+        #and given a mass from the NS mass dist instead
+        id_array10 = (output_array[1] == codes['BH']) & (output_array[0] < 3.0)
+        output_array[0][id_array10] = self.NS_mass(mass_array[id_array10])
+        output_array[1][id_array10] = codes['NS']
+
+        return output_array
