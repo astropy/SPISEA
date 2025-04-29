@@ -52,7 +52,7 @@ def get_red_law(str):
                      'broken_pl': RedLawBrokenPowerLaw,
                      'RL85': RedLawRiekeLebofsky,
                      'C89': RedLawCardelli,
-                     'I05': RedLawIndebetouw05
+                     'I05': RedLawIndebetouw05,
                      'RZ07': RedLawRomanZuniga07,
                      'F09': RedLawFitzpatrick09,
                      'N09':RedLawNishiyama09,
