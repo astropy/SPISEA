@@ -48,22 +48,23 @@ def get_red_law(str):
                 params = params + (float(tmp[ii+1]),)
 
     # Define dictionary connecting redlaw names to the redlaw classes
-    name_dict = {'N09':RedLawNishiyama09,
-                     'C89': RedLawCardelli,
-                     'RZ07': RedLawRomanZuniga07,
+    name_dict = {'pl': RedLawPowerLaw,
+                     'broken_pl': RedLawBrokenPowerLaw,
                      'RL85': RedLawRiekeLebofsky,
+                     'C89': RedLawCardelli,
+                     'I05': RedLawIndebetouw05
+                     'RZ07': RedLawRomanZuniga07,
+                     'F09': RedLawFitzpatrick09,
+                     'N09':RedLawNishiyama09,
+                     'S10': RedLawSchoedel10,
+                     'F11': RedLawFritz11,
                      'D16': RedLawDamineli16,
                      'DM16': RedLawDeMarchi16,
-                     'F09': RedLawFitzpatrick09,
                      'S16': RedLawSchlafly16,
-                     'pl': RedLawPowerLaw,
-                     'broken_pl': RedLawBrokenPowerLaw,
-                     'F11': RedLawFritz11,
                      'H18b': RedLawHosek18b,
                      'NL18': RedLawNoguerasLara18,
-                     'NL20': RedLawNoguerasLara20,
-                     'S10': RedLawSchoedel10,
-                     'I05': RedLawIndebetouw05}
+                     'NL20': RedLawNoguerasLara20
+                    }
 
     # Make reddening law object, including params if necessary.
     # This is not great coding, but I really strugged to generalize this...
