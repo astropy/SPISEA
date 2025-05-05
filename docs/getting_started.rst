@@ -96,15 +96,15 @@ STScI CDBS conventions and should be placed in the ``cdbs/grid`` directory.
 You will need to download 2 files:
 
 * `spisea_models.tar.gz
-  <http://astro.berkeley.edu/~jlu/spisea/spisea_models.tar.gz>`_ (3.4 GB; 18 GB unzipped)
+  <https://w.astro.berkeley.edu/~jlu/spisea/spisea_models.tar.gz>`_ (3.4 GB; 18 GB unzipped)
 
-* `spisea_cdbs.tar.gz <http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs.tar.gz>`_  (142 MB; 248 MB unzipped)
+* `spisea_cdbs.tar.gz <https://w.astro.berkeley.edu/~jlu/spisea/spisea_cdbs.tar.gz>`_  (142 MB; 248 MB unzipped)
 
 You may **optionally** download a third file, which contains
 higher-resolution stellar atmospheres. Note that this file is quite
 large, and is not necessary for most SPISEA use cases:
 
-* `spisea_cdbs_highres.tar.gz <http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs_highres.tar.gz>`_ (50 GB; 74 GB unzipped)
+* `spisea_cdbs_highres.tar.gz <https://w.astro.berkeley.edu/~jlu/spisea/spisea_cdbs_highres.tar.gz>`_ (50 GB; 74 GB unzipped)
 
 SPISEA uses the low-resolution atmospheres (R = 250) in
 ``spisea_cdbs.tar.gz`` by default, as
