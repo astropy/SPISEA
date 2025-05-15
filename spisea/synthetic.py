@@ -146,7 +146,7 @@ class ResolvedCluster(Cluster):
     vebose: boolean
         True for verbose output.
     """
-    def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=True,
+    def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=False,
                      seed=None):
         Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
                              seed=seed)
@@ -587,7 +587,7 @@ class ResolvedCluster(Cluster):
             idx = (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0)
 
         if self.verbose and sum(idx) != N_systems:
-            print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
+            print( 'Found {0:d} stars out of mass range'.format(N_systems - sum(idx)))
 
         star_systems = star_systems[idx]
         N_systems = len(star_systems)
@@ -839,10 +839,11 @@ class Isochrone(object):
                  wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1,
                  wave_range=[3000, 52000], min_mass=None, max_mass=None,
-                 rebin=True):
+                 rebin=True, verbose=False):
 
-
-        t1 = time.time()
+        self.verbose = verbose
+        if self.verbose:
+            t1 = time.time()
 
         c = constants
 
@@ -939,9 +940,10 @@ class Isochrone(object):
         tab.meta['WAVEMAX'] = wave_range[1]
 
         self.points = tab
-
-        t2 = time.time()
-        print( 'Isochrone generation took {0:f} s.'.format(t2-t1))
+        
+        if self.verbose:
+            t2 = time.time()
+            print( 'Isochrone generation took {0:f} s.'.format(t2-t1))
         return
 
     def plot_HR_diagram(self, savefile=None):
@@ -1079,8 +1081,8 @@ class IsochronePhot(Isochrone):
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
-                          'ubv,R', 'ubv,I']):
-
+                          'ubv,R', 'ubv,I'],
+                verbose=False):
         self.metallicity = metallicity
 
         # Make the iso_dir, if it doesn't already exist
@@ -1093,10 +1095,10 @@ class IsochronePhot(Isochrone):
         # properly
         if metallicity == 0.0:
             save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_p00.fits'
-            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5))
+            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(round(distance)).zfill(5))
 
             save_file_legacy = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
-            self.save_file_legacy = save_file_legacy.format(iso_dir, logAge, AKs, str(distance).zfill(5))
+            self.save_file_legacy = save_file_legacy.format(iso_dir, logAge, AKs, str(round(distance)).zfill(5))
         else:
             # Set metallicity flag
             if metallicity < 0:
@@ -1106,34 +1108,42 @@ class IsochronePhot(Isochrone):
             metal_flag = int(abs(metallicity)*10)
 
             save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_{4}{5:2s}.fits'
-            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
-            self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
-
+            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(round(distance)).zfill(5), metal_pre, str(metal_flag).zfill(2))
+            self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs, str(round(distance)).zfill(5), metal_pre, str(metal_flag).zfill(2))
+        
         # Expected filters
         self.filters = filters
 
         # Recalculate isochrone if save_file doesn't exist or recomp == True
-        file_exists = self.check_save_file(evo_model, atm_func, red_law)
+        file_exists = self.check_save_file(evo_model, atm_func, red_law, verbose=verbose)
 
         if (not file_exists) | (recomp==True):
             self.recalc = True
-            Isochrone.__init__(self, logAge, AKs, distance,
-                               metallicity=metallicity,
-                               evo_model=evo_model, atm_func=atm_func,
-                               wd_atm_func=wd_atm_func,
-                               wave_range=wave_range,
-                               red_law=red_law, mass_sampling=mass_sampling,
-                               min_mass=min_mass, max_mass=max_mass, rebin=rebin)
-            self.verbose = True
+            if verbose:
+                print(f'Generating new isochrone of log(t)={logAge:.2f}, AKs={AKs:.2f}, d={distance} pc')
+            # user_input = input(f"Isochrone file {self.save_file} does not exist or needs to be regenerated. Do you want to proceed? (yes/no): ").strip().lower()
+            # if user_input != 'yes':
+            #     print("Operation canceled by the user.")
+            #     return
+            super().__init__(logAge, AKs, distance,
+                             metallicity=metallicity,
+                             evo_model=evo_model, atm_func=atm_func,
+                             wd_atm_func=wd_atm_func,
+                             wave_range=wave_range,
+                             red_law=red_law, mass_sampling=mass_sampling,
+                             min_mass=min_mass, max_mass=max_mass, rebin=rebin, verbose=verbose)
 
             # Make photometry
             self.make_photometry(rebin=rebin, vega=vega)
+            if self.verbose:
+                print(f'Isochrone saved to {self.save_file}')
         else:
             self.recalc = False
             try:
                 self.points = Table.read(self.save_file)
             except:
                 self.points = Table.read(self.save_file_legacy)
+            # print(f'Isochrone loaded from existing file: {self.save_file}')
             # Add some error checking.
 
         return
@@ -1145,13 +1155,12 @@ class IsochronePhot(Isochrone):
         photometry.
 
         """
-        startTime = time.time()
+        if self.verbose:
+            startTime = time.time()
 
-        meta = self.points.meta
-
-        print( 'Making photometry for isochrone: log(t) = %.2f  AKs = %.2f  dist = %d' % \
-            (meta['LOGAGE'], meta['AKS'], meta['DISTANCE']))
-        print( '     Starting at: ', datetime.datetime.now(), '  Usually takes ~5 minutes')
+        # print('Making photometry for isochrone: log(t) = %.2f  AKs = %.2f  dist = %d' % \
+        #     (meta['LOGAGE'], meta['AKS'], meta['DISTANCE']))
+        # print( 'Starting at: ', datetime.datetime.now(), '  Usually takes ~5 minutes')
 
         npoints = len(self.points)
         verbose_fmt = 'M = {0:7.3f} Msun  T = {1:5.0f} K  m_{2:s} = {3:4.2f}'
@@ -1159,8 +1168,9 @@ class IsochronePhot(Isochrone):
         # Loop through the filters, get filter info, make photometry for
         # all stars in this filter.
         for ii in self.filters:
-            prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
-            print( prt_fmt.format(ii, time.time() - startTime))
+            if self.verbose:
+                prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
+                print( prt_fmt.format(ii, time.time() - startTime))
 
             filt = get_filter_info(ii, rebin=rebin, vega=vega)
             filt_name = get_filter_col_name(ii)
@@ -1171,19 +1181,21 @@ class IsochronePhot(Isochrone):
             self.points.add_column(mag_col)
 
             # Loop through each star in the isochrone and do the filter integration
-            print('Starting synthetic photometry')
+            if self.verbose:
+                print('Starting synthetic photometry')
             for ss in range(npoints):
                 star = self.spec_list[ss]  # These are already extincted, observed spectra.
                 star_mag = mag_in_filter(star, filt)
 
                 self.points[col_name][ss] = star_mag
 
-                if (self.verbose and (ss % 100) == 0):
+                if self.verbose and (ss % 100) == 0:
                     print( verbose_fmt.format(self.points['mass'][ss], self.points['Teff'][ss],
                                              filt_name, star_mag))
 
-        endTime = time.time()
-        print( '      Time taken: {0:.2f} seconds'.format(endTime - startTime))
+        if self.verbose:
+            endTime = time.time()
+            print( 'Time taken: {0:.2f} seconds'.format(endTime - startTime))
 
         if self.save_file != None:
             with warnings.catch_warnings():
@@ -1192,7 +1204,7 @@ class IsochronePhot(Isochrone):
 
         return
 
-    def check_save_file(self, evo_model, atm_func, red_law):
+    def check_save_file(self, evo_model, atm_func, red_law, verbose=False):
         """
         Check to see if save_file exists, as saved by the save_file
         and save_file_legacy objects. If the filename exists, check the
@@ -1214,6 +1226,18 @@ class IsochronePhot(Isochrone):
                 (tmp.meta['ATMFUNC'] == atm_func.__name__) &
                  (tmp.meta['REDLAW'] == red_law.name) ):
                 out_bool = True
+            else:
+                if verbose:
+                    print(f'Isochrone file {self.save_file} exists, but meta-data does not match.')
+                    if tmp.meta['EVOMODEL'] != type(evo_model).__name__:
+                        print(f'  EVOMODEL: {tmp.meta["EVOMODEL"]} != {type(evo_model).__name__}')
+                    if tmp.meta['ATMFUNC'] != atm_func.__name__:
+                        print(f'  ATMFUNC: {tmp.meta["ATMFUNC"]} != {atm_func.__name__}')
+                    if tmp.meta['REDLAW'] != red_law.name:
+                        print(f'  REDLAW: {tmp.meta["REDLAW"]} != {red_law.name}')
+        else:
+            if verbose:
+                print(f'Isochrone file {self.save_file} or {self.save_file_legacy} does not exist, generating new one.')
 
         return out_bool
 
