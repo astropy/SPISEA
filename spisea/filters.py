@@ -17,7 +17,7 @@ def get_nirc2_filt(name):
     try:
         t = Table.read('{0}/nirc2/{1}.dat'.format(filters_dir, name), format='ascii')
     except:
-        #pdb.set_trace()
+        pdb.set_trace()
         raise ValueError('Could not find NIRC2 filter file {0}/nirc2/{1}.dat'.format(filters_dir, name))
 
     wavelength = t[t.keys()[0]]
