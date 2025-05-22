@@ -35,6 +35,7 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     # Filter by metallicity. Will chose the closest metallicity to desired input
     metal_list = np.unique(np.array(z_arr))
     metal_idx = np.argmin(np.abs(metal_list - metallicity))
+    metallicity_new = metal_list[metal_idx]
     
     z_filt = np.where(z_arr == metal_list[metal_idx])
     teff_arr = teff_arr[z_filt]
@@ -85,8 +86,12 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     if gravity_new != gravity:
         logg_msg = 'Changing to logg={0:4.2f} for T={1:6.0f} logg={2:4.2f}'
         print( logg_msg.format(gravity_new, temperature, gravity))
+
+    if metallicity_new != metallicity:
+        logg_msg = 'Changing to met={0:4.2f} for met={1:4.2f} T={2:6.0f} logg={3:4.2f}'
+        print( logg_msg.format(metallicity_new, metallicity, temperature, gravity))
     
-    return (temperature_new, gravity_new)
+    return (temperature_new, gravity_new, metallicity_new)
 
 def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=False):
     """
@@ -117,7 +122,7 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=Fal
         sp = pysynphot.Icat('k93models', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
-        (temperature, gravity) = get_atmosphere_bounds('k93models',
+        (temperature, gravity, metallicity) = get_atmosphere_bounds('k93models',
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
@@ -168,7 +173,7 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=F
         sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
-        (temperature, gravity) = get_atmosphere_bounds('ck04models',
+        (temperature, gravity, metallicity) = get_atmosphere_bounds('ck04models',
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
@@ -195,7 +200,7 @@ def get_nextgen_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=Fal
         sp = pysynphot.Icat('nextgen', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
-        (temperature, gravity) = get_atmosphere_bounds('nextgen',
+        (temperature, gravity, metallicity) = get_atmosphere_bounds('nextgen',
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
@@ -257,7 +262,7 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
         sp = pysynphot.Icat('phoenix', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
-        (temperature, gravity) = get_atmosphere_bounds('phoenix',
+        (temperature, gravity, metallicity) = get_atmosphere_bounds('phoenix',
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
@@ -461,7 +466,7 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
         sp = pysynphot.Icat(atm_model_name, temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
-        (temperature, gravity) = get_atmosphere_bounds(atm_model_name,
+        (temperature, gravity, metallicity) = get_atmosphere_bounds(atm_model_name,
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
@@ -517,7 +522,7 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
         sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
-        (temperature, gravity) = get_atmosphere_bounds(atm_name,
+        (temperature, gravity, metallicity) = get_atmosphere_bounds(atm_name,
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
@@ -617,7 +622,7 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
         sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
-        (temperature, gravity) = get_atmosphere_bounds(atm_name,
+        (temperature, gravity, metallicity) = get_atmosphere_bounds(atm_name,
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
@@ -678,7 +683,7 @@ def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
         sp = pysynphot.Icat('merged_atlas_phoenix', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
-        (temperature, gravity) = get_atmosphere_bounds('merged_atlas_phoenix',
+        (temperature, gravity, metallicity) = get_atmosphere_bounds('merged_atlas_phoenix',
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
@@ -706,7 +711,7 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
         sp = pysynphot.Icat('merged_BTSettl_phoenix', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
-        (temperature, gravity) = get_atmosphere_bounds('merged_BTSettl_phoenix',
+        (temperature, gravity, metallicity) = get_atmosphere_bounds('merged_BTSettl_phoenix',
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
