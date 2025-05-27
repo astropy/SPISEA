@@ -81,11 +81,11 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     # Print out changes, if any
     if temperature_new != temperature:
         teff_msg = 'Changing to T={0:6.0f} for met={1:4.2f} T={1:6.0f} logg={2:4.2f}'
-        print( teff_msg.format(temperature_new, temperature, gravity))
+        print( teff_msg.format(temperature_new, metallicity, temperature, gravity))
     
     if gravity_new != gravity:
         logg_msg = 'Changing to logg={0:4.2f} for met={1:4.2f} T={1:6.0f} logg={2:4.2f}'
-        print( logg_msg.format(gravity_new, temperature, gravity))
+        print( logg_msg.format(gravity_new, metallicity, temperature, gravity))
 
     if metallicity_new != metallicity:
         logg_msg = 'Changing to met={0:4.2f} for met={1:4.2f} T={2:6.0f} logg={3:4.2f}'
