@@ -153,8 +153,28 @@ def test_IsochronePhot(plot=False):
                                 mass_sampling=mass_sampling, iso_dir=iso_dir)
 
     assert iso_new.recalc == False
+    
+    # Check 2: Confirm that adding a new column to an existing isochrone works properly.
+    #    Does the new filter get added to the isochrone? And the old ones still there?
+    #    Does the computed data for the new filter match the same result if you fully regenerate the isochrone?
+    iso_new_addfilt = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo_model,
+                                atm_func=atm_func, red_law=redlaw,
+                                filters=filt_list+['2mass,Ks'],
+                                mass_sampling=mass_sampling, iso_dir=iso_dir)
 
-    # Check 2: If we change evo model, atmo model, or redlaw,
+    assert iso_new_addfilt.recalc == False
+    assert 'm_2mass_Ks' in iso_new_addfilt.points.colnames
+    assert 'm_nirc2_J' in iso_new_addfilt.points.colnames
+    
+    iso_new_3filt = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo_model,
+                                atm_func=atm_func, red_law=redlaw,
+                                filters=filt_list+['2mass,Ks'],
+                                mass_sampling=mass_sampling, iso_dir=iso_dir,
+                                recomp=True)
+    np.testing.assert_almost_equal(iso_new_addfilt.points['m_2mass_Ks'], iso_new_3filt.points['m_2mass_Ks'])
+    assert iso_new_3filt.recalc==True
+
+    # Check 3: If we change evo model, atmo model, or redlaw,
     # does IsochronePhot regenerate the isochrone and overwrite the existing one?
     evo2 = evolution.MergedBaraffePisaEkstromParsec()
     mass_sampling=20
@@ -181,7 +201,6 @@ def test_IsochronePhot(plot=False):
                                 mass_sampling=mass_sampling, iso_dir=iso_dir)
 
     assert iso_new.recalc == True
-
 
     return
 
