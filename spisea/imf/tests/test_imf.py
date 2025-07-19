@@ -9,9 +9,9 @@ def test_generate_cluster():
     # Make multiplicity object
     imf_multi = multiplicity.MultiplicityUnresolved()
 
-    # Make IMF object; we'll use a broken power law with the parameters from Kroupa+01
-    massLimits = np.array([0.08, 0.5, 1, 120]) # Define boundaries of each mass segement
-    powers = np.array([-1.3, -2.3, -2.3]) # Power law slope associated with each mass segment
+    # Make IMF object; we'll use a broken power law with the parameters from Salpeter_Kirkpatrick+24 (updated with brown dwarf addition
+    massLimits = np.array([0.01, 0.05, 0.22, 0.55, 8, 120]) # Define boundaries of each mass segement
+    powers = np.array([-0.6, -0.25, -1.3, -2.3, -2.35]) # Power law slope associated with each mass segment
     my_imf = imf.IMF_broken_powerlaw(massLimits, powers, imf_multi)
 
     # Define total cluster mass

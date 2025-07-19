@@ -690,14 +690,15 @@ class Weidner_Kroupa_2004(IMF_broken_powerlaw):
         IMF_broken_powerlaw.__init__(self, massLimits, powers,
                                      multiplicity=multiplicity)
         
-class CombinedWeidnerKroupaKirkpatrick_2024(IMF_broken_powerlaw):
+class Salpeter_Kirkpatrick_2024(IMF_broken_powerlaw):
     """
-    Define combined IMF from several papers considering brown dwarf mass ranges.
+    Define combined IMF from Kirkpatrick (2024) and Salpeter (1955) to allow
+    inclusion of the brown dwarf mass range.
     Mass range: 
         * 0.01 M_sun - 8 M_sun: Kirkpatrick 2024
         <https://ui.adsabs.harvard.edu/abs/2024ApJS..271...55K/abstract>`_.
-        * 8 M_sun - 120 M_sun: Weidner & Kroupa 2004
-        <https://ui.adsabs.harvard.edu/abs/2004MNRAS.348..187W/abstract>`_.
+        * 8 M_sun - 120 M_sun: Salpeter 1955
+        <https://ui.adsabs.harvard.edu/abs/1955ApJ...121..161S/abstract>`_.
     """
     def __init__(self, multiplicity=None):
         massLimits = np.array([0.01, 0.05, 0.22, 0.55, 8, 120])
