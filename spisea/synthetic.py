@@ -479,7 +479,7 @@ class ResolvedCluster(Cluster):
             # Adjust the properties as needed
             star_systems['mass_current'][lm_idx] = star_systems['mass'][lm_idx]
             star_systems['phase'][lm_idx] = 98
-            pdb.set_trace()
+            #pdb.set_trace()
 
         star_systems = star_systems[idx]
         N_systems = len(star_systems)

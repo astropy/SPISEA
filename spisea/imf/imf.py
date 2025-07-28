@@ -97,6 +97,7 @@ class IMF(object):
             List of 
         
         """
+        initial_mass_limit = self._mass_limits[-1]
 
         if (self._mass_limits[-1] > totalMass):
             log.info('sample_imf: Setting maximum allowed mass to %d' %
@@ -193,6 +194,8 @@ class IMF(object):
         else:
             isMultiple = np.zeros(len(masses), dtype=bool)
             systemMasses = masses
+
+        self._mass_limits[-1] = initial_mass_limit
 
         return (masses, isMultiple, compMasses, systemMasses)
         
