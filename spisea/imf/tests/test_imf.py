@@ -169,7 +169,6 @@ def test_xi2():
     plt.clf()
     plt.loglog(masses[sdx], pdf_sorted, 'k.')
     plt.axis('equal')
-    # pdb.set_trace()
 
     return
 

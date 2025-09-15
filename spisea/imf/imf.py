@@ -213,6 +213,10 @@ class IMF(object):
             n_comp_arr[too_many] = self._multi_props.CSF_max
         primary = newMasses[idx]
 
+        # limiting BD companions to 1 (mass-based)
+        bd_mask = primary <= 0.08
+        n_comp_arr[bd_mask & (n_comp_arr > 1)] = 1
+
         # We will deal with each number of multiple system independently. This is
         # so we can put in uniform arrays in _multi_props.random_q.
         num = np.unique(n_comp_arr)

@@ -216,8 +216,11 @@ def test_resolvedmult():
 
     #checks for brown dwarf specific features
     bd_idx = np.where(clust_Mult.star_systems['mass'] < 0.08)[0]
+
+    #check there is only one possible companion per BD
+    assert all(clust_Mult.star_systems['N_companions'][bd_idx] <= 1), \
+    "Brown dwarf primaries have >1 companion."
     
-    # Map primaries → companions
     comp_rows = []
     start = 0
     for ii, N in enumerate(clust_Mult.star_systems['N_companions']):
@@ -231,7 +234,7 @@ def test_resolvedmult():
         mean_log_a = np.mean(bd_companions['log_a'])
         std_log_a = np.std(bd_companions['log_a'])
     
-        # Expect lognormal centered near log10(2.9 AU), width ~0.21
+        #expect lognormal centered near log10(2.9 AU), width ~0.21
         assert abs(mean_log_a - np.log10(2.9)) < 0.25, \
             f"BD mean log(a) off: {mean_log_a:.2f}"
         assert abs(std_log_a - 0.21) < 0.15, \
