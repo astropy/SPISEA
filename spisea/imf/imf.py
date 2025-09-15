@@ -199,7 +199,10 @@ class IMF(object):
     def calc_multi(self, newMasses, compMasses, newSystemMasses, newIsMultiple, CSF, MF):
         """
         Helper function to calculate multiples more efficiently.
-        We will use array operations as much as possible
+        We will use array operations as much as possible.
+        Uses Fontanive+18 parameters for brown dwarf masses 
+        (M <= 0.08 M_sun) while keeping default parameters for
+        all other stellar primaries.
         """
         # Identify multiple systems, calculate number of companions for
         # each 
@@ -215,13 +218,27 @@ class IMF(object):
         num = np.unique(n_comp_arr)
         for ii in num:
             tmp = np.where(n_comp_arr == ii)[0]
+            prim_subset = primary[tmp]
+
+            # define masks based on stellar or substellar range
+            bd_mask = prim_subset <= 0.08
+            star_mask = ~bd_mask
             
             if ii == 1:
                 # Single companion case
-                q_values = self._multi_props.random_q(np.random.rand(len(tmp)))
+                q_values = np.empty(len(tmp))
+
+                if np.any(star_mask):
+                    rand_vals = np.random.rand(star_mask.sum())
+                    q_values[star_mask] = self._multi_props.random_q(rand_vals)
+
+                if np.any(bd_mask):
+                    rand_vals = np.random.rand(bd_mask.sum())
+                    b = 1.0 + 6.1   #gamma from Fontanive+18
+                    q_values[bd_mask] = (rand_vals * (1.0 - self._multi_props.q_min ** b) + self._multi_props.q_min ** b) ** (1.0 / b)
                 
                 # Calculate mass of companion
-                m_comp = q_values * primary[tmp]
+                m_comp = q_values * prim_subset
 
                 # Only keep companions that are more than the minimum mass. Update
                 # compMasses, newSystemMasses, and newIsMultiple appropriately 
@@ -233,22 +250,30 @@ class IMF(object):
                 bad = np.where(m_comp < self._mass_limits[0])[0]
                 newIsMultiple[idx[tmp[bad]]] = False                
             else:
-                # Multple companion case
-                q_values = self._multi_props.random_q(np.random.rand(len(tmp), ii))
-
-                # Calculate masses of companions
-                m_comp = np.multiply(q_values, np.transpose([primary[tmp]]))
-
-                # Update compMasses, newSystemMasses, and newIsMultiple appropriately
+                # Multi-companion case
                 for jj in range(len(tmp)):
-                    m_comp_tmp = m_comp[jj]
+                    prim = prim_subset[jj]
+            
+                    # Finding q values of stellar and substellar primaries
+                    if prim <= 0.08:
+                        # BD case (Fontanive+18)
+                        b = 1.0 + 6.1
+                        rand_vals = np.random.rand(ii)
+                        q_values = (rand_vals * (1.0 - self._multi_props.q_min ** b) +
+                                    self._multi_props.q_min ** b) ** (1.0 / b)
+                    else:
+                        # Stellar case (Duchene & Kraus)
+                        q_values = self._multi_props.random_q(np.random.rand(ii))
+            
+                    # Calculate masses of companions & update compMasses, newSystemMasses, and newIsMultiple appropriately
+                    m_comp_tmp = q_values * prim
                     compMasses[idx[tmp[jj]]] = m_comp_tmp[m_comp_tmp >= self._mass_limits[0]]
                     newSystemMasses[idx[tmp[jj]]] += compMasses[idx[tmp[jj]]].sum()
-
-                    # Double check for the case when we drop all companions.
-                    # This happens a lot near the minimum allowed mass.
+            
+                    # Drop system if no valid companions remain
                     if len(compMasses[idx[tmp[jj]]]) == 0:
                         newIsMultiple[idx[tmp[jj]]] = False
+                        
 
         return compMasses, newSystemMasses, newIsMultiple
         

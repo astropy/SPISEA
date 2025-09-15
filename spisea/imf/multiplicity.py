@@ -41,6 +41,11 @@ class MultiplicityUnresolved(object):
             
                 MF(mass) = MF_amp * (mass ** MF_power)
 
+    However, in the brown dwarf mass regime, it is currently recognized 
+    that only binaries are possible, and the MF decreases dissimilarly 
+    to higher masses (> 0.08 solar masses). The values for this range 
+    are given by Aberasturi et al. (2014) and Fontanive et al. (2023).
+
     **Companion Star Fraction** -- the expected number of companions in
     a multiple system. The companion star fraction (CSF) also 
     changes with mass and this dependency can be described as
@@ -51,6 +56,9 @@ class MultiplicityUnresolved(object):
     The companion star fraction is clipped to some maximum
     value, CSF_max. The actual number of companions is drawn 
     from a Poisson distribution with an expectation value of CSF.
+
+    In the brown dwarf regime we impose an assumption that only
+    binary systems are possible due to current literature trends.
 
     **Mass Ratio (Q)** -- The ratio between the companion star 
     mass and primary star mass, Q = (m_comp / m_prim ) has
@@ -116,6 +124,9 @@ class MultiplicityUnresolved(object):
         Given a star's mass, determine the probability that the star is in a
         multiple system (multiplicity fraction = MF).
 
+        Modified to allow binary fraction to decrease in brown dwarf regime.
+        Supported by Aberasturi et al. (2014) and Fontanive et al. (2018).
+
         Parameters
         ----------
         mass : float or numpy array
@@ -133,6 +144,13 @@ class MultiplicityUnresolved(object):
         if np.isscalar(mf):
             if mf > 1:
                 mf = 1
+            # physically override mf for brown dwarfs
+            if (mass <= 0.08) & (mass > 0.06):
+                mf = 0.16
+            if (mass <= 0.06) & (mass > 0.02):
+                mf = 0.08
+            if (mass < 0.02):
+                mf = 0
         else:
             mf[mf > 1] = 1
 
@@ -141,7 +159,8 @@ class MultiplicityUnresolved(object):
     def companion_star_fraction(self, mass):
         """
         Given a star's mass, determine the average number of
-        companion stars (companion star fraction = CSF).
+        companion stars (companion star fraction = CSF). For 
+        brown dwarfs we impose a hard limit of one companion.
 
         Parameters
         ----------
@@ -160,6 +179,8 @@ class MultiplicityUnresolved(object):
         if np.isscalar(csf):
             if csf > self.CSF_max:
                 csf = self.CSF_max
+            if (mass <= 0.08):
+                csf = self.multiplicity_fraction(mass)
         else:
             csf[csf > self.CSF_max] = self.CSF_max
 
@@ -210,6 +231,8 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
     """
     Sub-class of MultiplicityUnresolved that adds semimajor axis and eccentricity information 
     for multiple objects from distributions described in Duchene and Kraus 2013
+
+    For brown dwarf regime, mean separation and std are given by Fontanive et al. (2018).
     
     Parameters
     --------------
@@ -246,6 +269,8 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         Generate the semimajor axis for a given mass. The mean and standard deviation of a given mass are determined 
         by fitting the data from fitting the semimajor axis data as a function of mass in table 1 of Duchene and Kraus 2013.
         Then a random semimajor axis is drawn from a log normal distribution with that mean and standard deviation.
+
+        The brown dwarf range is described by mean seperation and std values given in Fontanive et al. (2018).
         
         Parameters
         ----------
@@ -265,6 +290,9 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
             log_a_std = log_a_std_func(np.log10(2.9)) #sigma_log(a)
         if log_a_std < 0.1:
             log_a_std = 0.1
+        if mass <= 0.08:
+            log_a_mean = np.log10(2.9)
+            log_a_std = 0.21
             
         log_semimajoraxis = np.random.normal(log_a_mean, log_a_std)
         while 10**log_semimajoraxis > 2000 or log_semimajoraxis < -2: #AU
