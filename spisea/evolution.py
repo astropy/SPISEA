@@ -85,6 +85,7 @@ class StellarEvolution(object):
         self.z_list = z_list
         self.mass_list = mass_list
         self.age_list = age_list
+        self.model_version_name = "None"
       
         return
     
@@ -93,6 +94,7 @@ class Geneva(StellarEvolution):
         r"""
         Define intrinsic properties for Geneva stellar models.
         """
+        self.model_version_name = "Geneva"
         # populate list of model masses (in solar masses)
         mass_list = [(0.1 + i*0.005) for i in range(181)]
         
@@ -171,6 +173,10 @@ class Ekstrom12(StellarEvolution):
         If true, then use rotating Ekstrom models. Default is true.
     """
     def __init__(self, rot=True):
+        if rot:
+            self.model_version_name = "Ekstrom12-rot"
+        else:
+            self.model_version_name = "Ekstrom12-norot"
         # define metallicity parameters for Ekstrom+12 models
         self.z_list = [0.014]
         
@@ -401,6 +407,7 @@ class Parsec(StellarEvolution):
         models.
         """
         # populate list of model masses (in solar masses)
+        self.model_version_name = "Parsec1.2s"
         #mass_list = [(0.1 + i*0.005) for i in range(181)]
         
         # define metallicity parameters for Parsec models
@@ -551,6 +558,7 @@ class Pisa(StellarEvolution):
         Define intrinsic properties for the Pisa (Tognelli+11) stellar
         models.
         """
+        self.model_version_name = "Pisa"
         # define metallicity parameters for Pisa models
         self.z_list = [0.015]
         
@@ -710,6 +718,7 @@ class Baraffe15(StellarEvolution):
     Downloaded from `BHAC15 site <http://perso.ens-lyon.fr/isabelle.baraffe/BHAC15dir/BHAC15_tracks>`_.
     """
     def __init__(self):
+        self.model_version_name = "Baraffe15"
         # define metallicity parameters for Baraffe models
         self.z_list = [0.015]
         
@@ -1009,7 +1018,7 @@ class MISTv1(StellarEvolution):
         was downloaded on 8/2018 (solar metallicity)
         and 4/2019 (other metallicities). Default is 1.2.
     """
-    def __init__(self, version=1.2):
+    def __init__(self, version=1.2, synthpop_extension=False):
         # define metallicity parameters for MIST models
         self.z_list = [0.0000014,   # [Fe/H] = -4.00
                        0.0000045,   # [Fe/H] = -3.50
@@ -1032,15 +1041,25 @@ class MISTv1(StellarEvolution):
 
         # Set version directory
         self.version = version
-        if self.version == 1.0:
+        self.synthpop_extension = synthpop_extension
+        if (self.version == 1.0) and (not synthpop_extension):
+            self.model_version_name = 'MISTv1.0'
             version_dir = 'v1.0/'
+        if (self.version == 1.0) and synthpop_extension:
+            raise ValueError('Synthpop isochrone extension not supported for MISTv1.0 isochrones')
         elif self.version == 1.2:
+            self.model_version_name = 'MISTv1.2'
             version_dir = 'v1.2/'
         else:
             raise ValueError('Version {0} not supported for MIST isochrones'.format(version))
         
         # Specify location of model files
         self.model_dir = models_dir+'MISTv1/' + version_dir
+        if self.synthpop_extension:
+            self.model_version_name = self.model_version_name + '-synthpop'
+            self.model_extension_dir = models_dir+'MISTv1/' + version_dir[:-1] + '-synthpop/'
+        else:
+            self.model_extension_dir = None
 
         # Specifying metallicity
         self.z_solar = 0.0142
@@ -1096,10 +1115,18 @@ class MISTv1(StellarEvolution):
             
         # generate isochrone file string
         full_iso_file = self.model_dir + 'iso/' + z_dir + iso_file
+        if self.synthpop_extension:
+            addl_iso_file = self.model_extension_dir + 'iso/' + z_dir + iso_file
         
         # return isochrone data. Column locations depend on
         # version
         iso = Table.read(full_iso_file, format='fits')
+        if self.synthpop_extension:
+            addl_iso = Table.read(addl_iso_file, format='fits')
+            for row in addl_iso:
+                iso.add_row(row)
+            iso.sort('col3')
+            iso.meta['comments2'] = addl_iso.meta['comments']
         if self.version == 1.0:
             iso.rename_column('col7', 'Z')
             iso.rename_column('col2', 'logAge')
@@ -1232,6 +1259,10 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         If true, then use rotating Ekstrom models. Default is true.
     """
     def __init__(self, rot=True):
+        if rot:
+            self.model_version_name = "MergedBaraffePisaEkstromParsec-rot"
+        else:
+            self.model_version_name = "MergedBaraffePisaEkstromParsec-norot"
         # populate list of model masses (in solar masses)
         mass_list = [(0.1 + i*0.005) for i in range(181)]
         
@@ -1325,6 +1356,10 @@ class MergedPisaEkstromParsec(StellarEvolution):
         If true, then use rotating Ekstrom models. Default is true.
     """
     def __init__(self, rot=True):
+        if rot:
+            self.model_version_name = "MergedPisaEkstromParsec-rot"
+        else:
+            self.model_version_name = "MergedPisaEkstromParsec-norot"
         # populate list of model masses (in solar masses)
         mass_list = [(0.1 + i*0.005) for i in range(181)]
         
@@ -1422,6 +1457,7 @@ class MergedSiessGenevaPadova(StellarEvolution):
         Define intrinsic properties for merged Siess-meynetMaeder-Padova 
         stellar models.
         """
+        self.model_version_name = "MergedSiessGenevaPadova"
         # populate list of model masses (in solar masses)
         mass_list = [(0.1 + i*0.005) for i in range(181)]
         

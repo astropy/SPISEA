@@ -826,6 +826,7 @@ class Isochrone(object):
         tab.meta['REDLAW'] = red_law.name
         tab.meta['ATMFUNC'] = atm_func.__name__
         tab.meta['EVOMODEL'] = type(evo_model).__name__
+        tab.meta['EVOMODELVERSION'] = evo_model.model_version_name
         tab.meta['LOGAGE'] = logAge
         tab.meta['AKS'] = AKs
         tab.meta['DISTANCE'] = distance
@@ -1158,6 +1159,13 @@ class IsochronePhot(Isochrone):
                 (tmp.meta['ATMFUNC'] == atm_func.__name__) &
                  (tmp.meta['REDLAW'] == red_law.name) ):
                 out_bool = True
+
+            # Check model version if it was logged
+            if 'EVOMODELVERSION' in tmp.meta:
+                if tmp.meta['EVOMODELVERSION']!=evo_model.model_version_name:
+                    out_bool=False
+            else:
+                print(f"No version information found for evolution model {type(evo_model).__name__}.")
             
         return out_bool
 
@@ -1342,6 +1350,7 @@ class iso_table(object):
         
         tab.meta['ATMFUNC'] = atm_func.__name__
         tab.meta['EVOMODEL'] = type(evo_model).__name__
+        tab.meta['EVOMODELVERSION'] = evo_model.model_version_name
         tab.meta['LOGAGE'] = logAge
         tab.meta['DISTANCE'] = distance
         tab.meta['WAVEMIN'] = wave_range[0]
