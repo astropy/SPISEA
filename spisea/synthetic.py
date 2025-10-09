@@ -33,6 +33,7 @@ default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
 default_wd_atm_func = atm.get_wd_atmosphere
+default_bd_atm_func = atm.get_bd_atmosphere
 
 def Vega():
     # Use Vega as our zeropoint... assume V=0.03 mag and all colors = 0.0
@@ -192,6 +193,7 @@ class ResolvedCluster(Cluster):
                 filt_names.append(col_name)
 
         return filt_names
+
         
     def _make_star_systems_table(self, mass, isMulti, sysMass):
         """
@@ -232,7 +234,7 @@ class ResolvedCluster(Cluster):
         # effect is so small
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 90) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
         # Print warning, if desired
         verbose=False
         if verbose:
@@ -251,9 +253,10 @@ class ResolvedCluster(Cluster):
         # Remnants have flux = 0 in all bands if they are generated here.
         ##### 
         if self.ifmr != None:
-            # Identify compact objects as those with Teff = 0 or with phase > 100.
+            # Identify compact objects as those with Teff = 0 or with phase > 100 or BDs
             highest_mass_iso = self.iso.points['mass'].max()
-            idx_rem = np.where((np.isnan(star_systems['Teff'])) & (star_systems['mass'] > highest_mass_iso))[0]
+            idx_rem = np.where((np.isnan(star_systems['Teff'])) & (star_systems['mass'] > highest_mass_iso) | 
+                           (star_systems['mass'] < 0.08))[0]
             
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
@@ -274,6 +277,27 @@ class ResolvedCluster(Cluster):
             # Give remnants a magnitude of nan, so they can be filtered out later when calculating flux.
             for filt in self.filt_names:
                 star_systems[filt][idx_rem_good] = np.full(len(idx_rem_good), np.nan)
+
+
+            # Handle brown dwarfs separately and assign temperatures
+            idx_bd = np.where(star_systems['phase'] == 90)[0]
+            
+            # Define the class for BDs
+            evo_model = evolution.MergedBaraffePisaEkstromParsec()
+
+            # Use the instance to call get_temperature
+            masses = star_systems[idx_bd]['mass_current']
+            ages = np.full(len(masses), self.iso.points.meta['LOGAGE'])
+            temperatures = evo_model.get_temperature(masses, ages)
+
+            # Convert the numpy array to an astropy Column
+            temperatures_column = Column(temperatures)
+            
+            # Assign temperatures to the Table column
+            star_systems['Teff'][idx_bd] = temperatures_column
+
+            for filt in self.filt_names:
+                star_systems[filt][idx_bd] = np.full(len(idx_bd), np.nan)
 
         return star_systems
         
@@ -353,7 +377,7 @@ class ResolvedCluster(Cluster):
                 companions['isWR'][cdx] = np.round(self.iso_interps['isWR'](comp_mass))
                 companions['mass_current'] = self.iso_interps['mass_current'](companions['mass'])
                 companions['phase'] = np.round(self.iso_interps['phase'](companions['mass']))
-                companions['metallicity'] = np.ones(N_comp_tot)*self.iso.metallicity
+                companions['metallicity'] = np.ones(N_comp_tot)*self.iso.metallicity   #****
 
                 # For a very small fraction of stars, the star phase falls on integers in-between
                 # the ones we have definition for, as a result of the interpolation. For these
@@ -362,7 +386,7 @@ class ResolvedCluster(Cluster):
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
                 companions_phase_non_nan = np.nan_to_num(companions['phase'], nan=-99)
                 bad = np.where( (companions_phase_non_nan > 5) &
-                                (companions_phase_non_nan < 101) &
+                                (companions_phase_non_nan < 90) &
                                 (companions_phase_non_nan != 9) &
                                 (companions_phase_non_nan != -99))
                 # Print warning, if desired
@@ -395,14 +419,15 @@ class ResolvedCluster(Cluster):
                     star_systems[filt][idx[good]] = -2.5 * np.log10(f1[good] + f2[good])
                     star_systems[filt][idx[bad]] = np.nan
 
+                
         #####
         # Make Remnants with flux = 0 in all bands.
         ##### 
         if self.ifmr != None:
-            # Identify compact objects as those with Teff = 0 or with masses above the max iso mass
+            # Identify compact objects as those with Teff = 0 or with masses above the max iso mass, or BDs
             highest_mass_iso = self.iso.points['mass'].max()
-            cdx_rem = np.where(np.isnan(companions['Teff']) &
-                                (companions['mass'] > highest_mass_iso))[0]
+            cdx_rem = np.where((np.isnan(companions['Teff']) &
+                                (companions['mass'] > highest_mass_iso)) | (companions['mass'] < 0.08))[0]
 
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
@@ -410,12 +435,11 @@ class ResolvedCluster(Cluster):
                 r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem],
                                                                      metallicity_array=companions['metallicity'][cdx_rem])
             else:
-                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem])
-            
+                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem])           
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
-            good = np.where(r_id_tmp > 0)
+            good = np.where(r_id_tmp > 0) #****
             cdx_rem_good = cdx_rem[good]
 
             companions['mass_current'][cdx_rem_good] = r_mass_tmp[good]
@@ -425,13 +449,38 @@ class ResolvedCluster(Cluster):
             for filt in self.filt_names:
                 companions[filt][cdx_rem_good] = np.full(len(cdx_rem_good), np.nan)
 
+            # Assigning brown dwarf companions the correct phase/properties
+            bd_idx = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
+            companions['phase'][bd_idx] = 90
+            companions['mass_current'][bd_idx] = companions['mass'][bd_idx]
+            for filt in self.filt_names:
+                companions[filt][bd_idx] = np.full(len(bd_idx), np.nan)
 
+            # Define the class for BDs
+            evo_model = evolution.MergedBaraffePisaEkstromParsec()
+
+            # Use the instance to call get_temperature
+            c_masses = companions[bd_idx]['mass_current']
+            c_ages = np.full(len(c_masses), self.iso.points.meta['LOGAGE'])
+            c_temperatures = evo_model.get_temperature(c_masses, c_ages)
+
+            # Convert the numpy array to an astropy Column
+            c_temperatures_column = Column(c_temperatures)
+            
+            # Assign temperatures to the Table column
+            companions['Teff'][bd_idx] = c_temperatures_column
+
+  
         # Notify if we have a lot of bad ones.
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         companions_teff_non_nan = np.nan_to_num(companions['Teff'], nan=-99)
         idx = np.where(companions_teff_non_nan > 0)[0]
         if len(idx) != N_comp_tot and self.verbose:
             print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
+
+        # Final check for brown dwarf phase
+        bd_idx_final = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
+        
 
         # Double check that everything behaved properly.
         assert companions['mass'][idx].min() > 0
@@ -448,6 +497,7 @@ class ResolvedCluster(Cluster):
         removed. If self.ifmr != None, then we will save the high mass systems 
         since they will be plugged into an ifmr later.
         """
+
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
@@ -459,7 +509,8 @@ class ResolvedCluster(Cluster):
             idx = np.where(star_systems_teff_non_nan > 0)[0]
         else:
             # Keep stars (with Teff) and any other compact objects (with phase info). 
-            idx = np.where( (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) )[0]
+            idx = np.where((star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) | 
+                           (star_systems_phase_non_nan == 90))[0]
 
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
@@ -715,7 +766,7 @@ class Isochrone(object):
     """
     def __init__(self, logAge, AKs, distance, metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
-                 wd_atm_func = default_wd_atm_func,
+                 wd_atm_func = default_wd_atm_func, bd_atm_func = default_bd_atm_func,
                  red_law=default_red_law, mass_sampling=1,
                  wave_range=[3000, 52000], min_mass=None, max_mass=None,
                  rebin=True):
@@ -738,6 +789,7 @@ class Isochrone(object):
         # Takes about 0.1 seconds.
         evol = evo_model.isochrone(age=10**logAge,
                                    metallicity=metallicity)
+        
 
         # Eliminate cases where log g is less than 0
         idx = np.where(evol['logg'] > 0)
@@ -787,6 +839,10 @@ class Isochrone(object):
             # pull from WD atmospheres
             if phase == 101:
                 star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                                       verbose=False)
+            elif phase == 90:
+                print(f"Applying brown dwarf model to object {ii}")
+                star = bd_atm_func(temperature=T, gravity=gravity, metallicity=0,
                                        verbose=False)
             else:
                 star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
@@ -904,8 +960,12 @@ class IsochronePhot(Isochrone):
         Default is atmospheres.get_merged_atmosphere.
 
     wd_atm_func: white dwarf model atmosphere function, optional
-        Set the stellar atmosphere models for the white dwafs. 
+        Set the stellar atmosphere models for the white dwarfs. 
         Default is atmospheres.get_wd_atmosphere   
+
+    bd_atm_func: brown dwarf model atmosphere function, optimal
+        Set the stellar atmosphere models for the brown dwarfs.
+        Default is atmospheres.get_bd_atmosphere
 
     red_law : reddening law object, optional
         Define the reddening law for the synthetic photometry.
@@ -953,7 +1013,7 @@ class IsochronePhot(Isochrone):
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
-                 wd_atm_func = default_wd_atm_func,
+                 wd_atm_func = default_wd_atm_func, bd_atm_func = default_bd_atm_func,
                  wave_range=[3000, 52000],
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
@@ -1000,6 +1060,8 @@ class IsochronePhot(Isochrone):
                                metallicity=metallicity,
                                evo_model=evo_model, atm_func=atm_func,
                                wd_atm_func=wd_atm_func,
+                               bd_atm_func=bd_atm_func,
+                               
                                wave_range=wave_range,
                                red_law=red_law, mass_sampling=mass_sampling,
                                min_mass=min_mass, max_mass=max_mass, rebin=rebin)

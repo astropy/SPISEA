@@ -33,6 +33,7 @@ def test_create_MultiplicityUnresolved():
     assert mu2.q_pow == 0.4 
     assert mu2.q_min == 0.04
 
+
 def test_multiplicity_fraction():
     """
     Test creating a MultiplicityUnresolved object and getting
@@ -66,6 +67,14 @@ def test_multiplicity_fraction():
     mf2_3 = mu1.multiplicity_fraction(0.1)
     np.testing.assert_almost_equal(mf2_3, 0.136, decimal=2)
 
+    # Test brown dwarf mass fractions
+    mf_bd1 = mu1.multiplicity_fraction(0.07)  # near upper BD limit
+    mf_bd2 = mu1.multiplicity_fraction(0.04)  # mid BD
+    mf_bd3 = mu1.multiplicity_fraction(0.01)  # lower BD limit
+    assert np.isclose(mf_bd1, 0.16, atol=0.01)
+    assert np.isclose(mf_bd2, 0.08, atol=0.01)
+    assert np.isclose(mf_bd3, 0.0, atol=1e-6)
+
 
 def test_multiplicity_fraction_array():
     """
@@ -77,12 +86,23 @@ def test_multiplicity_fraction_array():
     # First set of multiplicity parameters
     mu1 = multiplicity.MultiplicityUnresolved()
 
-    mass_array = np.array([1.0, 10.0, 0.1])
+    mass_array = np.array([1.0, 10.0, 0.1, 0.07, 0.04, 0.01])
     mf_array = mu1.multiplicity_fraction(mass_array)
 
+    # Stellar regime checks
     np.testing.assert_almost_equal(mf_array[0], 0.44, decimal=2)
     np.testing.assert_almost_equal(mf_array[1], 1.0, decimal=2)
     np.testing.assert_almost_equal(mf_array[2], 0.136, decimal=2)
+
+    # BD regime checks
+    # interpolation between values implies lower masses --> lower mf
+    assert mf_array[3] < mf_array[2]   
+    assert mf_array[4] <= mf_array[3]  
+    assert mf_array[5] <= mf_array[4]  
+
+    # Ensure mf stars within reasonable bound (upper limit is 0.2)
+    assert np.all(mf_array[3:] >= 0.0)
+    assert np.all(mf_array[3:] <= 0.2)
     
     
 def test_companion_star_fraction():
@@ -117,11 +137,20 @@ def test_companion_star_fraction():
     # csf2_3 = mu1.companion_star_fraction(0.1)
     # np.testing.assert_almost_equal(csf2_3, 0.159, decimal=2)
 
+    # Test brown dwarf csf
+    csf_bd1 = mu1.companion_star_fraction(0.07)
+    csf_bd2 = mu1.companion_star_fraction(0.04)
+    csf_bd3 = mu1.companion_star_fraction(0.01)
+    assert np.isclose(csf_bd1, 0.16, atol=0.01)
+    assert np.isclose(csf_bd2, 0.08, atol=0.01)
+    assert np.isclose(csf_bd3, 0.0, atol=1e-6)
+
 
 def test_resolvedmult():
     """
     Test creating a MultiplicityResolvedDK object 
     and that the parameters it's populated with are correct.
+    Updated to test for specific brown dwarf characteristics.
     """
     from spisea import synthetic, evolution, atmospheres, reddening, ifmr
     from spisea.imf import imf, multiplicity
@@ -132,7 +161,7 @@ def test_resolvedmult():
     dist = 4000 # distance in parsecs
     metallicity = 0 # metallicity in [M/H]
     atm_func = atmospheres.get_merged_atmosphere
-    evo_merged = evolution.MISTv1()
+    evo_merged = evolution.MergedPhillipsBaraffePisaEkstromParsec()
     redlaw = reddening.RedLawCardelli(3.1) # Rv = 3.1
     filt_list = ['nirc2,J', 'nirc2,Kp']
     
@@ -149,7 +178,7 @@ def test_resolvedmult():
     clust_multiplicity = multiplicity.MultiplicityResolvedDK()
 
     # Multiplicity is defined in the IMF object
-    clust_imf_Mult = imf.Kroupa_2001(multiplicity=clust_multiplicity)
+    clust_imf_Mult = imf.Salpeter_Kirkpatrick_2024(multiplicity=clust_multiplicity)
     
     # Make clusters
     clust_Mult = synthetic.ResolvedCluster(iso_merged, clust_imf_Mult, clust_mtot)
@@ -184,7 +213,31 @@ def test_resolvedmult():
     n, bins = np.histogram(clust_Mult.companions['i'])
     bin_centers = 0.5*(bins[1:] + bins[:-1])
     assert all(np.abs(i) < 0.15 for i in n/max(n) - np.sin(np.pi*bin_centers/180))
+
+    #checks for brown dwarf specific features
+    bd_idx = np.where(clust_Mult.star_systems['mass'] < 0.08)[0]
+
+    #check there is only one possible companion per BD
+    assert all(clust_Mult.star_systems['N_companions'][bd_idx] <= 1), \
+    "Brown dwarf primaries have >1 companion."
+    
+    comp_rows = []
+    start = 0
+    for ii, N in enumerate(clust_Mult.star_systems['N_companions']):
+        if ii in bd_idx and N > 0:
+            comp_rows.extend(range(start, start+N))
+        start += N
+    
+    bd_companions = clust_Mult.companions[comp_rows]
+    
+    if len(bd_companions) > 30:  # only test if enough BD binaries
+        mean_log_a = np.mean(bd_companions['log_a'])
+        std_log_a = np.std(bd_companions['log_a'])
+    
+        #expect lognormal centered near log10(2.9 AU), width ~0.21
+        assert abs(mean_log_a - np.log10(2.9)) < 0.25, \
+            f"BD mean log(a) off: {mean_log_a:.2f}"
+        assert abs(std_log_a - 0.21) < 0.15, \
+            f"BD sigma log(a) off: {std_log_a:.2f}"
     
     return
-
-    
