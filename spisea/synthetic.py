@@ -1105,11 +1105,11 @@ class IsochronePhot(Isochrone):
                 metal_pre = 'm'
             else:
                 metal_pre = 'p'
-            metal_flag = int(abs(metallicity)*10)
+            metal_flag = int(abs(metallicity)*100)
 
             save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_{4}{5:2s}.fits'
-            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(round(distance)).zfill(5), metal_pre, str(metal_flag).zfill(2))
-            self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs, str(round(distance)).zfill(5), metal_pre, str(metal_flag).zfill(2))
+            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(round(distance)).zfill(5), metal_pre, str(metal_flag).zfill(3))
+            self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs, str(round(distance)).zfill(5), metal_pre, str(metal_flag).zfill(3))
         
         # Expected filters
         self.filters = filters
@@ -1121,10 +1121,12 @@ class IsochronePhot(Isochrone):
             self.recalc = True
             if verbose:
                 print(f'Generating new isochrone of log(t)={logAge:.2f}, AKs={AKs:.2f}, d={distance} pc')
-            # user_input = input(f"Isochrone file {self.save_file} does not exist or needs to be regenerated. Do you want to proceed? (yes/no): ").strip().lower()
-            # if user_input != 'yes':
-            #     print("Operation canceled by the user.")
-            #     return
+
+                user_input = input(f"Isochrone file {self.save_file} does not exist or needs to be regenerated. Do you want to proceed? (yes/no): ").strip().lower()
+                if user_input != 'yes':
+                    print("Operation canceled by the user.")
+                    return
+
             super().__init__(logAge, AKs, distance,
                              metallicity=metallicity,
                              evo_model=evo_model, atm_func=atm_func,
