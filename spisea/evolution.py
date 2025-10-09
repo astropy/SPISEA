@@ -1045,7 +1045,7 @@ class MISTv1(StellarEvolution):
         if (self.version == 1.0) and (not synthpop_extension):
             self.model_version_name = 'MISTv1.0'
             version_dir = 'v1.0/'
-        if (self.version == 1.0) and synthpop_extension:
+        elif (self.version == 1.0) and synthpop_extension:
             raise ValueError('Synthpop isochrone extension not supported for MISTv1.0 isochrones')
         elif self.version == 1.2:
             self.model_version_name = 'MISTv1.2'
