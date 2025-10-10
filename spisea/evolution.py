@@ -1058,7 +1058,7 @@ class MISTv1(StellarEvolution):
         if self.synthpop_extension:
             self.model_version_name = self.model_version_name + '-synthpop'
             self.model_extension_dir = models_dir+'MISTv1/' + version_dir[:-1] + '-synthpop/'
-            if not os.path.exists(model_extension_dir):
+            if not os.path.exists(self.model_extension_dir):
                 raise ValueError(f'Missing {self.model_extension_dir}. Please download the latest SPISEA data at https://w.astro.berkeley.edu/~jlu/spisea/spisea_models.tar.gz.')
 
         else:
