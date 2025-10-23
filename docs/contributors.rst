@@ -38,4 +38,6 @@ what operating system is used
 Sage Hironaka Remulla -- added Rubin Observatory filters
 
 Lingfeng Wei -- bugfix to improve creation of iso_dir in IsochronePhot
-(mkdir to makedirs)
+
+Macy Huston -- New metallicity bound + isochrone filter checks,
+imf_mass_lim bugfix
