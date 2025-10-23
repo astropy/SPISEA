@@ -612,6 +612,15 @@ def test_cluster_mass():
     assert np.abs(cluster_mass_out - cluster_mass) < 200.0   # within 200 Msun of desired mass.
     print('Cluster Mass: IN = ', cluster_mass, " OUT = ", cluster_mass_out)
 
+    cluster3 = syn.ResolvedCluster(iso, my_imf1, cluster_mass, ifmr=my_ifmr, keep_low_mass_stars=True)
+    clust3 = cluster3.star_systems
+    print('Constructed cluster w/ keep_low_mass_stars: %d seconds' % (time.time() - startTime))
+
+    # Check that the total mass is within tolerance of input mass
+    cluster_mass_out = clust3['systemMass'].sum()
+    assert np.abs(cluster_mass_out - cluster_mass) < 200.0   # within 200 Msun of desired mass.
+    print('Cluster Mass: IN = ', cluster_mass, " OUT = ", cluster_mass_out)
+
     ##########
     # Test with multiplicity
     ##########
