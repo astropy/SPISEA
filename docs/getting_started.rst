@@ -24,12 +24,11 @@ The basic SPISEA installation requires ~20 GB of memory, which is
 primarily for the suite of stellar evolution and atmosphere models.
 Other dependencies:
 
-* python (>=3.7; preferably via AstroConda, as it includes some necessary
-  packages, like astropy and pysynphot)
+* python (>=3.7, < 3.12)
 * astropy
 * pysynphot
 * scipy
-* numpy (>= v1.17)
+* numpy (>= 1.17, < 2.0)
 * matplotlib
 * `pytest-astropy-header <https://github.com/astropy/pytest-astropy-header>`_
 * STScI CDBS data package (See :ref:`set-up-cdbs` below for instructions)
