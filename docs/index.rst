@@ -89,7 +89,7 @@ Change Log
     isochrone file when deciding whether a new isochrone needs to be
     calculated
   * Small bugfix: ensures that imf_mass_limit is reset properly when
-     generating multiple clusters from same imf object
+    generating multiple clusters from same imf object
 
 2.1.13 (2024-12-10)
   * Small bugfix to make iso_dir creation more robust
