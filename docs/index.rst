@@ -82,6 +82,15 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.1.14 (2025-10-23)
+  * Added support for NACO intermediate bands
+  * Added metallicity bounds check when calling atmosphere model grid
+  * Added check to make sure desired filter columns are present in
+    isochrone file when deciding whether a new isochrone needs to be
+    calculated
+  * Small bugfix: ensures that imf_mass_limit is reset properly when
+     generating multiple clusters from same imf object
+
 2.1.13 (2024-12-10)
   * Small bugfix to make iso_dir creation more robust
     
