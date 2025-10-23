@@ -1015,9 +1015,53 @@ class IsochronePhot(Isochrone):
                 self.points = Table.read(self.save_file_legacy)
             # Add some error checking.
 
+        # Next: do we have all the filters we need?
+        comp_filters = []
+        for ii in self.filters:
+            col_name = 'm_' + get_filter_col_name(ii)
+            if col_name not in self.points.keys():
+                comp_filters.append(ii)
+        # Compute additional filters if needed
+        if len(comp_filters)>0:
+            self.verbose = True
+            print('Missing photometry for',len(comp_filters),'filter - recomputing these columns:',comp_filters)
+
+            print('Loading stellar spectra')
+            # Initialize output for stellar spectra
+            self.spec_list = []
+            # For each isochrone point, extract the synthetic photometry.
+            for ii in range(len(self.points['Teff'])):
+                # Loop is currently taking about 0.11 s per iteration
+                gravity = float( self.points['logg'][ii] )
+                L = float( (self.points['L'][ii]*units.W).cgs / (units.erg / units.s)) # in erg/s
+                T = float( self.points['Teff'][ii] )               # in Kelvin
+                R = float( (self.points['R'][ii]*units.m).to('pc') / units.pc)              # in pc
+                phase = int(self.points['phase'][ii])
+                # Get the atmosphere model now. Wavelength is in Angstroms
+                # This is the time-intensive call... everything else is negligable.
+                # If source is a star, pull from star atmospheres. If it is a WD,
+                # pull from WD atmospheres
+                if phase == 101:
+                    star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                                           verbose=False)
+                else:
+                    star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
+                                        rebin=rebin)
+                # Trim wavelength range down to appropriate range
+                star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
+                # Convert into flux observed at Earth (unreddened)
+                star *= (R / self.points.meta["DISTANCE"])**2  # in erg s^-1 cm^-2 A^-1
+                # Redden the spectrum. This doesn't take much time at all.
+                red = red_law.reddening(AKs).resample(star.wave) 
+                star *= red
+                # Save the final spectrum to our spec_list for later use.            
+                self.spec_list.append(star)
+
+            self.make_photometry(rebin=rebin, vega=vega, comp_filters=comp_filters)
+
         return
 
-    def make_photometry(self, rebin=True, vega=vega):
+    def make_photometry(self, rebin=True, vega=vega, comp_filters=None):
         """ 
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
@@ -1035,9 +1079,13 @@ class IsochronePhot(Isochrone):
         npoints = len(self.points)
         verbose_fmt = 'M = {0:7.3f} Msun  T = {1:5.0f} K  m_{2:s} = {3:4.2f}'
 
+        #Calculate all filters, or select filters
+        if comp_filters is None:
+            comp_filters = self.filters
+
         # Loop through the filters, get filter info, make photometry for
         # all stars in this filter.
-        for ii in self.filters:
+        for ii in comp_filters:
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
             print( prt_fmt.format(ii, time.time() - startTime))
             
@@ -1579,6 +1627,10 @@ def get_obs_str(col):
                  'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K',
                  'nirc1_K':'nirc1,K', 'nirc1_H':'nirc1,H',
                  'naco_J':'naco,J', 'naco_H':'naco,H', 'naco_Ks':'naco,Ks',
+                 'naco_IB_2.00': 'naco,IB_2.00', 'naco_IB_2.03':'naco,IB_2.03', 'naco_IB_2.06':'naco,IB_2.06',
+                 'naco_IB_2.24':'naco,IB_2.24', 'naco_IB_2.27':'naco,IB_2.27',
+                 'naco_IB_2.30':'naco,IB_2.30', 'naco_IB_2.33':'naco,IB_2.33',
+                 'naco_IB_2.36':'naco,IB_2.36',
                  'ukirt_J':'ukirt,J', 'ukirt_H':'ukirt,H', 'ukirt_K':'ukirt,K',
                  'ctio_osiris_H': 'ctio_osiris,H', 'ctio_osiris_K': 'ctio_osiris,K',
                  'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i',

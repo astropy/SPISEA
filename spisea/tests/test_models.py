@@ -155,6 +155,8 @@ def test_filters():
                      'jwst,F360M', 'jwst,F405N', 'jwst,F410M', 'jwst,F430M',
                      'jwst,F444W', 'jwst,F460M', 'jwst,F466N', 'jwst,F470N',
                      'jwst,F480M', 'naco,J', 'naco,H', 'naco,Ks',
+                     'naco,IB_2.00','naco,IB_2.03', 'naco,IB_2.06', 'naco,IB_2.24',
+                     'naco,IB_2.27', 'naco,IB_2.30', 'naco,IB_2.33', 'naco,IB_2.36',
                      'nirc1,K', 'nirc1,H', 'nirc2,J', 'nirc2,H',
                      'nirc2,Kp', 'nirc2,K', 'nirc2,Lp', 'nirc2,Hcont',
                      'nirc2,FeII', 'nirc2,Brgamma', 'ps1,z',
