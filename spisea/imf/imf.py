@@ -239,7 +239,8 @@ class IMF(object):
                 if np.any(bd_mask):
                     rand_vals = np.random.rand(bd_mask.sum())
                     b = 1.0 + 6.1   #gamma from Fontanive+18
-                    q_values[bd_mask] = (rand_vals * (1.0 - self._multi_props.q_min ** b) + self._multi_props.q_min ** b) ** (1.0 / b)
+                    q_values[bd_mask] = (rand_vals * (1.0 - self._multi_props.q_min ** b) + 
+                                         self._multi_props.q_min ** b) ** (1.0 / b)
                 
                 # Calculate mass of companion
                 m_comp = q_values * prim_subset

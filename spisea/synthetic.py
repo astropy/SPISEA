@@ -13,7 +13,7 @@ from pysynphot import ObsBandpass
 from pysynphot import observation as obs
 import pysynphot
 from astropy import constants, units
-from astropy.table import Table, Column, MaskedColumn
+from astropy.table import Table, Column, MaskedColumn, vstack
 import pickle
 import time, datetime
 import math
@@ -33,7 +33,6 @@ default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
 default_atm_func = atm.get_merged_atmosphere
 default_wd_atm_func = atm.get_wd_atmosphere
-default_bd_atm_func = atm.get_bd_atmosphere
 
 def Vega():
     # Use Vega as our zeropoint... assume V=0.03 mag and all colors = 0.0
@@ -255,8 +254,9 @@ class ResolvedCluster(Cluster):
         if self.ifmr != None:
             # Identify compact objects as those with Teff = 0 or with phase > 100 or BDs
             highest_mass_iso = self.iso.points['mass'].max()
-            idx_rem = np.where((np.isnan(star_systems['Teff'])) & (star_systems['mass'] > highest_mass_iso) | 
-                           (star_systems['mass'] < 0.08))[0]
+            idx_rem = np.where((np.isnan(star_systems['Teff']) & (star_systems['mass'] > highest_mass_iso)))[0]
+
+
             
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
@@ -278,26 +278,22 @@ class ResolvedCluster(Cluster):
             for filt in self.filt_names:
                 star_systems[filt][idx_rem_good] = np.full(len(idx_rem_good), np.nan)
 
-
-            # Handle brown dwarfs separately and assign temperatures
-            idx_bd = np.where(star_systems['phase'] == 90)[0]
-            
-            # Define the class for BDs
-            evo_model = evolution.MergedBaraffePisaEkstromParsec()
-
-            # Use the instance to call get_temperature
-            masses = star_systems[idx_bd]['mass_current']
-            ages = np.full(len(masses), self.iso.points.meta['LOGAGE'])
-            temperatures = evo_model.get_temperature(masses, ages)
-
-            # Convert the numpy array to an astropy Column
-            temperatures_column = Column(temperatures)
-            
-            # Assign temperatures to the Table column
-            star_systems['Teff'][idx_bd] = temperatures_column
-
-            for filt in self.filt_names:
-                star_systems[filt][idx_bd] = np.full(len(idx_bd), np.nan)
+            # override remnant conditions for BDs
+            idx_bd = np.where(star_systems['mass'] < 0.08)[0]
+            for i in idx_bd:
+                T = star_systems['Teff'][i]
+                g = star_systems['logg'][i]
+                print(T,g) 
+        
+                try:
+                    star_bd = atm.get_bd_atmosphere(temperature=T, gravity=g, metallicity=0, verbose=False)
+                    for filt in self.filt_names:
+                        star_systems[filt][i] = star_bd[filt]
+                except Exception as e:
+                    print(f"[Isochrone] BD atmosphere model failed for T={T}, logg={g}, idx={i}: {e}")
+                    # Keep filter magnitudes as NaN if model fails
+                    for filt in self.filt_names:
+                        star_systems[filt][i] = np.nan
 
         return star_systems
         
@@ -424,10 +420,12 @@ class ResolvedCluster(Cluster):
         # Make Remnants with flux = 0 in all bands.
         ##### 
         if self.ifmr != None:
-            # Identify compact objects as those with Teff = 0 or with masses above the max iso mass, or BDs
+            # Identify compact objects as those with Teff = 0 or with masses above the max iso mass
+            # Exclude BDs from designation
             highest_mass_iso = self.iso.points['mass'].max()
-            cdx_rem = np.where((np.isnan(companions['Teff']) &
-                                (companions['mass'] > highest_mass_iso)) | (companions['mass'] < 0.08))[0]
+            cdx_rem = np.where((np.isnan(companions['Teff'])) &
+                               (companions['mass'] > highest_mass_iso) &
+                               (companions['mass'] >= 0.08))[0]
 
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
@@ -449,26 +447,37 @@ class ResolvedCluster(Cluster):
             for filt in self.filt_names:
                 companions[filt][cdx_rem_good] = np.full(len(cdx_rem_good), np.nan)
 
-            # Assigning brown dwarf companions the correct phase/properties
-            bd_idx = np.where((companions['mass'] >= 0.01) & (companions['mass'] < 0.08))[0]
-            companions['phase'][bd_idx] = 90
-            companions['mass_current'][bd_idx] = companions['mass'][bd_idx]
-            for filt in self.filt_names:
-                companions[filt][bd_idx] = np.full(len(bd_idx), np.nan)
-
-            # Define the class for BDs
-            evo_model = evolution.MergedBaraffePisaEkstromParsec()
-
-            # Use the instance to call get_temperature
-            c_masses = companions[bd_idx]['mass_current']
-            c_ages = np.full(len(c_masses), self.iso.points.meta['LOGAGE'])
-            c_temperatures = evo_model.get_temperature(c_masses, c_ages)
-
-            # Convert the numpy array to an astropy Column
-            c_temperatures_column = Column(c_temperatures)
-            
-            # Assign temperatures to the Table column
-            companions['Teff'][bd_idx] = c_temperatures_column
+            # For brown dwarfs, we have Teff and logg from the isochrone.
+            # We want to use the atmosphere model to get their magnitudes
+            idx_bd = np.where(companions['mass'] < 0.08)[0]
+            for i in idx_bd:
+                T = companions['Teff'][i]
+                g = companions['logg'][i]
+    
+                # Check if we have valid Teff and logg
+                if np.isnan(T) or np.isnan(g):
+                    print('T/logg assigned nan for BD object!')
+                    continue
+    
+                try:
+                    # Use the default atmosphere function to get the spectrum.
+                    star_bd_spec = default_atm_func(temperature=T, gravity=g, metallicity=self.iso.metallicity)
+    
+                    # Redden the spectrum
+                    red = default_red_law.reddening(self.iso.points.meta['AKS']).resample(star_bd_spec.wave)
+                    star_bd_spec *= red
+                    
+                    # Calculate magnitude in each filter
+                    for filt_name_long in self.filt_names:
+                        obs_str = get_obs_str(filt_name_long)
+                        filt_info = get_filter_info(obs_str)
+                        mag = mag_in_filter(star_bd_spec, filt_info)
+                        companions[filt_name_long][i] = mag
+                except Exception as e:
+                    print(f"[ResolvedCluster] BD companion atmosphere model failed for T={T}, logg={g}, idx={i}: {e}")
+                    # Keep filter magnitudes as NaN if model fails
+                    for filt in self.filt_names:
+                        companions[filt][i] = np.nan
 
   
         # Notify if we have a lot of bad ones.
@@ -740,7 +749,11 @@ class Isochrone(object):
 
     wd_atm_func: white dwarf model atmosphere function, optional
         Set the stellar atmosphere models for the white dwafs. 
-        Default is get_wd_atmosphere   
+        Default is get_wd_atmosphere  
+
+    bd_atm_func: brown dwarf model atmosphere function, optional
+        Set the stellar atmosphere models for the brown dwafs. 
+        Default is get_bd_atmosphere
 
     mass_sampling : int, optional
         Sample the raw isochrone every `mass_sampling` steps. The default
@@ -766,7 +779,7 @@ class Isochrone(object):
     """
     def __init__(self, logAge, AKs, distance, metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
-                 wd_atm_func = default_wd_atm_func, bd_atm_func = default_bd_atm_func,
+                 wd_atm_func = default_wd_atm_func, #bd_atm_func = default_bd_atm_func,
                  red_law=default_red_law, mass_sampling=1,
                  wave_range=[3000, 52000], min_mass=None, max_mass=None,
                  rebin=True):
@@ -789,6 +802,52 @@ class Isochrone(object):
         # Takes about 0.1 seconds.
         evol = evo_model.isochrone(age=10**logAge,
                                    metallicity=metallicity)
+
+        # Specify MergedPhillipsBaraffePisaEkstromParsec for brown dwarfs in all cases
+        try:
+            bd_model = evolution.MergedPhillipsBaraffePisaEkstromParsec()
+    
+            # Clamp to valid BD grid domain
+            logAge_bd = np.clip(logAge, 6.0, 10.0)
+            metallicity_bd = 0.0  # Phillips2020 only supports solar [Fe/H]
+    
+            # Notify user if clamping occurred
+            if logAge != logAge_bd:
+                print(f"[Isochrone] Adjusted BD logAge from {logAge:.2f} → {logAge_bd:.2f} (model valid range 6–10)")
+            print(f"[Isochrone] Using solar metallicity for BD grid ([Fe/H]={metallicity_bd:.2f})")
+    
+            # Compute BD isochrone
+            evol_bd = bd_model.isochrone(age=10**logAge_bd, metallicity=metallicity_bd)
+
+            # If no data at specified age, find the closest available age in the model grid.
+            if len(evol_bd) == 0:
+                print(f"[Isochrone] Warning: No BD data at logAge={logAge_bd:.2f}. Searching for closest age.")
+                # Find the closest age in the model's grid
+                available_ages = np.unique(bd_model.model['logAge'])
+                closest_logAge = available_ages[np.argmin(np.abs(available_ages - logAge_bd))]
+                
+                if closest_logAge != logAge_bd:
+                    print(f"[Isochrone] Using closest available BD logAge: {closest_logAge:.2f}")
+                    logAge_bd = closest_logAge
+                    evol_bd = bd_model.isochrone(age=10**logAge_bd, metallicity=metallicity_bd)
+    
+            # Define BD threshold and merge
+            bd_thresh = 0.075
+            evol_stars = evol[evol['mass'] >= bd_thresh]
+            evol_bd = evol_bd[evol_bd['mass'] < bd_thresh]
+    
+            if len(evol_bd) > 0:
+                evol = vstack([evol_bd, evol_stars])
+                evol.sort('mass')
+                print(f"[Isochrone] Merged brown dwarf evolution below {bd_thresh:.3f} Msun "
+                      f"from PhillipsBaraffePisaMerged model (logAge={logAge_bd:.2f}, [Fe/H]=0.0).")
+            else:
+                print("[Isochrone] Warning: Brown dwarf model returned no data below threshold.")
+    
+        except Exception as e:
+            import traceback
+            print(f"[Isochrone] Warning: Failed to merge brown dwarf model ({e})")
+            traceback.print_exc()
         
 
         # Eliminate cases where log g is less than 0
@@ -808,7 +867,7 @@ class Isochrone(object):
         evol = evol[::mass_sampling]
 
         # Give luminosity, temperature, mass, radius units (astropy units).
-        L_all = 10**evol['logL'] * c.L_sun # luminsoity in W
+        L_all = 10**evol['logL'] * c.L_sun # luminosity in W
         T_all = 10**evol['logT'] * units.K
         R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * T_all**4))
         mass_all = evol['mass'] * units.Msun # masses in solar masses
@@ -837,13 +896,14 @@ class Isochrone(object):
             # This is the time-intensive call... everything else is negligable.
             # If source is a star, pull from star atmospheres. If it is a WD,
             # pull from WD atmospheres
+            
             if phase == 101:
                 star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
                                        verbose=False)
-            elif phase == 90:
-                print(f"Applying brown dwarf model to object {ii}")
-                star = bd_atm_func(temperature=T, gravity=gravity, metallicity=0,
-                                       verbose=False)
+            #elif phase == 90:
+            #    print(f"Applying brown dwarf model to object {ii}")
+            #    star = bd_atm_func(temperature=T, gravity=gravity, metallicity=0,
+            #                           verbose=False)
             else:
                 star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
                                     rebin=rebin)
@@ -1013,7 +1073,7 @@ class IsochronePhot(Isochrone):
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
-                 wd_atm_func = default_wd_atm_func, bd_atm_func = default_bd_atm_func,
+                 wd_atm_func = default_wd_atm_func, #bd_atm_func = default_bd_atm_func,
                  wave_range=[3000, 52000],
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
@@ -1060,7 +1120,7 @@ class IsochronePhot(Isochrone):
                                metallicity=metallicity,
                                evo_model=evo_model, atm_func=atm_func,
                                wd_atm_func=wd_atm_func,
-                               bd_atm_func=bd_atm_func,
+                               #bd_atm_func=bd_atm_func,
                                
                                wave_range=wave_range,
                                red_law=red_law, mass_sampling=mass_sampling,

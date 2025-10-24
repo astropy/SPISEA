@@ -27,7 +27,7 @@ def test_evolution_models():
     age_young_arr = [6.7, 7.9]
     age_all_arr = [6.7, 8.0, 9.7]
     age_all_MIST_arr = [5.2, 6.7, 9.7, 10.13]
-    bd_young_test = [6.0, 6.5, 7.4]
+    bd_test = [6.0, 6.5, 7.4, 8.4, 10.0]
 
     # Metallicity ranges to test (if applicable)
     metal_range = [-2.5, -1.5, 0, 0.25, 0.4]
@@ -42,7 +42,7 @@ def test_evolution_models():
 
     
     # Array of age_ranges for the specific evolution models to test
-    age_vals = [age_all_MIST_arr, age_all_arr, age_all_arr, age_young_arr, age_young_arr, age_young_arr, age_all_arr, age_all_arr, bd_young_test]
+    age_vals = [age_all_MIST_arr, age_all_arr, age_all_arr, age_young_arr, age_young_arr, age_young_arr, age_all_arr, age_all_arr, bd_test]
 
     # Array of metallicities for the specific evolution models to test
     metal_vals = [metal_range, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar, metal_solar, metal_Marley, metal_solar]

@@ -1497,7 +1497,7 @@ class MISTv1(StellarEvolution):
 #==============================#
 class MergedPhillipsBaraffePisaEkstromParsec(StellarEvolution):
     """
-    All merge -- only young and solar metals right now. 
+    All merged! 
 
     Parameters
     ----------
@@ -1512,7 +1512,7 @@ class MergedPhillipsBaraffePisaEkstromParsec(StellarEvolution):
         z_list = [0.015]
         
         # populate list of isochrone ages (log scale)
-        age_list = np.arange(6.0, 7.4, 0.01).tolist()
+        age_list = np.arange(6.0, 10.0, 0.01).tolist()
         
         # specify location of model files
         model_dir = models_dir + 'merged/phillips_baraffe_pisa_ekstrom_parsec/'
@@ -1595,6 +1595,7 @@ class MergedPhillipsBaraffePisaEkstromParsec(StellarEvolution):
             
         return iso
 
+
 class MergedBaraffePisaEkstromParsec(StellarEvolution):
     """
     This is a combination of several different evolution models:
@@ -1609,7 +1610,7 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
     
 
     For logAge < 7.4:
-    * 0.01 - 0.08 M_sun: assume mass does not change over time
+
     * Baraffe: 0.08 - 0.4 M_sun
     * Baraffe/Pisa transition: 0.4 - 0.5 M_sun 
     * Pisa: 0.5 M_sun to the highest mass in Pisa isochrone (typically 5 - 7 Msun)
@@ -1626,7 +1627,7 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
     """
     def __init__(self, rot=True):
         # populate list of model masses (in solar masses)
-        mass_list = [(0.01 + i*0.005) for i in range(181)] # generates masses from 0.01 - 1 M_sun
+        mass_list = [(0.1 + i*0.005) for i in range(181)]
         
         # define metallicity parameters for Geneva models
         z_list = [0.015]
@@ -1699,73 +1700,10 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         idx_WR = np.where(iso['logT'] != iso['logT_WR'])
         isWR[idx_WR] = True
         iso.add_column(isWR)
-
+        
         iso.meta['log_age'] = log_age
         iso.meta['metallicity_in'] = metallicity
         iso.meta['metallicity_act'] = np.log10(self.z_list[z_idx] / self.z_solar)
-        
-        # Assume mass of brown dwarfs does not change over their lifetime
-        bd_idx = iso['mass'] < 0.08
-        iso['mass_current'][bd_idx] = iso['mass'][bd_idx]
-
-        # Handling NaN effective temperatures
-        nan_teff_idx = np.isnan(iso['logT'])
-        if np.any(nan_teff_idx):
-            iso['logT'][nan_teff_idx] = self.estimate_teff(iso['mass'][nan_teff_idx])
-        return iso
-
-    def get_temperature(self, masses, ages):
-        """
-        Use interpolation to get temperatures for brown dwarfs based on mass and age.
-
-        Parameters:
-        -----------
-        masses : array-like
-            Array of brown dwarf masses.
-        ages : array-like
-            Array of ages corresponding to the masses.
-
-        Returns:
-        --------
-        temperatures : array
-            Array of interpolated temperatures.
-        """
-    
-        # Set the project root two levels up from 'spisea/evolution.py'
-        project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..'))
-
-        # Construct the full path to the CSV file in 'changes/bd_evo_csv'
-        csv_path = os.path.join(project_root, 'SPISEA', 'changes', 'bd_evo_csv', 'baraffe2003.csv')
-
-        # Load the CSV file
-        data = pd.read_csv(csv_path)
-    
-        # Create columns of relevant data
-        mass_grid = np.unique(data['mass'].values)
-        age_grid = np.unique(data['age'].values)
-        temperatures = data['temperature'].values
-
-        # Create a 2D grid for temperatures
-        temp_grid = np.zeros((len(age_grid), len(mass_grid)))
-
-        # Fill the temperature grid with actual values
-        for i, age in enumerate(age_grid):
-            for j, mass in enumerate(mass_grid):
-                temp_grid[i, j] = np.mean(temperatures[(data['age'] == age) & (data['mass'] == mass)])
-    
-        # Set up the interpolator
-        interpolator = RegularGridInterpolator((age_grid, mass_grid), temp_grid, bounds_error=False, fill_value=np.nan)
-
-        # Get temperatures for the provided masses and ages
-        temperatures = interpolator(np.column_stack((ages, masses)))
-        
-        # Make sure masses array is not empty
-        if len(masses) == 0:
-            print("No masses available for temperature calculation.")
-            return
-
-        return temperatures
-
         
         return iso
 

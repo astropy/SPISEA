@@ -523,6 +523,7 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
                                                    gravity=gravity)
     
         sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+        #print(dir(obj))
         
     
     # Do some error checking
@@ -607,6 +608,10 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
         which is often sufficient synthetic photometry in most cases.
+
+        **PRINT STATEMENTS TO DEBUG
+        **check get_atmosphere_bounds
+        **comment out try/except clause and check break
     """
     if rebin == True:
         atm_name = 'BTSettl_rebin'
@@ -626,78 +631,16 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
         
 def get_Meisner2023_atmosphere(metallicity=0, temperature=1000, gravity=4.5, rebin=True):
     """
-    Return atmosphere from CIFIST2011 grid 
-    (`Allard et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012RSPTA.370.2765A/abstract>`_)
+    Return atmosphere from Meisner2023 grid 
+    (`Meisner et al. 2023 <https://ui.adsabs.harvard.edu/abs/2023AJ....166...57M/abstract>`_)
 
-    Grid originally downloaded `here <https://phoenix.ens-lyon.fr/Grids/BT-Settl/>`_
+    Grid originally downloaded `here <https://noctis.erc-atmo.eu/fsdownload/Q7MUSoCLR/meisner2023>`_
 
-    Notes
-    ------
-    Grid Range:
+    Grid range:
+    * Teff = 250 - 1200 K
+    * gravity: 2.5 - 5.5 cgs (in steps of 0.5)
+    * [M/H] = -1.0, -0.5, 0, +0, +0.3
     
-    * [M/H] = -2.5, -2.0, -1.5, -1.0, -0.5, 0, 0.5
-    
-    Teff and gravity ranges depend on metallicity:
-
-    [M/H] = -2.5
-
-    * Teff: 2600 - 4600 K
-    * gravity: 4.5 - 5.5
-    
-    [M/H] = -2.0
-
-    * Teff: 2600 - 7000
-    * gravity: 4.5 - 5.5
-
-    [M/H] = -1.5
-
-    * Teff: 2600 - 7000
-    * gravity: 4.5 - 5.5
-
-    [M/H] = -1.0
-
-    * Teff: 2600 - 7000
-    * gravity: Teff < 3200 --> 4.5 - 5.5; Teff > 3200 --> 2.5 - 5.5 
-
-    [M/H] = -0.5
-
-    * Teff: 1000 -7000
-    * gravity: Teff < 3000 --> 4.5 - 5.5; Teff > 3000 --> 3.0 - 6.0
-
-    [M/H] = 0
-
-    * Teff: 750 - 7000
-    * gravity: Teff < 2500 --> 3.5 - 5.5; Teff > 2500 --> 0 - 5.5
-
-    [M/H] = 0.5
-
-    * Teff: 1000 - 5000
-    * gravity: 3.5 - 5.0
-
-
-    Alpha enhancement:
-
-    * [M/H]= -0.0, +0.5 no anhancement
-    * [M/H]= -0.5 with [alpha/H]=+0.2
-    * [M/H]= -1.0, -1.5, -2.0, -2.5 with [alpha/H]=+0.4
-
-    Parameters
-    ----------
-    metallicity: float
-        The stellar metallicity, in terms of [Z]
-
-    temperature: float
-        The stellar temperature, in units of K
-
-    gravity: float
-        The stellar gravity, in cgs units
-        
-    rebin: boolean
-        If true, rebins the atmospheres so that they are the same
-        resolution as the Castelli+04 atmospheres. Default is False,
-        which is often sufficient synthetic photometry in most cases.
-
-        FILL IN W MEISNER
     """
     if rebin == True:
         atm_name = 'Meisner2023_rebin'
@@ -733,7 +676,6 @@ def get_Phillips2020_atmosphere(metallicity=0, temperature=1000, gravity=4.5, re
         Grid originally downloaded `here <https://noctis.erc-atmo.eu/fsdownload/zyU96xA6o/phillips2020>`_
         
         Grid Range:
-        
         * Teff: 200 - 3000 K
         * gravity: 2.5 - 5.5 cgs
         * [M/H] = 0
@@ -852,7 +794,33 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 
     return sp
 
+def get_BTSettl_meisner_atmosphere(metallicity=0, temperature=5250, gravity=4):
+    """
+    Return atmosphere that is a linear merge of BTSettl_CITFITS2011_2015 model
+    and Meisner2023.
 
+    Only valid for temps between 1000 - 1200K, gravity from 3.5 - 5.5 
+    """
+    try:
+        sp = pysynphot.Icat('merged_BTSettl_meisner', temperature, metallicity, gravity)
+    except:
+        # Check atmosphere catalog bounds
+        (temperature, gravity) = get_atmosphere_bounds('merged_BTSettl_meisner',
+                                                   metallicity=metallicity,
+                                                   temperature=temperature,
+                                                   gravity=gravity)
+    
+        sp = pysynphot.Icat('merged_BTSettl_meisner', temperature, metallicity, gravity)
+
+    # Do some error checking
+    idx = np.where(sp.flux != 0)[0]
+    if len(idx) == 0:
+        print( 'Could not find BTSettl-Meisner merge atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
+
+    return sp
 
 #---------------------------------------------------------------------#
 def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose=False,
@@ -898,8 +866,8 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
     * T < 3800, logg < 2.5: PHOENIX v16
     * 3200 <= T < 3800, logg > 2.5: BTSettl_CIFITS2011_2015/PHOENIXV16 merge
     * 3200 < T <= 1200, logg > 2.5: BTSettl_CIFITS2011_2015
-    * 1200 < T <= 1000, logg > 2.5: BTSettl_CIFITS2011_2015/Phillips2020 merge
-    * 1000 < T <= 250, logg > 2.5: Phillips2020
+    * 1200 < T <= 1000, logg >= 3.5: BTSettl_CIFITS2011_2015/Meisner2023 merge
+    * 1000 < T <= 250, logg > 2.5: Meisner2023
 
     Otherwise, if T < 3800 and [M/H] != 0:
     
@@ -933,13 +901,29 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
     # If solar metallicity, use BTSettl 2015 grid. Only solar metallicity is
     # currently available here, so if non-solar metallicity, just stick with
     # the Phoenix grid
-    if (temperature <= 1200):
+    if (temperature < 1000):
         if verbose:
             print( 'Meisner2023 atmosphere')
         return get_Meisner2023_atmosphere(metallicity=metallicity,
                                                 temperature=temperature,
                                                 gravity=gravity,
                                                 rebin=rebin)
+
+    if (temperature <= 1200) & (temperature >= 1000):
+        if (gravity >= 3.5):
+            if verbose:
+                print( 'BTSettl/Meisner2023 merged atmosphere')
+            return get_Meisner2023_atmosphere(metallicity=metallicity,
+                                                    temperature=temperature,
+                                                    gravity=gravity,
+                                                    rebin=rebin)
+        if (gravity < 3.5) & (gravity >=2.5):
+            if verbose:
+                print( 'Meisner2023 atmosphere')
+            return get_Meisner2023_atmosphere(metallicity=metallicity,
+                                                    temperature=temperature,
+                                                    gravity=gravity,
+                                                    rebin=rebin)
         
     if (temperature <= 3800) & (metallicity == 0):
         # High gravity are in BTSettl regime
@@ -1052,10 +1036,11 @@ def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False
         bbspec = get_bb_atmosphere(temperature=temperature, verbose=verbose)
         return bbspec
 
+    
 def get_bd_atmosphere(metallicity=0, temperature=1000, gravity=4, verbose=False):
     """
     Return the brown dwarf atmosphere from 
-    `Meisner et al. 2020 <https://ui.adsabs.harvard.edu/abs/2023AJ....166...57M/abstract>`_. 
+    `Meisner et al. 2023 <https://ui.adsabs.harvard.edu/abs/2023AJ....166...57M/abstract>`_. 
     If desired parameters are 
     outside of grid, return a blackbody spectrum instead
 
@@ -1087,7 +1072,7 @@ def get_bd_atmosphere(metallicity=0, temperature=1000, gravity=4, verbose=False)
                                             gravity=gravity)
     
     except pysynphot.exceptions.ParameterOutOfBounds:
-        # Use a black-body atmosphere.
+        # Use a black-body atmosphere
         bbspec = get_bb_atmosphere(temperature=temperature, verbose=verbose)
         return bbspec
 

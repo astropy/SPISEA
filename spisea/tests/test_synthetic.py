@@ -211,8 +211,8 @@ def test_ResolvedCluster():
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
     # Now to create the cluster.
-    imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
-    imf_powers = np.array([-1.3, -2.3, -2.3])
+    imf_mass_limits = np.array([0.01, 0.05, 0.22, 0.55, 8, 120])
+    imf_powers = np.array([-0.6, -0.25, -1.3, -2.3, -2.35])
 
     ##########
     # Start without multiplicity
@@ -390,7 +390,7 @@ def test_UnresolvedCluster():
 
     startTime = time.time()    
     multi = multiplicity.MultiplicityUnresolved()
-    imf_in = imf.Kroupa_2001(multiplicity=multi)
+    imf_in = imf.Salpeter_Kirkpatrick_2024(multiplicity=multi)
     evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
     iso = syn.Isochrone(log_age, AKs, distance, metallicity=metallicity,
@@ -441,8 +441,7 @@ def test_ifmr_multiplicity():
     ##########
     # Start without multiplicity and IFMR
     ##########
-    my_imf1 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
-                                      multiplicity=None)
+    my_imf1 = imf.Salpeter_Kirkpatrick_2024(multiplicity=None)
     print('Constructed IMF: %d seconds' % (time.time() - startTime)) 
     
     cluster1 = syn.ResolvedCluster(iso, my_imf1, cluster_mass, ifmr=ifmr_obj)
@@ -454,8 +453,7 @@ def test_ifmr_multiplicity():
     # Test with multiplicity and IFMR
     ##########
     multi = multiplicity.MultiplicityUnresolved()
-    my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
-                                      multiplicity=multi)
+    my_imf2 = imf.Salpeter_Kirkpatrick_2024(multiplicity=multi)
     print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
     
     cluster2 = syn.ResolvedCluster(iso, my_imf2, cluster_mass, ifmr=ifmr_obj)
@@ -1044,7 +1042,7 @@ def test_Raithel18_phase_designation():
 
     #create an MZAMS array to cover all potential phase designations, and the expected phase designations
     test_MZAMS = np.array([0.06, 0.3, 0.6, 1.0, 3.0, 6.0, 10.0, 14.0, 25.0, 100.0])
-    expected_phases = np.array([99, -1, 101, 101, 101, 101, 102, 102, 103, 103])
+    expected_phases = np.array([90., -1., 101., 101., 101., 101., 102., 102., 103., 103.])
     
     #generate the output from Raithel IFMR
     output_array = Raithel.generate_death_mass(test_MZAMS)
