@@ -82,6 +82,11 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.1.15 (2025-10-25)
+  * Updated Roman filter name from outdated w146 to current f146. From
+    now on a STScI CDBS data version from 2024-03-22 or later is
+    required to use the Roman filter photometry.
+
 2.1.14 (2025-10-23)
   * Added support for NACO intermediate bands
   * Added metallicity bounds check when calling atmosphere model grid
