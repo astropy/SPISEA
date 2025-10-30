@@ -82,6 +82,9 @@ called ``comp``, ``mtab``, and ``grid``.
 You will add additional atmosphere models to ``cdbs/grid`` in
 the :ref:`models` section below.
 
+Note: To use the Roman filters, the CDBS data version should be from
+2024-03-22 or later.
+
 
 .. _models:
 

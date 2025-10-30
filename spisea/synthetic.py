@@ -1644,7 +1644,7 @@ def get_obs_str(col):
                  'roman_f106': 'roman,wfi,f106',
                  'roman_f129': 'roman,wfi,f129',
                  'roman_f158': 'roman,wfi,f158',
-                 'roman_w146': 'roman,wfi,w146',
+                 'roman_f146': 'roman,wfi,f146',
                  'roman_f213': 'roman,wfi,f213',
                  'roman_f184': 'roman,wfi,f184',
                  'rubin_g':'rubin,g',
