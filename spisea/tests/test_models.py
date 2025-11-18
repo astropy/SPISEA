@@ -1,4 +1,3 @@
-# Test functions for the different stellar evolution and atmosphere models
 import numpy as np
 import pdb
 
