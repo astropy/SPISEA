@@ -154,8 +154,9 @@ class ResolvedCluster(Cluster):
         self.iso_interps = {}
         for ikey in interp_keys:
             self.iso_interps[ikey] = interpolate.interp1d(self.iso.points['mass'], self.iso.points[ikey],
-                                                          kind='linear', bounds_error=False, fill_value=np.nan)
-        
+                                                          kind='linear', bounds_error=False, fill_value=np.nan,
+                                                         assume_sorted=False) #BDs out of bounds
+            #____
         ##### 
         # Make a table to contain all the information about each stellar system.
         #####
@@ -232,14 +233,32 @@ class ResolvedCluster(Cluster):
         # Note: this only becomes relevant when the cluster is > 10**6 M-sun, this
         # effect is so small
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
+        
+        # Define brown dwarf mass range
+        bd_mask = (star_systems['mass'] >= 0.01) & (star_systems['mass'] <= 0.08)
+        #hard code BDs as 90 and invariant masses
+        star_systems['phase'][bd_mask] = 90
+        star_systems['mass_current'][bd_mask] = star_systems['mass'][bd_mask]
+        
+        # Identify bad phases (non-brown-dwarfs only)
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 90) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
-        # Print warning, if desired
-        verbose=False
+        bad = np.where(
+            (star_systems_phase_non_nan > 5)
+            & (star_systems_phase_non_nan < 90)
+            & (star_systems_phase_non_nan != 9)
+            & (star_systems_phase_non_nan != -99)
+            & (~bd_mask)
+        )
+        
+        # Verbose warnings (optional)
+        verbose = False
         if verbose:
             for ii in range(len(bad[0])):
-                print('WARNING: changing phase {0} to 5'.format(star_systems['phase'][bad[0][ii]]))
-        star_systems['phase'][bad] = 5
+                print(f"WARNING: changing phase {star_systems['phase'][bad[0][ii]]} to 5")
+        
+        # Only modify non-90, non-BD entries
+        mask = (np.floor(star_systems['phase'][bad]) != 90)
+        star_systems['phase'][bad][mask] = 5
         
         for filt in self.filt_names:
             star_systems[filt] = self.iso_interps[filt](star_systems['mass'])
@@ -277,23 +296,6 @@ class ResolvedCluster(Cluster):
             # Give remnants a magnitude of nan, so they can be filtered out later when calculating flux.
             for filt in self.filt_names:
                 star_systems[filt][idx_rem_good] = np.full(len(idx_rem_good), np.nan)
-
-            # override remnant conditions for BDs
-            idx_bd = np.where(star_systems['mass'] < 0.08)[0]
-            for i in idx_bd:
-                T = star_systems['Teff'][i]
-                g = star_systems['logg'][i]
-                print(T,g) 
-        
-                try:
-                    star_bd = atm.get_bd_atmosphere(temperature=T, gravity=g, metallicity=0, verbose=False)
-                    for filt in self.filt_names:
-                        star_systems[filt][i] = star_bd[filt]
-                except Exception as e:
-                    print(f"[Isochrone] BD atmosphere model failed for T={T}, logg={g}, idx={i}: {e}")
-                    # Keep filter magnitudes as NaN if model fails
-                    for filt in self.filt_names:
-                        star_systems[filt][i] = np.nan
 
         return star_systems
         
@@ -380,11 +382,20 @@ class ResolvedCluster(Cluster):
                 # stars, round phase down to nearest defined phase (e.g., if phase is 71,
                 # then round it down to 5, rather than up to 101).
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
+                
+                # reinforce BD phase of 90 and invariant masses
+                bd_mask = (companions['mass'] >= 0.01) & (companions['mass'] < 0.08)
+                companions['phase'][bd_mask] = 90
+                companions['mass_current'][bd_mask] = companions['mass'][bd_mask]
+                
                 companions_phase_non_nan = np.nan_to_num(companions['phase'], nan=-99)
-                bad = np.where( (companions_phase_non_nan > 5) &
-                                (companions_phase_non_nan < 90) &
-                                (companions_phase_non_nan != 9) &
-                                (companions_phase_non_nan != -99))
+                bad = np.where(
+                    (companions_phase_non_nan > 5) &
+                    (companions_phase_non_nan < 90) &
+                    (companions_phase_non_nan != 9) &
+                    (companions_phase_non_nan != -99) &
+                    (~bd_mask))
+                
                 # Print warning, if desired
                 verbose=False
                 if verbose:
@@ -458,26 +469,6 @@ class ResolvedCluster(Cluster):
                 if np.isnan(T) or np.isnan(g):
                     print('T/logg assigned nan for BD object!')
                     continue
-    
-                try:
-                    # Use the default atmosphere function to get the spectrum.
-                    star_bd_spec = default_atm_func(temperature=T, gravity=g, metallicity=self.iso.metallicity)
-    
-                    # Redden the spectrum
-                    red = default_red_law.reddening(self.iso.points.meta['AKS']).resample(star_bd_spec.wave)
-                    star_bd_spec *= red
-                    
-                    # Calculate magnitude in each filter
-                    for filt_name_long in self.filt_names:
-                        obs_str = get_obs_str(filt_name_long)
-                        filt_info = get_filter_info(obs_str)
-                        mag = mag_in_filter(star_bd_spec, filt_info)
-                        companions[filt_name_long][i] = mag
-                except Exception as e:
-                    print(f"[ResolvedCluster] BD companion atmosphere model failed for T={T}, logg={g}, idx={i}: {e}")
-                    # Keep filter magnitudes as NaN if model fails
-                    for filt in self.filt_names:
-                        companions[filt][i] = np.nan
 
   
         # Notify if we have a lot of bad ones.
@@ -751,10 +742,6 @@ class Isochrone(object):
         Set the stellar atmosphere models for the white dwafs. 
         Default is get_wd_atmosphere  
 
-    bd_atm_func: brown dwarf model atmosphere function, optional
-        Set the stellar atmosphere models for the brown dwafs. 
-        Default is get_bd_atmosphere
-
     mass_sampling : int, optional
         Sample the raw isochrone every `mass_sampling` steps. The default
         is mass_sampling = 0, which is the native isochrone mass sampling 
@@ -779,7 +766,7 @@ class Isochrone(object):
     """
     def __init__(self, logAge, AKs, distance, metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
-                 wd_atm_func = default_wd_atm_func, #bd_atm_func = default_bd_atm_func,
+                 wd_atm_func = default_wd_atm_func,
                  red_law=default_red_law, mass_sampling=1,
                  wave_range=[3000, 52000], min_mass=None, max_mass=None,
                  rebin=True):
@@ -900,10 +887,6 @@ class Isochrone(object):
             if phase == 101:
                 star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
                                        verbose=False)
-            #elif phase == 90:
-            #    print(f"Applying brown dwarf model to object {ii}")
-            #    star = bd_atm_func(temperature=T, gravity=gravity, metallicity=0,
-            #                           verbose=False)
             else:
                 star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
                                     rebin=rebin)
