@@ -788,54 +788,7 @@ class Isochrone(object):
         # Get solar metallicity models for a population at a specific age.
         # Takes about 0.1 seconds.
         evol = evo_model.isochrone(age=10**logAge,
-                                   metallicity=metallicity)
-
-        # Specify MergedPhillipsBaraffePisaEkstromParsec for brown dwarfs in all cases
-        try:
-            bd_model = evolution.MergedPhillipsBaraffePisaEkstromParsec()
-    
-            # Clamp to valid BD grid domain
-            logAge_bd = np.clip(logAge, 6.0, 10.0)
-            metallicity_bd = 0.0  # Phillips2020 only supports solar [Fe/H]
-    
-            # Notify user if clamping occurred
-            if logAge != logAge_bd:
-                print(f"[Isochrone] Adjusted BD logAge from {logAge:.2f} → {logAge_bd:.2f} (model valid range 6–10)")
-            print(f"[Isochrone] Using solar metallicity for BD grid ([Fe/H]={metallicity_bd:.2f})")
-    
-            # Compute BD isochrone
-            evol_bd = bd_model.isochrone(age=10**logAge_bd, metallicity=metallicity_bd)
-
-            # If no data at specified age, find the closest available age in the model grid.
-            if len(evol_bd) == 0:
-                print(f"[Isochrone] Warning: No BD data at logAge={logAge_bd:.2f}. Searching for closest age.")
-                # Find the closest age in the model's grid
-                available_ages = np.unique(bd_model.model['logAge'])
-                closest_logAge = available_ages[np.argmin(np.abs(available_ages - logAge_bd))]
-                
-                if closest_logAge != logAge_bd:
-                    print(f"[Isochrone] Using closest available BD logAge: {closest_logAge:.2f}")
-                    logAge_bd = closest_logAge
-                    evol_bd = bd_model.isochrone(age=10**logAge_bd, metallicity=metallicity_bd)
-    
-            # Define BD threshold and merge
-            bd_thresh = 0.075
-            evol_stars = evol[evol['mass'] >= bd_thresh]
-            evol_bd = evol_bd[evol_bd['mass'] < bd_thresh]
-    
-            if len(evol_bd) > 0:
-                evol = vstack([evol_bd, evol_stars])
-                evol.sort('mass')
-                print(f"[Isochrone] Merged brown dwarf evolution below {bd_thresh:.3f} Msun "
-                      f"from PhillipsBaraffePisaMerged model (logAge={logAge_bd:.2f}, [Fe/H]=0.0).")
-            else:
-                print("[Isochrone] Warning: Brown dwarf model returned no data below threshold.")
-    
-        except Exception as e:
-            import traceback
-            print(f"[Isochrone] Warning: Failed to merge brown dwarf model ({e})")
-            traceback.print_exc()
-        
+                                   metallicity=metallicity)   
 
         # Eliminate cases where log g is less than 0
         idx = np.where(evol['logg'] > 0)
