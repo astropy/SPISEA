@@ -47,7 +47,7 @@ class IMF(object):
         If None, no multiplicity is assumed. Otherwise, use 
         multiplicity object to create multiple star systems.
     """
-    def __init__(self, massLimits=np.array([0.1,150]), multiplicity=None):
+    def __init__(self, massLimits=np.array([0.01,150]), multiplicity=None):
         self._multi_props = multiplicity
         self._mass_limits = massLimits
 
@@ -202,7 +202,10 @@ class IMF(object):
     def calc_multi(self, newMasses, compMasses, newSystemMasses, newIsMultiple, CSF, MF):
         """
         Helper function to calculate multiples more efficiently.
-        We will use array operations as much as possible
+        We will use array operations as much as possible.
+        Uses Fontanive+18 parameters for brown dwarf masses 
+        (M <= 0.08 M_sun) while keeping default parameters for
+        all other stellar primaries.
         """
         # Identify multiple systems, calculate number of companions for
         # each 
@@ -213,18 +216,37 @@ class IMF(object):
             n_comp_arr[too_many] = self._multi_props.CSF_max
         primary = newMasses[idx]
 
+        # limiting BD companions to 1 (mass-based)
+        bd_mask = primary <= 0.08
+        n_comp_arr[bd_mask & (n_comp_arr > 1)] = 1
+
         # We will deal with each number of multiple system independently. This is
         # so we can put in uniform arrays in _multi_props.random_q.
         num = np.unique(n_comp_arr)
         for ii in num:
             tmp = np.where(n_comp_arr == ii)[0]
+            prim_subset = primary[tmp]
+
+            # define masks based on stellar or substellar range
+            bd_mask = prim_subset <= 0.08
+            star_mask = ~bd_mask
             
             if ii == 1:
                 # Single companion case
-                q_values = self._multi_props.random_q(np.random.rand(len(tmp)))
+                q_values = np.empty(len(tmp))
+
+                if np.any(star_mask):
+                    rand_vals = np.random.rand(star_mask.sum())
+                    q_values[star_mask] = self._multi_props.random_q(rand_vals)
+
+                if np.any(bd_mask):
+                    rand_vals = np.random.rand(bd_mask.sum())
+                    b = 1.0 + 6.1   #gamma from Fontanive+18
+                    q_values[bd_mask] = (rand_vals * (1.0 - self._multi_props.q_min ** b) + 
+                                         self._multi_props.q_min ** b) ** (1.0 / b)
                 
                 # Calculate mass of companion
-                m_comp = q_values * primary[tmp]
+                m_comp = q_values * prim_subset
 
                 # Only keep companions that are more than the minimum mass. Update
                 # compMasses, newSystemMasses, and newIsMultiple appropriately 
@@ -236,22 +258,30 @@ class IMF(object):
                 bad = np.where(m_comp < self._mass_limits[0])[0]
                 newIsMultiple[idx[tmp[bad]]] = False                
             else:
-                # Multple companion case
-                q_values = self._multi_props.random_q(np.random.rand(len(tmp), ii))
-
-                # Calculate masses of companions
-                m_comp = np.multiply(q_values, np.transpose([primary[tmp]]))
-
-                # Update compMasses, newSystemMasses, and newIsMultiple appropriately
+                # Multi-companion case
                 for jj in range(len(tmp)):
-                    m_comp_tmp = m_comp[jj]
+                    prim = prim_subset[jj]
+            
+                    # Finding q values of stellar and substellar primaries
+                    if prim <= 0.08:
+                        # BD case (Fontanive+18)
+                        b = 1.0 + 6.1
+                        rand_vals = np.random.rand(ii)
+                        q_values = (rand_vals * (1.0 - self._multi_props.q_min ** b) +
+                                    self._multi_props.q_min ** b) ** (1.0 / b)
+                    else:
+                        # Stellar case (Duchene & Kraus)
+                        q_values = self._multi_props.random_q(np.random.rand(ii))
+            
+                    # Calculate masses of companions & update compMasses, newSystemMasses, and newIsMultiple appropriately
+                    m_comp_tmp = q_values * prim
                     compMasses[idx[tmp[jj]]] = m_comp_tmp[m_comp_tmp >= self._mass_limits[0]]
                     newSystemMasses[idx[tmp[jj]]] += compMasses[idx[tmp[jj]]].sum()
-
-                    # Double check for the case when we drop all companions.
-                    # This happens a lot near the minimum allowed mass.
+            
+                    # Drop system if no valid companions remain
                     if len(compMasses[idx[tmp[jj]]]) == 0:
                         newIsMultiple[idx[tmp[jj]]] = False
+                        
 
         return compMasses, newSystemMasses, newIsMultiple
         
@@ -687,12 +717,29 @@ class Weidner_Kroupa_2004(IMF_broken_powerlaw):
     Mass range is 0.01 M_sun - inf M_sun.
     """
     def __init__(self, multiplicity=None):
-        massLimits = np.array([0.01, 0.08, 0.5, 1, np.inf])
+        massLimits = np.array([0.01, 0.08, 0.5, 1, 120])
         powers = np.array([-0.3, -1.3, -2.3, -2.35])
 
         IMF_broken_powerlaw.__init__(self, massLimits, powers,
                                      multiplicity=multiplicity)
-
+        
+class Salpeter_Kirkpatrick_2024(IMF_broken_powerlaw):
+    """
+    Define combined IMF from Kirkpatrick (2024) and Salpeter (1955) to allow
+    inclusion of the brown dwarf mass range.
+    Mass range: 
+        * 0.01 M_sun - 8 M_sun: Kirkpatrick 2024
+        <https://ui.adsabs.harvard.edu/abs/2024ApJS..271...55K/abstract>`_.
+        * 8 M_sun - 120 M_sun: Salpeter 1955
+        <https://ui.adsabs.harvard.edu/abs/1955ApJ...121..161S/abstract>`_.
+    """
+    def __init__(self, multiplicity=None):
+        massLimits = np.array([0.01, 0.05, 0.22, 0.55, 8, 120])
+        powers = np.array([-0.6, -0.25, -1.3, -2.3, -2.35])
+    
+        IMF_broken_powerlaw.__init__(self, massLimits, powers,
+                                     multiplicity=multiplicity)
+        
 ##################################################
 # 
 # Generic functions -- see if we can move these up.
