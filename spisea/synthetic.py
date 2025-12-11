@@ -434,7 +434,8 @@ class ResolvedCluster(Cluster):
             print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
 
         # Double check that everything behaved properly.
-        assert companions['mass'][idx].min() > 0
+        if len(idx)>0:
+            assert companions['mass'][idx].min() > 0
 
         return companions
 
@@ -469,7 +470,8 @@ class ResolvedCluster(Cluster):
         else:
             print('Keep low mass stars below grid and compact objects')
             # Keep all
-            idx = np.arange(N_systems)
+            idx = np.where( (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) |
+                            ((star_systems['mass']<np.min(self.iso.points['mass']))) )[0]
 
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
