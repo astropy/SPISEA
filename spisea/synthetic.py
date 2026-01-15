@@ -120,6 +120,12 @@ class ResolvedCluster(Cluster):
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
 
+    keep_low_mass_stars: boolean (default False)
+        If True, the cluster will not cut out stars below the isochrone grid 
+        on initial mass. They are assigned a current mass equal to their initial 
+        mass, a phase of 98, and no other evolutionary properties or photometry.
+        If False, stars below the isochrone initial mass limit are cut out.
+
     seed: int
         If set to non-None, all random sampling will be seeded with the
         specified seed, forcing identical output.
