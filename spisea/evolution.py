@@ -1017,6 +1017,12 @@ class MISTv1(StellarEvolution):
         was downloaded from MIST website on 2/2017, while Version 1.2
         was downloaded on 8/2018 (solar metallicity)
         and 4/2019 (other metallicities). Default is 1.2.
+        
+    synthpop_extension: boolean (default False)
+        If True, the isochrones are extended down to a minimum initial
+        mass of 0.1Msun using grids interpolated via SynthPop. If False,
+        the web-downloaded MIST isochrones are used with their varying  
+        lower mass limits. True option is only valid for version=1.2.
     """
     def __init__(self, version=1.2, synthpop_extension=False):
         # define metallicity parameters for MIST models
