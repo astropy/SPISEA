@@ -79,6 +79,10 @@ class StellarEvolution(object):
 
     z_list: list
         List of metallicities
+
+    model_version_name: string
+        Name of the model class plus additional details like version
+        numbers and rotation if relevant.
     """
     def __init__(self, model_dir, age_list, mass_list, z_list):
         self.model_dir = model_dir
