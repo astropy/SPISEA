@@ -120,6 +120,12 @@ class ResolvedCluster(Cluster):
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
 
+    keep_low_mass_stars: boolean (default False)
+        If True, the cluster will not cut out stars below the isochrone grid 
+        on initial mass. They are assigned a current mass equal to their initial 
+        mass, a phase of 98, and no other evolutionary properties or photometry.
+        If False, stars below the isochrone initial mass limit are cut out.
+
     seed: int
         If set to non-None, all random sampling will be seeded with the
         specified seed, forcing identical output.
@@ -129,7 +135,7 @@ class ResolvedCluster(Cluster):
         True for verbose output.
     """
     def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=True,
-                     seed=None):
+                     seed=None, keep_low_mass_stars=False):
         Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
                              seed=seed)
         # Provide a user warning is random seed is set
@@ -163,7 +169,7 @@ class ResolvedCluster(Cluster):
         
         # Trim out bad systems; specifically, stars with masses outside those provided
         # by the model isochrone (except for compact objects).
-        star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
+        star_systems, compMass = self._remove_bad_systems(star_systems, compMass, keep_low_mass_stars)
 
         ##### 
         # Make a table to contain all the information about companions.
@@ -433,13 +439,19 @@ class ResolvedCluster(Cluster):
         if len(idx) != N_comp_tot and self.verbose:
             print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
 
+        # For low-mass stars and substellar objects below isochrone, assume no mass loss and set phase to 98
+        low_mass_idxs = (companions['mass']<np.min(self.iso.points['mass']))
+        companions['mass_current'][low_mass_idxs] = companions['mass'][low_mass_idxs]
+        companions['phase'][low_mass_idxs] = 98
+
         # Double check that everything behaved properly.
-        assert companions['mass'][idx].min() > 0
+        if len(idx)>0:
+            assert companions['mass'][idx].min() > 0
 
         return companions
 
     
-    def _remove_bad_systems(self, star_systems, compMass):
+    def _remove_bad_systems(self, star_systems, compMass, keep_low_mass_stars):
         """
         Helper function to remove stars with masses outside the isochrone
         mass range from the cluster. These stars are identified by having 
@@ -454,15 +466,33 @@ class ResolvedCluster(Cluster):
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         star_systems_teff_non_nan = np.nan_to_num(star_systems['Teff'], nan=-99)
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-        if self.ifmr == None:
+        if (self.ifmr == None) and (not keep_low_mass_stars):
+            print('Remove low mass stars below grid and compact objects')
             # Keep only those stars with Teff assigned.
             idx = np.where(star_systems_teff_non_nan > 0)[0]
-        else:
+        elif not keep_low_mass_stars:
+            print('Remove low mass stars, keep compact objects')
             # Keep stars (with Teff) and any other compact objects (with phase info). 
             idx = np.where( (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) )[0]
+        elif self.ifmr == None:
+            print('Remove compact objects, keep low mass stars below grid')
+            # Keep stars (with Teff) and objects below mass grid
+            idx = np.where( (star_systems_teff_non_nan > 0) | ((star_systems['mass']<np.min(self.iso.points['mass']))) )[0]
+        else:
+            print('Keep low mass stars below grid and compact objects')
+            # Keep all
+            idx = np.where( (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) |
+                            ((star_systems['mass']<np.min(self.iso.points['mass']))) )[0]
 
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
+
+        if keep_low_mass_stars:
+            lm_idx = np.where(star_systems['mass']<np.min(self.iso.points['mass']))[0]
+            # Adjust the properties as needed
+            star_systems['mass_current'][lm_idx] = star_systems['mass'][lm_idx]
+            star_systems['phase'][lm_idx] = 98
+            #pdb.set_trace()
 
         star_systems = star_systems[idx]
         N_systems = len(star_systems)
@@ -511,10 +541,10 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         True for verbose output.
     """
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 ifmr=None, verbose=False, seed=None):
+                 ifmr=None, verbose=False, seed=None, keep_low_mass_stars=False):
 
         ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
-                                     seed=seed)
+                                     seed=seed, keep_low_mass_stars=keep_low_mass_stars)
 
         # Set random seed, if desired
         if seed is not None:
@@ -809,6 +839,7 @@ class Isochrone(object):
         tab.meta['REDLAW'] = red_law.name
         tab.meta['ATMFUNC'] = atm_func.__name__
         tab.meta['EVOMODEL'] = type(evo_model).__name__
+        tab.meta['EVOMODELVERSION'] = evo_model.model_version_name
         tab.meta['LOGAGE'] = logAge
         tab.meta['AKS'] = AKs
         tab.meta['DISTANCE'] = distance
@@ -1141,6 +1172,13 @@ class IsochronePhot(Isochrone):
                 (tmp.meta['ATMFUNC'] == atm_func.__name__) &
                  (tmp.meta['REDLAW'] == red_law.name) ):
                 out_bool = True
+
+            # Check model version if it was logged
+            if 'EVOMODELVERSION' in tmp.meta:
+                if tmp.meta['EVOMODELVERSION']!=evo_model.model_version_name:
+                    out_bool=False
+            else:
+                print(f"No version information found for evolution model {type(evo_model).__name__}.")
             
         return out_bool
 
@@ -1325,6 +1363,7 @@ class iso_table(object):
         
         tab.meta['ATMFUNC'] = atm_func.__name__
         tab.meta['EVOMODEL'] = type(evo_model).__name__
+        tab.meta['EVOMODELVERSION'] = evo_model.model_version_name
         tab.meta['LOGAGE'] = logAge
         tab.meta['DISTANCE'] = distance
         tab.meta['WAVEMIN'] = wave_range[0]
