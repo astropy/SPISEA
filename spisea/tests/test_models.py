@@ -79,11 +79,14 @@ def test_synthpop_MIST_extension():
     evo2_grid = evolution.MISTv1(version=1.2, synthpop_extension=True)
 
     # Extract same isochrone from these two models
-    logAge = 6.7
+    logAge = 10.12
     evo1 = evo1_grid.isochrone(10**logAge, metallicity=0)
     evo2 = evo2_grid.isochrone(10**logAge, metallicity=0)
 
     # I expect evo2 extends to low masses velow evo1
+    assert len(evo2) > len(evo1)
+    assert np.min(evo2['mass']) < np.min(evo1['mass'])
+
     return
 
 def test_atmosphere_models():
