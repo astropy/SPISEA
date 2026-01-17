@@ -1092,8 +1092,8 @@ class MISTv1(StellarEvolution):
                            0.025: 'z025/',
                            0.045: 'z045/'}
 
-        # Define required evo_grid number
-        self.evo_grid_min = 1.1
+        # Define required evo_grid number (now 1.2 for synthpop extension)
+        self.evo_grid_min = 1.2
                 
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
