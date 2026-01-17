@@ -640,6 +640,65 @@ def test_cluster_mass():
 
     return
 
+def test_keep_low_mass_stars():
+    """
+    Test "keep_low_mass_stars = True" functionality introduced in v2.2 
+    """
+    # Define cluster parameters, pulling on an isochrone generated in an earlier test (since
+    # we don't care about isochrone generation here
+    logAge = 6.7
+    AKs = 2.4
+    distance = 4000
+    cluster_mass = 10**5.
+    mass_sampling = 5
+
+    # Test filters
+    filt_list = ['nirc2,J', 'nirc2,Kp']
+    
+    # Define evolution/atmosphere models and extinction law
+    evo = evolution.MISTv1() 
+    atm_func = atmospheres.get_merged_atmosphere
+    red_law = reddening.RedLawHosek18b()
+    
+    iso = syn.IsochronePhot(logAge, AKs, distance,
+                            evo_model=evo, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                            mass_sampling=mass_sampling)
+
+    # Get the minimum mass in the isochrones. This should be the lowest
+    # mass psosbile when keep_low_mass_stars == False.
+    # Make sure this min mass is low enough for a reasonalbe test
+    min_mass_iso = np.min(iso.points['mass'])
+    assert min_mass_iso >= 0.05
+    
+    # Define IMF + IFMR. Make sure IMF goes to really low masses,
+    # below the 0.08 Msun limit of the MIST isochrones
+    imf_min = 0.01
+    imf_mass_limits = np.array([imf_min, 0.5, 1, 120.0])
+    imf_powers = np.array([-1.3, -2.3, -2.3])
+    my_ifmr = ifmr.IFMR_Raithel18()
+    my_imf = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
+                                      multiplicity=multiplicity.MultiplicityUnresolved())
+
+    # Define 2 clusters: one without keep_low_mass_stars and the other
+    # with keep_low_mass_stars
+    clust_remove = syn.ResolvedCluster(iso, my_imf, cluster_mass, ifmr=my_ifmr, keep_low_mass_stars=False)
+    clust_keep = syn.ResolvedCluster(iso, my_imf, cluster_mass, ifmr=my_ifmr, keep_low_mass_stars=True)
+
+    # Check the star_systems tables: clust_remove loweset mass should match
+    # min_mass_iso, while clust_keep should stretch to IMF limit (1%)
+    assert np.isclose(np.min(clust_keep.star_systems['mass']), imf_min, rtol=0.01, atol=10**-8)
+    assert (np.isclose(np.min(clust_remove.star_systems['mass']), imf_min, rtol=0.01, atol=10**-8) == False)
+
+    # NOTE: companion table always had the low-mass stars, this functionality is only on the star_systems table
+
+    # Finally, make sure these low-mass stars have properly assigned phase = 98
+    idx = np.where(clust_keep.star_systems['mass'] < min_mass_iso)
+    assert ( (len(idx[0]) > 0) & (np.all(clust_keep.star_systems['phase'][idx] == 98)) )
+
+    return
+
+        
 def test_compact_object_companions():
     
     # Define cluster parameters
