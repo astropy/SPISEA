@@ -1,4 +1,5 @@
 # Test functions for the different stellar evolution and atmosphere models
+from spisea import evolution
 import numpy as np
 import pdb
 
@@ -21,8 +22,6 @@ def test_evolution_models():
     """
     Test to make sure the different evolution models work
     """
-    from spisea import evolution
-
     # Age ranges to test
     age_young_arr = [6.7, 7.9]
     age_all_arr = [6.7, 8.0, 9.7]
@@ -70,6 +69,21 @@ def test_evolution_models():
 
         print('Done {0}'.format(evo))
         
+    return
+
+def test_synthpop_MIST_extension():
+    """
+    Testing the synthpop MIST extension to consistently lower masses 
+    """
+    evo1_grid = evolution.MISTv1(version=1.2, synthpop_extension=False)
+    evo2_grid = evolution.MISTv1(version=1.2, synthpop_extension=True)
+
+    # Extract same isochrone from these two models
+    logAge = 6.7
+    evo1 = evo1_grid.isochrone(10**logAge, metallicity=0)
+    evo2 = evo2_grid.isochrone(10**logAge, metallicity=0)
+
+    # I expect evo2 extends to low masses velow evo1
     return
 
 def test_atmosphere_models():
