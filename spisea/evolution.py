@@ -1327,6 +1327,7 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         age_idx = np.where(abs(np.array(self.age_list) - log_age) == min(abs(np.array(self.age_list) - log_age)) )[0][0]
         iso_file = 'iso_{0:.2f}.fits'.format(self.age_list[age_idx])
         
+        
         # find closest metallicity value
         z_idx = np.where(abs(np.array(self.z_list) - z_defined) == min(abs(np.array(self.z_list) - z_defined)) )[0][0]
         z_dir = self.z_file_map[self.z_list[z_idx]]
@@ -1335,7 +1336,16 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         full_iso_file = self.model_dir + z_dir + iso_file
 
         # return isochrone data
-        iso = Table.read(full_iso_file, format='fits')
+        try:
+            # FITS version of file (older model evolution grids)
+            iso = Table.read(full_iso_file, format='fits')
+        except:
+            # ASCII version of files (newer model evo grids
+            iso_file = 'iso_{0:.2f}.dat'.format(self.age_list[age_idx])
+            full_iso_file = self.model_dir + z_dir + iso_file
+            
+            iso = Table.read(full_iso_file, format='ascii')
+            
         iso.rename_column('col1', 'mass')
         iso.rename_column('col2', 'logT')
         iso.rename_column('col3', 'logL')
