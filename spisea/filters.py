@@ -437,7 +437,7 @@ def get_rubin_filt(name):
     try:
         t = Table.read('{0}/rubin/{1}.dat'.format(filters_dir, name), format='ascii')
     except:
-        raise ValueError('Could not find Rubin LSST filter file {0}/total_/{1}.dat'.format(filters_dir, name))
+        raise ValueError('Could not find Rubin LSST filter file {0}/rubin/{1}.dat'.format(filters_dir, name))
 
     wavelength = t[t.keys()[0]]
     transmission = t[t.keys()[1]]
@@ -448,5 +448,27 @@ def get_rubin_filt(name):
     # Make spectrum object
     spectrum = pysynphot.ArrayBandpass(wavelength, transmission, waveunits='angstrom',
                                        name='rubin_{0}'.format(name))
+
+    return spectrum
+
+def get_euclid_filt(name):
+    """
+    Define the Euclid filters as a pysynphot spectrum object
+    """
+    # Read in filter info
+    try:
+        t = Table.read('{0}/euclid/{1}.dat'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find Euclid filter file {0}/euclid/{1}.dat'.format(filters_dir, name))
+
+    wavelength = t[t.keys()[0]]
+    transmission = t[t.keys()[1]]
+
+    # Convert wavelength to Angstroms
+    wavelength = wavelength * 10
+
+    # Make spectrum object
+    spectrum = pysynphot.ArrayBandpass(wavelength, transmission, waveunits='angstrom',
+                                       name='euclid_{0}'.format(name))
 
     return spectrum
