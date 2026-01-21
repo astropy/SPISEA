@@ -91,7 +91,11 @@ Change Log
      evolutionary information or photometry.
    * Evolution model versions are now logged in IsochronePhot files
      and checked if present.
-   * The option ``synthpop_extension`` is now available for MISTv1 version=1.2 evolution. This fills in the missing parameter space down to initial mass 0.1Msun in isochrones where needed. Use of this option will require downloading updated isochrone files.
+   * The option ``synthpop_extension`` is now available for MISTv1
+     version=1.2 evolution. This fills in the missing parameter space
+     down to initial mass 0.1Msun in isochrones where needed. Use of
+     this option will require downloading updated isochrone files.
+   * Added support for Euclid filters. 
     
 2.1.15 (2025-10-25)
   * Updated Roman filter name from outdated w146 to current f146. From
