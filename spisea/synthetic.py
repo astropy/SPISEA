@@ -1548,6 +1548,9 @@ def get_filter_info(name, vega=vega, rebin=True):
      
     elif name.startswith('rubin'):
         filt = filters.get_rubin_filt(filterName)
+
+    elif name.startswith('euclid'):
+        filt = filters.get_euclid_filt(filterName)
         
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
@@ -1691,7 +1694,10 @@ def get_obs_str(col):
                  'rubin_r':'rubin,r',
                  'rubin_u':'rubin,u',
                  'rubin_z':'rubin,z',
-                 'rubin_y':'rubin,y'}
+                 'rubin_y':'rubin,y',
+                 'euclid_Y':'euclid,Y',
+                 'euclid_J':'euclid,J',
+                 'euclid_H':'euclid,H'}
 
     obs_str = filt_list[name]
         
