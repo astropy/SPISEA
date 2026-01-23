@@ -1497,8 +1497,33 @@ class MISTv1(StellarEvolution):
 #==============================#
 class MergedPhillipsBaraffePisaEkstromParsec(StellarEvolution):
     """
-    All merged! 
+    This is a combination of several different evolution models:
 
+    * Phillips (`Phillips et al. 2020 <https://ui.adsabs.harvard.edu/abs/2020A%26A...637A..38P/abstract>`_)
+    * Baraffe (`Baraffe et al. 2015 <https://ui.adsabs.harvard.edu/abs/2015A%26A...577A..42B/abstract>`_)
+    * Pisa (`Tognelli et al. 2011 <https://ui.adsabs.harvard.edu/abs/2011A%26A...533A.109T/abstract>`_)
+    * Geneva (`Ekstrom et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012A%26A...537A.146E/abstract>`_)
+    * Parsec (version 1.2s, `Bressan+12 <https://ui.adsabs.harvard.edu/abs/2012MNRAS.427..127B/abstract>`_)
+
+    The model used depends on the age of the population and what stellar masses
+    are being modeled:
+    
+
+    For logAge < 7.4:
+
+    * Phillips: 0.01 - 0.07 M_sun
+    * Phillips/Baraffe transition: 0.070 - 0.075 M_sun
+    * Baraffe: 0.075 - 0.4 M_sun
+    * Baraffe/Pisa transition: 0.4 - 0.5 M_sun 
+    * Pisa: 0.5 M_sun to the highest mass in Pisa isochrone (typically 5 - 7 Msun)
+    * Geneva: Highest mass of Pisa models to 120 M_sun
+
+    For logAge > 7.4:
+
+    * Phillips: 0.01 - 0.075 M_sun
+    * Phillips/Parsec v1.2s transition: 0.075 - 0.2 M_sun
+    * Parsec v1.2s: full mass range above 0.2 M_sun
+    
     Parameters
     ----------
     rot: boolean, optional
