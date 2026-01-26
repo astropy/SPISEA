@@ -84,7 +84,7 @@ Example: ``'decam,r'``
 **Euclid**
 
 Euclid space telescope `NISP filters <https://doi.org/10.5270/esa-kx8w57c>`_ 
-and `VIS filter-free detector transmission curve <https://svo2.cab.inta-csic.es/svo/theory/fps/index.php?id=Euclid/VIS.vis>`_
+and `VIS single filter <https://svo2.cab.inta-csic.es/svo/theory/fps/index.php?id=Euclid/VIS.vis>`_
 
 Filters: VIS, Y, J, H
 
