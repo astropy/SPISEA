@@ -16,21 +16,7 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     """
     Given atmosphere model, get temperature and gravity bounds
     """
-    # Open catalog fits file and break out row indices
-    catalog = Table.read('{0}/grid/{1}/catalog.fits'.format(os.environ['PYSYN_CDBS'], model_dir))
-    
-    teff_arr = []
-    z_arr = []
-    logg_arr = []
-    for cur_row_index in range(len(catalog)):
-        index = catalog['INDEX'][cur_row_index]
-        tmp = index.split(',')
-        teff_arr.append(float(tmp[0]))
-        z_arr.append(float(tmp[1]))
-        logg_arr.append(float(tmp[2]))
-    teff_arr = np.array(teff_arr)
-    z_arr = np.array(z_arr)
-    logg_arr = np.array(logg_arr)
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid(model_dir)
 
     # Filter by metallicity. Will chose the closest metallicity to desired input
     metal_list = np.unique(np.array(z_arr))
@@ -93,6 +79,45 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     
     return (temperature_new, gravity_new, metallicity_new)
 
+def get_atmosphere_grid(model_dir):
+    """
+    Gets grid of temps, Zs, and loggs of atmosphere grid
+
+    Parameters
+    ----------
+    model_dir : str
+        Model directory
+
+    Returns
+    -------
+    teff_arr : array-like
+        Temperature array
+
+    z_arr : array-like
+        Metallicity array
+ 
+    logg_arr : array-like
+        Surface gravity array
+    """
+    # Open catalog fits file and break out row indices
+    catalog = Table.read('{0}/grid/{1}/catalog.fits'.format(os.environ['PYSYN_CDBS'], model_dir))
+    
+    teff_arr = []
+    z_arr = []
+    logg_arr = []
+    for cur_row_index in range(len(catalog)):
+        index = catalog['INDEX'][cur_row_index]
+        tmp = index.split(',')
+        teff_arr.append(float(tmp[0]))
+        z_arr.append(float(tmp[1]))
+        logg_arr.append(float(tmp[2]))
+    teff_arr = np.array(teff_arr)
+    z_arr = np.array(z_arr)
+    logg_arr = np.array(logg_arr)
+
+    return teff_arr, z_arr, logg_arr
+    
+
 def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=False):
     """
     Return atmosphere from the Kurucz pysnphot grid 
@@ -118,6 +143,7 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=Fal
     rebin: boolean
         Always false for this particular function
     """
+        
     try:
         sp = pysynphot.Icat('k93models', temperature, metallicity, gravity)
     except:
@@ -138,6 +164,20 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=Fal
         print( '  log gravity = %.1f' % gravity)
 
     return sp
+
+def get_kurucz_atmosphere_grid():
+    """
+    Return atmosphere grid from the Kurucz pysnphot grid 
+    (`Kurucz 1993 <http://www.stsci.edu/hst/observatory/crds/k93models.html>`_).
+
+    Grid Range:
+
+    * Teff: 3000 - 50000 K
+    * gravity: 0 - 5 cgs
+    * metallicity: -5.0 - 1.0
+    """
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid('k93models')
+    return teff_arr, z_arr, logg_arr
 
 def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=False):
     """
@@ -190,12 +230,30 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=F
 
     return sp
 
+def get_castelli_atmosphere_grid():
+    """
+    Return atmosphere grid from the pysynphot ATLAS9 atlas 
+    (`Castelli & Kurucz 2004 <http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html>`_).
+
+    Grid Range: 
+
+    * Teff: 3500 - 50000 K
+    * gravity: 0 - 5.0 cgs
+    * [M/H]: -2.5 - 0.2
+    """
+    
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid('ck04models')
+    return teff_arr, z_arr, logg_arr
+
 def get_nextgen_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=False):
     """
     metallicity = [M/H] (def = 0)
     temperature = Kelvin (def = 5000)
     gravity = log gravity (def = 4.0)
     """
+    if get_grid_only:
+        teff_arr, z_arr, logg_arr = get_atmosphere_grid('nextgen')
+        return teff_arr, z_arr, logg_arr
     try:
         sp = pysynphot.Icat('nextgen', temperature, metallicity, gravity)
     except:
@@ -217,12 +275,22 @@ def get_nextgen_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=Fal
 
     return sp
 
+def get_nextgen_atmosphere_grid():
+    """
+    metallicity = [M/H] (def = 0)
+    temperature = Kelvin (def = 5000)
+    gravity = log gravity (def = 4.0)
+    """
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid('nextgen')
+    return teff_arr, z_arr, logg_arr
+
 def get_amesdusty_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=False):
     """
     metallicity = [M/H] (def = 0)
     temperature = Kelvin (def = 5000)
     gravity = log gravity (def = 4.0)
     """
+        
     sp = pysynphot.Icat('AMESdusty', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -234,6 +302,15 @@ def get_amesdusty_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=F
         print( '  log gravity = %.1f' % gravity)
 
     return sp
+
+def get_amesdusty_atmosphere_grid():
+    """
+    metallicity = [M/H] (def = 0)
+    temperature = Kelvin (def = 5000)
+    gravity = log gravity (def = 4.0)
+    """
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid('AMESdusty')
+    return teff_arr, z_arr, logg_arr
 
 def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
                                rebin=False):
@@ -256,8 +333,8 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
         which is often sufficient synthetic photometry in most cases.
-
     """
+        
     try:
         sp = pysynphot.Icat('phoenix', temperature, metallicity, gravity)
     except:
@@ -279,6 +356,15 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
 
     return sp
 
+def get_phoenix_atmosphere_grid():
+    """
+    Return atmosphere grid from the pysynphot 
+    `PHOENIX atlas <http://www.stsci.edu/hst/observatory/crds/SIfileInfo/pysynphottables/index_phoenix_models_html>`_.
+
+    """
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid('phoenix')
+    return teff_arr, z_arr, logg_arr
+
 def get_cmfgenRot_atmosphere(metallicity=0, temperature=24000, gravity=4.3, rebin=True):
     """
     metallicity = [M/H] (def = 0)
@@ -287,6 +373,7 @@ def get_cmfgenRot_atmosphere(metallicity=0, temperature=24000, gravity=4.3, rebi
 
     rebin=True: pull from atmospheres at ck04model resolution.
     """
+        
     # Take care of atmospheres outside the catalog boundaries
     logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
     if gravity > 4.3:
@@ -307,6 +394,21 @@ def get_cmfgenRot_atmosphere(metallicity=0, temperature=24000, gravity=4.3, rebi
         print( '  log gravity = %.1f' % gravity)
 
     return sp
+
+def get_cmfgenRot_atmosphere_grid(rebin=True):
+    """
+    metallicity = [M/H] (def = 0)
+    temperature = Kelvin (def = 24000)
+    gravity = log gravity (def = 4.3)
+
+    rebin=True: pull from atmospheres at ck04model resolution.
+    """
+    if rebin:
+        teff_arr, z_arr, logg_arr = get_atmosphere_grid('cmfgen_rot_rebin')
+    else:
+        teff_arr, z_arr, logg_arr = get_atmosphere_grid('cmfgen_rot')
+    return teff_arr, z_arr, logg_arr
+
 
 def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4.3, rebin=True,
                                          verbose=False):
@@ -384,6 +486,7 @@ def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4
 
     return sp
 
+
 def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=22500, gravity=3.98, rebin=True):
     """
     metallicity = [M/H] (def = 0)
@@ -392,6 +495,7 @@ def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=22500, gravity=3.98, r
 
     rebin=True: pull from atmospheres at ck04model resolution.
     """
+        
     if rebin:
         sp = pysynphot.Icat('cmfgen_norot_rebin', temperature, metallicity, gravity)
     else:
@@ -407,12 +511,27 @@ def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=22500, gravity=3.98, r
 
     return sp
 
+def get_cmfgenNoRot_atmosphere_grid(rebin=True):
+    """
+    metallicity = [M/H] (def = 0)
+    temperature = Kelvin (def = 24000)
+    gravity = log gravity (def = 4.3)
+
+    rebin=True: pull from atmospheres at ck04model resolution.
+    """
+    if rebin:
+        teff_arr, z_arr, logg_arr = get_atmosphere_grid('cmfgen_norot_rebin')
+    else:
+        teff_arr, z_arr, logg_arr = get_atmosphere_grid('cmfgen_norot')
+    return teff_arr, z_arr, logg_arr
+
 def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=30000, gravity=4.14):
     """
     metallicity = [M/H] (def = 0)
     temperature = Kelvin (def = 30000)
     gravity = log gravity (def = 4.14)
     """
+        
     sp = pysynphot.Icat('cmfgenF15_noRot', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -424,6 +543,15 @@ def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=30000, gravity=4.14):
         print( '  log gravity = %.1f' % gravity)
 
     return sp
+
+def get_cmfgenNoRot_atmosphere_grid():
+    """
+    metallicity = [M/H] (def = 0)
+    temperature = Kelvin (def = 30000)
+    gravity = log gravity (def = 4.14)
+    """
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid('cmfgenF15_noRot')
+    return teff_arr, z_arr, logg_arr
 
 def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=True):
     """
@@ -454,8 +582,8 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
         which is often sufficient synthetic photometry in most cases.
-
     """
+        
     atm_model_name = 'phoenix_v16'
     if rebin == True:
         atm_model_name = 'phoenix_v16_rebin'
@@ -482,6 +610,33 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
         print( '  log gravity = %.1f' % gravity)
 
     return sp
+
+def get_phoenixv16_atmosphere_grid(rebin=True):
+    """
+    Return PHOENIX v16 atmosphere grid from  
+    `Husser et al. 2013 <https://ui.adsabs.harvard.edu/abs/2013A%26A...553A...6H/abstract>`_. 
+    
+    Models originally downloaded via `ftp <http://phoenix.astro.physik.uni-goettingen.de/?page_id=15>`_.
+    Solar metallicity and [alpha/Fe] is used.
+
+    Grid Range:
+
+    * Teff: 2300 - 7000 K, steps of 100 K; 7000 - 12000 in steps of 200 K
+    * gravity: 0.0 - 6.0 cgs, steps of 0.5
+    * [M/H]: -4.0 - 1.0
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is True
+    """
+        
+    atm_model_name = 'phoenix_v16'
+    if rebin == True:
+        atm_model_name = 'phoenix_v16_rebin'
+    
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid(atm_model_name)
+    return teff_arr, z_arr, logg_arr
+
 
 def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebin=True):
     """
@@ -511,7 +666,7 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
     rebin: boolean
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
-        which is often sufficient synthetic photometry in most cases.    
+        which is often sufficient synthetic photometry in most cases.   
     """
     if rebin == True:
         atm_name = 'BTSettl_2015_rebin'
@@ -539,6 +694,33 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
         print( '  log gravity = %.1f' % gravity)
 
     return sp
+
+def get_BTSettl_2015_atmosphere_grid(rebin=True):
+    """
+    Return atmosphere grid from CIFIST2011_2015 grid 
+    (`Allard et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012RSPTA.370.2765A/abstract>`_, 
+    `Baraffe et al. 2015 <https://ui.adsabs.harvard.edu/abs/2015A%26A...577A..42B/abstract>`_ )
+
+    Grid originally downloaded from `website <https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/FITS/>`_.
+
+    Grid Range:
+    
+    * Teff: 1200 - 7000 K
+    * gravity: 2.5 - 5.5 cgs
+    * [M/H] = 0
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is True  
+    """
+    if rebin == True:
+        atm_name = 'BTSettl_2015_rebin'
+    else:
+        atm_name = 'BTSettl_2015'
+        
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid(atm_name)
+    return teff_arr, z_arr, logg_arr
+
 
 def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=True):
     """
@@ -640,6 +822,76 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
 
     return sp
 
+def get_BTSettl_atmosphere_grid(rebin=True):
+    """
+    Return atmosphere grid from CIFIST2011 grid 
+    (`Allard et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012RSPTA.370.2765A/abstract>`_)
+
+    Grid originally downloaded `here <https://phoenix.ens-lyon.fr/Grids/BT-Settl/>`_
+
+    Notes
+    ------
+    Grid Range:
+    
+    * [M/H] = -2.5, -2.0, -1.5, -1.0, -0.5, 0, 0.5
+    
+    Teff and gravity ranges depend on metallicity:
+
+    [M/H] = -2.5
+
+    * Teff: 2600 - 4600 K
+    * gravity: 4.5 - 5.5
+    
+    [M/H] = -2.0
+
+    * Teff: 2600 - 7000
+    * gravity: 4.5 - 5.5
+
+    [M/H] = -1.5
+
+    * Teff: 2600 - 7000
+    * gravity: 4.5 - 5.5
+
+    [M/H] = -1.0
+
+    * Teff: 2600 - 7000
+    * gravity: Teff < 3200 --> 4.5 - 5.5; Teff > 3200 --> 2.5 - 5.5 
+
+    [M/H] = -0.5
+
+    * Teff: 1000 -7000
+    * gravity: Teff < 3000 --> 4.5 - 5.5; Teff > 3000 --> 3.0 - 6.0
+
+    [M/H] = 0
+
+    * Teff: 750 - 7000
+    * gravity: Teff < 2500 --> 3.5 - 5.5; Teff > 2500 --> 0 - 5.5
+
+    [M/H] = 0.5
+
+    * Teff: 1000 - 5000
+    * gravity: 3.5 - 5.0
+
+
+    Alpha enhancement:
+
+    * [M/H]= -0.0, +0.5 no anhancement
+    * [M/H]= -0.5 with [alpha/H]=+0.2
+    * [M/H]= -1.0, -1.5, -2.0, -2.5 with [alpha/H]=+0.4
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is True.
+    """
+    if rebin == True:
+        atm_name = 'BTSettl_rebin'
+    else:
+        atm_name = 'BTSettl'
+
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid(atm_name)
+    return teff_arr, z_arr, logg_arr
+
+
 def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
     """
     Return white dwarf atmospheres from  
@@ -661,6 +913,7 @@ def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
         resolution as the Castelli+04 atmospheres. Default is False,
         which is often sufficient synthetic photometry in most cases.
     """
+        
     sp = pysynphot.Icat('wdKoester', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -673,12 +926,21 @@ def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
         
     return sp
 
+def get_wdKoester_atmosphere_grid():
+    """
+    Return white dwarf grid atmospheres from  
+    `Koester et al. 2010 <https://ui.adsabs.harvard.edu/abs/2010MmSAI..81..921K/abstract>`_
+    """
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid('wdKoester')
+    return teff_arr, z_arr, logg_arr
+
 def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     """
     Return atmosphere that is a linear merge of atlas ck04 model and phoenixV16.
 
     Only valid for temps between 5000 - 5500K, gravity from 0 = 5.0 
     """
+        
     try:
         sp = pysynphot.Icat('merged_atlas_phoenix', temperature, metallicity, gravity)
     except:
@@ -700,6 +962,15 @@ def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 
     return sp
 
+def get_atlas_phoenix_atmosphere_grid():
+    """
+    Return atmosphere that is a linear merge of atlas ck04 model and phoenixV16.
+
+    Only valid for temps between 5000 - 5500K, gravity from 0 = 5.0 
+    """
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid('merged_atlas_phoenix')
+    return teff_arr, z_arr, logg_arr
+        
 def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     """
     Return atmosphere that is a linear merge of BTSettl_CITFITS2011_2015 model
@@ -728,6 +999,17 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 
     return sp
 
+def get_BTSettl_phoenix_atmosphere_grid():
+    """
+    Return atmosphere grid that is a linear merge of BTSettl_CITFITS2011_2015 model
+    and phoenixV16.
+
+    Only valid for temps between 3200 - 3800K, gravity from 2.5 - 5.5 
+    """
+    teff_arr, z_arr, logg_arr = get_atmosphere_grid('merged_BTSettl_phoenix')
+    return teff_arr, z_arr, logg_arr
+        
+    
 #---------------------------------------------------------------------#
 def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose=False,
                               rebin=True):
@@ -800,6 +1082,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
     temperature ranges where we switch between model grids, to 
     ensure a smooth transition.
     """
+        
     # For T < 3800, atmosphere depends on metallicity + gravity.
     # If solar metallicity, use BTSettl 2015 grid. Only solar metallicity is
     # currently available here, so if non-solar metallicity, just stick with
@@ -837,7 +1120,6 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
                                         temperature=temperature,
                                         gravity=gravity,
                                         rebin=rebin)
-
     # For T > 3800, no metallicity or gravity dependence
     if (temperature >= 3800) & (temperature < 5000):
         if verbose:
@@ -874,8 +1156,253 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
         #                               gravity=gravity)
 
     
+def get_merged_atmosphere_grid(rebin=True):
 
+    # temp array, metallicity array, logg array
+    BTSettl_2015_atmosphere_arrs = np.array(get_BTSettl_2015_atmosphere_grid(rebin))
 
+    BTSettl_phoenix_atmosphere_arrs = np.array(get_BTSettl_phoenix_atmosphere_grid())
+
+    phoenixv16_atmosphere_arrs = np.array(get_phoenixv16_atmosphere_grid(rebin))
+    atlas_phoenix_atmosphere_arrs = np.array(get_atlas_phoenix_atmosphere_grid())
+
+    castelli_atmosphere_arrs = np.array(get_castelli_atmosphere_grid())
+
+    BTSettl_2015_atmosphere_idxs = np.where((BTSettl_2015_atmosphere_arrs[0] <= 3200) &\
+                                            (BTSettl_2015_atmosphere_arrs[1] == 0) &\
+                                            (BTSettl_2015_atmosphere_arrs[2] > 2.5))
+    BTSettl_2015_atmosphere_arrs = BTSettl_2015_atmosphere_arrs[:,BTSettl_2015_atmosphere_idxs]
+
+    BTSettl_phoenix_atmosphere_idxs = np.where((BTSettl_phoenix_atmosphere_arrs[0] >= 3200) &\
+                                               (BTSettl_phoenix_atmosphere_arrs[0] < 3800) &\
+                                               (BTSettl_phoenix_atmosphere_arrs[1] == 0) &\
+                                               (BTSettl_phoenix_atmosphere_arrs[2] > 2.5))
+    BTSettl_phoenix_atmosphere_arrs = BTSettl_phoenix_atmosphere_arrs[:,BTSettl_phoenix_atmosphere_idxs]
+
+    phoenixv16_atmosphere_idxs = np.where(((phoenixv16_atmosphere_arrs[0] <= 3800) & (phoenixv16_atmosphere_arrs[1] == 0) & (phoenixv16_atmosphere_arrs[2] <= 2.5)) |\
+                                          ((phoenixv16_atmosphere_arrs[0] <= 3800) & (phoenixv16_atmosphere_arrs[1] != 0)) |\
+                                          ((phoenixv16_atmosphere_arrs[0] >= 3800) & (phoenixv16_atmosphere_arrs[0] < 5000)))
+    phoenixv16_atmosphere_arrs = phoenixv16_atmosphere_arrs[:,phoenixv16_atmosphere_idxs]
+
+    atlas_phoenix_atmosphere_idxs = np.where((atlas_phoenix_atmosphere_arrs[0] >= 5000) & (atlas_phoenix_atmosphere_arrs[0] < 5500))
+    atlas_phoenix_atmosphere_arrs = atlas_phoenix_atmosphere_arrs[:,atlas_phoenix_atmosphere_idxs]
+
+    castelli_atmosphere_idxs = np.where(castelli_atmosphere_arrs[0] >= 5500)
+    castelli_atmosphere_arrs = castelli_atmosphere_arrs[:,castelli_atmosphere_idxs]
+
+    super_tarr = np.concatenate((BTSettl_2015_atmosphere_arrs[0][0], BTSettl_phoenix_atmosphere_arrs[0][0], 
+                                phoenixv16_atmosphere_arrs[0][0], atlas_phoenix_atmosphere_arrs[0][0], 
+                                castelli_atmosphere_arrs[0][0]))
+    
+    super_zarr = np.concatenate((BTSettl_2015_atmosphere_arrs[1][0], BTSettl_phoenix_atmosphere_arrs[1][0], 
+                                phoenixv16_atmosphere_arrs[1][0], atlas_phoenix_atmosphere_arrs[1][0], 
+                                castelli_atmosphere_arrs[1][0]))
+
+    super_loggarr = np.concatenate((BTSettl_2015_atmosphere_arrs[2][0], BTSettl_phoenix_atmosphere_arrs[2][0], 
+                                phoenixv16_atmosphere_arrs[2][0], atlas_phoenix_atmosphere_arrs[2][0], 
+                                castelli_atmosphere_arrs[2][0]))
+
+    return super_tarr, super_zarr, super_loggarr
+
+def get_merged_atmosphere_w_bb_supplement(metallicity=0, temperature=20000, gravity=4.5, verbose=False,
+                              rebin=True):
+    """
+    Return a stellar atmosphere from a suite of different model grids, 
+    depending  on the input temperature, (all values in K).
+    IF OUTSIDE SUPPORTED GRID, WILL RETURN BB ATMOSPHERE
+
+    Parameters
+    ----------
+    metallicity: float
+        The stellar metallicity, in terms of [Z]
+
+    temperature: float
+        The stellar temperature, in units of K
+
+    gravity: float
+        The stellar gravity, in cgs units
+        
+    rebin: boolean
+        If true, rebins the atmospheres so that they are the same
+        resolution as the Castelli+04 atmospheres. Default is False,
+        which is often sufficient synthetic photometry in most cases.
+
+    verbose: boolean
+        True for verbose output
+
+    Notes
+    -----
+    The underlying stellar model grid used changes as a function of 
+    stellar temperature (in K):
+
+    * T > 20,000: ATLAS
+    * 5500 <= T < 20,000: ATLAS
+    * 5000 <= T < 5500: ATLAS/PHOENIXv16 merge
+    * 3800 <= T < 5000: PHOENIXv16
+
+    For T < 3800, there is an additional gravity and metallicity
+    dependence:
+
+    If T < 3800 and [M/H] = 0: 
+    
+    * T < 3800, logg < 2.5: PHOENIX v16
+    * 3200 <= T < 3800, logg > 2.5: BTSettl_CIFITS2011_2015/PHOENIXV16 merge
+    * 3200 < T <= 1200, logg > 2.5: BTSettl_CIFITS2011_2015
+
+    Otherwise, if T < 3800 and [M/H] != 0:
+    
+    * T < 3800: PHOENIX v16
+
+    References:
+
+    * ATLAS: ATLAS9 models (`Castelli & Kurucz 2004 <http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html>`_)
+    * PHOENIXv16 (`Husser et al. 2013 <https://ui.adsabs.harvard.edu/abs/2013A%26A...553A...6H/abstract>`_)
+    * BTSettl_CIFITS2011_2015: Baraffee+15, Allard+ (https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/)
+
+    LTE WARNING: 
+
+    The ATLAS atmospheres are calculated with LTE, and so they
+    are less accurate when non-LTE conditions apply (e.g. T > 20,000
+    K). Ultimately we'd like to add a non-LTE atmosphere grid for
+    the hottest stars in the future.
+
+    HOW BOUNDARIES BETWEEN MODELS ARE TREATED: 
+
+    At the boundary between two models grids a temperature range is defined 
+    where the resulting atmosphere is a weighted average between the two 
+    grids. Near one boundary one model
+    is weighted more heavily, while at the other boundary the other 
+    model is weighted more heavily. These are calculated in the 
+    temperature ranges where we switch between model grids, to 
+    ensure a smooth transition.
+    """
+
+    if (temperature <= 1000):
+        print('BB atmosphere')
+        return get_bb_atmosphere(temperature=temperature,
+                                 metallicity=metallicity,
+                                 gravity=gravity,
+                                 verbose=verbose)
+    if (gravity >= 9.8):
+        print('BB atmosphere')
+        return get_bb_atmosphere(temperature=temperature,
+                                 metallicity=metallicity,
+                                 gravity=gravity,
+                                 verbose=verbose)
+    if (temperature < 4.6e3) & (gravity >= 6.5):
+        print('BB atmosphere')
+        return get_bb_atmosphere(temperature=temperature,
+                                 metallicity=metallicity,
+                                 gravity=gravity,
+                                 verbose=verbose)
+        
+    if (temperature < 3.5e3) & (gravity  < 6.5) & (gravity > 6):
+        print('BB atmosphere')
+        return get_bb_atmosphere(temperature=temperature,
+                                 metallicity=metallicity,
+                                 gravity=gravity,
+                                 verbose=verbose)
+    
+    # For T < 3800, atmosphere depends on metallicity + gravity.
+    # If solar metallicity, use BTSettl 2015 grid. Only solar metallicity is
+    # currently available here, so if non-solar metallicity, just stick with
+    # the Phoenix grid
+    if (temperature <= 3800) & (metallicity == 0):
+        # High gravity are in BTSettl regime
+        if (temperature <= 3200) & (gravity > 2.5):
+            if verbose:
+                print( 'BTSettl_2015 atmosphere')
+            return get_BTSettl_2015_atmosphere(metallicity=metallicity,
+                                                temperature=temperature,
+                                                gravity=gravity,
+                                                rebin=rebin)
+ 
+        if (temperature >= 3200) & (temperature < 3800) & (gravity > 2.5):
+            if verbose:
+                print( 'BTSettl/Phoenixv16 merged atmosphere')
+            return get_BTSettl_phoenix_atmosphere(metallicity=metallicity,
+                                                temperature=temperature,
+                                                gravity=gravity)
+
+        # Low gravity is PHOENIX regime
+        if gravity <= 2.5:
+            if verbose:
+                print( 'Phoenixv16 atmosphere')
+            return get_phoenixv16_atmosphere(metallicity=metallicity,
+                                            temperature=temperature,
+                                            gravity=gravity,
+                                            rebin=rebin)
+        
+    if (temperature <= 3800) & (metallicity != 0):
+        if verbose:
+            print( 'Phoenixv16 atmosphere')
+        return get_phoenixv16_atmosphere(metallicity=metallicity,
+                                        temperature=temperature,
+                                        gravity=gravity,
+                                        rebin=rebin)
+    # For T > 3800, no metallicity or gravity dependence
+    if (temperature >= 3800) & (temperature < 5000):
+        if verbose:
+            print( 'Phoenixv16 atmosphere')
+        return get_phoenixv16_atmosphere(metallicity=metallicity,
+                                      temperature=temperature,
+                                      gravity=gravity,
+                                      rebin=rebin)
+
+    if (temperature >= 5000) & (temperature < 5500):
+        if verbose:
+            print( 'ATLAS/Phoenix merged atmosphere')
+        return get_atlas_phoenix_atmosphere(metallicity=metallicity,
+                                        temperature=temperature,
+                                        gravity=gravity)
+    
+    if (temperature >= 5500) & (temperature < 20000):
+        if verbose:
+            print( 'ATLAS merged atmosphere')
+        return get_castelli_atmosphere(metallicity=metallicity,
+                                      temperature=temperature,
+                                      gravity=gravity)
+
+    if temperature >= 20000:
+        if verbose:
+            print( 'Still ATLAS merged atmosphere')
+        return get_castelli_atmosphere(metallicity=metallicity,
+                                       temperature=temperature,
+                                       gravity=gravity)
+
+    # Returns BB if outside of WD defined atmospheres
+    else:
+        if verbose:
+            print('WD or BB atmosphere')
+        return get_wd_atmosphere(metallicity=metallicity,
+                                       temperature=temperature,
+                                       gravity=gravity)
+
+def get_merged_atmosphere_w_bb_supplement_grid(bb_supplement_tarr='default', bb_supplement_zarr='default', bb_supplement_loggarr='default', rebin=True):
+
+    super_tarr, super_zarr, super_loggarr = get_merged_atmosphere_grid(rebin=rebin)
+
+    wd_tarr, wd_zarr, wd_loggarr = get_wdKoester_atmosphere_grid()
+    super_tarr = np.concatenate((super_tarr, wd_tarr))
+    super_zarr = np.concatenate((super_zarr, wd_zarr))
+    super_loggarr = np.concatenate((super_loggarr, wd_loggarr))
+
+    if bb_supplement_tarr == 'default':
+        X, Y = np.meshgrid(np.logspace(np.log10(2e3), np.log10(4.6e3), 20), np.linspace(6.5, 8.7, 10))
+        X1, Y1 = np.meshgrid(np.logspace(np.log10(2e3), np.log10(3.5e3), 15), np.linspace(6, 6.25, 2))
+        X2, Y2 = np.meshgrid(np.logspace(np.log10(1e2), np.log10(1.1e3), 25), np.linspace(3, 4.5, 4))
+        X3, Y3 = np.meshgrid(np.logspace(np.log10(8e3), np.log10(2e4), 25), np.linspace(9.8, 11.6, 8))
+        bb_supplement_tarr = np.concatenate((X.ravel(), X1.ravel(), X2.ravel(), X3.ravel()))
+        bb_supplement_loggarr = np.concatenate((Y.ravel(), Y1.ravel(), Y2.ravel(), Y3.ravel()))
+        bb_supplement_zarr = np.zeros(len(bb_supplement_tarr))
+        
+
+    super_tarr = np.concatenate((super_tarr, bb_supplement_tarr))
+    super_zarr = np.concatenate((super_zarr, bb_supplement_zarr))
+    super_loggarr = np.concatenate((super_loggarr, bb_supplement_loggarr))
+
+    return super_tarr, super_zarr, super_loggarr
+    
 def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False):
     """
     Return the white dwarf atmosphere from 

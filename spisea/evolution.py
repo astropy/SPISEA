@@ -11,6 +11,8 @@ from scipy import interpolate
 import pylab as py
 from spisea.utils import objects
 from spisea import exceptions
+import astropy.units as u
+import astropy.constants as c
 
 logger = logging.getLogger('evolution')
 
@@ -85,6 +87,7 @@ class StellarEvolution(object):
         self.z_list = z_list
         self.mass_list = mass_list
         self.age_list = age_list
+        self.external_evol = False
       
         return
     
@@ -1198,6 +1201,172 @@ class MISTv1(StellarEvolution):
         # Return to starting directory
         os.chdir(start_dir)
         return
+        
+#===========================================#
+# COSMIC Breivik+ 2020 - not normal evo model
+#===========================================#
+class COSMIC(StellarEvolution):
+    
+    def __init__(self, BSEDict='default', keep_disrupted_companions=True, keep_COSMIC_tables=False): 
+        if BSEDict == 'default':
+            self.BSEDict = BSEDict = {'xi': 1.0, 'bhflag': 1, 'neta': 0.5, 
+                                       'windflag': 3, 'wdflag': 1, 'alpha1': 1.0, 
+                                       'pts1': 0.001, 'pts3': 0.02, 'pts2': 0.01, 
+                                       'epsnov': 0.001, 'hewind': 0.5, 'ck': 1000, 
+                                       'bwind': 0.0, 'lambdaf': 0.0, 'mxns': 3.0, 
+                                       'beta': -1.0, 'tflag': 1, 'acc2': 1.5, 
+                                       'grflag' : 1, 'remnantflag': 4, 'ceflag': 0, 
+                                       'eddfac': 1.0, 'ifflag': 0, 'bconst': 3000, 
+                                       'sigma': 265.0, 'gamma': -2.0, 'pisn': 45.0, 
+                                       'natal_kick_array' : [[-100.0,-100.0,-100.0,-100.0,0.0], [-100.0,-100.0,-100.0,-100.0,0.0]], 
+                                       'bhsigmafrac' : 1.0, 'polar_kick_angle' : 90, 
+                                       'qcrit_array' : [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0], 
+                                       'cekickflag' : 2, 'cehestarflag' : 0, 'cemergeflag' : 0, 
+                                       'ecsn' : 2.25, 'ecsn_mlow' : 1.6, 'aic' : 1, 'ussn' : 0, 
+                                       'sigmadiv' :-20.0, 'qcflag' : 1, 'eddlimflag' : 0, 
+                                       'fprimc_array' : [2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0], 
+                                       'bhspinflag' : 0, 'bhspinmag' : 0.0, 'rejuv_fac' : 1.0, 
+                                       'rejuvflag' : 0, 'htpmb' : 1, 'ST_cr' : 1, 'ST_tide' : 1, 
+                                       'bdecayfac' : 1, 'rembar_massloss' : 0.5, 'kickflag' : 1, 
+                                       'zsun' : 0.014, 'bhms_coll_flag' : 0, 'don_lim' : -1, 
+                                       'acc_lim' : -1, 'rtmsflag' : 0, 'wd_mass_lim': 1}
+        else:
+            self.BSEDict = BSEDict
+
+        self.external_evol = True
+        self.z_solar = 0.014
+        self.keep_disrupted_companions = keep_disrupted_companions
+        self.keep_COSMIC_tables = keep_COSMIC_tables
+
+
+    def evolve(self, star_systems, companions, logAge, metallicity):
+        from cosmic.utils import p_from_a, a_from_p
+        from cosmic.sample.initialbinarytable import InitialBinaryTable
+        from cosmic.evolve import Evolve
+        
+        companion_system_idxs = companions['system_idx']
+        m1s = star_systems['mass']
+        m2s = np.zeros(len(star_systems))
+        m2s[companion_system_idxs] = companions['mass']
+        
+        a_Rsuns = (10**companions['log_a'])*u.AU.to('Rsun')
+        porbs = np.zeros(len(star_systems))
+        porbs[companion_system_idxs] = p_from_a(a_Rsuns, m1s[companion_system_idxs], m2s[companion_system_idxs])
+        
+        eccs = np.zeros(len(star_systems))
+        eccs[companion_system_idxs] = companions['e']
+        
+        kstar1s = (m1s >= 0.7).astype(int) # 1 if MS above 0.7 and 0 if MS below 0.7
+        kstar2s = (m2s >= 0.7).astype(int) # 1 if MS above 0.7 and 0 if MS below 0.7
+
+        binary_pop = InitialBinaryTable.InitialBinaries(m1=m1s, m2=m2s, porb=porbs,
+                                                   ecc=eccs, tphysf=[10**logAge/1e6]*len(m1s),
+                                                   kstar1=kstar1s, kstar2=kstar2s, metallicity=[self.z_solar*10**metallicity]*len(m1s))
+        
+        bpp, bcm, initC, kick_info = Evolve.evolve(initialbinarytable=binary_pop, BSEDict=self.BSEDict)
+        if self.keep_COSMIC_tables:
+            self.bpp = bpp
+            self.bcm = bcm
+            self.initC = initC
+            self.kick_info = kick_info
+            
+        final_binaries = bcm[bcm['tphys'] > 0] #only gives the first and last idx, so this takes final one
+        
+        
+        star_systems['mass_current'] = final_binaries['mass_1']
+        star_systems['Teff'] = final_binaries['teff_1']
+        star_systems['L'] = final_binaries['lum_1']
+        star_systems['logg'] = self.calc_logg(final_binaries['mass_1'], final_binaries['rad_1'])
+        # for kick, just take total since we will assign a random direction later anyway in PopSyCLE
+        star_systems['kick'] = kick_info.groupby(level=0).nth(0)['vsys_1_total'] # takes first row with priamry info
+        
+        companions['mass_current'] = final_binaries['mass_2'][companion_system_idxs]
+        companions['Teff'] = final_binaries['teff_2'][companion_system_idxs]
+        companions['L'] = final_binaries['lum_2'][companion_system_idxs]
+        companions['logg'] = self.calc_logg(final_binaries['mass_2'][companion_system_idxs], final_binaries['rad_2'][companion_system_idxs])
+        companions['kick'] = kick_info.groupby(level=0).nth(1)['vsys_2_total'][companion_system_idxs] # takes second row with companion info
+        
+        loga = np.log10(final_binaries['sep'][companion_system_idxs]*u.Rsun.to('AU'))
+        companions['log_a'] = loga
+        
+        fixed_phases1 = final_binaries['kstar_1'].to_numpy()
+        fixed_phases1[np.where((final_binaries['kstar_1'] >= 10) & (final_binaries['kstar_1'] <= 12))[0]] = 101
+        fixed_phases1[np.where(final_binaries['kstar_1'] == 13)[0]] = 102
+        fixed_phases1[np.where(final_binaries['kstar_1'] == 14)[0]] = 103
+        star_systems['phase'] = fixed_phases1
+        
+        fixed_phases2 = final_binaries['kstar_2'].to_numpy()
+        fixed_phases2[np.where((final_binaries['kstar_2'] >= 10) & (final_binaries['kstar_2'] <= 12))[0]] = 101
+        fixed_phases2[np.where(final_binaries['kstar_2'] == 13)[0]] = 102
+        fixed_phases2[np.where(final_binaries['kstar_2'] == 14)[0]] = 103
+        companions['phase'] = fixed_phases2[companion_system_idxs]
+        
+        # maybe add WR designation
+
+        # Take the disrupted binaries and put the companions into the star_system table (if desired)
+        # don't include massless remnant companions
+        disrupted_binary_companion_idxs = np.where((final_binaries['bin_state'][companion_system_idxs] == 2) & (final_binaries['kstar_2'][companion_system_idxs] != 15))[0]
+        if self.keep_disrupted_companions and len(disrupted_binary_companion_idxs) > 0:
+            disrupted_binary_companions = companions[disrupted_binary_companion_idxs]
+            disrupted_binary_companions['systemMass'] = disrupted_binary_companions['mass_current']
+            disrupted_binary_companions['isMultiple'] = [False]*len(disrupted_binary_companions)
+            disrupted_binary_companions['N_companions'] = [0]*len(disrupted_binary_companions)
+            disrupted_binary_companions.remove_columns(['system_idx', 'log_a', 'e', 'i', 'Omega', 'omega'])
+            star_systems = vstack([star_systems, disrupted_binary_companions])
+
+        #Drop merged companions and totally disappeared systems
+        # Also promote companions to primaries when the initial primary "merged" (if desired)
+        mr_companion_only_idxs = np.where((final_binaries['kstar_1'][companion_system_idxs] != 15) & (final_binaries['kstar_2'][companion_system_idxs] == 15))[0] #mr for massless remnant
+        disappeared_system_companion_idxs = np.where((final_binaries['kstar_1'][companion_system_idxs] == 15) & (final_binaries['kstar_2'][companion_system_idxs] == 15))[0]
+        companions_to_mr_primaries_idxs = np.where((final_binaries['kstar_1'][companion_system_idxs] == 15) & (final_binaries['kstar_2'][companion_system_idxs] != 15))[0]
+        
+        mr_primary_only_idx = np.where((final_binaries['kstar_1'] == 15) & (final_binaries['kstar_2'] != 15))[0] #mr for massless remnant
+        disappeared_system_primaries = np.where((final_binaries['kstar_1'] == 15) & (final_binaries['kstar_2'] == 15))[0]
+        
+        
+        delete_primary_idxs = np.concatenate((mr_primary_only_idx, disappeared_system_primaries))
+        delete_companion_idxs = np.concatenate((disrupted_binary_companion_idxs, mr_companion_only_idxs, disappeared_system_companion_idxs, companions_to_mr_primaries_idxs))
+        primaries_to_deleted_companion_idxs = companions[delete_companion_idxs]['system_idx']
+        
+        #Fix binary specification of primaries that lost their companions
+        star_systems['isMultiple'][primaries_to_deleted_companion_idxs] = False
+        star_systems['N_companions'][primaries_to_deleted_companion_idxs] = 0
+        
+        # Promote the companions to merged primaries to primaries
+        if self.keep_disrupted_companions and len(companions_to_mr_primaries_idxs) > 0:
+            companions_to_mr_primaries = companions[companions_to_mr_primaries_idxs]
+            companions_to_mr_primaries['systemMass'] = companions_to_mr_primaries['mass_current']
+            companions_to_mr_primaries['isMultiple'] = [False]*len(companions_to_mr_primaries)
+            companions_to_mr_primaries['N_companions'] = [0]*len(companions_to_mr_primaries)
+            companions_to_mr_primaries.remove_columns(['system_idx', 'log_a', 'e', 'i', 'Omega', 'omega'])
+            
+            star_systems = vstack([star_systems, companions_to_mr_primaries])
+        
+        star_systems.remove_rows(delete_primary_idxs)
+        companions.remove_rows(delete_companion_idxs) #if kstar 1 is 15 take the seocnd star and if kstar2 is 15 take the other
+
+        #FIXME add assertion about mass_current not being zero
+
+        return star_systems, companions
+
+        
+    def calc_logg(self, masses, radii):
+        """
+        Inputs
+        ------
+        masses : array-like 
+            Masses of objects in Msun
+            
+        radii : array-like
+            Radii of stars in Rsun
+    
+        Returns
+        -------
+        logg : array-like
+            Log10 surface gravity in cgs
+        """
+        return np.log10(((np.array(c.G.to('Rsun^3/(Msun*s^2)').value*masses/((radii)**2))*u.Rsun/u.s**2).to('cm/s^2')).value)
+
 
 #==============================#
 # Merged model classes
