@@ -31,6 +31,7 @@ Available filters:
 * 2MASS
 * CTIO_OSIRIS
 * DeCam
+* Euclid
 * GAIA
 * HAWK-I
 * Hubble Space Telescope
@@ -79,6 +80,14 @@ Example: ``'ctio_osiris,H'``
 Filters: u, g, r, i, z, Y
 
 Example: ``'decam,r'``
+
+**Euclid**
+
+`Euclid (NISP) space telescope filters <https://doi.org/10.5270/esa-kx8w57c>`_
+
+Filters: Y, J, H
+
+Example: ``'euclid,Y'``
 
 **GAIA**
 
