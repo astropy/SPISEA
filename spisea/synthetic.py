@@ -547,14 +547,15 @@ class ResolvedCluster(Cluster):
             if len(idx) != N_comp_tot and self.verbose:
                 print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
 
-        # For low-mass stars and substellar objects below isochrone, assume no mass loss and set phase to 98
-        low_mass_idxs = (companions['mass']<np.min(self.iso.points['mass']))
-        companions['mass_current'][low_mass_idxs] = companions['mass'][low_mass_idxs]
-        companions['phase'][low_mass_idxs] = 98
+            # For low-mass stars and substellar objects below isochrone, assume no mass loss and set phase to 98
+            low_mass_idxs = (companions['mass']<np.min(self.iso.points['mass']))
+            companions['mass_current'][low_mass_idxs] = companions['mass'][low_mass_idxs]
+            companions['phase'][low_mass_idxs] = 98
 
-        # Double check that everything behaved properly.
-        if len(idx)>0:
-            assert companions['mass'][idx].min() > 0
+            # FIXME SHOULD BE ADDED FOR EXTERNALEVOL TOO
+            # Double check that everything behaved properly.
+            if len(idx)>0:
+                assert companions['mass'][idx].min() > 0
 
         return companions
 
