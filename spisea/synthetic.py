@@ -1596,6 +1596,7 @@ class IsochronePhotExternalEvolution(IsochronePhot):
             tab.meta['REDLAW'] = red_law.name
             tab.meta['ATMFUNC'] = atm_func.__name__
             tab.meta['EVOMODEL'] = type(evo_model).__name__
+            tab.meta['EVOMODELVERSION'] = evo_model.model_version_name
             tab.meta['AKS'] = AKs
             tab.meta['DISTANCE'] = distance
             tab.meta['WAVEMIN'] = wave_range[0]

@@ -1277,6 +1277,7 @@ class COSMIC(StellarEvolution):
         self.z_solar = 0.014
         self.keep_disrupted_companions = keep_disrupted_companions
         self.keep_COSMIC_tables = keep_COSMIC_tables
+        self.model_version_name = "COSMIC"
 
 
     def evolve(self, star_systems, companions, logAge, metallicity):

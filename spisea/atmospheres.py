@@ -1276,7 +1276,7 @@ def get_merged_atmosphere_w_bb_supplement(metallicity=0, temperature=20000, grav
     temperature ranges where we switch between model grids, to 
     ensure a smooth transition.
     """
-
+    
     if (temperature <= 1000):
         print('BB atmosphere')
         return get_bb_atmosphere(temperature=temperature,
@@ -1302,6 +1302,7 @@ def get_merged_atmosphere_w_bb_supplement(metallicity=0, temperature=20000, grav
                                  metallicity=metallicity,
                                  gravity=gravity,
                                  verbose=verbose)
+    
     
     # For T < 3800, atmosphere depends on metallicity + gravity.
     # If solar metallicity, use BTSettl 2015 grid. Only solar metallicity is
@@ -1390,10 +1391,12 @@ def get_merged_atmosphere_w_bb_supplement_grid(bb_supplement_tarr='default', bb_
     if bb_supplement_tarr == 'default':
         X, Y = np.meshgrid(np.logspace(np.log10(2e3), np.log10(4.6e3), 20), np.linspace(6.5, 8.7, 10))
         X1, Y1 = np.meshgrid(np.logspace(np.log10(2e3), np.log10(3.5e3), 15), np.linspace(6, 6.25, 2))
-        X2, Y2 = np.meshgrid(np.logspace(np.log10(1e2), np.log10(1.1e3), 25), np.linspace(3, 4.5, 4))
+        #X2, Y2 = np.meshgrid(np.logspace(np.log10(2e2), np.log10(1.1e3), 20), np.linspace(3, 4.5, 4))
         X3, Y3 = np.meshgrid(np.logspace(np.log10(8e3), np.log10(2e4), 25), np.linspace(9.8, 11.6, 8))
-        bb_supplement_tarr = np.concatenate((X.ravel(), X1.ravel(), X2.ravel(), X3.ravel()))
-        bb_supplement_loggarr = np.concatenate((Y.ravel(), Y1.ravel(), Y2.ravel(), Y3.ravel()))
+        bb_supplement_tarr = np.concatenate((X.ravel(), X1.ravel(), X3.ravel()))
+        bb_supplement_loggarr = np.concatenate((Y.ravel(), Y1.ravel(), Y3.ravel()))
+        #bb_supplement_tarr = np.concatenate((X.ravel(), X1.ravel(), X2.ravel(), X3.ravel()))
+        #bb_supplement_loggarr = np.concatenate((Y.ravel(), Y1.ravel(), Y2.ravel(), Y3.ravel()))
         bb_supplement_zarr = np.zeros(len(bb_supplement_tarr))
         
 
