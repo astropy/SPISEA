@@ -153,8 +153,28 @@ def test_IsochronePhot(plot=False):
                                 mass_sampling=mass_sampling, iso_dir=iso_dir)
 
     assert iso_new.recalc == False
+    
+    # Check 2: Confirm that adding a new column to an existing isochrone works properly.
+    #    Does the new filter get added to the isochrone? And the old ones still there?
+    #    Does the computed data for the new filter match the same result if you fully regenerate the isochrone?
+    iso_new_addfilt = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo_model,
+                                atm_func=atm_func, red_law=redlaw,
+                                filters=filt_list+['2mass,Ks'],
+                                mass_sampling=mass_sampling, iso_dir=iso_dir)
 
-    # Check 2: If we change evo model, atmo model, or redlaw,
+    assert iso_new_addfilt.recalc == False
+    assert 'm_2mass_Ks' in iso_new_addfilt.points.colnames
+    assert 'm_nirc2_J' in iso_new_addfilt.points.colnames
+    
+    iso_new_3filt = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo_model,
+                                atm_func=atm_func, red_law=redlaw,
+                                filters=filt_list+['2mass,Ks'],
+                                mass_sampling=mass_sampling, iso_dir=iso_dir,
+                                recomp=True)
+    np.testing.assert_almost_equal(iso_new_addfilt.points['m_2mass_Ks'], iso_new_3filt.points['m_2mass_Ks'])
+    assert iso_new_3filt.recalc==True
+
+    # Check 3: If we change evo model, atmo model, or redlaw,
     # does IsochronePhot regenerate the isochrone and overwrite the existing one?
     evo2 = evolution.MergedBaraffePisaEkstromParsec()
     mass_sampling=20
@@ -181,7 +201,6 @@ def test_IsochronePhot(plot=False):
                                 mass_sampling=mass_sampling, iso_dir=iso_dir)
 
     assert iso_new.recalc == True
-
 
     return
 
@@ -593,6 +612,15 @@ def test_cluster_mass():
     assert np.abs(cluster_mass_out - cluster_mass) < 200.0   # within 200 Msun of desired mass.
     print('Cluster Mass: IN = ', cluster_mass, " OUT = ", cluster_mass_out)
 
+    cluster3 = syn.ResolvedCluster(iso, my_imf1, cluster_mass, ifmr=my_ifmr, keep_low_mass_stars=True)
+    clust3 = cluster3.star_systems
+    print('Constructed cluster w/ keep_low_mass_stars: %d seconds' % (time.time() - startTime))
+
+    # Check that the total mass is within tolerance of input mass
+    cluster_mass_out = clust3['systemMass'].sum()
+    assert np.abs(cluster_mass_out - cluster_mass) < 200.0   # within 200 Msun of desired mass.
+    print('Cluster Mass: IN = ', cluster_mass, " OUT = ", cluster_mass_out)
+
     ##########
     # Test with multiplicity
     ##########
@@ -612,6 +640,65 @@ def test_cluster_mass():
 
     return
 
+def test_keep_low_mass_stars():
+    """
+    Test "keep_low_mass_stars = True" functionality introduced in v2.2 
+    """
+    # Define cluster parameters, pulling on an isochrone generated in an earlier test (since
+    # we don't care about isochrone generation here
+    logAge = 6.7
+    AKs = 2.4
+    distance = 4000
+    cluster_mass = 10**5.
+    mass_sampling = 5
+
+    # Test filters
+    filt_list = ['nirc2,J', 'nirc2,Kp']
+    
+    # Define evolution/atmosphere models and extinction law
+    evo = evolution.MISTv1() 
+    atm_func = atmospheres.get_merged_atmosphere
+    red_law = reddening.RedLawHosek18b()
+    
+    iso = syn.IsochronePhot(logAge, AKs, distance,
+                            evo_model=evo, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                            mass_sampling=mass_sampling)
+
+    # Get the minimum mass in the isochrones. This should be the lowest
+    # mass psosbile when keep_low_mass_stars == False.
+    # Make sure this min mass is low enough for a reasonalbe test
+    min_mass_iso = np.min(iso.points['mass'])
+    assert min_mass_iso >= 0.05
+    
+    # Define IMF + IFMR. Make sure IMF goes to really low masses,
+    # below the 0.08 Msun limit of the MIST isochrones
+    imf_min = 0.01
+    imf_mass_limits = np.array([imf_min, 0.5, 1, 120.0])
+    imf_powers = np.array([-1.3, -2.3, -2.3])
+    my_ifmr = ifmr.IFMR_Raithel18()
+    my_imf = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
+                                      multiplicity=multiplicity.MultiplicityUnresolved())
+
+    # Define 2 clusters: one without keep_low_mass_stars and the other
+    # with keep_low_mass_stars
+    clust_remove = syn.ResolvedCluster(iso, my_imf, cluster_mass, ifmr=my_ifmr, keep_low_mass_stars=False)
+    clust_keep = syn.ResolvedCluster(iso, my_imf, cluster_mass, ifmr=my_ifmr, keep_low_mass_stars=True)
+
+    # Check the star_systems tables: clust_remove loweset mass should match
+    # min_mass_iso, while clust_keep should stretch to IMF limit (1%)
+    assert np.isclose(np.min(clust_keep.star_systems['mass']), imf_min, rtol=0.01, atol=10**-8)
+    assert (np.isclose(np.min(clust_remove.star_systems['mass']), imf_min, rtol=0.01, atol=10**-8) == False)
+
+    # NOTE: companion table always had the low-mass stars, this functionality is only on the star_systems table
+
+    # Finally, make sure these low-mass stars have properly assigned phase = 98
+    idx = np.where(clust_keep.star_systems['mass'] < min_mass_iso)
+    assert ( (len(idx[0]) > 0) & (np.all(clust_keep.star_systems['phase'][idx] == 98)) )
+
+    return
+
+        
 def test_compact_object_companions():
     
     # Define cluster parameters
