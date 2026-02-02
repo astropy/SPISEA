@@ -52,3 +52,6 @@ distribute-*.tar.gz
 # OS Generated Files
 .DS_Store
 ._*
+
+# Test files generated
+spisea/tests/isochrones

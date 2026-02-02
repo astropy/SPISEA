@@ -677,10 +677,6 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
                                      seed=seed)
 
-        # Set random seed, if desired
-        if seed is not None:
-            np.random.seed(seed=seed)
-
         # Extract the extinction law from the isochrone object
         redlaw_str = iso.points.meta['REDLAW']
         red_law = reddening.get_red_law(redlaw_str)
@@ -1134,24 +1130,17 @@ class IsochronePhot(Isochrone):
         # For solar metallicity case, allow for legacy isochrones (which didn't have
         # metallicity tag since they were all solar metallicity) to be read
         # properly
-        if metallicity == 0.0:
-            save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_p00.fits'
-            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(round(distance)).zfill(5))
-
-            save_file_legacy = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}.fits'
-            self.save_file_legacy = save_file_legacy.format(iso_dir, logAge, AKs, str(round(distance)).zfill(5))
-        else:
-            # Set metallicity flag
-            if metallicity < 0:
-                metal_pre = 'm'
-            else:
-                metal_pre = 'p'
-            metal_flag = int(abs(metallicity)*100)
-
-            save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_{4}{5:2s}.fits'
-            self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(round(distance)).zfill(5), metal_pre, str(metal_flag).zfill(3))
-            self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs, str(round(distance)).zfill(5), metal_pre, str(metal_flag).zfill(3))
         
+        # Set save file name
+        metal_value = round(abs(metallicity), 2)
+        metal_sign = 'm' if metallicity < 0 else 'p'
+        self.save_file = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}_{metal_sign}{metal_value:.2f}.fits'
+
+        if metallicity == 0.0:            
+            self.save_file_legacy = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}.fits'
+        else:
+            self.save_file_legacy = self.save_file
+
         # Expected filters
         self.filters = filters
 
@@ -1259,9 +1248,10 @@ class IsochronePhot(Isochrone):
         # Loop through the filters, get filter info, make photometry for
         # all stars in this filter.
         for ii in comp_filters:
-            prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
-            print( prt_fmt.format(ii, time.time() - startTime))
-            
+            if self.verbose:
+                prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
+                print( prt_fmt.format(ii, time.time() - startTime))
+
             filt = get_filter_info(ii, rebin=rebin, vega=vega)
             filt_name = get_filter_col_name(ii)
 

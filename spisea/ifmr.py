@@ -771,7 +771,7 @@ class IFMR_Raithel18(IFMR):
         output_array = np.zeros((2, len(mass_array)))
 
         #Random array to get probabilities for what type of object will form
-        random_array = self.rng.intergers(1, 1001, size = len(mass_array))
+        random_array = self.rng.integers(1, 1001, size = len(mass_array))
 
         codes = {'WD': 101, 'NS': 102, 'BH': 103}
         
