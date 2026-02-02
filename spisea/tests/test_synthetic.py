@@ -924,10 +924,10 @@ def model_young_cluster_object(resolved=False):
     AKs = 0.1
     distance = 8000.0
     cluster_mass = 10000.
-    
+
     multi = multiplicity.MultiplicityUnresolved()
     imf_in = imf.Kroupa_2001(multiplicity=multi)
-    evo = evolution.MergedPisaEkstromParsec()
+    evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
     iso = syn.Isochrone(
         log_age, 
