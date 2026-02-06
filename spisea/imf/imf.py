@@ -4,7 +4,7 @@
 # Original code was taken from libimf package written by Jan Pflamm-Altenburg
 # and has been modified only marginally. The libimf code was licensed under
 # a GNU General Public License.
-# 
+#
 # When I use this code, I should cite Pflamm-Altenburg & Kroupa 2006
 #
 # Unfortunately, the code was almost completely un-commented, so all
@@ -22,29 +22,29 @@ log = logging.getLogger('imf')
 
 class IMF(object):
     """
-    The IMF base class. The mass sampling and multiplicity 
-    implementation is here. 
+    The IMF base class. The mass sampling and multiplicity
+    implementation is here.
 
     Notes
     -----
-    Code author: J. Lu. 
+    Code author: J. Lu.
 
     Original code was taken from libimf package written by Jan Pflamm-Altenburg
     (`Pflamm-Altenburg & Kroupa 2006 <https://ui.adsabs.harvard.edu/abs/2006MNRAS.373..295P/abstract>`_)
     and has been modified only marginally, though more convinient and general purpose
     functions have been added. The libimf code was licensed under
-    a GNU General Public License. 
+    a GNU General Public License.
 
 
     Parameters
     ----------
     massLimits : 2 element array; optional
-        Define the minimum and maximum stellar masses in the IMF, in 
-        solar masses. First element is taken as the min, second element 
+        Define the minimum and maximum stellar masses in the IMF, in
+        solar masses. First element is taken as the min, second element
         the max (e.g. `massLimits` = [min_mass, max_mass]).
 
     multiplicity : Multiplicity object or None
-        If None, no multiplicity is assumed. Otherwise, use 
+        If None, no multiplicity is assumed. Otherwise, use
         multiplicity object to create multiple star systems.
     """
     def __init__(self, massLimits=np.array([0.1,150]), multiplicity=None, seed=None):
@@ -52,19 +52,19 @@ class IMF(object):
         self._mass_limits = np.atleast_1d(massLimits)
         self.seed = seed
         self.rng = np.random.default_rng(seed)
-        
+
         if multiplicity:
             self.make_multiples = True
         else:
             self.make_multiples = False
- 
+
         return
-            
+
 
     def generate_cluster(self, totalMass):
         """
         Generate a cluster of stellar systems with the specified IMF.
-        
+
         Randomly sample from an IMF with specified mass
         limits until the desired total mass is reached. The maximum
         stellar mass is not allowed to exceed the total cluster mass.
@@ -96,8 +96,8 @@ class IMF(object):
             system and False for each single star.
 
         companionMasses : numpy float array
-            List of 
-        
+            List of
+
         """
         initial_mass_limit = self._mass_limits[-1]
 
@@ -124,19 +124,19 @@ class IMF(object):
         # the desired total cluster mass.
         totalMassTally = 0
         loopCnt = 0
-        
+
         # start_while = time.time()
         while totalMassTally < totalMass:
             # Generate a random number array.
             uniX = self.rng.random(int(newStarCount))
             # Convert into the IMF from the inverted CDF
             newMasses = self.dice_star_cl(uniX)
-            
+
             # Testing for Nans produced in masses
             test = np.isnan(newMasses)
             if np.sum(test) > 0:
                 raise ValueError('Nan detected in cluster mass')
-            
+
             # Dealing with multiplicity
             if self._multi_props:
                 # newCompMasses = np.empty((len(newMasses),), dtype=object)
@@ -163,7 +163,7 @@ class IMF(object):
             # print('Time taken for while loop: ', end_while - start_while)
             # Append to our primary masses array
             masses = np.append(masses, newMasses)
-            
+
             if (loopCnt >= 0):
                 log.info('sample_imf: Loop %d added %.2e Msun to previous total of %.2e Msun' %
                          (loopCnt, newTotalMassTally, totalMassTally))
@@ -171,27 +171,27 @@ class IMF(object):
             totalMassTally += newTotalMassTally
             newStarCount = mean_number * 0.1  # increase by 20% each pass
             loopCnt += 1
-        
+
         # Make a running sum of the system masses
         if self._multi_props:
             # Concatenate the companion masses
             if len(compMasses) > 1:
                 max_cols = max(compMass.shape[1] for compMass in compMasses)
-                
+
                 # Pad each array to have the same number of columns
                 padded_arrays = [
                     np.ma.masked_all((compMass.shape[0], max_cols)) for compMass in compMasses
                 ]
-                
+
                 for i, compMass in enumerate(compMasses):
                     padded_arrays[i][:, :compMass.shape[1]] = compMass
-                
+
                 # Vertically stack the padded arrays
                 compMasses = np.ma.vstack(padded_arrays)
-            
+
             else:
                 compMasses = compMasses[0]
-            
+
             # Make a running sum of the system masses
             massCumSum = systemMasses.cumsum()
         else:
@@ -214,7 +214,7 @@ class IMF(object):
         self._mass_limits[-1] = initial_mass_limit
 
         return (masses, isMultiple, compMasses, systemMasses)
-        
+
     def calc_multi(self, newMasses, newIsMultiple, CSF, MF):
         """
         Helper function to calculate multiples more efficiently.
@@ -222,8 +222,8 @@ class IMF(object):
         """
         # Copy over the primary masses. Eventually add the companions.
         newSystemMasses = newMasses.copy()
-        
-        # Identify multiple systems, calculate number of companions for each 
+
+        # Identify multiple systems, calculate number of companions for each
         multiple_idx = np.where(newIsMultiple)[0]
         comp_nums = 1 + self.rng.poisson((CSF[multiple_idx] / MF[multiple_idx]) - 1)
         if self._multi_props.companion_max:
@@ -236,21 +236,21 @@ class IMF(object):
         comp_unique = np.unique(comp_nums)
         comp_indices = [np.where(comp_nums == i)[0] for i in comp_unique]
         compMasses = np.zeros((len(newMasses), max(comp_unique)))
-        
+
         for comp_num, comp_index in zip(comp_unique, comp_indices):
             # Calculate masses of companions
             q_values = self._multi_props.random_q(self.rng.random((len(comp_index), comp_num)))
             m_comp = np.multiply(q_values, np.transpose([primary[comp_index]]))
             compMasses[multiple_idx[comp_index], :comp_num] = m_comp
-        
+
         # Mask out companions that are less than the minimum mass
         compMasses = np.ma.MaskedArray(compMasses, mask=compMasses < self._mass_limits[0])
         newSystemMasses[multiple_idx] += compMasses[multiple_idx].sum(axis=1)
         newIsMultiple = np.any(~compMasses.mask, axis=1)
-        
+
         return compMasses, newSystemMasses, newIsMultiple
-        
-    
+
+
 class IMF_broken_powerlaw(IMF):
     """
     Initialize a multi-part power-law with N parts. Each part of the
@@ -263,7 +263,7 @@ class IMF_broken_powerlaw(IMF):
     Parameters
     ----------
     mass_limits : numpy array
-        Array of length (N + 1) with lower and upper limits of 
+        Array of length (N + 1) with lower and upper limits of
         the power-law segments.
 
     powers : numpy array
@@ -271,7 +271,7 @@ class IMF_broken_powerlaw(IMF):
         power-law segment.
 
     multiplicity : Multiplicity object or None
-        If None, no multiplicity is assumed. Otherwise, use 
+        If None, no multiplicity is assumed. Otherwise, use
         multiplicity object to create multiple star systems.
     """
     def __init__(self, mass_limits, powers, multiplicity=None, seed=None):
@@ -316,7 +316,7 @@ class IMF_broken_powerlaw(IMF):
         xi - probability of measuring that mass.
         """
         returnFloat = type(m) == float
-        
+
         m = np.atleast_1d(m)
 
         # Temporary arrays
@@ -333,7 +333,7 @@ class IMF_broken_powerlaw(IMF):
             # Maybe we are all done?
             if len(idx) == 0:
                 break
-            
+
             m_tmp = m[idx]
             aux_tmp = aux[idx]
 
@@ -346,7 +346,7 @@ class IMF_broken_powerlaw(IMF):
             z *= delta(m - self._m_limits_high[i])
 
         xi = self.k * z * y
-        
+
         if returnFloat:
             return xi[0]
         else:
@@ -374,7 +374,7 @@ class IMF_broken_powerlaw(IMF):
             # Maybe we are all done?
             if len(idx) == 0:
                 break
-            
+
             m_tmp = m[idx]
             aux_tmp = aux[idx]
 
@@ -387,7 +387,7 @@ class IMF_broken_powerlaw(IMF):
             z *= delta(m - self._m_limits_high[i])
 
         mxi = self.k * z * y
-        
+
         if returnFloat:
             return mxi[0]
         else:
@@ -395,23 +395,23 @@ class IMF_broken_powerlaw(IMF):
 
 
     def getProbabilityBetween(self, massLo, massHi):
-        """Return the integrated probability between some low and high 
+        """Return the integrated probability between some low and high
         mass value.
         """
         return self.int_xi(massLo, massHi)
 
     def int_xi(self, massLo, massHi):
-        """Return the integrated probability between some low and high 
+        """Return the integrated probability between some low and high
         mass value.
         """
         return self.prim_xi(massHi) - self.prim_xi(massLo)
-    
+
     def getMassBetween(self, massLo, massHi):
-        """Return the integrated mass between some low and high 
+        """Return the integrated mass between some low and high
         mass value.
         """
         return self.int_mxi(massLo, massHi)
-    
+
     def int_mxi(self, massLo, massHi):
         """Return the integrated total mass between some low and high stellar
         mass value. Be sure to normalize the IMF instance beforehand.
@@ -433,7 +433,7 @@ class IMF_broken_powerlaw(IMF):
             t3 = prim_power(self._m_limits_low, self._powers)
             y1 = (t1 * (t2 - t3)).sum()
 
-            t1 = gamma_closed(a[i], self._m_limits_low, self._m_limits_high) 
+            t1 = gamma_closed(a[i], self._m_limits_low, self._m_limits_high)
             t1 *= self.coeffs
             t2 = prim_power(a[i], self._powers)
             t3 = prim_power(self._m_limits_low, self._powers)
@@ -451,7 +451,7 @@ class IMF_broken_powerlaw(IMF):
         Helper function
         """
         returnFloat = type(a) == float
-        
+
         a = np.atleast_1d(a)
         val = np.zeros(len(a), dtype=float)
 
@@ -460,8 +460,8 @@ class IMF_broken_powerlaw(IMF):
             t2 = prim_power(self._m_limits_high, self._powers+1)
             t3 = prim_power(self._m_limits_low, self._powers+1)
             y1 = (t1 * (t2 - t3)).sum()
-            
-            t1 = gamma_closed(a[i], self._m_limits_low, self._m_limits_high) 
+
+            t1 = gamma_closed(a[i], self._m_limits_low, self._m_limits_high)
             t1 *= self.coeffs
             t2 = prim_power(a[i], self._powers+1)
             t3 = prim_power(self._m_limits_low, self._powers+1)
@@ -481,7 +481,7 @@ class IMF_broken_powerlaw(IMF):
         """
         self.k = 1.0
         self.Mcl = Mcl
-        
+
         if Mmax == None:
             Mmax = self._m_limits_high[-1]
 
@@ -491,7 +491,7 @@ class IMF_broken_powerlaw(IMF):
 
         if Mmax > Mcl:
             Mmax = Mcl
-            
+
         if Mmax > self._m_limits_high[-1]:
             Mmax = self._m_limits_high[-1]
 
@@ -500,7 +500,7 @@ class IMF_broken_powerlaw(IMF):
 
         self.norm_Mmin = Mmin
         self.norm_Mmax = Mmax
-        
+
         self.k = Mcl / self.int_mxi(self.norm_Mmin, self.norm_Mmax)
         self.lamda = self.int_xi_cl(self._m_limits_low[0], self._mass_limits)
 
@@ -519,7 +519,7 @@ class IMF_broken_powerlaw(IMF):
 
         if Mmax > Mcl:
             Mmax = Mcl
-            
+
         if Mmax > self._m_limits_high[-1]:
             Mmax = self._m_limits_high[-1]
 
@@ -587,24 +587,24 @@ class IMF_broken_powerlaw(IMF):
         returnFloat = type(r) == float
         r = np.atleast_1d(r)  # Make sure it is an array
 
-        x = r * self.lamda[-1] 
+        x = r * self.lamda[-1]
         y = np.zeros_like(r)
         z = np.ones_like(r)
 
         # Loop through the different parts of the power law.
         for i in range(self.nterms): #-----For i = 0 --> n, where n is the number of intervals
             aux = x - self.lamda[i] #---Should this be i - 1?
-            
+
             # Only continue for those entries that are in later segments
             idx = aux >= 0
 
             # Maybe we are all done?
             if sum(idx) == 0:
                 break
-            
+
             x_tmp = x[idx]
             aux_tmp = aux[idx]
-            
+
             t1 = aux_tmp / (self.coeffs[i] * self.k)
             t1 += prim_power(self._m_limits_low[i], self._powers[i])
             y_i = gamma_closed(x_tmp, self.lamda[i], self.lamda[i+1])
@@ -684,7 +684,7 @@ class Weidner_Kroupa_2004(IMF_broken_powerlaw):
                                      multiplicity=multiplicity)
 
 ##################################################
-# 
+#
 # Generic functions -- see if we can move these up.
 #
 ##################################################
@@ -708,7 +708,7 @@ def prim_power(m, power):
     valid_idx = power != -1
     val[valid_idx] = (m[valid_idx]**z[valid_idx]) / z[valid_idx]
     val[~valid_idx] = np.log(m[~valid_idx])
-    
+
     if returnFloat:
         return val[0]
     else:
@@ -716,7 +716,7 @@ def prim_power(m, power):
 
 def inv_prim_power(x, power):
     """
-    returns ((1+power) * x)**(1.0 / (1 + power)) and handles the case 
+    returns ((1+power) * x)**(1.0 / (1 + power)) and handles the case
     when power == -1.
     """
     returnFloat = (type(x) == float) and (type(power) == float)
@@ -731,7 +731,7 @@ def inv_prim_power(x, power):
 
     if x.shape != power.shape:
         raise ValueError('spisea.imf.inv_prim_power: Dimension mismatch, x and power must have the same shape')
-    
+
     z = 1.0 + power
     val = np.empty_like(x)
     valid_idx = power != -1
@@ -742,7 +742,7 @@ def inv_prim_power(x, power):
         return val[0]
     else:
         return val
-    
+
 
 def log_normal(m, mean_logm, sigma_logm):
     returnFloat = (type(m) == float) and (type(mean_logm) == float) and \
@@ -754,7 +754,7 @@ def log_normal(m, mean_logm, sigma_logm):
 
     z = np.log10(m) - mean_logm
     val = np.exp(-z**2 / (2.0 * sigma_logm**2)) / m
-    
+
     if returnFloat:
         return val[0]
     else:
@@ -770,7 +770,7 @@ def prim_log_normal(m, mean_logm, sigma_logm):
 
     mu = (np.log10(m) - mean_logm) / (1.4142135623731 * sigma_logm)
     val = 2.88586244942136 * sigma_logm * error(mu)
-    
+
     if returnFloat:
         return val[0]
     else:
@@ -783,10 +783,10 @@ def inv_prim_log_normal(x, mean_logm, sigma_logm):
     m = np.atleast_1d(m)
     mean_logm = np.atleat_1d(mean_logm)
     sigma_logm = np.atleat_1d(sigma_logm)
-    
+
     mu = inv_error(0.346516861952484 * x / sigma_logm)
     val = 10.0**(1.4142135623731 * sigma_logm * mu + mean_logm)
-    
+
     if returnFloat:
         return val[0]
     else:
@@ -802,7 +802,7 @@ def mlog_normal(x, mean_logm, sigma_logm):
 
     z = np.log10(m) - mean_logm
     val = np.exp(-z**2 / (2.0 * sigma_logm**2))
-    
+
     if returnFloat:
         return val[0]
     else:
@@ -823,12 +823,12 @@ def prim_mlog_normal(x, mean_logm, sigma_logm):
 
     val = error(eta)
     val *= 2.88586244942136 * sigma_logm * np.exp(2.30258509299405 * t1)
-    
+
     if returnFloat:
         return val[0]
     else:
         return val
-    
+
 
 def theta_closed(x):
     """
@@ -878,7 +878,7 @@ def delta(x):
 
 def gamma_closed(m, left, right):
     """
-    
+
     """
     return theta_closed(m - left) * theta_closed(right - m)
 
@@ -886,7 +886,7 @@ def gamma_closed(m, left, right):
 def error(x):
     x2 = x**2
     ax2 = 0.140012288686666 * x2
-    
+
     val = np.sqrt(1.0 - np.exp(-x2*(1.27323954473516+ax2)/(1+ax2)))
 
     if x >=0:
@@ -899,7 +899,7 @@ def inv_error(x):
     lnx2 = np.log(1.0 - x2)
     aux = 4.54688497944829 + (lnx2 / 2.0)
     y = -aux + np.sqrt(aux**2 - (lnx2 / 0.140012288686666))
-    
+
     val = np.sqrt(y)
 
     if x>=0:
