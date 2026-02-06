@@ -89,14 +89,17 @@ class IMF(object):
         Returns
         -------
         masses : numpy float array
-            List of primary star masses.
+            Array of primary star masses.
 
         isMultiple : numpy boolean array
-            List of booleans with True for each primary star that is in a multiple
+            Array of booleans with True for each primary star that is in a multiple
             system and False for each single star.
 
-        companionMasses : numpy float array
-            List of
+        companionMasses : numpy masked array
+            Masked array of companion masses. Each row corresponds to a primary star, and each column corresponds to a companion. The mask is True for entries that are not valid companions (e.g. for single stars or for companions that are below the minimum mass limit).
+
+        systemMasses : numpy float array
+            Array of total system masses (primary + companions) for each primary star.
 
         """
         initial_mass_limit = self._mass_limits[-1]
