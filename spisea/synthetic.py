@@ -37,7 +37,7 @@ default_wd_atm_func = atm.get_wd_atmosphere
 def Vega():
     # Use Vega as our zeropoint... assume V=0.03 mag and all colors = 0.0
     # These parameters are defined in Girardi+02
-    vega = atm.get_kurucz_atmosphere(temperature=9550, 
+    vega = atm.get_kurucz_atmosphere(temperature=9550,
                                      gravity=3.95,
                                      metallicity=-0.5)
 
@@ -47,8 +47,8 @@ def Vega():
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
     # and is used to convert to flux observed at Earth.
-    vega *= 6.247e-17 
-    
+    vega *= 6.247e-17
+
     return vega
 
 vega = Vega()
@@ -56,13 +56,13 @@ vega = Vega()
 class Cluster(object):
     """
     Base class to create a cluster with user-specified isochrone,
-    imf, ifmr, and total mass. 
+    imf, ifmr, and total mass.
 
     Parameters
     -----------
     iso: isochrone object
         SPISEA isochrone object
-    
+
     imf: imf object
         SPISEA IMF object
 
@@ -90,17 +90,17 @@ class Cluster(object):
         self.ifmr = ifmr
         self.cluster_mass = cluster_mass
         self.seed = seed
-        
+
         return
-    
+
 class ResolvedCluster(Cluster):
     """
     Cluster sub-class that produces a *resolved* stellar cluster.
-    A table is output with the synthetic photometry and intrinsic 
-    properties of the individual stars (or stellar systems, if 
+    A table is output with the synthetic photometry and intrinsic
+    properties of the individual stars (or stellar systems, if
     mutliplicity is used in the IMF object).
 
-    If multiplicity is used, than a second table is produced that 
+    If multiplicity is used, than a second table is produced that
     contains the properties of the companion stars independent of their
     primary stars.
 
@@ -108,7 +108,7 @@ class ResolvedCluster(Cluster):
     -----------
     iso: isochrone object
         SPISEA isochrone object
-    
+
     imf: imf object
         SPISEA IMF object
 
@@ -120,12 +120,6 @@ class ResolvedCluster(Cluster):
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
 
-    keep_low_mass_stars: boolean (default False)
-        If True, the cluster will not cut out stars below the isochrone grid 
-        on initial mass. They are assigned a current mass equal to their initial 
-        mass, a phase of 98, and no other evolutionary properties or photometry.
-        If False, stars below the isochrone initial mass limit are cut out.
-
     seed: int
         If set to non-None, all random sampling will be seeded with the
         specified seed, forcing identical output.
@@ -135,7 +129,7 @@ class ResolvedCluster(Cluster):
         True for verbose output.
     """
     def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=True,
-                     seed=None, keep_low_mass_stars=False):
+                     seed=None):
         Cluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
                              seed=seed)
         # Provide a user warning is random seed is set
@@ -143,7 +137,7 @@ class ResolvedCluster(Cluster):
             print('WARNING: random seed set to %i' % seed)
 
         t1 = time.time()
-        ##### 
+        #####
         # Sample the IMF to build up our cluster mass.
         #####
         mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass,
@@ -161,27 +155,27 @@ class ResolvedCluster(Cluster):
         for ikey in interp_keys:
             self.iso_interps[ikey] = interpolate.interp1d(self.iso.points['mass'], self.iso.points[ikey],
                                                           kind='linear', bounds_error=False, fill_value=np.nan)
-        
-        ##### 
+
+        #####
         # Make a table to contain all the information about each stellar system.
         #####
         star_systems = self._make_star_systems_table(mass, isMulti, sysMass)
-        
+
         # Trim out bad systems; specifically, stars with masses outside those provided
         # by the model isochrone (except for compact objects).
-        star_systems, compMass = self._remove_bad_systems(star_systems, compMass, keep_low_mass_stars)
+        star_systems, compMass = self._remove_bad_systems(star_systems, compMass)
 
-        ##### 
+        #####
         # Make a table to contain all the information about companions.
         #####
         if self.imf.make_multiples:
             companions = self._make_companions_table(star_systems, compMass)
-            
+
         #####
         # Save our arrays to the object
         #####
         self.star_systems = star_systems
-        
+
         if self.imf.make_multiples:
             self.companions = companions
 
@@ -192,13 +186,13 @@ class ResolvedCluster(Cluster):
         Set filter column names
         """
         filt_names = []
-        
+
         for col_name in self.iso.points.colnames:
             if 'm_' in col_name:
                 filt_names.append(col_name)
 
         return filt_names
-        
+
     def _make_star_systems_table(self, mass, isMulti, sysMass):
         """
         Make a star_systems table and get synthetic photometry for each primary star.
@@ -245,7 +239,7 @@ class ResolvedCluster(Cluster):
             for ii in range(len(bad[0])):
                 print('WARNING: changing phase {0} to 5'.format(star_systems['phase'][bad[0][ii]]))
         star_systems['phase'][bad] = 5
-        
+
         for filt in self.filt_names:
             star_systems[filt] = self.iso_interps[filt](star_systems['mass'])
 
@@ -253,14 +247,14 @@ class ResolvedCluster(Cluster):
         # Make Remnants
         #     Note: Some models already have WDs in them. If they do, then they shouldn't
         #     be handled by this code here (because their Teff > 0).
-        # 
+        #
         # Remnants have flux = 0 in all bands if they are generated here.
-        ##### 
+        #####
         if self.ifmr != None:
             # Identify compact objects as those with Teff = 0 or with phase > 100.
             highest_mass_iso = self.iso.points['mass'].max()
             idx_rem = np.where((np.isnan(star_systems['Teff'])) & (star_systems['mass'] > highest_mass_iso))[0]
-            
+
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
             if 'metallicity_array' in inspect.getfullargspec(self.ifmr.generate_death_mass).args:
@@ -282,13 +276,13 @@ class ResolvedCluster(Cluster):
                 star_systems[filt][idx_rem_good] = np.full(len(idx_rem_good), np.nan)
 
         return star_systems
-        
+
     def _make_companions_table(self, star_systems, compMass):
 
         N_systems = len(star_systems)
-        
+
         #####
-        #    MULTIPLICITY                 
+        #    MULTIPLICITY
         # Make a second table containing all the companion-star masses.
         # This table will be much longer... here are the arrays:
         #    sysIndex - the index of the system this star belongs too
@@ -312,17 +306,17 @@ class ResolvedCluster(Cluster):
         companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='metallicity') )
         for filt in self.filt_names:
             companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
-            
+
         if isinstance(self.imf._multi_props, multiplicity.MultiplicityResolvedDK):
             companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='log_a') )
             companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='e') )
             companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='i', description = 'degrees') )
             companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Omega') )
             companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='omega') )
-            
+
             for ii in range(len(companions)):
                 companions['log_a'][ii] = self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx'][ii]])
-            
+
             companions['e'] = self.imf._multi_props.random_e(np.random.rand(N_comp_tot))
             companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(np.random.rand(N_comp_tot),np.random.rand(N_comp_tot),np.random.rand(N_comp_tot))
 
@@ -330,7 +324,7 @@ class ResolvedCluster(Cluster):
         # Make an array that maps system index (ii), companion index (cc) to
         # the place in the 1D companions array.
         N_comp_max = N_companions.max()
-        
+
         comp_index = np.zeros((N_systems, N_comp_max), dtype=int)
         kk = 0
         for ii in range(N_systems):
@@ -346,9 +340,9 @@ class ResolvedCluster(Cluster):
             idx = np.where(N_companions >= cc)[0]
 
             # Get the location in the companions array for each system and
-            # the cc'th companion. 
+            # the cc'th companion.
             cdx = comp_index[idx, cc-1]
-            
+
             companions['mass'][cdx] = [compMass[ii][cc-1] for ii in idx]
             comp_mass = companions['mass'][cdx]
 
@@ -397,13 +391,13 @@ class ResolvedCluster(Cluster):
                     # as np.nan. Otherwise, add fluxes together
                     good = np.where( (f1 != 0) | (f2 != 0) )
                     bad = np.where( (f1 == 0) & (f2 == 0) )
-                    
+
                     star_systems[filt][idx[good]] = -2.5 * np.log10(f1[good] + f2[good])
                     star_systems[filt][idx[bad]] = np.nan
 
         #####
         # Make Remnants with flux = 0 in all bands.
-        ##### 
+        #####
         if self.ifmr != None:
             # Identify compact objects as those with Teff = 0 or with masses above the max iso mass
             highest_mass_iso = self.iso.points['mass'].max()
@@ -417,7 +411,7 @@ class ResolvedCluster(Cluster):
                                                                      metallicity_array=companions['metallicity'][cdx_rem])
             else:
                 r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem])
-            
+
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
@@ -426,7 +420,7 @@ class ResolvedCluster(Cluster):
 
             companions['mass_current'][cdx_rem_good] = r_mass_tmp[good]
             companions['phase'][cdx_rem_good] = r_id_tmp[good]
-                
+
             # Give remnants a magnitude of nan, so they can be filtered out later when calculating flux.
             for filt in self.filt_names:
                 companions[filt][cdx_rem_good] = np.full(len(cdx_rem_good), np.nan)
@@ -439,25 +433,19 @@ class ResolvedCluster(Cluster):
         if len(idx) != N_comp_tot and self.verbose:
             print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
 
-        # For low-mass stars and substellar objects below isochrone, assume no mass loss and set phase to 98
-        low_mass_idxs = (companions['mass']<np.min(self.iso.points['mass']))
-        companions['mass_current'][low_mass_idxs] = companions['mass'][low_mass_idxs]
-        companions['phase'][low_mass_idxs] = 98
-
         # Double check that everything behaved properly.
-        if len(idx)>0:
-            assert companions['mass'][idx].min() > 0
+        assert companions['mass'][idx].min() > 0
 
         return companions
 
-    
-    def _remove_bad_systems(self, star_systems, compMass, keep_low_mass_stars):
+
+    def _remove_bad_systems(self, star_systems, compMass):
         """
         Helper function to remove stars with masses outside the isochrone
-        mass range from the cluster. These stars are identified by having 
+        mass range from the cluster. These stars are identified by having
         a Teff = 0, as set up by _make_star_systems_table_interp.
-        If self.ifmr == None, then both high and low-mass bad systems are 
-        removed. If self.ifmr != None, then we will save the high mass systems 
+        If self.ifmr == None, then both high and low-mass bad systems are
+        removed. If self.ifmr != None, then we will save the high mass systems
         since they will be plugged into an ifmr later.
         """
         N_systems = len(star_systems)
@@ -466,33 +454,15 @@ class ResolvedCluster(Cluster):
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         star_systems_teff_non_nan = np.nan_to_num(star_systems['Teff'], nan=-99)
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-        if (self.ifmr == None) and (not keep_low_mass_stars):
-            print('Remove low mass stars below grid and compact objects')
+        if self.ifmr == None:
             # Keep only those stars with Teff assigned.
             idx = np.where(star_systems_teff_non_nan > 0)[0]
-        elif not keep_low_mass_stars:
-            print('Remove low mass stars, keep compact objects')
-            # Keep stars (with Teff) and any other compact objects (with phase info). 
-            idx = np.where( (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) )[0]
-        elif self.ifmr == None:
-            print('Remove compact objects, keep low mass stars below grid')
-            # Keep stars (with Teff) and objects below mass grid
-            idx = np.where( (star_systems_teff_non_nan > 0) | ((star_systems['mass']<np.min(self.iso.points['mass']))) )[0]
         else:
-            print('Keep low mass stars below grid and compact objects')
-            # Keep all
-            idx = np.where( (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) |
-                            ((star_systems['mass']<np.min(self.iso.points['mass']))) )[0]
+            # Keep stars (with Teff) and any other compact objects (with phase info).
+            idx = np.where( (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0) )[0]
 
         if len(idx) != N_systems and self.verbose:
             print( 'Found {0:d} stars out of mass range'.format(N_systems - len(idx)))
-
-        if keep_low_mass_stars:
-            lm_idx = np.where(star_systems['mass']<np.min(self.iso.points['mass']))[0]
-            # Adjust the properties as needed
-            star_systems['mass_current'][lm_idx] = star_systems['mass'][lm_idx]
-            star_systems['phase'][lm_idx] = 98
-            #pdb.set_trace()
 
         star_systems = star_systems[idx]
         N_systems = len(star_systems)
@@ -500,7 +470,7 @@ class ResolvedCluster(Cluster):
         if self.imf.make_multiples:
             # Clean up companion stuff (which we haven't handled yet)
             compMass = [compMass[ii] for ii in idx]
-        
+
         return star_systems, compMass
 
 
@@ -513,7 +483,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
     -----------
     iso: isochrone object
         SPISEA isochrone object
-    
+
     imf: imf object
         SPISEA IMF object
 
@@ -523,7 +493,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
     delta_AKs: float
         Amount of differential extinction to apply to synthetic photometry,
         in terms of magnitudes of extinction in the Ks filter. Specifically,
-        delta_AKs defines the standard deviation of a Gaussian distribution 
+        delta_AKs defines the standard deviation of a Gaussian distribution
         from which the delta_AKs values will be drawn from for each individual
         system.
 
@@ -541,10 +511,10 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         True for verbose output.
     """
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 ifmr=None, verbose=False, seed=None, keep_low_mass_stars=False):
+                 ifmr=None, verbose=False, seed=None):
 
         ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
-                                     seed=seed, keep_low_mass_stars=keep_low_mass_stars)
+                                     seed=seed)
 
         # Set random seed, if desired
         if seed is not None:
@@ -553,7 +523,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         # Extract the extinction law from the isochrone object
         redlaw_str = iso.points.meta['REDLAW']
         red_law = reddening.get_red_law(redlaw_str)
-            
+
         # For a given delta_AKs (Gaussian sigma of reddening distribution at Ks),
         # figure out the equivalent delta_filt values for all other filters.
         #t1 = time.time()
@@ -565,7 +535,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         for filt in self.filt_names:
             obs_str = get_obs_str(filt)
             filt_info = get_filter_info(obs_str)
-            
+
             mag_lo = mag_in_filter(red_vega_lo, filt_info)
             mag_hi = mag_in_filter(red_vega_hi, filt_info)
             delta_red_filt[filt] = mag_hi - mag_lo
@@ -593,18 +563,18 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         #t2 = time.time()
         #print 'Diff redden: {0}'.format(t2 - t1)
         return
-    
+
 class UnresolvedCluster(Cluster):
     """
     Cluster sub-class that produces an *unresolved* stellar cluster.
-    Output is a combined spectrum that is the sum of the individual 
+    Output is a combined spectrum that is the sum of the individual
     spectra of the cluster stars.
 
     Parameters
     -----------
     iso: isochrone object
         SPISEA isochrone object
-    
+
     imf: imf object
         SPISEA IMF object
 
@@ -622,10 +592,10 @@ class UnresolvedCluster(Cluster):
                  wave_range=[3000, 52000], verbose=False):
         # Doesn't do much.
         Cluster.__init__(self, iso, imf, cluster_mass, verbose=verbose)
-        
+
         # Sample a power-law IMF randomly
         self.mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
-        
+
         temp = np.zeros(len(self.mass), dtype=float)
         self.mass_all = np.zeros(len(self.mass), dtype=float)
         self.spec_list = [None] * len(self.mass)
@@ -659,7 +629,7 @@ class UnresolvedCluster(Cluster):
             tmpspectrim = spectrum.trimSpectrum(tmpspecresamp,wave_range[0],wave_range[1])
             self.spec_list_trim[ii] = tmpspectrim
             spec_list_trim_np[:,ii] = np.asarray(tmpspectrim._fluxtable)
-            
+
 
         t2 = time.time()
         print( 'Mass matching took {0:f} s.'.format(t2-t1))
@@ -681,7 +651,7 @@ class UnresolvedCluster(Cluster):
 
         self.spec_trim = np.sum(spec_list_trim_np,1)
         self.wave_trim = self.spec_list_trim[0].wave
-        
+
         t4 = time.time()
         print( 'Spec trimming took {0:f}s'.format(t4-t3))
 
@@ -689,10 +659,10 @@ class UnresolvedCluster(Cluster):
         print( 'Total cluster mass is {0:f} M_sun'.format(self.mass_tot))
 
         return
-        
+
 class Isochrone(object):
     """
-    Base Isochrone class. 
+    Base Isochrone class.
 
     Parameters
     ----------
@@ -710,20 +680,20 @@ class Isochrone(object):
         Default is 0.
 
     evo_model: model evolution class, optional
-        Set the stellar evolution model class. 
+        Set the stellar evolution model class.
         Default is evolution.MISTv1().
 
     atm_func: model atmosphere function, optional
-        Set the stellar atmosphere models for the stars. 
+        Set the stellar atmosphere models for the stars.
         Default is get_merged_atmosphere.
 
     wd_atm_func: white dwarf model atmosphere function, optional
-        Set the stellar atmosphere models for the white dwafs. 
-        Default is get_wd_atmosphere   
+        Set the stellar atmosphere models for the white dwafs.
+        Default is get_wd_atmosphere
 
     mass_sampling : int, optional
         Sample the raw isochrone every `mass_sampling` steps. The default
-        is mass_sampling = 0, which is the native isochrone mass sampling 
+        is mass_sampling = 0, which is the native isochrone mass sampling
         of the evolution model.
 
     wave_range : list, optional
@@ -752,7 +722,7 @@ class Isochrone(object):
 
 
         t1 = time.time()
-        
+
         c = constants
 
         # Assert that the wavelength ranges are within the limits of the
@@ -763,7 +733,7 @@ class Isochrone(object):
         except:
             print('Desired wavelength range invalid. Limit to 1000 - 10000 A')
             return
-        
+
         # Get solar metallicity models for a population at a specific age.
         # Takes about 0.1 seconds.
         evol = evo_model.isochrone(age=10**logAge,
@@ -779,7 +749,7 @@ class Isochrone(object):
             evol = evol[idx]
         if max_mass != None:
             idx = np.where(evol['mass'] <= max_mass)
-            evol = evol[idx] 
+            evol = evol[idx]
 
         # Trim down the table by selecting every Nth point where
         # N = mass sampling factor.
@@ -829,17 +799,16 @@ class Isochrone(object):
             star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
 
             # Redden the spectrum. This doesn't take much time at all.
-            red = red_law.reddening(AKs).resample(star.wave) 
+            red = red_law.reddening(AKs).resample(star.wave)
             star *= red
-            
-            # Save the final spectrum to our spec_list for later use.            
+
+            # Save the final spectrum to our spec_list for later use.
             self.spec_list.append(star)
 
         # Append all the meta data to the summary table.
         tab.meta['REDLAW'] = red_law.name
         tab.meta['ATMFUNC'] = atm_func.__name__
         tab.meta['EVOMODEL'] = type(evo_model).__name__
-        tab.meta['EVOMODELVERSION'] = evo_model.model_version_name
         tab.meta['LOGAGE'] = logAge
         tab.meta['AKS'] = AKs
         tab.meta['DISTANCE'] = distance
@@ -861,7 +830,7 @@ class Isochrone(object):
         Parameters
         -----------
         savefile: path or None, optional
-             Path to file plot too, if desired. 
+             Path to file plot too, if desired.
              Default is None
         """
         plt.clf()
@@ -870,7 +839,7 @@ class Isochrone(object):
         plt.gca().invert_xaxis()
         plt.xlabel(r'T$_{\mathrm{eff}}$ (K)')
         plt.ylabel('Luminosity (erg / s)')
-        
+
         fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
         plt.title(fmt_title.format(self.points.meta['LOGAGE'],
                                   self.points.meta['DISTANCE']/1e3,
@@ -878,7 +847,7 @@ class Isochrone(object):
 
         if savefile != None:
             plt.savefig(savefile)
-        
+
         return
 
     def plot_mass_luminosity(self, savefile=None):
@@ -888,28 +857,28 @@ class Isochrone(object):
         Parameters
         -----------
         savefile: path or None, optional
-             Path to file plot too, if desired. 
+             Path to file plot too, if desired.
              Default is None
         """
         plt.clf()
         plt.loglog(self.points['mass'], self.points['L'], 'k.')
         plt.xlabel(r'Mass (M$_\odot$)')
         plt.ylabel('Luminosity (erg / s)')
-        
+
         fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
         plt.title(fmt_title.format(self.points.meta['LOGAGE'],
                                   self.points.meta['DISTANCE']/1e3,
                                   self.points.meta['AKS']))
-        
+
         if savefile != None:
             plt.savefig(savefile)
-        
+
         return
 
 class IsochronePhot(Isochrone):
     """
-    Make an isochrone with synthetic photometry in various filters. 
-    Load from file if possible. 
+    Make an isochrone with synthetic photometry in various filters.
+    Load from file if possible.
 
     Parameters
     ----------
@@ -927,16 +896,16 @@ class IsochronePhot(Isochrone):
         Default is 0.
 
     evo_model: model evolution class, optional
-        Set the stellar evolution model class. 
+        Set the stellar evolution model class.
         Default is evolution.MISTv1().
 
     atm_func: model atmosphere function, optional
-        Set the stellar atmosphere models for the stars. 
+        Set the stellar atmosphere models for the stars.
         Default is atmospheres.get_merged_atmosphere.
 
     wd_atm_func: white dwarf model atmosphere function, optional
-        Set the stellar atmosphere models for the white dwafs. 
-        Default is atmospheres.get_wd_atmosphere   
+        Set the stellar atmosphere models for the white dwafs.
+        Default is atmospheres.get_wd_atmosphere
 
     red_law : reddening law object, optional
         Define the reddening law for the synthetic photometry.
@@ -944,14 +913,14 @@ class IsochronePhot(Isochrone):
 
     iso_dir : path, optional
          Path to isochrone directory. Code will check isochrone
-         directory to see if isochrone file already exists; if it 
-         does, it will just read the isochrone. If the isochrone 
+         directory to see if isochrone file already exists; if it
+         does, it will just read the isochrone. If the isochrone
          file doesn't exist, then save isochrone to the isochrone
          directory.
 
     mass_sampling : int, optional
         Sample the raw isochrone every `mass_sampling` steps. The default
-        is mass_sampling = 0, which is the native isochrone mass sampling 
+        is mass_sampling = 0, which is the native isochrone mass sampling
         of the evolution model.
 
     wave_range : list, optional
@@ -972,14 +941,14 @@ class IsochronePhot(Isochrone):
         which is often sufficient synthetic photometry in most cases.
 
     recomp : boolean, optional
-        If true, recalculate the isochrone photometry even if 
+        If true, recalculate the isochrone photometry even if
         the savefile exists. You should recompute anytime you change
         the filter set (see filters below).
 
     filters : array of strings, optional
         Define what filters the synthetic photometry
-        will be calculated for, via the filter string 
-        identifier. 
+        will be calculated for, via the filter string
+        identifier.
     """
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
@@ -1014,11 +983,11 @@ class IsochronePhot(Isochrone):
             else:
                 metal_pre = 'p'
             metal_flag = int(abs(metallicity)*10)
-            
+
             save_file_fmt = '{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_{4}{5:2s}.fits'
             self.save_file = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
             self.save_file_legacy = save_file_fmt.format(iso_dir, logAge, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
-            
+
         # Expected filters
         self.filters = filters
 
@@ -1035,7 +1004,7 @@ class IsochronePhot(Isochrone):
                                red_law=red_law, mass_sampling=mass_sampling,
                                min_mass=min_mass, max_mass=max_mass, rebin=rebin)
             self.verbose = True
-            
+
             # Make photometry
             self.make_photometry(rebin=rebin, vega=vega)
         else:
@@ -1046,58 +1015,14 @@ class IsochronePhot(Isochrone):
                 self.points = Table.read(self.save_file_legacy)
             # Add some error checking.
 
-        # Next: do we have all the filters we need?
-        comp_filters = []
-        for ii in self.filters:
-            col_name = 'm_' + get_filter_col_name(ii)
-            if col_name not in self.points.keys():
-                comp_filters.append(ii)
-        # Compute additional filters if needed
-        if len(comp_filters)>0:
-            self.verbose = True
-            print('Missing photometry for',len(comp_filters),'filter - recomputing these columns:',comp_filters)
-
-            print('Loading stellar spectra')
-            # Initialize output for stellar spectra
-            self.spec_list = []
-            # For each isochrone point, extract the synthetic photometry.
-            for ii in range(len(self.points['Teff'])):
-                # Loop is currently taking about 0.11 s per iteration
-                gravity = float( self.points['logg'][ii] )
-                L = float( (self.points['L'][ii]*units.W).cgs / (units.erg / units.s)) # in erg/s
-                T = float( self.points['Teff'][ii] )               # in Kelvin
-                R = float( (self.points['R'][ii]*units.m).to('pc') / units.pc)              # in pc
-                phase = int(self.points['phase'][ii])
-                # Get the atmosphere model now. Wavelength is in Angstroms
-                # This is the time-intensive call... everything else is negligable.
-                # If source is a star, pull from star atmospheres. If it is a WD,
-                # pull from WD atmospheres
-                if phase == 101:
-                    star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
-                                           verbose=False)
-                else:
-                    star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
-                                        rebin=rebin)
-                # Trim wavelength range down to appropriate range
-                star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
-                # Convert into flux observed at Earth (unreddened)
-                star *= (R / self.points.meta["DISTANCE"])**2  # in erg s^-1 cm^-2 A^-1
-                # Redden the spectrum. This doesn't take much time at all.
-                red = red_law.reddening(AKs).resample(star.wave) 
-                star *= red
-                # Save the final spectrum to our spec_list for later use.            
-                self.spec_list.append(star)
-
-            self.make_photometry(rebin=rebin, vega=vega, comp_filters=comp_filters)
-
         return
 
-    def make_photometry(self, rebin=True, vega=vega, comp_filters=None):
-        """ 
+    def make_photometry(self, rebin=True, vega=vega):
+        """
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
         photometry.
-        
+
         """
         startTime = time.time()
 
@@ -1110,16 +1035,12 @@ class IsochronePhot(Isochrone):
         npoints = len(self.points)
         verbose_fmt = 'M = {0:7.3f} Msun  T = {1:5.0f} K  m_{2:s} = {3:4.2f}'
 
-        #Calculate all filters, or select filters
-        if comp_filters is None:
-            comp_filters = self.filters
-
         # Loop through the filters, get filter info, make photometry for
         # all stars in this filter.
-        for ii in comp_filters:
+        for ii in self.filters:
             prt_fmt = 'Starting filter: {0:s}   Elapsed time: {1:.2f} seconds'
             print( prt_fmt.format(ii, time.time() - startTime))
-            
+
             filt = get_filter_info(ii, rebin=rebin, vega=vega)
             filt_name = get_filter_col_name(ii)
 
@@ -1127,15 +1048,15 @@ class IsochronePhot(Isochrone):
             col_name = 'm_' + filt_name
             mag_col = Column(np.zeros(npoints, dtype=float), name=col_name)
             self.points.add_column(mag_col)
-            
+
             # Loop through each star in the isochrone and do the filter integration
             print('Starting synthetic photometry')
             for ss in range(npoints):
                 star = self.spec_list[ss]  # These are already extincted, observed spectra.
                 star_mag = mag_in_filter(star, filt)
-                
+
                 self.points[col_name][ss] = star_mag
-        
+
                 if (self.verbose and (ss % 100) == 0):
                     print( verbose_fmt.format(self.points['mass'][ss], self.points['Teff'][ss],
                                              filt_name, star_mag))
@@ -1152,34 +1073,27 @@ class IsochronePhot(Isochrone):
 
     def check_save_file(self, evo_model, atm_func, red_law):
         """
-        Check to see if save_file exists, as saved by the save_file 
-        and save_file_legacy objects. If the filename exists, check the 
+        Check to see if save_file exists, as saved by the save_file
+        and save_file_legacy objects. If the filename exists, check the
         meta-data as well.
 
         returns a boolean: True is file exists, false otherwise
         """
         out_bool = False
-        
+
         if os.path.exists(self.save_file) | os.path.exists(self.save_file_legacy):
             try:
                 tmp = Table.read(self.save_file)
             except:
                 tmp = Table.read(self.save_file_legacy)
-            
-        
+
+
             # See if the meta-data matches: evo model, atm_func, redlaw
             if ( (tmp.meta['EVOMODEL'] == type(evo_model).__name__) &
                 (tmp.meta['ATMFUNC'] == atm_func.__name__) &
                  (tmp.meta['REDLAW'] == red_law.name) ):
                 out_bool = True
 
-            # Check model version if it was logged
-            if 'EVOMODELVERSION' in tmp.meta:
-                if tmp.meta['EVOMODELVERSION']!=evo_model.model_version_name:
-                    out_bool=False
-            else:
-                print(f"No version information found for evolution model {type(evo_model).__name__}.")
-            
         return out_bool
 
     def plot_CMD(self, mag1, mag2, savefile=None):
@@ -1193,7 +1107,7 @@ class IsochronePhot(Isochrone):
         mag2 : string
             The name of the second magnitude column to be plotted.
         savefile : string (default None)
-            If a savefile is specified, then the plot will be saved to that file. 
+            If a savefile is specified, then the plot will be saved to that file.
         """
         plt.clf()
         plt.plot(self.points[mag1] - self.points[mag2], self.points[mag1],
@@ -1201,7 +1115,7 @@ class IsochronePhot(Isochrone):
         plt.gca().invert_yaxis()
         plt.xlabel(mag1 + ' - ' + mag2 + ' (mag)')
         plt.ylabel(mag1 + ' (mag)')
-        
+
         fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
         plt.title(fmt_title.format(self.points.meta['LOGAGE'],
                                   self.points.meta['DISTANCE']/1e3,
@@ -1209,34 +1123,34 @@ class IsochronePhot(Isochrone):
 
         if savefile != None:
             plt.savefig(savefile)
-        
+
         return
 
     def plot_mass_magnitude(self, mag, savefile=None):
         """
         Make a standard mass-luminosity relation plot for this isochrone.
-        
+
         Parameters
         ----------
         mag : string
             The name of the magnitude column to be plotted.
         savefile : string (default None)
-            If a savefile is specified, then the plot will be saved to that file. 
+            If a savefile is specified, then the plot will be saved to that file.
         """
         plt.clf()
         plt.semilogx(self.points['mass'], self.points[mag], 'k.')
         plt.gca().invert_yaxis()
         plt.xlabel(r'Mass (M$_\odot$)')
         plt.ylabel(mag + ' (mag)')
-        
+
         fmt_title = 'logAge={0:.2f}, d={1:.2f} kpc, AKs={2:.2f}'
         plt.title(fmt_title.format(self.points.meta['LOGAGE'],
                                   self.points.meta['DISTANCE']/1e3,
                                   self.points.meta['AKS']))
-        
+
         if savefile != None:
             plt.savefig(savefile)
-        
+
         return
 
 #===================================================#
@@ -1258,7 +1172,7 @@ class iso_table(object):
         Functions on this object:
         apply_reddening (Apply reddening with defined redlaw and AKs)
         make_photometry (make synthetic photometry for spectra)
-                 
+
         Parameters
         ----------
         logAge : float
@@ -1296,13 +1210,13 @@ class iso_table(object):
             spectrum. This is very useful to save computation time down the
             road.
         """
-        t1 = time.time()        
+        t1 = time.time()
         c = constants
 
         # Get solar metallicity models for a population at a specific age.
         # Takes about 0.1 seconds.
-        evol = evo_model.isochrone(age=10**logAge)  # solar metallicity 
-        
+        evol = evo_model.isochrone(age=10**logAge)  # solar metallicity
+
         # Eliminate cases where log g is less than 0
         idx = np.where(evol['logg'] > 0)
         evol = evol[idx]
@@ -1313,8 +1227,8 @@ class iso_table(object):
             evol = evol[idx]
         if max_mass != None:
             idx = np.where(evol['mass'] <= max_mass)
-            evol = evol[idx]            
- 
+            evol = evol[idx]
+
         # Trim down the table by selecting every Nth point where
         # N = mass sampling factor.
         evol = evol[::mass_sampling]
@@ -1349,31 +1263,30 @@ class iso_table(object):
             # Get the atmosphere model now. Wavelength is in Angstroms
             # This is the time-intensive call... everything else is negligable.
             star = atm_func(temperature=T, gravity=gravity)
-            
+
             # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
             star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
 
             # Convert into flux observed at Earth (unreddened)
             star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
-            
-            # Save the final spectrum to our spec_list for later use.            
+
+            # Save the final spectrum to our spec_list for later use.
             self.spec_list.append(star)
 
         # Append all the meta data to the summary table.
-        
+
         tab.meta['ATMFUNC'] = atm_func.__name__
         tab.meta['EVOMODEL'] = type(evo_model).__name__
-        tab.meta['EVOMODELVERSION'] = evo_model.model_version_name
         tab.meta['LOGAGE'] = logAge
         tab.meta['DISTANCE'] = distance
         tab.meta['WAVEMIN'] = wave_range[0]
         tab.meta['WAVEMAX'] = wave_range[1]
 
         self.points = tab
-    
+
         t2 = time.time()
         print('Isochrone generation took {0:f} s.'.format(t2-t1))
-        
+
         return
 
     def apply_reddening(self, AKs, extinction_law, dAKs=0, dist='uniform', dAKs_max=None):
@@ -1385,7 +1298,7 @@ class iso_table(object):
         ----------
         AKs: float
             Total extinction in AKs
-            
+
         extinction_law: SPISEA extinction object
             Extinction law to be used on the spectra
 
@@ -1395,13 +1308,13 @@ class iso_table(object):
 
         dAKs_max: float or None
             If not none, defines the maximum |dAKs| a star can
-            have in gaussian distribution case 
+            have in gaussian distribution case
 
         dist: string, 'uniform' or 'gaussian'
             Distribution to draw differential reddening from. If uniform,
             dAKs will cut off at Aks +/- dAKs. Otherwise, will draw
             from Gaussian of width AKs +/- dAks
-            
+
         """
         self.AKs = np.ones(len(self.spec_list))
         # Apply reddening to each object in the spec list
@@ -1430,7 +1343,7 @@ class iso_table(object):
             else:
                 AKs_act = AKs
 
-            red = extinction_law.reddening(AKs_act).resample(star.wave) 
+            red = extinction_law.reddening(AKs_act).resample(star.wave)
             star *= red
 
             # Update the spectrum in spec list
@@ -1443,7 +1356,7 @@ class iso_table(object):
         return
 
     def make_photometry(self, filters, rebin=True):
-        """ 
+        """
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
         photometry.
@@ -1453,11 +1366,11 @@ class iso_table(object):
         filters : dictionary
             A dictionary containing the filter name (for the output columns)
             and the filter specification string that can be processed by pysynphot.
-                   
+
         rebin: boolean
-            True to rebin filter function (only used if non-zero transmission points are 
+            True to rebin filter function (only used if non-zero transmission points are
             larger than 1500 points)
- 
+
         """
         npoints = len(self.points)
 
@@ -1474,35 +1387,35 @@ class iso_table(object):
             col_name = 'mag_' + filt_name
             mag_col = Column(np.zeros(npoints, dtype=float), name=col_name)
             self.points.add_column(mag_col)
-            
+
             # Loop through each star in the isochrone and do the filter integration
             for ss in range(npoints):
                 star = self.spec_list[ss]  # These are already extincted, observed spectra.
                 star_mag = mag_in_filter(star, filt)
-                
+
                 self.points[col_name][ss] = star_mag
-        
-            
+
+
         endTime = time.time()
         print( '      Time taken: {0:.2f} seconds'.format(endTime - ts))
 
         return
 
 def get_filter_info(name, vega=vega, rebin=True):
-    """ 
+    """
     Define filter functions, setting ZP according to
     Vega spectrum. Input name is the SPISEA
     obs_string
     """
     tmp = name.split(',')
     filterName = tmp[-1]
-        
+
     if name.startswith('nirc2'):
         filt = filters.get_nirc2_filt(filterName)
 
     elif name.startswith('2mass'):
         filt = filters.get_2mass_filt(filterName)
-        
+
     elif name.startswith('vista'):
         filt = filters.get_vista_filt(filterName)
 
@@ -1517,10 +1430,10 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('jg'):
         filt = filters.get_Johnson_Glass_filt(filterName)
-        
+
     elif name.startswith('nirc1'):
         filt = filters.get_nirc1_filt(filterName)
-        
+
     elif name.startswith('ctio_osiris'):
         filt = filters.get_ctio_osiris_filt(filterName)
 
@@ -1532,7 +1445,7 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('ukirt'):
         filt = filters.get_ukirt_filt(filterName)
-        
+
     elif name.startswith('keck_osiris'):
         filt = filters.get_keck_osiris_filt(filterName)
 
@@ -1545,20 +1458,20 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('hawki'):
         filt = filters.get_hawki_filt(filterName)
-     
+
     elif name.startswith('rubin'):
         filt = filters.get_rubin_filt(filterName)
 
-    elif name.startswith('euclid'):
-        filt = filters.get_euclid_filt(filterName)
-        
+    elif name.startswith('nsfcam'):
+        filt = filters.get_nsfcam_filt(filterName)
+
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
         try:
             filt = ObsBandpass(name)
         except:
             raise Exception('Filter {0} not understood. Check spelling and make sure cdbs/mtab and cdbs/comp files are up to date'.format(name))
-        
+
         # Convert to ArraySpectralElement for resampling.
         filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
                                              waveunits=filt.waveunits,
@@ -1576,14 +1489,14 @@ def get_filter_info(name, vega=vega, rebin=True):
     # Otherwise, throw an error
     idx = np.where(filt.throughput > 0.001)[0]
     if (min(filt.wave[idx]) < min(vega.wave)) | (max(filt.wave[idx]) > max(vega.wave)):
-        raise ValueError('Vega spectrum doesnt cover filter wavelength range!')  
+        raise ValueError('Vega spectrum doesnt cover filter wavelength range!')
 
     vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
     #vega_flux = vega_obs.binflux.sum()
     diff = np.diff(vega_obs.binwave)
     diff = np.append(diff, diff[-1])
     vega_flux = np.sum(vega_obs.binflux * diff)
-    
+
     vega_mag = 0.03
 
     filt.flux0 = vega_flux
@@ -1594,7 +1507,7 @@ def get_filter_info(name, vega=vega, rebin=True):
 
 def get_filter_col_name(obs_str):
     """
-    Get standard column name for synthetic photometry based on 
+    Get standard column name for synthetic photometry based on
     the input string. The input string is expected to be an
     appropriate SPISEA obs_string
     """
@@ -1613,7 +1526,7 @@ def get_filter_col_name(obs_str):
             filt_name = 'hst_{0}'.format(tmp[-1])
     else:
         filt_name = '{0}_{1}'.format(tmp[0], tmp[1])
-        
+
     return filt_name
 
 def get_obs_str(col):
@@ -1623,7 +1536,7 @@ def get_obs_str(col):
     """
     # Remove the trailing m_
     name = col[2:]
-    
+
     # Define dictionary for filters
     filt_list = {'hst_f127m': 'wfc3,ir,f127m', 'hst_f139m': 'wfc3,ir,f139m', 'hst_f153m': 'wfc3,ir,f153m',
                  'hst_f814w': 'acs,wfc1,f814w', 'hst_f125w': 'wfc3,ir,f125w', 'hst_f160w': 'wfc3,ir,f160w',
@@ -1645,7 +1558,7 @@ def get_obs_str(col):
                  'jwst_F187N': 'jwst,F187N',
                  'jwst_F200W': 'jwst,F200W',
                  'jwst_F210M': 'jwst,F210M',
-                 'jwst_F250M': 'jwst,F250M', 
+                 'jwst_F250M': 'jwst,F250M',
                  'jwst_F277W': 'jwst,F277W',
                  'jwst_F300M': 'jwst,F300M',
                  'jwst_F322W2': 'jwst,F322W2',
@@ -1665,14 +1578,10 @@ def get_obs_str(col):
                  'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
                  '2mass_J': '2mass,J', '2mass_H': '2mass,H', '2mass_Ks': '2mass,Ks',
                  'ubv_U':'ubv,U', 'ubv_B':'ubv,B', 'ubv_V':'ubv,V', 'ubv_R':'ubv,R',
-                 'ubv_I':'ubv,I', 
+                 'ubv_I':'ubv,I',
                  'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K',
                  'nirc1_K':'nirc1,K', 'nirc1_H':'nirc1,H',
                  'naco_J':'naco,J', 'naco_H':'naco,H', 'naco_Ks':'naco,Ks',
-                 'naco_IB_2.00': 'naco,IB_2.00', 'naco_IB_2.03':'naco,IB_2.03', 'naco_IB_2.06':'naco,IB_2.06',
-                 'naco_IB_2.24':'naco,IB_2.24', 'naco_IB_2.27':'naco,IB_2.27',
-                 'naco_IB_2.30':'naco,IB_2.30', 'naco_IB_2.33':'naco,IB_2.33',
-                 'naco_IB_2.36':'naco,IB_2.36',
                  'ukirt_J':'ukirt,J', 'ukirt_H':'ukirt,H', 'ukirt_K':'ukirt,K',
                  'ctio_osiris_H': 'ctio_osiris,H', 'ctio_osiris_K': 'ctio_osiris,K',
                  'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i',
@@ -1686,7 +1595,7 @@ def get_obs_str(col):
                  'roman_f106': 'roman,wfi,f106',
                  'roman_f129': 'roman,wfi,f129',
                  'roman_f158': 'roman,wfi,f158',
-                 'roman_f146': 'roman,wfi,f146',
+                 'roman_w146': 'roman,wfi,w146',
                  'roman_f213': 'roman,wfi,f213',
                  'roman_f184': 'roman,wfi,f184',
                  'rubin_g':'rubin,g',
@@ -1694,14 +1603,10 @@ def get_obs_str(col):
                  'rubin_r':'rubin,r',
                  'rubin_u':'rubin,u',
                  'rubin_z':'rubin,z',
-                 'rubin_y':'rubin,y',
-                 'euclid_VIS':'euclid,VIS',
-                 'euclid_Y':'euclid,Y',
-                 'euclid_J':'euclid,J',
-                 'euclid_H':'euclid,H'}
+                 'rubin_y':'rubin,y'}
 
     obs_str = filt_list[name]
-        
+
     return obs_str
 
 def rebin_spec(wave, specin, wavnew):
@@ -1714,7 +1619,7 @@ def rebin_spec(wave, specin, wavnew):
     f = np.ones(len(wave))
     filt = spectrum.ArraySpectralElement(wave, f, waveunits='angstrom')
     obs_f = obs.Observation(spec, filt, binset=wavnew, force='taper')
- 
+
     return obs_f.binflux
 
 def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
@@ -1725,7 +1630,7 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
                                  'wfc3,ir,f153m']):
     """
     Wrapper routine to generate a grid of isochrones of different ages,
-    extinctions, and distances. 
+    extinctions, and distances.
 
     Parameters:
     ----------
@@ -1737,7 +1642,7 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
 
     dist_arr: array
         Array of distances to loop over (pc)
- 
+
     evo_models: SPISEA evolution object
         Which evolution models to use
 
@@ -1754,7 +1659,7 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
         Mass sampling of isochrone, relative to original mass sampling
 
     filters: dictionary
-        Which filters to do the synthetic photometry on    
+        Which filters to do the synthetic photometry on
     """
     print( '**************************************')
     print( 'Start generating isochrones')
@@ -1799,7 +1704,7 @@ def mag_in_filter(star, filt):
     diff = np.diff(star_in_filter.binwave)
     diff = np.append(diff, diff[-1])
     star_flux = np.sum(star_in_filter.binflux * diff)
-    
+
     star_mag = -2.5 * math.log10(star_flux / filt.flux0) + filt.mag0
     return star_mag
 
@@ -1822,10 +1727,10 @@ def match_model_masses(isoMasses, starMasses):
 
     idx = np.where(dm_frac > 0.1)[0]
     indices[idx] = -1
-    
+
     return indices
 
-    
+
 def get_evo_model_by_string(evo_model_string):
     return getattr(evolution, evo_model_string)
 
@@ -1836,7 +1741,7 @@ def calc_ab_vega_filter_conversion(filt_str):
     AB and Vega magnitudes for a given filter:
     m_AB - m_vega
 
-    Note: this conversion is just the vega magnitude in 
+    Note: this conversion is just the vega magnitude in
     AB system
 
     Parameters:
@@ -1856,14 +1761,14 @@ def calc_ab_vega_filter_conversion(filt_str):
     filt_wave = filt.wave
     filt_mu = c / filt_wave
     s_filt = filt.throughput
-    
+
     # Interpolate the filter function, determine what the
     # filter function is at the exact sampling of the
     # vega spectrum (in freq space)
     filt_interp = scipy.interpolate.interp1d(filt_mu, s_filt, kind='linear', bounds_error=False,
                                                  fill_value=0)
     s_interp = filt_interp(vega_mu)
-    
+
     # Now for the m_ab calculation
     mu_diff = np.diff(vega_mu)
     numerator = np.sum(vega_flux_mu[:-1] * s_interp[:-1] * mu_diff)
@@ -1881,10 +1786,10 @@ def calc_ab_vega_filter_conversion(filt_str):
     #                                             fill_value=0)
     #s_interp = filt_interp(vega.wave)
 
-    # Calculate the numerator 
+    # Calculate the numerator
     #diff = np.diff(vega.wave)
     #numerator2 = np.sum((vega.wave[:-1]**2. / c) * vega.flux[:-1] * s_interp[:-1] * diff)
-    
+
     # Now we need to intergrate the filter response for the denominator
     #denominator2 = np.sum(s_interp[:-1] * diff)
 
@@ -1892,4 +1797,3 @@ def calc_ab_vega_filter_conversion(filt_str):
     #vega_mag_ab2 = -2.5 * np.log10(numerator2 / denominator2) - 48.6
 
     return vega_mag_ab
-
