@@ -1207,3 +1207,40 @@ def test_Raithel18_IFMR_5():
     assert len(WD_idx) == 2 , "There are not the right number of WDs for the Raithel18 IFMR"
 
     return
+
+def test_ResolvedCluster_random_state():
+    """
+    Test that the random state is properly set in ResolvedCluster, such that two clusters with the same seed have the same stars.
+    """
+    log_age = 6.7
+    AKs = 2.7
+    distance = 4000
+    cluster_mass = 10**4.
+    iso_dir = 'isochrones/'
+
+    evo = evolution.MergedBaraffePisaEkstromParsec()
+    atm_func = atmospheres.get_merged_atmosphere
+    red_law = reddening.RedLawNishiyama09()
+    filt_list = ['nirc2,J', 'nirc2,Kp']
+    
+    iso = syn.IsochronePhot(
+        log_age,
+        AKs,
+        distance,
+        evo_model=evo,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        mass_sampling=10,
+        iso_dir=iso_dir
+    )
+
+    imf_limits = np.array([0.07, 0.5, 150])
+    imf_powers = np.array([-1.3, -2.35])
+    imf_multi = multiplicity.MultiplicityUnresolved()
+    imf_test = imf.IMF_broken_powerlaw(imf_limits, imf_powers, multiplicity=imf_multi)
+
+    cluster1 = syn.ResolvedCluster(iso, imf_test, cluster_mass, seed=42)
+    cluster2 = syn.ResolvedCluster(iso, imf_test, cluster_mass, seed=42)
+    np.testing.assert_array_equal(cluster1.star_systems, cluster2.star_systems)
+    return

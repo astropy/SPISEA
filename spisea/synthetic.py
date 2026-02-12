@@ -159,7 +159,8 @@ class ResolvedCluster(Cluster):
         # Provide a user warning is random seed is set
         if seed is not None and verbose:
             print('WARNING: random seed set to %i' % seed)
-
+            imf.rng = self.rng
+        
         #####
         # Sample the IMF to build up our cluster mass.
         #####
