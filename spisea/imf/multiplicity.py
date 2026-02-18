@@ -181,6 +181,18 @@ class MultiplicityUnresolved(object):
 
         return  q
 
+    def get_resolved_companions(self, mass1)
+        """
+        Function that generates companion masses and orbital
+        parameters.
+
+        Not defined for the unresolved class, will be defined in
+        resolved subclasses.
+        """
+        raise NotImplementedError("Function get_resolved_companions is not"
+            " defined for MultiplicityUnresolved, only its resolved subclasses.")
+
+
     def random_is_multiple(self, x, MF):
         """
         Helper function: determine if star is in multiple system.
@@ -282,6 +294,21 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         e = np.sqrt(x)
         
         return e
+
+    def get_resolved_companions(self, mass1):
+        """
+        Function that generates companion masses and orbital
+        parameters.
+
+        Parameters
+        ----------
+        mass1 : float or array_like
+            initial masses of primary stars for singles + systems
+
+        Returns
+        companions_table : astropy Table with companion initial parameters
+        """
+        # TODO: bring together the number, mass, a, and e generators here
     
     def random_keplarian_parameters(self, x, y, z):
         """
@@ -695,7 +722,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
             Companion star fraction for each star in the input list.
         """
 
-        return
+        return np.minimum(1.0, self.multiplicity_fraction(mass))
 
     def random_q(self, x, mass1):
         # Full primary mass vector across 0.08 < M1 < 150
