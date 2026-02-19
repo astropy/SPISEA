@@ -54,4 +54,4 @@ distribute-*.tar.gz
 ._*
 
 # Test files generated
-spisea/tests/isochrones
+# spisea/tests/isochrones
