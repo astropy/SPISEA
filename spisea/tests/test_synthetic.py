@@ -1248,8 +1248,14 @@ def test_ResolvedCluster_random_state():
     cluster2 = syn.ResolvedCluster(iso, imf_test, cluster_mass, seed=42)
     np.testing.assert_array_equal(cluster1.star_systems, cluster2.star_systems)
 
+    with open(f'{spisea_path}/tests/test_data/star_systems.pkl', 'rb') as file:
+        old_star_systems = pickle.load(file)
     with open(f'{spisea_path}/tests/test_data/companions.pkl', 'rb') as file:
         old_companion = pickle.load(file)
+
+    for key in old_star_systems.colnames:
+        # Equal to the 7th decimal
+        np.testing.assert_almost_equal(cluster1.star_systems[key], old_star_systems[key])
 
     for key in old_companion.colnames:
         np.testing.assert_array_equal(cluster1.companions[key], old_companion[key])
