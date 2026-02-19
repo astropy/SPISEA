@@ -139,8 +139,8 @@ class ResolvedCluster(Cluster):
         no compact remnants are produced.
 
     keep_low_mass_stars: boolean (default False)
-        If True, the cluster will not cut out stars below the isochrone grid 
-        on initial mass. They are assigned a current mass equal to their initial 
+        If True, the cluster will not cut out stars below the isochrone grid
+        on initial mass. They are assigned a current mass equal to their initial
         mass, a phase of 98, and no other evolutionary properties or photometry.
         If False, stars below the isochrone initial mass limit are cut out.
 
@@ -160,7 +160,7 @@ class ResolvedCluster(Cluster):
         if seed is not None and verbose:
             print('WARNING: random seed set to %i' % seed)
             imf.rng = self.rng
-        
+
         #####
         # Sample the IMF to build up our cluster mass.
         #####
@@ -573,7 +573,7 @@ class ResolvedCluster(Cluster):
 
         return star_systems, companions
 
-    
+
     def _remove_bad_systems(self, star_systems, compMass, keep_low_mass_stars):
         """
         Helper function to remove stars with masses outside the isochrone
@@ -607,7 +607,7 @@ class ResolvedCluster(Cluster):
             idx =   (star_systems_teff_non_nan > 0) | \
                     (star_systems_phase_non_nan >= 0) | \
                     (star_systems['mass'] < np.min(self.iso.points['mass']))
-        
+
         n_out_of_range = N_systems - sum(idx)
         if self.verbose and n_out_of_range > 0:
             print( 'Found {0:d} stars out of mass range'.format(n_out_of_range))
@@ -978,7 +978,7 @@ class Isochrone(object):
         tab.meta['WAVEMAX'] = wave_range[1]
 
         self.points = tab
-        
+
         if self.verbose:
             t2 = time.time()
             print( 'Isochrone generation took {0:f} s.'.format(t2-t1))
@@ -1131,13 +1131,13 @@ class IsochronePhot(Isochrone):
         # For solar metallicity case, allow for legacy isochrones (which didn't have
         # metallicity tag since they were all solar metallicity) to be read
         # properly
-        
+
         # Set save file name
         metal_value = round(abs(metallicity), 2)
         metal_sign = 'm' if metallicity < 0 else 'p'
         self.save_file = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}_{metal_sign}{metal_value:.2f}.fits'
 
-        if metallicity == 0.0:            
+        if metallicity == 0.0:
             self.save_file_legacy = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}.fits'
         else:
             self.save_file_legacy = self.save_file
@@ -1216,9 +1216,9 @@ class IsochronePhot(Isochrone):
                 # Convert into flux observed at Earth (unreddened)
                 star *= (R / self.points.meta["DISTANCE"])**2  # in erg s^-1 cm^-2 A^-1
                 # Redden the spectrum. This doesn't take much time at all.
-                red = red_law.reddening(AKs).resample(star.wave) 
+                red = red_law.reddening(AKs).resample(star.wave)
                 star *= red
-                # Save the final spectrum to our spec_list for later use.            
+                # Save the final spectrum to our spec_list for later use.
                 self.spec_list.append(star)
 
             self.make_photometry(rebin=rebin, vega=vega, comp_filters=comp_filters)
@@ -1226,7 +1226,7 @@ class IsochronePhot(Isochrone):
         return
 
     def make_photometry(self, rebin=True, vega=vega, comp_filters=None):
-        """ 
+        """
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
         photometry.
@@ -1700,7 +1700,7 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('euclid'):
         filt = filters.get_euclid_filt(filterName)
-        
+
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
         try:
