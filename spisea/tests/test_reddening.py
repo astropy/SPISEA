@@ -1,9 +1,11 @@
 import numpy as np
+import spisea
 from spisea import reddening, synthetic, evolution, atmospheres
 import pylab as py
 import os
 import pdb
 
+spisea_path = os.path.dirname(spisea.__file__)
 
 def test_RedLawBrokenPowerLaw(plots=False):
     #===============================#
@@ -225,7 +227,7 @@ def test_red_law_IsochronePhot():
             filters=filt_list,
             min_mass=0.95, 
             max_mass=1.05,
-            iso_dir='isochrones/',
+            iso_dir=f'{spisea_path}/tests/isochrones',
             recomp=True
         )
         print('----EL {0} works OK!-----'.format(redlaw_arr[ii]))

@@ -2,6 +2,8 @@ import time
 import numpy as np
 import pylab as plt
 import numpy as np
+import pickle
+import spisea
 from spisea import reddening, evolution, atmospheres, ifmr
 from spisea import synthetic as syn
 from spisea.imf import imf
@@ -10,6 +12,8 @@ import pysynphot
 import os
 import pdb
 from scipy.spatial import cKDTree as KDTree
+
+spisea_path = os.path.dirname(spisea.__file__)
 
 def test_isochrone(plot=False):
     logAge = 6.7
@@ -46,7 +50,7 @@ def test_iso_wave():
     logAge = np.log10(5*10**6.) # Age in log(years)
     AKs = 0.8 # extinction in mags
     dist = 4000 # distance in parsec
-    iso_dir = 'isochrones/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Define evolution/atmosphere models and extinction law (optional)
     evo_model = evolution.MergedBaraffePisaEkstromParsec() 
@@ -134,7 +138,7 @@ def test_IsochronePhot(plot=False):
     distance = 4000
     filt_list = ['wfc3,ir,f127m', 'nirc2,J']
     mass_sampling=1
-    iso_dir = 'isochrones/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     evo_model = evolution.MISTv1()
     atm_func = atmospheres.get_merged_atmosphere
@@ -284,7 +288,7 @@ def test_ResolvedCluster():
     distance = 4000
     cluster_mass = 10**5.
     mass_sampling=5
-    iso_dir = 'isochrones/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Test filters
     filt_list = ['nirc2,J', 'nirc2,Kp']
@@ -398,7 +402,7 @@ def test_ResolvedClusterDiffRedden():
     cluster_mass = 10**5.
     deltaAKs = 0.05
     mass_sampling=5
-    iso_dir = 'isochrones/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Test filters
     filt_list = ['nirc2,J', 'nirc2,Kp']
@@ -523,7 +527,7 @@ def test_ifmr_multiplicity():
     distance = 1000
     cluster_mass = 1e6
     mass_sampling = 5
-    iso_dir = 'isochrones/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Test all filters
     filt_list = ['nirc2,Kp', 'nirc2,H', 'nirc2,J']
@@ -616,7 +620,7 @@ def test_metallicity():
     atm_func = atmospheres.get_phoenixv16_atmosphere
     red_law = reddening.RedLawHosek18b()
     filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m']
-    iso_dir = 'isochrones/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Start with a solar metallicity isochrone    
     metallicity= 0.
@@ -685,7 +689,7 @@ def test_cluster_mass():
     distance = 4000
     cluster_mass = 10**5.
     mass_sampling = 5
-    iso_dir = 'isochrones/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Test filters
     filt_list = ['nirc2,J', 'nirc2,Kp']
@@ -774,7 +778,7 @@ def test_keep_low_mass_stars():
     distance = 4000
     cluster_mass = 10**5.
     mass_sampling = 5
-    iso_dir = 'isochrones/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Test filters
     filt_list = ['nirc2,J', 'nirc2,Kp']
@@ -838,7 +842,7 @@ def test_compact_object_companions():
     distance = 4000
     cluster_mass = 10**4.
     mass_sampling=5
-    iso_dir = 'isochrones/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Test filters
     filt_list = ['nirc2,J', 'nirc2,Kp']
@@ -887,7 +891,7 @@ def time_test_cluster():
     AKs = 2.7
     distance = 4000
     cluster_mass = 10**4
-    iso_dir = 'isochrones/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     startTime = time.time()
     
@@ -964,7 +968,7 @@ def time_test_mass_match():
     AKs = 2.7
     distance = 4000
     cluster_mass = 5e3
-    iso_dir = 'isochrones/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     imf_in = imf.Kroupa_2001(multiplicity=None)
 
@@ -1058,7 +1062,7 @@ def generate_Spera15_IFMR():
 
     return bad_idx[0], WD_idx[0], NS_idx[0], BH_idx[0], rem_mass
 
-def test_Spera15_IFMR1():
+def test_Spera15_IFMR_1():
     """
     Check to make sure the total number of objects input matches the number of objects output (28)
     """
@@ -1069,7 +1073,7 @@ def test_Spera15_IFMR1():
 
     return
 
-def test_Spera15_IFMR2():
+def test_Spera15_IFMR_2():
     """
     Check that all negative remnant masses have type code -1
     """
@@ -1216,13 +1220,13 @@ def test_ResolvedCluster_random_state():
     AKs = 2.7
     distance = 4000
     cluster_mass = 10**4.
-    iso_dir = 'isochrones/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
     red_law = reddening.RedLawNishiyama09()
     filt_list = ['nirc2,J', 'nirc2,Kp']
-    
+
     iso = syn.IsochronePhot(
         log_age,
         AKs,
