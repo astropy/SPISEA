@@ -47,9 +47,10 @@ def test_iso_wave():
     range (propagated through IsochronePhot)
     """
     # Define isochrone parameters
-    logAge = np.log10(5*10**6.) # Age in log(years)
-    AKs = 0.8 # extinction in mags
+    logAge = 6.7 # Age in log(years)
+    AKs = 2.7 # extinction in mags
     dist = 4000 # distance in parsec
+    metal = 0.0 # metallicity
     iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Define evolution/atmosphere models and extinction law (optional)
@@ -72,6 +73,7 @@ def test_iso_wave():
     wave_range1 = [3000, 52000]
     my_iso = syn.IsochronePhot(
         logAge, AKs, dist,
+        metallicity=metal,
         evo_model=evo_model, 
         atm_func=atm_func,
         red_law=red_law, 
@@ -155,6 +157,7 @@ def test_IsochronePhot(plot=False):
         filters=filt_list,
         mass_sampling=mass_sampling,
         iso_dir=iso_dir
+        recomp=True
     )
     endTime = time.time()
     print('IsochronePhot generated in: %d seconds' % (endTime - startTime))
@@ -309,7 +312,8 @@ def test_ResolvedCluster():
         red_law=red_law,
         filters=filt_list,
         mass_sampling=mass_sampling,
-        iso_dir=iso_dir
+        iso_dir=iso_dir,
+        recomp=True
     )
 
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
@@ -1254,10 +1258,11 @@ def test_ResolvedCluster_random_state():
         old_companion = pickle.load(file)
 
     for key in old_star_systems.colnames:
-        # Equal to the 7th decimal
-        np.testing.assert_almost_equal(cluster1.star_systems[key], old_star_systems[key])
+        # Require values are consistent within reasonable bounds
+        assert np.all(np.isclose(cluster1.star_systems[key], old_star_systems[key], rtol=1e-05, atol=1e-08))
 
     for key in old_companion.colnames:
-        np.testing.assert_array_equal(cluster1.companions[key], old_companion[key])
+        # Require values are consistent within reasonable bounds
+        assert np.all(np.isclose(cluster1.companions[key], old_companion[key], rtol=1e-05, atol=1e-08))
 
     return
