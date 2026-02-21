@@ -1,3 +1,6 @@
+# SPISEA-generated isochrones from test functions
+spisea/tests/isochrones/
+
 # Compiled files
 *.py[co]
 *.a
@@ -52,3 +55,6 @@ distribute-*.tar.gz
 # OS Generated Files
 .DS_Store
 ._*
+
+# Test files generated
+# spisea/tests/isochrones
