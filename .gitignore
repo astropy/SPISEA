@@ -1,3 +1,6 @@
+# SPISEA-generated isochrones from test functions
+spisea/tests/isochrones/
+
 # Compiled files
 *.py[co]
 *.a
