@@ -1523,8 +1523,8 @@ class IsochronePhotExternalEvolution(IsochronePhot):
             metal_flag = int(abs(metallicity)*10)
             
             save_file_fmt = '{0}/atm_{1:4.2f}_{2:4s}_{3}{4:2s}.fits'
-            self.save_file = save_file_fmt.format(iso_dir, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
-            self.save_file_legacy = save_file_fmt.format(iso_dir, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
+            self.save_file = save_file_fmt.format(atm_grid_dir, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
+            self.save_file_legacy = save_file_fmt.format(atm_grid_dir, AKs, str(distance).zfill(5), metal_pre, str(metal_flag).zfill(2))
             
         # Expected filters
         self.filters = filters
