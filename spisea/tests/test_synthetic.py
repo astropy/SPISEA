@@ -156,7 +156,7 @@ def test_IsochronePhot(plot=False):
         red_law=redlaw,
         filters=filt_list,
         mass_sampling=mass_sampling,
-        iso_dir=iso_dir
+        iso_dir=iso_dir,
         recomp=True
     )
     endTime = time.time()
