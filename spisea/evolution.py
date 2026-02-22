@@ -1312,7 +1312,31 @@ class COSMIC(StellarEvolution):
             self.kick_info = kick_info
             
         final_binaries = bcm[bcm['tphys'] > 0] #only gives the first and last idx, so this takes final one
+
+        # Add number for system idx since we're about to manipuluate them a bunch
+        star_systems['system_idx'] = np.arange(len(star_systems))
         
+        # Remove systems that don't show up in bcm final (very few)
+        if len(final_binaries) != len(star_systems):
+            start_bins = bcm[bcm['tphys'] == 0]['bin_num'].values
+            end_bins   = bcm[bcm['tphys'] != 0]['bin_num'].values
+            
+            bad_bin_nums  = np.setdiff1d(start_bins, end_bins)
+            good_bin_nums = np.intersect1d(start_bins, end_bins)
+
+            bad_system_mask = np.isin(star_systems['system_idx'], bad_bin_nums)
+            bad_system_idxs = np.where(bad_system_mask)[0]
+            
+            bad_companion_rows = np.where(np.isin(companions['system_idx'], bad_bin_nums))[0]
+            
+            companions.remove_rows(bad_companion_rows)
+            star_systems.remove_rows(bad_system_idxs)
+            
+            keep_mask = np.ones(len(companion_system_idxs), dtype=bool)
+            keep_mask[bad_companion_rows] = False
+            companion_system_idxs = companion_system_idxs[keep_mask]
+            
+            kick_info = kick_info.loc[kick_info.index.isin(good_bin_nums)]
         
         star_systems['mass_current'] = final_binaries['mass_1']
         star_systems['Teff'] = final_binaries['teff_1']
@@ -1336,16 +1360,14 @@ class COSMIC(StellarEvolution):
         fixed_phases1[np.where(final_binaries['kstar_1'] == 14)[0]] = 103
         star_systems['phase'] = fixed_phases1
         
-        fixed_phases2 = final_binaries['kstar_2'].to_numpy()
-        fixed_phases2[np.where((final_binaries['kstar_2'] >= 10) & (final_binaries['kstar_2'] <= 12))[0]] = 101
-        fixed_phases2[np.where(final_binaries['kstar_2'] == 13)[0]] = 102
-        fixed_phases2[np.where(final_binaries['kstar_2'] == 14)[0]] = 103
-        companions['phase'] = fixed_phases2[companion_system_idxs]
+        fixed_phases2 = final_binaries['kstar_2'][companion_system_idxs].to_numpy()
+        fixed_phases2[np.where((final_binaries['kstar_2'][companion_system_idxs] >= 10) & (final_binaries['kstar_2'][companion_system_idxs] <= 12))[0]] = 101
+        fixed_phases2[np.where(final_binaries['kstar_2'][companion_system_idxs] == 13)[0]] = 102
+        fixed_phases2[np.where(final_binaries['kstar_2'][companion_system_idxs] == 14)[0]] = 103
+        companions['phase'] = fixed_phases2
         
         # maybe add WR designation
 
-        # Add number for system idx since we're about to manipuluate them a bunch
-        star_systems['system_idx'] = np.arange(len(star_systems))
 
         # Take the disrupted binaries and put the companions into the star_system table (if desired)
         # don't include massless remnant companions
@@ -1374,8 +1396,14 @@ class COSMIC(StellarEvolution):
         primaries_to_deleted_companion_idxs = companions[delete_companion_idxs]['system_idx']
         
         #Fix binary specification of primaries that lost their companions
-        star_systems['isMultiple'][primaries_to_deleted_companion_idxs] = False
-        star_systems['N_companions'][primaries_to_deleted_companion_idxs] = 0
+        #star_systems['isMultiple'][primaries_to_deleted_companion_idxs] = False
+        #star_systems['N_companions'][primaries_to_deleted_companion_idxs] = 0
+
+        mask = np.isin(star_systems['system_idx'],
+               primaries_to_deleted_companion_idxs)
+
+        star_systems['N_companions'][mask] = 0
+        star_systems['isMultiple'][mask] = False
         
         # Promote the companions to merged primaries to primaries
         if self.keep_disrupted_companions and len(companions_to_mr_primaries_idxs) > 0:
@@ -1398,6 +1426,9 @@ class COSMIC(StellarEvolution):
         star_systems.remove_columns(['system_idx', 'system_idx_new'])
 
         #FIXME add assertion about mass_current not being zero
+
+        # Make sure we didn't break anything by manipulating the number of companions
+        assert star_systems['N_companions'].sum() == len(companions)
 
         return star_systems, companions
 
