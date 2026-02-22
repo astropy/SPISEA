@@ -1372,6 +1372,7 @@ class COSMIC(StellarEvolution):
         # Take the disrupted binaries and put the companions into the star_system table (if desired)
         # don't include massless remnant companions
         disrupted_binary_companion_idxs = np.where((final_binaries['bin_state'][companion_system_idxs] == 2) & (final_binaries['kstar_2'][companion_system_idxs] != 15))[0]
+        disrupted_binary_companions_num = 0
         if self.keep_disrupted_companions and len(disrupted_binary_companion_idxs) > 0:
             disrupted_binary_companions = companions[disrupted_binary_companion_idxs]
             disrupted_binary_companions['systemMass'] = disrupted_binary_companions['mass_current']
@@ -1380,6 +1381,7 @@ class COSMIC(StellarEvolution):
             disrupted_binary_companions.remove_columns(['system_idx', 'log_a', 'e', 'i', 'Omega', 'omega'])
             disrupted_binary_companions['system_idx'] = np.arange(len(disrupted_binary_companions)) + len(star_systems)
             star_systems = vstack([star_systems, disrupted_binary_companions])
+            disrupted_binary_companions_num = len(disrupted_binary_companions)
 
         #Drop merged companions and totally disappeared systems
         # Also promote companions to primaries when the initial primary "merged" (if desired)
@@ -1412,7 +1414,7 @@ class COSMIC(StellarEvolution):
             companions_to_mr_primaries['isMultiple'] = [False]*len(companions_to_mr_primaries)
             companions_to_mr_primaries['N_companions'] = [0]*len(companions_to_mr_primaries)
             companions_to_mr_primaries.remove_columns(['system_idx', 'log_a', 'e', 'i', 'Omega', 'omega'])
-            companions_to_mr_primaries['system_idx'] = np.arange(len(companions_to_mr_primaries)) + len(star_systems) + len(disrupted_binary_companions)
+            companions_to_mr_primaries['system_idx'] = np.arange(len(companions_to_mr_primaries)) + len(star_systems) + disrupted_binary_companions_num
             star_systems = vstack([star_systems, companions_to_mr_primaries])
         
         star_systems.remove_rows(delete_primary_idxs)
