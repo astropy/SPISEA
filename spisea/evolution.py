@@ -1318,25 +1318,7 @@ class COSMIC(StellarEvolution):
         
         # Remove systems that don't show up in bcm final (very few)
         if len(final_binaries) != len(star_systems):
-            start_bins = bcm[bcm['tphys'] == 0]['bin_num'].values
-            end_bins   = bcm[bcm['tphys'] != 0]['bin_num'].values
-            
-            bad_bin_nums  = np.setdiff1d(start_bins, end_bins)
-            good_bin_nums = np.intersect1d(start_bins, end_bins)
-
-            bad_system_mask = np.isin(star_systems['system_idx'], bad_bin_nums)
-            bad_system_idxs = np.where(bad_system_mask)[0]
-            
-            bad_companion_rows = np.where(np.isin(companions['system_idx'], bad_bin_nums))[0]
-            
-            companions.remove_rows(bad_companion_rows)
-            star_systems.remove_rows(bad_system_idxs)
-            
-            keep_mask = np.ones(len(companion_system_idxs), dtype=bool)
-            keep_mask[bad_companion_rows] = False
-            companion_system_idxs = companion_system_idxs[keep_mask]
-            
-            kick_info = kick_info.loc[kick_info.index.isin(good_bin_nums)]
+            raise Exception("Some binaries didn't make it. Something went wrong with COSMIC")
         
         star_systems['mass_current'] = final_binaries['mass_1']
         star_systems['Teff'] = final_binaries['teff_1']
