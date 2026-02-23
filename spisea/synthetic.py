@@ -1118,6 +1118,7 @@ class IsochronePhot(Isochrone):
                           'ubv,R', 'ubv,I'],
                 verbose=False):
         self.metallicity = metallicity
+        self.verbose=verbose
 
         # Make the iso_dir, if it doesn't already exist
         if not os.path.exists(iso_dir):
