@@ -238,7 +238,8 @@ class ResolvedCluster(Cluster):
         # effect is so small
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & 
+                        (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
         # Print warning, if desired
         verbose=False
         if verbose:
@@ -324,7 +325,8 @@ class ResolvedCluster(Cluster):
                 companions['log_a'][ii] = self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx'][ii]])
             
             companions['e'] = self.imf._multi_props.random_e(np.random.rand(N_comp_tot))
-            companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(np.random.rand(N_comp_tot),np.random.rand(N_comp_tot),np.random.rand(N_comp_tot))
+            companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(
+                                            np.random.rand(N_comp_tot),np.random.rand(N_comp_tot),np.random.rand(N_comp_tot))
 
 
         # Make an array that maps system index (ii), companion index (cc) to
@@ -1089,6 +1091,12 @@ class IsochronePhot(Isochrone):
                 self.spec_list.append(star)
 
             self.make_photometry(rebin=rebin, vega=vega, comp_filters=comp_filters)
+
+        # Drop filters in the saved file that we don't actually want here
+        all_filters = ['m_'+get_filter_col_name(f) for f in filters]
+        drop_columns = [col for col in self.points.columns if (col[:2]=='m_' and 
+                        (col not in all_filters))]
+        self.points.remove_columns(drop_columns)
 
         return
 
@@ -1891,4 +1899,43 @@ def calc_ab_vega_filter_conversion(filt_str):
     #vega_mag_ab2 = -2.5 * np.log10(numerator2 / denominator2) - 48.6
 
     return vega_mag_ab
+
+def calc_st_vega_filter_conversion(filt_str):
+    """
+    Function to calculate the conversion between
+    ST and Vega magnitudes for a given filter:
+    m_ST - m_vega
+
+    Note: this conversion is just the vega magnitude in 
+    ST system
+
+    Parameters:
+    -----------
+    filt_str: string
+        Filter identification string
+    """
+    # Get filter info
+    filt = get_filter_info(filt_str)
+    
+    # Interpolate the filter function to be the exact same sampling as the
+    # vega spectrum
+    c = 2.997*10**18 # A / s
+    filt_interp = scipy.interpolate.interp1d(filt.wave, filt.throughput, kind='linear', bounds_error=False,
+                                                fill_value=0)
+    s_interp = filt_interp(vega.wave)
+
+    # Calculate the numerator 
+    diff = np.diff(vega.wave)
+    numerator = np.sum(vega.flux[:-1] * s_interp[:-1] * diff)
+    
+    # Now we need to intergrate the filter response for the denominator
+    denominator = np.sum(s_interp[:-1] * diff)
+    # Fλ must be in erg cm–2 sec–1 Å–1
+
+    # Calculate vega AB magnitude. This is the conversion
+    vega_mag_st = -2.5 * np.log10(numerator / denominator) - 21.1
+
+    print('For {0}, m_st - m_vega = {1}'.format(filt_str, vega_mag_st))
+
+    return vega_mag_st
 
