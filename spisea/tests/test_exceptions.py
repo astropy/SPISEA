@@ -35,9 +35,3 @@ def test_grid_number_exception():
     evolution.check_evo_grid_number(required_grid, models_dir)    
 
     return
-
-
-
-        
-
-    
