@@ -253,7 +253,7 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         py.errorbar(wave_obs, A_AKs, yerr=A_AKs_err, fmt='k.', ms=10,
                         label='Measured')
         py.xlabel('Wavelength (microns)')
-        py.ylabel('Extinction (A$_{\lambda}$)')
+        py.ylabel(r'Extinction (A$_{\lambda}$)')
         py.title('Nishiyama+09 EL')
         py.gca().set_xscale('log')
         py.gca().set_yscale('log')
@@ -263,7 +263,7 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         return
 
 class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
-    """
+    r"""
     Defines the extinction law from
     `Cardelli et al. 1989 <https://ui.adsabs.harvard.edu/abs/1989ApJ...345..245C/abstract>`_.
     The law is defined from 0.3 - 3 microns, and in terms
@@ -519,7 +519,7 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
         py.errorbar(wave_obs, A_AKs, yerr=A_AKs_err, fmt='k.', ms=10,
                         label='Measured')
         py.xlabel('Wavelength (microns)')
-        py.ylabel('Extinction (A$_{\lambda}$)')
+        py.ylabel(r'Extinction (A$_{\lambda}$)')
         py.title('Roman-Zuniga+07 EL')
         py.gca().set_xscale('log')
         py.gca().set_yscale('log')
@@ -687,7 +687,7 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
         py.plot(wave_obs_f, A_Ak_f, 'k.', ms=10,
                         label='Measured')
         py.xlabel('Wavelength (microns)')
-        py.ylabel('Extinction (A$_{\lambda}$)')
+        py.ylabel(r'Extinction (A$_{\lambda}$)')
         py.title('Rieke+Lebofsky+85 EL')
         py.gca().set_xscale('log')
         py.gca().set_yscale('log')
@@ -814,7 +814,7 @@ class RedLawDamineli16(pysynphot.reddening.CustomRedLaw):
         py.errorbar(wave_obs, A_AKs, fmt='k.', ms=10,
                         label='Measured')
         py.xlabel('Wavelength (microns)')
-        py.ylabel('Extinction (A$_{\lambda}$)')
+        py.ylabel(r'Extinction (A$_{\lambda}$)')
         py.title('Damineli+16 EL')
         py.gca().set_xscale('log')
         py.gca().set_yscale('log')
@@ -1309,7 +1309,7 @@ class RedLawIndebetouw05(pysynphot.reddening.CustomRedLaw):
         py.errorbar(wave_arr, law_obs_arr, yerr=law_obs_err_arr, fmt='k.', ms=10,
                         label='Measured')
         py.xlabel('Wavelength (microns)')
-        py.ylabel('Extinction (A$_{\lambda}$)')
+        py.ylabel(r'Extinction (A$_{\lambda}$)')
         py.title('Indebetouw+05 EL')
         py.gca().set_xscale('log')
         py.gca().set_yscale('log')
@@ -1319,7 +1319,7 @@ class RedLawIndebetouw05(pysynphot.reddening.CustomRedLaw):
         return
 
 class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
-    """
+    r"""
     Extinction object that is a power-law extinction law:
     :math:`A_{\lambda} \propto \lambda^{\alpha}`.
 
@@ -1433,7 +1433,7 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
         return A_at_wave
 
 class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
-    """
+    r"""
     Extinction object that is a broken power-law extinction law:
     :math:`A_{\lambda} \propto \lambda^{\alpha[n]}`
 
@@ -1713,7 +1713,7 @@ class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
                         label='Measured')
         py.plot(ext_scaled.wave*10**-4, np.log10(ext_scaled.throughput)/-0.4, 'b-', label='Scaled EL')
         py.xlabel('Wavelength (microns)')
-        py.ylabel('Extinction (A$_{\lambda}$)')
+        py.ylabel(r'Extinction (A$_{\lambda}$)')
         py.title('Fritz+11 EL')
         py.gca().set_xscale('log')
         py.gca().set_yscale('log')
