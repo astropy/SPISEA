@@ -12,7 +12,7 @@
 #https://ui.adsabs.harvard.edu/abs/2014ApJ...783...10S/abstract
 #BH/NS IFMR based on Sukhbold et al. 2016 for solar-Z models::
 #https://ui.adsabs.harvard.edu/abs/2016ApJ...821...38S/abstract
-#PPISN based on Woosley 2017: 
+#PPISN based on Woosley 2017:
 #https://ui.adsabs.harvard.edu/abs/2017ApJ...836..244W/abstract
 #PPSIN based on Woosley et al. 2020:
 #https://ui.adsabs.harvard.edu/abs/2020ApJ...896...56W/abstract
@@ -38,7 +38,7 @@ class IFMR(object):
         return 10**(Fe_H - 1.85387)
 
     def Kalirai_mass(self, MZAMS):
-        """                                                                                                      
+        """
         From Kalirai+08 https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract
         1.16 < MZAMS < 6.5
         But we use this function for anything between 0.5 and 9 depending on the IFMR.
@@ -48,34 +48,34 @@ class IFMR(object):
         result = 0.109*MZAMS + 0.394
 
         final = np.zeros(len(MZAMS))
-        
+
         good_idx = MZAMS >= 0.5
         final[good_idx] = result[good_idx]
         final[~good_idx] = -99
 
         return final
-        
-        
+
+
 
 
 class IFMR_Spera15(IFMR):
     """
     The BH/NS IFMR (used for MZAMS>= 7 M_sun) comes from
     `Spera et. al. (2015) Appendix C <https://ui.adsabs.harvard.edu/abs/2015MNRAS.451.4086S/abstract>`_.
-    The WD IFMR (used for MZAMS< 7_Msun) comes from 
+    The WD IFMR (used for MZAMS< 7_Msun) comes from
     `Kalirai et al. (2008) <https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract>`_.
 
     See Rose et al. (submitted) for more details.
-    
+
     """
-    
+
     #The get_Mco functions come from C11 of Spera
     def get_Mco_low_metal(self, Z, MZAMS):
         """
         C15 of Spera, valid for Z < 1.0e-3
-    
+
         """
-        
+
         B1 = 67.07
         K1 = 46.89
         K2 = 1.138e2
@@ -94,7 +94,7 @@ class IFMR_Spera15(IFMR):
         C14 of Spera, valid for Z >= 1.0e-3 and Z <= 4.0e-3
 
         """
-        
+
         B1 = 40.98 + 3.415e4*Z - 8.064e6*Z**2
         K1 = 35.17 + 1.548e4*Z - 3.759e6*Z**2
         K2 = 20.36 + 1.162e5*Z - 2.276e7*Z**2
@@ -113,7 +113,7 @@ class IFMR_Spera15(IFMR):
         C13 of Spera, valid for Z > 4.0e-3
 
         """
-        
+
         B1 = 59.63 - 2.969e3*Z + 4.988e4*Z**2
         K1 = 45.04 - 2.176e3*Z + 3.806e4*Z**2
         K2 = 1.389e2 - 4.664e3*Z + 5.106e4*Z**2
@@ -123,7 +123,7 @@ class IFMR_Spera15(IFMR):
         g1 = 0.5/(1+10**((K1-MZAMS)*(d1))) #C12 of Spera
         g2 = 0.5/(1+10**((K2-MZAMS)*(d2))) #C12 of Spera
 
-        
+
         return -2.0 + (B1 + 2.0)*(g1 + g2) #C11 of Spera
 
 
@@ -132,8 +132,8 @@ class IFMR_Spera15(IFMR):
         This function uses Spera C11-C15 in order to reurn an array of core masses from an array of metallicities
         and ZAMS masses. It will be the same length as these two arrays with -99 entries where invalid (ie MZAMS< 7 M_sun)
 
-        Parameters: 
-        
+        Parameters:
+
         Z: an array with metallicities reported as Z where Z is metal_mass/total_mass
         MZAMS: an array of ZAMS masses in solar masses. The Spera functions are valid for MZAMS> 7 M_sun
 
@@ -158,28 +158,28 @@ class IFMR_Spera15(IFMR):
         core_masses[high_metal_idx] = self.get_Mco_high_metal(Z[high_metal_idx], MZAMS[high_metal_idx])
 
         return core_masses
-        
+
 
 
     def M_rem_very_low_metal_low_mass(self, Z, Mco):
         """
         C1 of Spera, valid for Z <= 5.0e-4 and Mco <= 5.0
-        
+
         Parameters:
 
         Z: an array of metallicities reported as metal_mass/total_mass
         Mco: an arrray of core masses in M_sun
 
         """
-        
+
         p = -2.333 + 0.1559*Mco + 0.2700*Mco**2 #C2 of Spera
 
         #need to return p or 1.27, whichever is greater
         final = np.zeros(len(p))
-        
+
         p_max_idx = np.where(p >= 1.27)
         final[p_max_idx] = p[p_max_idx]
-        
+
         p_min_idx = np.where(p < 1.27)
         final[p_min_idx] = 1.27
 
@@ -217,7 +217,7 @@ class IFMR_Spera15(IFMR):
 
         m = -6.476e2*Z + 1.911 #C3 of Spera
         q = 2.300e3*Z + 11.67 #C3 of Spera
-            
+
         f = m*Mco + q #C2 of Spera
 
         #need to return either p or f, whichever is less
@@ -228,7 +228,7 @@ class IFMR_Spera15(IFMR):
 
         f_min_idx = np.where(f < p)
         final[f_min_idx] = f[f_min_idx]
-        
+
         return final
 
     def M_rem_low_metal_low_mass(self, Z, Mco):
@@ -252,15 +252,15 @@ class IFMR_Spera15(IFMR):
 
         #need to return h or 1.27, whichever is greater
         final = np.zeros(len(h))
-        
+
         h_max_idx = np.where(h >= 1.27)
         final[h_max_idx] = h[h_max_idx]
-        
+
         h_min_idx = np.where(h < 1.27)
         final[h_min_idx] = 1.27
 
         return final
-    
+
 
     def M_rem_low_metal_med_mass(self, Z, Mco):
         """
@@ -316,9 +316,9 @@ class IFMR_Spera15(IFMR):
 
         f_max_idx = np.where(f > h)
         final[f_max_idx] = f[f_max_idx]
-        
+
         return final
-            
+
 
     def M_rem_med_metal_low_mass(self, Z, Mco):
         """
@@ -341,10 +341,10 @@ class IFMR_Spera15(IFMR):
 
         #need to return h or 1.27, whichever is greater
         final = np.zeros(len(h))
-        
+
         h_max_idx = np.where(h >= 1.27)
         final[h_max_idx] = h[h_max_idx]
-        
+
         h_min_idx = np.where(h < 1.27)
         final[h_min_idx] = 1.27
 
@@ -395,7 +395,7 @@ class IFMR_Spera15(IFMR):
         q = -1.296e4*Z + 26.98
 
         f = m*Mco + q #C5 of Spera
-            
+
         #need to return either h or f, whichever is greater
         final = np.zeros(len(h))
 
@@ -404,7 +404,7 @@ class IFMR_Spera15(IFMR):
 
         f_max_idx = np.where(f > h)
         final[f_max_idx] = f[f_max_idx]
-        
+
         return final
 
     def M_rem_med_metal_high_mass_2(self, Z, Mco):
@@ -431,7 +431,7 @@ class IFMR_Spera15(IFMR):
         q = 1.061
 
         f = m*Mco + q #C5 of Spera
-            
+
         #need to return either h or f, whichever is greater
         final = np.zeros(len(h))
 
@@ -440,7 +440,7 @@ class IFMR_Spera15(IFMR):
 
         f_max_idx = np.where(f > h)
         final[f_max_idx] = f[f_max_idx]
-        
+
         return final
 
 
@@ -465,10 +465,10 @@ class IFMR_Spera15(IFMR):
 
         #need to return h or 1.27, whichever is greater
         final = np.zeros(len(h))
-        
+
         h_max_idx = np.where(h >= 1.27)
         final[h_max_idx] = h[h_max_idx]
-        
+
         h_min_idx = np.where(h < 1.27)
         final[h_min_idx] = 1.27
 
@@ -519,7 +519,7 @@ class IFMR_Spera15(IFMR):
         q = 1.061
 
         f = m*Mco + q #C5 of Spera
-            
+
         #need to return either h or f, whichever is greater
         final = np.zeros(len(h))
 
@@ -528,15 +528,15 @@ class IFMR_Spera15(IFMR):
 
         f_max_idx = np.where(f > h)
         final[f_max_idx] = f[f_max_idx]
-        
+
         return final
 
 
     def generate_death_mass(self, mass_array, metallicity_array):
         """
-        The top-level function that assigns the remnant type 
-        and mass based on the stellar initial mass. 
-        
+        The top-level function that assigns the remnant type
+        and mass based on the stellar initial mass.
+
         Parameters
         ----------
         mass_array: array of floats
@@ -547,20 +547,20 @@ class IFMR_Spera15(IFMR):
         Notes
         ------
         The output typecode tells what compact object formed:
-        
+
         * WD: typecode = 101
         * NS: typecode = 102
         * BH: typecode = 103
-        A typecode of value -1 means you're outside the range of 
-        validity for applying the ifmr formula. 
-        A remnant mass of -99 means you're outside the range of 
+        A typecode of value -1 means you're outside the range of
         validity for applying the ifmr formula.
-        Range of validity: MZAMS > 0.5 
-        
+        A remnant mass of -99 means you're outside the range of
+        validity for applying the ifmr formula.
+        Range of validity: MZAMS > 0.5
+
         Returns
         -------
         output_arr: 2-element array
-            output_array[0] contains the remnant mass, and 
+            output_array[0] contains the remnant mass, and
             output_array[1] contains the typecode
         """
 
@@ -585,10 +585,10 @@ class IFMR_Spera15(IFMR):
         Kal_idx = np.where(core_mass < 0)
         rem_mass_array[Kal_idx] = self.Kalirai_mass(mass_array[Kal_idx])
 
-        
+
 
         ##### very low metallicity Z < 5.0e-4
-        
+
         #remnant masses of stars with Z < 5.0e-4 and Mco < 5.0
         very_low_metal_low_mass_idx = np.where((Z_array < 5.0e-4) & (core_mass < 5.0) & (core_mass >= 0))
         rem_mass_array[very_low_metal_low_mass_idx] = self.M_rem_very_low_metal_low_mass(Z_array[very_low_metal_low_mass_idx], core_mass[very_low_metal_low_mass_idx])
@@ -602,7 +602,7 @@ class IFMR_Spera15(IFMR):
         rem_mass_array[very_low_metal_high_mass_idx] = self.M_rem_very_low_metal_high_mass(Z_array[very_low_metal_high_mass_idx], core_mass[very_low_metal_high_mass_idx])
 
         #### low metallicity 5.0e-4 <= Z < 1.0e-3
-        
+
         #remnant masses of stars with 5.0e-4 <= Z < 1.0e-3 and Mco < 5.0
         low_metal_low_mass_idx = np.where((Z_array >= 5.0e-4) & (Z_array < 1.0e-3) & (core_mass < 5.0) & (core_mass >= 0))
         rem_mass_array[low_metal_low_mass_idx] = self.M_rem_low_metal_low_mass(Z_array[low_metal_low_mass_idx], core_mass[low_metal_low_mass_idx])
@@ -614,9 +614,9 @@ class IFMR_Spera15(IFMR):
         #remnant masses of stars with 5.0e-4 <= Z < 1.0e-3 and Mco > 10.0
         low_metal_high_mass_idx = np.where((Z_array >= 5.0e-4) & (Z_array < 1.0e-3) & (core_mass > 10.0))
         rem_mass_array[low_metal_high_mass_idx] = self.M_rem_low_metal_high_mass(Z_array[low_metal_high_mass_idx], core_mass[low_metal_high_mass_idx])
-                
+
         #### medium metallicity 1.0e-3 <= Z <= 4.0e-3
-        
+
         #remnant masses of stars with 1.0e-3 <= Z <= 4.0e-3 and Mco < 5.0
         med_metal_low_mass_idx = np.where((Z_array >= 1.0e-3) & (Z_array <= 4.0e-3) & (core_mass < 5.0) & (core_mass >= 0))
         rem_mass_array[med_metal_low_mass_idx] = self.M_rem_med_metal_low_mass(Z_array[med_metal_low_mass_idx],core_mass[med_metal_low_mass_idx])
@@ -632,9 +632,9 @@ class IFMR_Spera15(IFMR):
         #remnant masses of stars with 2.0e-3 <= Z <= 4.0e-3 and Mco > 10.0
         med_metal_high_mass_idx_2 = np.where((Z_array >= 2.0e-3) & (Z_array <= 4.0e-3) & (core_mass > 10.0))
         rem_mass_array[med_metal_high_mass_idx_2] = self.M_rem_med_metal_high_mass_2(Z_array[med_metal_high_mass_idx_2], core_mass[med_metal_high_mass_idx_2])
-        
+
         #### high metallicity Z > 4.0e-3
-        
+
         #remnant masses of stars with Z > 4.0e-3 and Mco < 5.0
         high_metal_low_mass_idx = np.where((Z_array > 4.0e-3) & (core_mass < 5.0) & (core_mass >= 0))
         rem_mass_array[high_metal_low_mass_idx] = self.M_rem_high_metal_low_mass(Z_array[high_metal_low_mass_idx], core_mass[high_metal_low_mass_idx])
@@ -646,16 +646,16 @@ class IFMR_Spera15(IFMR):
         #remnant masses of stars with Z > 4.0e-3 and MZAMS > 10.0
         high_metal_high_mass_idx = np.where((Z_array > 4.0e-3) & (core_mass > 10.0))
         rem_mass_array[high_metal_high_mass_idx] = self.M_rem_high_metal_high_mass(Z_array[high_metal_high_mass_idx], core_mass[high_metal_high_mass_idx])
-        
+
         #assign object types based on remnant mass
         bad_idx = np.where(rem_mass_array < 0) #outside the range of validity for the ifmr
         WD_idx = np.where((rem_mass_array <= 1.4) & (rem_mass_array >= 0 )) #based on the Chandresekhar limit
-        NS_idx = np.where((rem_mass_array > 1.4) & (rem_mass_array <= 3.0)) #based on figures 15-17 of Spera 
+        NS_idx = np.where((rem_mass_array > 1.4) & (rem_mass_array <= 3.0)) #based on figures 15-17 of Spera
         BH_idx = np.where(rem_mass_array > 3.0) #based on figures 15-17 of Spera
 
         output_array[0][bad_idx] = rem_mass_array[bad_idx]
         output_array[1][bad_idx] = -1
-        
+
         output_array[0][WD_idx] = rem_mass_array[WD_idx]
         output_array[1][WD_idx] = codes['WD']
 
@@ -666,76 +666,76 @@ class IFMR_Spera15(IFMR):
         output_array[1][BH_idx] = codes['BH']
 
         return output_array
-        
+
 
 
 class IFMR_Raithel18(IFMR):
     """
-    The IFMR is a combination of the WD IFMR from 
+    The IFMR is a combination of the WD IFMR from
     `Kalirai et al. (2008) <https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract>`_
     and the NS/BH IFMR from
     `Raithel et al. (2018) <https://ui.adsabs.harvard.edu/abs/2018ApJ...856...35R/abstract>`_.
-    Note that the NS masses are NOT assigned based on the above results. 
+    Note that the NS masses are NOT assigned based on the above results.
     We do take the NS/BH formation ratio and the BH masses.
-    NS masses are assigned based on random draws from a Gaussian (see NS_mass function). 
+    NS masses are assigned based on random draws from a Gaussian (see NS_mass function).
 
-    See 
+    See
     `Lam et al. (2020) <https://ui.adsabs.harvard.edu/abs/2020ApJ...889...31L/abstract>`_
     and Rose et al. (submitted)  for more details.
     """
 
     def BH_mass_core_low(self, MZAMS):
-        """                                                                                                      
-        Eqn (1)                                                                                                  
-        Paper: 15 < MZAMS < 40                                                                                   
-        Us extending: 15 < MZAMS < 42.22                                                                         
+        """
+        Eqn (1)
+        Paper: 15 < MZAMS < 40
+        Us extending: 15 < MZAMS < 42.22
         """
         return -2.024 + 0.4130*MZAMS
 
     def BH_mass_all_low(self, MZAMS):
-        """                                                                                                      
-        Eqn (2)                                                                                                  
-        Paper: 15 < MZAMS < 40                                                                                   
-        Us extending: 15 < MZAMS < 42.22                                                                         
+        """
+        Eqn (2)
+        Paper: 15 < MZAMS < 40
+        Us extending: 15 < MZAMS < 42.22
         """
         return 16.28 + 0.00694 * (MZAMS - 21.872) - 0.05973 * (MZAMS - 21.872)**2 + 0.003112 * (MZAMS - 21.872)**3
 
     def BH_mass_high(self, MZAMS):
-        """                                                                                                      
-        Eqn (3)                                                                                                  
-        Paper: 45 < MZAMS < 120                                                                                  
-        Us extending: 42.22 < MZAMS < 120                                                                        
+        """
+        Eqn (3)
+        Paper: 45 < MZAMS < 120
+        Us extending: 42.22 < MZAMS < 120
         """
         return 5.795 + 1.007 * 10**9 * MZAMS**-4.926
 
     def BH_mass_low(self, MZAMS, f_ej):
-        """                                                                                                      
-        Eqn (4)                                                                                                  
-        Paper: 15 < MZAMS < 40                                                                                   
-        Us extending: 15 < MZAMS < 42.22                                                                         
+        """
+        Eqn (4)
+        Paper: 15 < MZAMS < 40
+        Us extending: 15 < MZAMS < 42.22
         """
         return f_ej * self.BH_mass_core_low(MZAMS) + (1 - f_ej) * self.BH_mass_all_low(MZAMS)
 
     def NS_mass(self, MZAMS):
-        """                                                                                                      
+        """
         Drawing the NS mass from a Gaussian distrobuton based on observational data.
 
         Gaussian fit by Emily Ramey and Sergiy Vasylyev of University of Caifornia, Berkeley using a
-        sample of NSs from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020), 
-        J2302+4442 Kirichenko et al. (2018), J2215+5135 Linares et al. (2018), 
-        J1913+1102 Ferdman & Collaboration (2017), J1411+2551 Martinez et al. (2017), 
+        sample of NSs from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020),
+        J2302+4442 Kirichenko et al. (2018), J2215+5135 Linares et al. (2018),
+        J1913+1102 Ferdman & Collaboration (2017), J1411+2551 Martinez et al. (2017),
         J1757+1854 Cameron et al. (2018), J0030+0451 Riley et al. (2019), J1301+0833 Romani et al. (2016)
         The Gaussian distribution was fit using this data and a Bayesian MCMC method adapted from
         Kiziltan et al. (2010).
-        
+
         """
         return self.rng.normal(loc=1.36, scale=0.09, size=len(MZAMS))
 
     def generate_death_mass(self, mass_array):
         """
-        The top-level function that assigns the remnant type 
-        and mass based on the stellar initial mass. 
-        
+        The top-level function that assigns the remnant type
+        and mass based on the stellar initial mass.
+
         Parameters
         ----------
         mass_array: array of floats
@@ -746,15 +746,15 @@ class IFMR_Raithel18(IFMR):
         Notes
         ------
         The output typecode tells what compact object formed:
-        
+
         * WD: typecode = 101
         * NS: typecode = 102
         * BH: typecode = 103
 
-        A typecode of value -1 means you're outside the range of 
-        validity for applying the ifmr formula. 
+        A typecode of value -1 means you're outside the range of
+        validity for applying the ifmr formula.
 
-        A remnant mass of -99 means you're outside the range of 
+        A remnant mass of -99 means you're outside the range of
         validity for applying the ifmr formula.
 
         Range of validity: 0.5 < MZAMS < 120
@@ -762,7 +762,7 @@ class IFMR_Raithel18(IFMR):
         Returns
         -------
         output_arr: 2-element array
-            output_array[0] contains the remnant mass, and 
+            output_array[0] contains the remnant mass, and
             output_array[1] contains the typecode
         """
 
@@ -774,7 +774,7 @@ class IFMR_Raithel18(IFMR):
         random_array = self.rng.integers(1, 1001, size = len(mass_array))
 
         codes = {'WD': 101, 'NS': 102, 'BH': 103}
-        
+
         """
         The id_arrays are to separate all the different formation regimes
         """
@@ -801,7 +801,7 @@ class IFMR_Raithel18(IFMR):
         id_array4_BH = np.where((mass_array >= 17.8) & (mass_array < 18.5) & (random_array > 833))
         output_array[0][id_array4_BH]= self.BH_mass_low(mass_array[id_array4_BH], 0.9)
         output_array[1][id_array4_BH] = codes['BH']
-        
+
         id_array4_NS = np.where((mass_array >= 17.8) & (mass_array < 18.5) & (random_array <= 833))
         output_array[0][id_array4_NS] = self.NS_mass(mass_array[id_array4_NS])
         output_array[1][id_array4_NS] = codes['NS']
@@ -809,7 +809,7 @@ class IFMR_Raithel18(IFMR):
         id_array5_BH = np.where((mass_array >= 18.5) & (mass_array < 21.7) & (random_array > 500))
         output_array[0][id_array5_BH] = self.BH_mass_low(mass_array[id_array5_BH], 0.9)
         output_array[1][id_array5_BH] = codes['BH']
-        
+
         id_array5_NS = np.where((mass_array >= 18.5) & (mass_array < 21.7) & (random_array <= 500))
         output_array[0][id_array5_NS] = self.NS_mass(mass_array[id_array5_NS])
         output_array[1][id_array5_NS] = codes['NS']
@@ -821,7 +821,7 @@ class IFMR_Raithel18(IFMR):
         id_array7_BH = np.where((mass_array >= 25.2) & (mass_array < 27.5) & (random_array > 652))
         output_array[0][id_array7_BH] = self.BH_mass_low(mass_array[id_array7_BH], 0.9)
         output_array[1][id_array7_BH] = codes['BH']
-        
+
         id_array7_NS = np.where((mass_array >= 25.2) & (mass_array < 27.5) & (random_array <= 652))
         output_array[0][id_array7_NS] = self.NS_mass(mass_array[id_array7_NS])
         output_array[1][id_array7_NS] = codes['NS']
@@ -837,7 +837,7 @@ class IFMR_Raithel18(IFMR):
         id_array10_BH = np.where((mass_array >= 60) & (mass_array < 120) & (random_array > 400))
         output_array[0][id_array10_BH] = self.BH_mass_high(mass_array[id_array10_BH])
         output_array[1][id_array10_BH] = codes['BH']
-        
+
         id_array10_NS = np.where((mass_array >= 60) & (mass_array < 120) & (random_array <= 400))
         output_array[0][id_array10_NS] = self.NS_mass(mass_array[id_array10_NS])
         output_array[1][id_array10_NS] = codes['NS']
@@ -850,11 +850,11 @@ class IFMR_N20_Sukhbold(IFMR):
     `Sukhbold & Woosley (2014) <https://ui.adsabs.harvard.edu/abs/2014ApJ...783...10S/abstract>`_.
     The BH/NS IFMR for solar metallicity progenitors comes from
     `Sukhbold et al. (2016) <https://ui.adsabs.harvard.edu/abs/2016ApJ...821...38S/abstract>`_.
-    The PPISN models are from 
+    The PPISN models are from
     `Woosley (2017) <https://ui.adsabs.harvard.edu/abs/2017ApJ...836..244W/abstract>`_
     and
     `Woosley et al. (2020) <https://ui.adsabs.harvard.edu/abs/2020ApJ...896...56W/abstract>`_.
-    The WD IFMR is from 
+    The WD IFMR is from
     `Kalirai et al. (2008) <https://ui.adsabs.harvard.edu/abs/2008ApJ...676..594K/abstract>`_.
     Note that the NS masses are NOT assigned based on the above results.
     We do take the NS/BH formation ratio and the BH masses.
@@ -869,7 +869,7 @@ class IFMR_N20_Sukhbold(IFMR):
         #func = np.poly1d(zero_coeff)
         #result = func(MZAMS)
         return 0.46522639*MZAMS + -3.29170817
-    
+
     def solar_BH_mass(self, MZAMS):
         #solar_coeff = [-0.27079245, 24.74320755]
         #func = np.poly1d(solar_coeff)
@@ -879,24 +879,24 @@ class IFMR_N20_Sukhbold(IFMR):
     Zsun = 0.014
 
     def NS_mass(self, MZAMS):
-        """                                                                                                      
+        """
         Drawing the NS mass from a Gaussian distrobuton based on observational data.
 
         Gaussian fit by Emily Ramey and Sergiy Vasylyev of University of Caifornia, Berkeley using a
-        sample of NSs from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020), 
-        J2302+4442 Kirichenko et al. (2018), J2215+5135 Linares et al. (2018), 
-        J1913+1102 Ferdman & Collaboration (2017), J1411+2551 Martinez et al. (2017), 
+        sample of NSs from Ozel & Freire (2016) — J1811+2405 Ng et al. (2020),
+        J2302+4442 Kirichenko et al. (2018), J2215+5135 Linares et al. (2018),
+        J1913+1102 Ferdman & Collaboration (2017), J1411+2551 Martinez et al. (2017),
         J1757+1854 Cameron et al. (2018), J0030+0451 Riley et al. (2019), J1301+0833 Romani et al. (2016)
         The Gaussian distribution was fit using this data and a Bayesian MCMC method adapted from
         Kiziltan et al. (2010).
-        
+
         """
         if isinstance(MZAMS, np.ndarray):
             return self.rng.normal(loc=1.36, scale=0.09, size=len(MZAMS))
         else:
             return self.rng.normal(loc=1.36, scale=0.09, size=1)[0]
- 
- 
+
+
     def BH_mass_low(self, MZAMS):
         """
         9 < MZAMS < 40 Msun
@@ -912,7 +912,7 @@ class IFMR_N20_Sukhbold(IFMR):
         """
         # Solar metallicity (what Sam is using)
         Zsun = 0.014
-        
+
         zfrac = np.atleast_1d(Z/Zsun)
         # super-solar Z gives identical results as solar Z
         above_idx = np.where(zfrac > 1)
@@ -935,15 +935,15 @@ class IFMR_N20_Sukhbold(IFMR):
         """
         # Solar metallicity (what Sam is using)
         Zsun = 0.014
-        
+
         Z = np.atleast_1d(Z)
         # Convert from [Fe/H] to Z
         zfrac = Z / Zsun
-        
+
         # super-solar Z gives identical results as solar Z
         zfrac[zfrac > 1] = 1.0
         zfrac[zfrac < 0] = np.nan
-        
+
         pBH = 1 - 0.8*zfrac
 
         return pBH
@@ -951,9 +951,9 @@ class IFMR_N20_Sukhbold(IFMR):
 
     def generate_death_mass(self, mass_array, metallicity_array):
         """
-        The top-level function that assigns the remnant type 
-        and mass based on the stellar initial mass. 
-        
+        The top-level function that assigns the remnant type
+        and mass based on the stellar initial mass.
+
         Parameters
         ----------
         mass_array: array of floats
@@ -964,27 +964,27 @@ class IFMR_N20_Sukhbold(IFMR):
         Notes
         ------
         The output typecode tells what compact object formed:
-        
+
         * WD: typecode = 101
         * NS: typecode = 102
         * BH: typecode = 103
-        A typecode of value -1 means you're outside the range of 
-        validity for applying the ifmr formula. 
-        A remnant mass of -99 means you're outside the range of 
+        A typecode of value -1 means you're outside the range of
         validity for applying the ifmr formula.
-        Range of validity: MZAMS > 0.5 
-        
+        A remnant mass of -99 means you're outside the range of
+        validity for applying the ifmr formula.
+        Range of validity: MZAMS > 0.5
+
         Returns
         -------
         output_arr: 2-element array
-            output_array[0] contains the remnant mass, and 
+            output_array[0] contains the remnant mass, and
             output_array[1] contains the typecode
         """
         #output_array[0] holds the remnant mass
         #output_array[1] holds the remnant type
         mass_array = np.atleast_1d(mass_array)
         metallicity_array = np.atleast_1d(metallicity_array)
-        
+
         output_array = np.zeros((2, len(mass_array)))
 
         codes = {'WD': 101, 'NS': 102, 'BH': 103}
@@ -1042,14 +1042,14 @@ class IFMR_N20_Sukhbold(IFMR):
         BH_or_NS = np.where((mass_array >= 60) & (mass_array < 120))[0]
         pBH = self.prob_BH_high(Z_array[BH_or_NS])
         is_BH = random_array[BH_or_NS] > 100 * pBH
-        
+
         id_array8 = BH_or_NS[is_BH]
         id_array9 = BH_or_NS[~is_BH]
-        
+
         # Assign BH masses and types for BH-forming indices
         output_array[0][id_array8] = self.BH_mass_high(mass_array[id_array8], Z_array[id_array8])
         output_array[1][id_array8] = codes['BH']
-        
+
         # Assign NS masses and types for NS-forming indices
         output_array[0][id_array9] = self.NS_mass(mass_array[id_array9])
         output_array[1][id_array9] = codes['NS']
