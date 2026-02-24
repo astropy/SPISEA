@@ -1254,8 +1254,7 @@ def test_ResolvedCluster_random_state():
         old_companion = pickle.load(file)
 
     for key in old_star_systems.colnames:
-        # Equal to the 7th decimal
-        np.testing.assert_almost_equal(cluster1.star_systems[key], old_star_systems[key])
+        np.testing.assert_array_equal(cluster1.star_systems[key], old_star_systems[key])
 
     for key in old_companion.colnames:
         np.testing.assert_array_equal(cluster1.companions[key], old_companion[key])

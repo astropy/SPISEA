@@ -107,7 +107,7 @@ class Cluster(object):
         self.ifmr = ifmr
         self.cluster_mass = cluster_mass
         self.seed = seed
-        # self.rng = np.random.default_rng(self.seed)
+        self.rng = np.random.default_rng(self.seed)
 
         return
 
@@ -159,13 +159,13 @@ class ResolvedCluster(Cluster):
         # Provide a user warning is random seed is set
         if seed is not None and verbose:
             print('WARNING: random seed set to %i' % seed)
-            # imf.rng = self.rng
+            imf.rng = self.rng
 
         #####
         # Sample the IMF to build up our cluster mass.
         #####
         # start0 = time.time()
-        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass, seed=seed)
+        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
         # end0 = time.time()
         # print('IMF sampling took {0:f} s.'.format(end0 - start0))
 
@@ -328,11 +328,11 @@ class ResolvedCluster(Cluster):
 
         if isinstance(self.imf._multi_props, multiplicity.MultiplicityResolvedDK):
             companions.add_column(Column(self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx']]), name='log_a'))
-            companions.add_column(Column(self.imf._multi_props.random_e(np.random.rand(N_comp_tot)), name='e'))
+            companions.add_column(Column(self.imf._multi_props.random_e(self.rng.random(N_comp_tot)), name='e'))
             companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(
-                np.random.rand(N_comp_tot),
-                np.random.rand(N_comp_tot),
-                np.random.rand(N_comp_tot)
+                self.rng.random(N_comp_tot),
+                self.rng.random(N_comp_tot),
+                self.rng.random(N_comp_tot)
             )
 
         companions['mass'] = compMass.compressed()
@@ -441,11 +441,11 @@ class ResolvedCluster(Cluster):
             for ii in range(len(companions)):
                 companions['log_a'][ii] = self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx'][ii]])
 
-            companions['e'] = self.imf._multi_props.random_e(np.random.rand(N_comp_tot))
+            companions['e'] = self.imf._multi_props.random_e(self.rng.random(N_comp_tot))
             companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(
-                np.random.rand(N_comp_tot),
-                np.random.rand(N_comp_tot),
-                np.random.rand(N_comp_tot)
+                self.rng.random(N_comp_tot),
+                self.rng.random(N_comp_tot),
+                self.rng.random(N_comp_tot)
             )
 
 
@@ -701,7 +701,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         # Perturb all of star systems' photometry by a random amount corresponding to
         # differential de-reddening. The distribution is normal with a width of
         # Aks +/- deltaAKs in each filter
-        rand_red = np.random.randn(len(self.star_systems))
+        rand_red = self.rng.standard_normal(len(self.star_systems))
 
         for filt in self.filt_names:
             self.star_systems[filt] += rand_red * delta_red_filt[filt]
@@ -1527,18 +1527,18 @@ class iso_table(object):
             # extinction law
             if dAKs != 0:
                 if dist == 'gaussian':
-                    AKs_act = np.random.normal(loc=AKs, scale=dAKs)
+                    AKs_act = self.rng.normal(loc=AKs, scale=dAKs)
                     # Apply dAKs_max if desired. Redo if diff > dAKs_max
                     if dAKs_max != None:
                         diff = abs(AKs_act - AKs)
                         while diff > dAKs_max:
                             print('While loop active')
-                            AKs_act = np.random.normal(loc=AKs, scale=dAKs)
+                            AKs_act = self.rng.normal(loc=AKs, scale=dAKs)
                             diff = abs(AKs_act - AKs)
                 elif dist == 'uniform':
                     low = AKs - dAKs
                     high = AKs + dAKs
-                    AKs_act = np.random.uniform(low=low, high=high)
+                    AKs_act = self.rng.uniform(low=low, high=high)
                 else:
                     print('dist {0} undefined'.format(dist))
                     return

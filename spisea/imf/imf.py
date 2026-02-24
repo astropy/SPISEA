@@ -51,7 +51,7 @@ class IMF(object):
         self._multi_props = multiplicity
         self._mass_limits = np.atleast_1d(massLimits)
         self.seed = seed
-        # self.rng = np.random.default_rng(seed)
+        self.rng = np.random.default_rng(seed)
 
         if multiplicity:
             self.make_multiples = True
@@ -61,7 +61,7 @@ class IMF(object):
         return
 
 
-    def generate_cluster(self, totalMass, seed=None):
+    def generate_cluster(self, totalMass):
         """
         Generate a cluster of stellar systems with the specified IMF.
 
@@ -128,13 +128,10 @@ class IMF(object):
         totalMassTally = 0
         loopCnt = 0
 
-        if seed:
-            np.random.seed(seed=seed)
-
         # start_while = time.time()
         while totalMassTally < totalMass:
             # Generate a random number array.
-            uniX = np.random.rand(int(newStarCount))
+            uniX = self.rng.random(int(newStarCount))
             # Convert into the IMF from the inverted CDF
             newMasses = self.dice_star_cl(uniX)
 
@@ -151,7 +148,7 @@ class IMF(object):
                 MF = self._multi_props.multiplicity_fraction(newMasses)
                 CSF = self._multi_props.companion_star_fraction(newMasses)
 
-                newIsMultiple = np.random.rand(int(newStarCount)) < MF
+                newIsMultiple = self.rng.random(int(newStarCount)) < MF
 
                 # Function to calculate multiple systems more efficiently
                 # start_calc = time.time()
@@ -231,7 +228,7 @@ class IMF(object):
 
         # Identify multiple systems, calculate number of companions for each
         multiple_idx = np.where(newIsMultiple)[0]
-        comp_nums = 1 + np.random.poisson((CSF[multiple_idx] / MF[multiple_idx]) - 1)
+        comp_nums = 1 + self.rng.poisson((CSF[multiple_idx] / MF[multiple_idx]) - 1)
         if self._multi_props.companion_max:
             too_many = np.where(comp_nums > self._multi_props.CSF_max)[0]
             comp_nums[too_many] = self._multi_props.CSF_max
@@ -245,7 +242,7 @@ class IMF(object):
 
         for comp_num, comp_index in zip(comp_unique, comp_indices):
             # Calculate masses of companions
-            q_values = self._multi_props.random_q(np.random.rand(len(comp_index), comp_num))
+            q_values = self._multi_props.random_q(self.rng.random((len(comp_index), comp_num)))
             m_comp = np.multiply(q_values, np.transpose([primary[comp_index]]))
             compMasses[multiple_idx[comp_index], :comp_num] = m_comp
 
@@ -912,4 +909,3 @@ def inv_error(x):
         return y
     else:
         return -y
-
