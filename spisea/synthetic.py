@@ -1141,14 +1141,12 @@ class IsochronePhot(Isochrone):
         oldest_file     = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}.fits'
 
         new_file_exists = check_save_file(self.save_file, evo_model, atm_func, red_law, verbose=verbose)
-        older_file_exists = check_save_file(older_file, evo_model, atm_func, red_law, verbose=verbose)
-        oldest_file_exists = check_save_file(oldest_file, evo_model, atm_func, red_law, verbose=verbose)
 
         if new_file_exists:
             self.save_file_legacy = None
-        elif older_file_exists:
+        elif check_save_file(older_file, evo_model, atm_func, red_law, verbose=verbose):
             self.save_file_legacy = older_file
-        elif oldest_file_exists and metallicity == 0.0:
+        elif metallicity == 0.0 and check_save_file(oldest_file, evo_model, atm_func, red_law, verbose=verbose):
             self.save_file_legacy = oldest_file
         else:
             self.save_file_legacy = None
