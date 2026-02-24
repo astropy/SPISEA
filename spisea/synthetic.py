@@ -1135,20 +1135,31 @@ class IsochronePhot(Isochrone):
         # Set save file name
         metal_value = round(abs(metallicity), 2)
         metal_sign = 'm' if metallicity < 0 else 'p'
-        self.save_file = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}_{metal_sign}{metal_value:.2f}.fits'
 
-        if metallicity == 0.0:
-            self.save_file_legacy = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}.fits'
+        oldest_file     = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}.fits'
+        older_file      = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}_{metal_sign}{metal_value*10:02.0f}.fits'
+        self.save_file  = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}_{metal_sign}{metal_value:.2f}.fits'
+
+        oldest_file_exists = check_save_file(oldest_file, evo_model, atm_func, red_law, verbose=verbose)
+        older_file_exists = check_save_file(older_file, evo_model, atm_func, red_law, verbose=verbose)
+        new_file_exists = check_save_file(self.save_file, evo_model, atm_func, red_law, verbose=verbose)
+
+        if new_file_exists:
+            self.save_file_legacy = None
+        elif older_file_exists:
+            self.save_file_legacy = older_file
+        elif oldest_file_exists and metallicity == 0.0:
+            self.save_file_legacy = oldest_file
         else:
-            self.save_file_legacy = self.save_file
+            self.save_file_legacy = None
 
         # Expected filters
         self.filters = filters
 
         # Recalculate isochrone if save_file doesn't exist or recomp == True
-        file_exists = self.check_save_file(evo_model, atm_func, red_law, verbose=verbose)
+        file_exists = new_file_exists or (self.save_file_legacy is not None)
 
-        if (not file_exists) | (recomp==True):
+        if  (recomp==True) or (not file_exists):
             self.recalc = True
             if verbose:
                 print(f'Generating new isochrone of log(t)={logAge:.2f}, AKs={AKs:.2f}, d={distance} pc')
@@ -1172,12 +1183,12 @@ class IsochronePhot(Isochrone):
                 print(f'Isochrone saved to {self.save_file}')
         else:
             self.recalc = False
-            try:
+            if new_file_exists:
                 self.points = Table.read(self.save_file)
-            except:
+                print(f'Isochrone loaded from existing file: {self.save_file}')
+            else:
                 self.points = Table.read(self.save_file_legacy)
-            # print(f'Isochrone loaded from existing file: {self.save_file}')
-            # Add some error checking.
+                print(f'Isochrone loaded from existing file: {self.save_file_legacy}')
 
         # Next: do we have all the filters we need?
         comp_filters = []
@@ -1285,51 +1296,6 @@ class IsochronePhot(Isochrone):
 
         return
 
-    def check_save_file(self, evo_model, atm_func, red_law, verbose=False):
-        """
-        Check to see if save_file exists, as saved by the save_file
-        and save_file_legacy objects. If the filename exists, check the
-        meta-data as well.
-
-        returns a boolean: True is file exists, false otherwise
-        """
-        out_bool = False
-
-        if os.path.exists(self.save_file) | os.path.exists(self.save_file_legacy):
-            try:
-                tmp = Table.read(self.save_file)
-            except:
-                tmp = Table.read(self.save_file_legacy)
-
-
-            # See if the meta-data matches: evo model, atm_func, redlaw
-            if ( (tmp.meta['EVOMODEL'] == type(evo_model).__name__) &
-                (tmp.meta['ATMFUNC'] == atm_func.__name__) &
-                 (tmp.meta['REDLAW'] == red_law.name) ):
-                out_bool = True
-            else:
-                # If out_bool is false, print out what doesn't match
-                if verbose:
-                    print(f'Isochrone file {self.save_file} exists, but meta-data does not match.')
-                    if tmp.meta['EVOMODEL'] != type(evo_model).__name__:
-                        print(f'  EVOMODEL: {tmp.meta["EVOMODEL"]} != {type(evo_model).__name__}')
-                    if tmp.meta['ATMFUNC'] != atm_func.__name__:
-                        print(f'  ATMFUNC: {tmp.meta["ATMFUNC"]} != {atm_func.__name__}')
-                    if tmp.meta['REDLAW'] != red_law.name:
-                        print(f'  REDLAW: {tmp.meta["REDLAW"]} != {red_law.name}')
-
-            # Check model version if it was logged
-            if 'EVOMODELVERSION' in tmp.meta:
-                if tmp.meta['EVOMODELVERSION'] != evo_model.model_version_name:
-                    out_bool=False
-                    if verbose:
-                        print(f'EVOMODELVERSION does not match: The recorded {tmp.meta["EVOMODELVERSION"]} does not matched the existing version {evo_model.model_version_name}')
-
-        else:
-            if verbose:
-                print(f'Isochrone file {self.save_file} or {self.save_file_legacy} does not exist, generating new one.')
-
-        return out_bool
 
     def plot_CMD(self, mag1, mag2, savefile=None):
         """
@@ -1636,6 +1602,49 @@ class iso_table(object):
         print( '      Time taken: {0:.2f} seconds'.format(endTime - ts))
 
         return
+
+def check_save_file(save_file_path, evo_model, atm_func, red_law, verbose=False):
+    """
+    Check to see if save_file exists, as saved by the save_file
+    and save_file_legacy objects. If the filename exists, check the
+    meta-data as well.
+
+    returns a boolean: True is file exists, false otherwise
+    """
+    out_bool = False
+
+    if not os.path.exists(save_file_path):
+        if verbose: print(f'Isochrone file {save_file_path} does not exist.')
+        return out_bool
+
+    tmp = Table.read(save_file_path)
+
+    # See if the meta-data matches: evo model, atm_func, redlaw
+    if ( (tmp.meta['EVOMODEL'] == type(evo_model).__name__) &
+        (tmp.meta['ATMFUNC'] == atm_func.__name__) &
+            (tmp.meta['REDLAW'] == red_law.name) ):
+        out_bool = True
+    else:
+        # If out_bool is false, print out what doesn't match
+        if verbose:
+            print(f'Isochrone file {save_file_path} exists, but meta-data does not match.')
+            if tmp.meta['EVOMODEL'] != type(evo_model).__name__:
+                print(f'  EVOMODEL: {tmp.meta["EVOMODEL"]} != {type(evo_model).__name__}')
+            if tmp.meta['ATMFUNC'] != atm_func.__name__:
+                print(f'  ATMFUNC: {tmp.meta["ATMFUNC"]} != {atm_func.__name__}')
+            if tmp.meta['REDLAW'] != red_law.name:
+                print(f'  REDLAW: {tmp.meta["REDLAW"]} != {red_law.name}')
+
+    # Check model version if it was logged
+    if 'EVOMODELVERSION' in tmp.meta:
+        if tmp.meta['EVOMODELVERSION'] != evo_model.model_version_name:
+            out_bool=False
+            if verbose:
+                print(f'EVOMODELVERSION does not match: The recorded {tmp.meta["EVOMODELVERSION"]} does not matched the existing version {evo_model.model_version_name}')
+
+
+    return out_bool
+
 
 def get_filter_info(name, vega=vega, rebin=True):
     """
