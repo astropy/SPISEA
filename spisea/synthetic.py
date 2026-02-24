@@ -1136,13 +1136,13 @@ class IsochronePhot(Isochrone):
         metal_value = round(abs(metallicity), 2)
         metal_sign = 'm' if metallicity < 0 else 'p'
 
-        oldest_file     = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}.fits'
-        older_file      = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}_{metal_sign}{metal_value*10:02.0f}.fits'
         self.save_file  = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}_{metal_sign}{metal_value:.2f}.fits'
+        older_file      = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}_{metal_sign}{metal_value*10:02.0f}.fits'
+        oldest_file     = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}.fits'
 
-        oldest_file_exists = check_save_file(oldest_file, evo_model, atm_func, red_law, verbose=verbose)
-        older_file_exists = check_save_file(older_file, evo_model, atm_func, red_law, verbose=verbose)
         new_file_exists = check_save_file(self.save_file, evo_model, atm_func, red_law, verbose=verbose)
+        older_file_exists = check_save_file(older_file, evo_model, atm_func, red_law, verbose=verbose)
+        oldest_file_exists = check_save_file(oldest_file, evo_model, atm_func, red_law, verbose=verbose)
 
         if new_file_exists:
             self.save_file_legacy = None
