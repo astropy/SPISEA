@@ -1602,7 +1602,7 @@ def make_isochrone_pisa_interp(log_age, metallicity=0.015,
 
     print( '*** Generating Pisa isochrone for log t = %3.2f and Z = %.3f' % \
         (log_age, metallicity))
-
+    import time
     print( time.asctime(), 'Getting original Pisa isochrones.')
     iso = get_orig_pisa_isochrones(metallicity=metallicity)
 

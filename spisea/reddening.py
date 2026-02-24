@@ -1243,7 +1243,7 @@ class RedLawIndebetouw05(pysynphot.reddening.CustomRedLaw):
         Alambda_AK = 10**log_Alambda_AK
         return Alambda_AK
 
-    def Indebetouw05(self, wavelength, AK):
+    def Indebetouw05(self, wavelength, AKs):
         """
         Return the extinction at a given wavelength assuming the
         extinction law and an overall extinction at AK (2.164 microns)
