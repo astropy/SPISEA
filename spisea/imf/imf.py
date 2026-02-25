@@ -25,16 +25,6 @@ class IMF(object):
     The IMF base class. The mass sampling and multiplicity
     implementation is here.
 
-    Notes
-    -----
-    Code author: J. Lu.
-
-    Original code was taken from libimf package written by Jan Pflamm-Altenburg
-    (`Pflamm-Altenburg & Kroupa 2006 <https://ui.adsabs.harvard.edu/abs/2006MNRAS.373..295P/abstract>`_)
-    and has been modified only marginally, though more convinient and general purpose
-    functions have been added. The libimf code was licensed under
-    a GNU General Public License.
-
 
     Parameters
     ----------
@@ -46,11 +36,53 @@ class IMF(object):
     multiplicity : Multiplicity object or None
         If None, no multiplicity is assumed. Otherwise, use
         multiplicity object to create multiple star systems.
+    
+    seed : int, optional
+        Seed for the random generator numpy.random.default_rng(seed).
+        All random functions in the class will use this generator, unless a different generator is passed in as an argument to the function. Default None.
+        Behavior:
+        ::
+
+            imf = IMF(..., seed=42)
+            result1 = imf.generate_cluster()
+            result2 = imf.generate_cluster()
+            imf = IMF(..., seed=42)
+            result3 = imf.generate_cluster()
+            result4 = imf.generate_cluster()
+
+        result1==result3, result2==result4, but result1≠result2, result3≠result4.
+        This is the same behavior as
+        ::
+
+            rng = np.random.default_rng(seed=42)
+            result1 = rng.random(1)
+            result2 = rng.random(1)
+            rng = np.random.default_rng(seed=42)
+            result3 = rng.random(1)
+            result4 = rng.random(1)
+
+        If identical output is desired over each run, the same generator can be passed in as an argument to the generate_cluster function, e.g.
+        ::
+
+            result1 = imf.generate_cluster(rng=np.random.default_rng(42))            
+            result2 = imf.generate_cluster(rng=np.random.default_rng(42))
+
+        In this case, result1==result2
+
+    Notes
+    -----
+    Code author: J. Lu.
+
+    Original code was taken from libimf package written by Jan Pflamm-Altenburg
+    (`Pflamm-Altenburg & Kroupa 2006 <https://ui.adsabs.harvard.edu/abs/2006MNRAS.373..295P/abstract>`_)
+    and has been modified only marginally, though more convinient and general purpose
+    functions have been added. The libimf code was licensed under
+    a GNU General Public License.
+
     """
     def __init__(self, massLimits=np.array([0.1,150]), multiplicity=None, seed=None):
         self._multi_props = multiplicity
         self._mass_limits = np.atleast_1d(massLimits)
-        self.seed = seed
         self.rng = np.random.default_rng(seed)
 
         if multiplicity:
@@ -61,7 +93,7 @@ class IMF(object):
         return
 
 
-    def generate_cluster(self, totalMass):
+    def generate_cluster(self, totalMass, rng=None):
         """
         Generate a cluster of stellar systems with the specified IMF.
 
@@ -81,10 +113,10 @@ class IMF(object):
         totalMass : float
             The total mass of the cluster (including companions) in solar masses.
 
-        seed: int
-            If set to non-None, all random sampling will be seeded with the
-            specified seed, forcing identical output.
-            Default None
+        rng: numpy.random.Generator, optional
+            If not provided, will use the random number generator specified by the seed in the IMF instance.
+            If provided, will override the random generator in the IMF instance and use the specified generator,
+            by default None.
 
         Returns
         -------
@@ -102,6 +134,8 @@ class IMF(object):
             Array of total system masses (primary + companions) for each primary star.
 
         """
+        rng = self.rng if rng is None else rng
+
         initial_mass_limit = self._mass_limits[-1]
 
         if (self._mass_limits[-1] > totalMass):
@@ -131,7 +165,7 @@ class IMF(object):
         # start_while = time.time()
         while totalMassTally < totalMass:
             # Generate a random number array.
-            uniX = self.rng.random(int(newStarCount))
+            uniX = rng.random(int(newStarCount))
             # Convert into the IMF from the inverted CDF
             newMasses = self.dice_star_cl(uniX)
 
@@ -148,11 +182,11 @@ class IMF(object):
                 MF = self._multi_props.multiplicity_fraction(newMasses)
                 CSF = self._multi_props.companion_star_fraction(newMasses)
 
-                newIsMultiple = self.rng.random(int(newStarCount)) < MF
+                newIsMultiple = rng.random(int(newStarCount)) < MF
 
                 # Function to calculate multiple systems more efficiently
                 # start_calc = time.time()
-                newCompMasses, newSystemMasses, newIsMultiple = self.calc_multi(newMasses, newIsMultiple, CSF, MF)
+                newCompMasses, newSystemMasses, newIsMultiple = self.calc_multi(newMasses, newIsMultiple, CSF, MF, rng=rng)
                 # end_calc = time.time()
                 # print('Time taken for calc_multi: ', end_calc - start_calc)
                 newTotalMassTally = newSystemMasses.sum()
@@ -218,17 +252,18 @@ class IMF(object):
 
         return (masses, isMultiple, compMasses, systemMasses)
 
-    def calc_multi(self, newMasses, newIsMultiple, CSF, MF):
+    def calc_multi(self, newMasses, newIsMultiple, CSF, MF, rng=None):
         """
         Helper function to calculate multiples more efficiently.
         We will use array operations as much as possible
         """
+        rng = self.rng if rng is None else rng
         # Copy over the primary masses. Eventually add the companions.
         newSystemMasses = newMasses.copy()
 
         # Identify multiple systems, calculate number of companions for each
         multiple_idx = np.where(newIsMultiple)[0]
-        comp_nums = 1 + self.rng.poisson((CSF[multiple_idx] / MF[multiple_idx]) - 1)
+        comp_nums = 1 + rng.poisson((CSF[multiple_idx] / MF[multiple_idx]) - 1)
         if self._multi_props.companion_max:
             too_many = np.where(comp_nums > self._multi_props.CSF_max)[0]
             comp_nums[too_many] = self._multi_props.CSF_max
@@ -242,7 +277,7 @@ class IMF(object):
 
         for comp_num, comp_index in zip(comp_unique, comp_indices):
             # Calculate masses of companions
-            q_values = self._multi_props.random_q(self.rng.random((len(comp_index), comp_num)))
+            q_values = self._multi_props.random_q(rng.random((len(comp_index), comp_num)))
             m_comp = np.multiply(q_values, np.transpose([primary[comp_index]]))
             compMasses[multiple_idx[comp_index], :comp_num] = m_comp
 

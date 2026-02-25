@@ -92,9 +92,9 @@ class Cluster(object):
         no compact remnants are produced.
 
     seed: int
-        If set to non-None, all random sampling will be seeded with the
-        specified seed, forcing identical output.
-        Default None
+        Seed for the random number generator numpy.random.default_rng(seed).
+        All random functions in the class will use this generator, 
+        unless a different generator is passed in as an argument to the function, by default None.
 
     vebose: boolean
         True for verbose output.
@@ -133,24 +133,56 @@ class ResolvedCluster(Cluster):
     cluster_mass: float
         Total initial mass of the cluster, in M_sun
 
-    ifmr: ifmr object or None
+    ifmr: ifmr object, optional
         If ifmr object is defined, will create compact remnants
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
+        By default None.
 
-    keep_low_mass_stars: boolean (default False)
+    keep_low_mass_stars: boolean, optional
         If True, the cluster will not cut out stars below the isochrone grid
         on initial mass. They are assigned a current mass equal to their initial
         mass, a phase of 98, and no other evolutionary properties or photometry.
         If False, stars below the isochrone initial mass limit are cut out.
+        By default False.
 
-    seed: int
-        If set to non-None, all random sampling will be seeded with the
-        specified seed, forcing identical output.
-        Default None
+    seed: int, optional
+        Seed for the random number generator numpy.random.default_rng(seed).
+        All random functions in the class will use this generator, 
+        unless a different generator is passed in as an argument to the function, by default None.
 
-    vebose: boolean
+    vebose: boolean, optional
         True for verbose output.
+
+    Attributes
+    ----------
+    star_systems: astropy.table.Table
+        Table containing the properties of the primary stars (or stellar systems, if multiplicity is used). The columns include:
+            mass: primary mass
+            isMultiple: boolean for whether the star is in a multiple system
+            systemMass: total initial mass of the stellar system (primary + companions)
+            Teff: effective temperature of the star
+            L: luminosity of the star in L_sun
+            logg: surface gravity of the star in cgs
+            isWR: boolean for whether the star is a Wolf-Rayet star
+            mass_current: current mass of the star
+            phase: evolutionary phase of the star, as defined by the isochrone model
+            metallicity: metallicity of the star
+            filter columns: magnitude of the star in each filter defined by the isochrone model
+    
+    companions: astropy.table.Table (only if multiplicity is used in the IMF object)
+        Table containing the properties of the companion stars. The columns include:
+            system_idx: index of the stellar system this companion belongs to, which can be used to match to the star_systems table
+            mass: initial mass of the companion star
+            Teff: effective temperature of the companion star
+            L: luminosity of the companion star in L_sun
+            logg: surface gravity of the companion star in cgs
+            isWR: boolean for whether the companion star is a Wolf-Rayet star
+            mass_current: current mass of the companion star
+            phase: evolutionary phase of the companion star, as defined by the isochrone model
+            metallicity: metallicity of the companion star
+            filter columns: magnitude of the companion star in each filter defined by the isochrone model
+            If multiplicity properties are defined in the IMF object, additional columns for those properties (e.g., log_a, e, i, Omega, omega) are included.
     """
     def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=True,
                      seed=None, keep_low_mass_stars=False):
@@ -659,21 +691,55 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         from which the delta_AKs values will be drawn from for each individual
         system.
 
-    ifmr: ifmr object or None
+    ifmr: ifmr object, optional
         If ifmr object is defined, will create compact remnants
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
 
-    seed: int
-        If set to non-None, all random sampling will be seeded with the
-        specified seed, forcing identical output.
-        Default None
+    seed: int, optional
+        Seed for the random number generator numpy.random.default_rng(seed).
+        All random functions in the class will use this generator, 
+        unless a different generator is passed in as an argument to the function, by default None.
 
-    vebose: boolean
+
+    vebose: boolean, optional
         True for verbose output.
+
+
+    Attributes
+    ----------
+    star_systems: astropy.table.Table
+        Table containing the properties of the primary stars (or stellar systems, if multiplicity is used). The columns include:
+            mass: primary mass
+            isMultiple: boolean for whether the star is in a multiple system
+            systemMass: total initial mass of the stellar system (primary + companions)
+            Teff: effective temperature of the star
+            L: luminosity of the star in L_sun
+            logg: surface gravity of the star in cgs
+            isWR: boolean for whether the star is a Wolf-Rayet star
+            mass_current: current mass of the star
+            phase: evolutionary phase of the star, as defined by the isochrone model
+            metallicity: metallicity of the star
+            filter columns: magnitude of the star in each filter defined by the isochrone model, which have been perturbed by differential reddening according to the delta_AKs parameter
+            AKs_f: the final AKs value for each star, which is the original AKs value from the isochrone plus the differential reddening drawn from the Gaussian distribution defined by delta_AKs
+
+    companions: astropy.table.Table, optional
+        If multiplicity is used, this table contains the properties of the companion stars. The columns include:
+            system_idx: index of the primary star's system in the star_systems table
+            mass: mass of the companion star
+            Teff: effective temperature of the companion star
+            L: luminosity of the companion star in L_sun
+            logg: surface gravity of the companion star in cgs
+            isWR: boolean for whether the companion star is a Wolf-Rayet star
+            mass_current: current mass of the companion star
+            phase: evolutionary phase of the companion star, as defined by the isochrone model
+            metallicity: metallicity of the companion star
+            filter columns: magnitude of the companion star in each filter defined by the isochrone model, which have been perturbed by differential reddening according to the delta_AKs parameter
+            If multiplicity properties are defined in the IMF object, additional columns for those properties (e.g., log_a, e, i, Omega, omega) are included.
+    
     """
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 ifmr=None, verbose=False, seed=None, keep_low_mass_stars=False):
+                 ifmr=None, verbose=False, seed=None):
 
         ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
                                      seed=seed)
@@ -743,8 +809,23 @@ class UnresolvedCluster(Cluster):
         Define the minumum and maximum wavelengths of the final
         output spectrum, in Angstroms. Array should be [min_wave, max_wave]
 
-    vebose: boolean
-        True for verbose output.
+    vebose: boolean, optional
+        True for verbose output, by default False.
+
+    Attributes
+    ----------
+    mass_all: numpy array
+        The mass of each star in the cluster, in M_sun.
+    spec_list: list of spectra
+        List of the spectra of each star in the cluster, resampled to a common wavelength grid
+    spec_list_trim: list of spectra
+        List of the spectra of each star in the cluster, resampled to a common wavelength grid and trimmed to the wavelength range defined by wave_range
+    spec_tot_full: numpy array
+        The total spectrum of the cluster, obtained by summing the spectra of all stars in spec_list, before trimming to wave_range
+    spec_trim: numpy array
+        The total spectrum of the cluster, obtained by summing the spectra of all stars in spec_list_trim, which have been trimmed to the wavelength range defined by wave_range
+    wave_trim: numpy array
+        The wavelength grid corresponding to spec_trim, which is the same as the wavelength grid of the individual spectra in spec_list_trim
     """
     def __init__(self, iso, imf, cluster_mass,
                  wave_range=[3000, 52000], verbose=False):

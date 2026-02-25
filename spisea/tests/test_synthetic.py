@@ -1244,6 +1244,12 @@ def test_ResolvedCluster_random_state():
     imf_multi = multiplicity.MultiplicityUnresolved()
     imf_test = imf.IMF_broken_powerlaw(imf_limits, imf_powers, multiplicity=imf_multi)
 
+    # Test that the same random seed produces the same cluster
+    result1 = imf_test.generate_cluster(cluster_mass, rng=np.random.default_rng(seed=42))
+    result2 = imf_test.generate_cluster(cluster_mass, rng=np.random.default_rng(seed=42))
+    np.testing.assert_equal(result1, result2)
+
+    # Test that two clusters generated with the same seed have the same star systems and companions
     cluster1 = syn.ResolvedCluster(iso, imf_test, cluster_mass, seed=42)
     cluster2 = syn.ResolvedCluster(iso, imf_test, cluster_mass, seed=42)
     np.testing.assert_array_equal(cluster1.star_systems, cluster2.star_systems)
