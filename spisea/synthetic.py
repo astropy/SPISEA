@@ -1932,6 +1932,7 @@ def get_obs_str(col):
                  'rubin_u':'rubin,u',
                  'rubin_z':'rubin,z',
                  'rubin_y':'rubin,y',
+                 'euclid_VIS':'euclid,VIS',
                  'euclid_Y':'euclid,Y',
                  'euclid_J':'euclid,J',
                  'euclid_H':'euclid,H'}
