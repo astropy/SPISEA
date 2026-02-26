@@ -66,8 +66,8 @@ class StellarEvolution(object):
     """
     Base Stellar evolution class.
 
-    Parameters
-    ----------
+    Subclasses must define the following parameters:
+    ------------------------------------------------
     model_dir: path
         Directory path to evolution model files
 
@@ -83,14 +83,11 @@ class StellarEvolution(object):
     model_version_name: string
         Name of the model class plus additional details like version
         numbers and rotation if relevant.
+
+    AKs_grid_age_list: list
+        Sparser list of ages to use for AKs interpolation grid
     """
-    def __init__(self, model_dir, age_list, mass_list, z_list):
-        self.model_dir = model_dir
-        self.z_list = z_list
-        self.mass_list = mass_list
-        self.age_list = age_list
-        self.model_version_name = "None"
-      
+    def __init__(self):
         return
     
 class Geneva(StellarEvolution):
@@ -100,22 +97,22 @@ class Geneva(StellarEvolution):
         """
         self.model_version_name = "Geneva"
         # populate list of model masses (in solar masses)
-        mass_list = [(0.1 + i*0.005) for i in range(181)]
+        self.mass_list = [(0.1 + i*0.005) for i in range(181)]
         
         # define metallicity parameters for Geneva models
-        z_list = [0.01, 0.02, 0.03]
+        self.z_list = [0.01, 0.02, 0.03]
         
         # populate list of isochrone ages (log scale)
         age_list = [round(5.5 + 0.01*i, 2) for i in range(190)]
         age_list += [round(7.4 + 0.05*i, 2) for i in range(12)]
         age_list += [round(math.log10(1.e8*x), 2) for x in range(1, 10)]
         age_list += [round(math.log10(1.e9*x), 2) for x in range(1, 10)]
-        age_list = age_list
+        self.age_list = age_list
+        # Add AKs_grid_age_list after clarifying data set
+        #self.AKs_grid_age_list = np.linspace(5.5, , 0.05)
         
         # specify location of model files
-        model_dir = models_dir + 'geneva/'
-
-        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+        self.model_dir = models_dir + 'geneva/'
 
         self.z_solar = 0.02
         self.z_file_map = {0.01: 'z01/', 0.02: 'z02/', 0.03: 'z03/'}
@@ -186,6 +183,7 @@ class Ekstrom12(StellarEvolution):
         
         # populate list of isochrone ages (log scale)
         self.age_list = np.arange(6.0, 8.0+0.005, 0.01)
+        self.AKs_grid_age_list = np.arange(6.0, 8.0+0.005, 0.05)
         
         # Specify location of model files
         self.model_dir = models_dir+'Ekstrom2012/'
@@ -420,7 +418,9 @@ class Parsec(StellarEvolution):
         # populate list of isochrone ages (log scale)
         self.age_list = np.arange(6.6, 10.12+0.005, 0.01)
         self.age_list = np.append(6.40, self.age_list)
-        
+        self.AKs_grid_age_list = np.arange(6.6, 10.12+0.005, 0.05)
+        self.AKs_grid_age_list = [6.40] + list(self.AKs_grid_age_list) + [10.12]
+
         # Specify location of model files
         self.model_dir = models_dir+'ParsecV1.2s/'
 
@@ -568,6 +568,7 @@ class Pisa(StellarEvolution):
         
         # populate list of isochrone ages (log scale)
         self.age_list = np.arange(6.0, 8.01+0.005, 0.01)
+        self.AKs_grid_age_list = np.arange(6.0, 8.01+0.005, 0.05)
         
         # Specify location of model files
         self.model_dir = models_dir+'Pisa2011/'
@@ -728,6 +729,7 @@ class Baraffe15(StellarEvolution):
         
         # populate list of isochrone ages (log scale)
         self.age_list = np.arange(6.0, 8.0+0.005, 0.01)
+        self.AKs_grid_age_list = np.arange(6.0, 8.0+0.005, 0.05)
         
         # Specify location of model files
         self.model_dir = models_dir+'Baraffe15/'
@@ -1048,6 +1050,8 @@ class MISTv1(StellarEvolution):
         
         # populate list of isochrone ages (log scale)
         self.age_list = np.arange(5.01, 10.30+0.005, 0.01)
+        self.AKs_grid_age_list = np.linspace(5.0,10.3,107)
+        self.AKs_grid_age_list[0] = 5.01
 
         # Set version directory
         self.version = version
@@ -1277,17 +1281,18 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         else:
             self.model_version_name = "MergedBaraffePisaEkstromParsec-norot"
         # populate list of model masses (in solar masses)
-        mass_list = [(0.1 + i*0.005) for i in range(181)]
+        self.mass_list = [(0.1 + i*0.005) for i in range(181)]
         
         # define metallicity parameters for Geneva models
-        z_list = [0.015]
+        self.z_list = [0.015]
         
         # populate list of isochrone ages (log scale)
-        age_list = np.arange(6.0, 10.091, 0.01).tolist()
+        self.age_list = np.arange(6.0, 10.091, 0.01).tolist()
+        self.AKs_grid_age_list = np.arange(6.0, 10.091, 0.05).tolist()
+        self.AKs_grid_age_list += [10.09]
         
         # specify location of model files
-        model_dir = models_dir + 'merged/baraffe_pisa_ekstrom_parsec/'
-        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+        self.model_dir = models_dir + 'merged/baraffe_pisa_ekstrom_parsec/'
         self.z_solar = 0.015
         
         # Switch to specify rotating/non-rotating models
@@ -1384,17 +1389,17 @@ class MergedPisaEkstromParsec(StellarEvolution):
         else:
             self.model_version_name = "MergedPisaEkstromParsec-norot"
         # populate list of model masses (in solar masses)
-        mass_list = [(0.1 + i*0.005) for i in range(181)]
+        self.mass_list = [(0.1 + i*0.005) for i in range(181)]
         
         # define metallicity parameters for Geneva models
-        z_list = [0.015]
+        self.z_list = [0.015]
         
         # populate list of isochrone ages (log scale)
-        age_list = np.arange(6.0, 8.001, 0.01).tolist()
+        self.age_list = np.arange(6.0, 8.001, 0.01).tolist()
+        self.AKs_grid_age_list = np.arange(6.0, 8.001, 0.05).tolist()
         
         # specify location of model files
-        model_dir = models_dir + 'merged/pisa_ekstrom_parsec/'
-        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+        self.model_dir = models_dir + 'merged/pisa_ekstrom_parsec/'
         self.z_solar = 0.015
 
         #Switch to specify rot/notot
@@ -1482,10 +1487,10 @@ class MergedSiessGenevaPadova(StellarEvolution):
         """
         self.model_version_name = "MergedSiessGenevaPadova"
         # populate list of model masses (in solar masses)
-        mass_list = [(0.1 + i*0.005) for i in range(181)]
+        self.mass_list = [(0.1 + i*0.005) for i in range(181)]
         
         # define metallicity parameters for Geneva models
-        z_list = [0.02]
+        self.z_list = [0.02]
         
         # populate list of isochrone ages (log scale)
         age_list = np.arange(5.5, 7.41, 0.01).tolist()
@@ -1506,10 +1511,11 @@ class MergedSiessGenevaPadova(StellarEvolution):
         age_list.append(9.60)
         age_list.append(9.70)
         age_list.append(9.78)
+        self.age_list = age_list
+        # TODO: define AKs_grid_age_list after clarifying isochrones
         
         # specify location of model files
-        model_dir = models_dir + 'merged/siess_meynetMaeder_padova/'
-        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+        self.model_dir = models_dir + 'merged/siess_meynetMaeder_padova/'
         self.z_solar = 0.02
         
         # Metallicity map

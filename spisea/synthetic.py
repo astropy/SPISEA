@@ -1110,6 +1110,14 @@ class IsochronePhot(Isochrone):
         Define what filters the synthetic photometry
         will be calculated for, via the filter string
         identifier.
+
+    verbose : bool
+        Determines whether certain information gets printed
+
+    interp_AKs_grid : bool
+        If true, interpolate over existing grid for AKs values, instead of
+        re-generating all photometry from scratch. If False, re-generate all
+        photometry from scratch if the file does not already exist.
     """
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
@@ -1120,7 +1128,8 @@ class IsochronePhot(Isochrone):
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
                           'ubv,R', 'ubv,I'],
-                verbose=False):
+                verbose=False,
+                interp_AKs_grid=False):
         self.metallicity = metallicity
 
         # Make the iso_dir, if it doesn't already exist
