@@ -164,6 +164,7 @@ def test_filters():
                      'decam,y', 'decam,i', 'decam,z',
                      'decam,u', 'decam,g', 'decam,r',
                      'gaia,dr2_rev,G', 'gaia,dr2_rev,Gbp', 'gaia,dr2_rev,Grp',
+                     'gaia,edr3,G', 'gaia,edr3,Gbp', 'gaia,edr3,Grp',
                      'jwst,F070W', 'jwst,F090W', 'jwst,F115W', 'jwst,F140M',
                      'jwst,F150W', 'jwst,F150W2', 'jwst,F162M', 'jwst,F164N',
                      'jwst,F182M', 'jwst,F187N', 'jwst,F200W', 'jwst,F212N',
