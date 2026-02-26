@@ -1,33 +1,21 @@
+import os
+import time
+import math
+import scipy
+import inspect
+import warnings
 import numpy as np
 import pylab as plt
-from spisea import reddening
-from spisea import evolution
+import matplotlib.pyplot as plt
+from spisea import reddening, evolution, filters
 from spisea import atmospheres as atm
-from spisea import filters
-from spisea.imf import imf, multiplicity
-from scipy import interpolate
-from scipy import stats
-from scipy.special import erf
+from scipy.spatial import cKDTree as KDTree
+from spisea.imf import multiplicity
 from pysynphot import spectrum
 from pysynphot import ObsBandpass
 from pysynphot import observation as obs
-import pysynphot
 from astropy import constants, units
-from astropy.table import Table, Column, MaskedColumn
-import pickle
-import time, datetime
-import math
-import os, glob
-import tempfile
-import scipy
-import matplotlib
-import matplotlib.pyplot as plt
-import time
-import warnings
-import pdb
-from scipy.spatial import cKDTree as KDTree
-import inspect
-import astropy.modeling
+from astropy.table import Table, Column
 
 default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
@@ -92,9 +80,9 @@ class Cluster(object):
         no compact remnants are produced.
 
     seed: int
-        If set to non-None, all random sampling will be seeded with the
-        specified seed, forcing identical output.
-        Default None
+        Seed for the random number generator numpy.random.default_rng(seed).
+        All random functions in the class will use this generator, 
+        unless a different generator is passed in as an argument to the function, by default None.
 
     vebose: boolean
         True for verbose output.
@@ -107,7 +95,7 @@ class Cluster(object):
         self.ifmr = ifmr
         self.cluster_mass = cluster_mass
         self.seed = seed
-        # self.rng = np.random.default_rng(self.seed)
+        self.rng = np.random.default_rng(self.seed)
 
         return
 
@@ -133,24 +121,56 @@ class ResolvedCluster(Cluster):
     cluster_mass: float
         Total initial mass of the cluster, in M_sun
 
-    ifmr: ifmr object or None
+    ifmr: ifmr object, optional
         If ifmr object is defined, will create compact remnants
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
+        By default None.
 
-    keep_low_mass_stars: boolean (default False)
-        If True, the cluster will not cut out stars below the isochrone grid 
-        on initial mass. They are assigned a current mass equal to their initial 
+    keep_low_mass_stars: boolean, optional
+        If True, the cluster will not cut out stars below the isochrone grid
+        on initial mass. They are assigned a current mass equal to their initial
         mass, a phase of 98, and no other evolutionary properties or photometry.
         If False, stars below the isochrone initial mass limit are cut out.
+        By default False.
 
-    seed: int
-        If set to non-None, all random sampling will be seeded with the
-        specified seed, forcing identical output.
-        Default None
+    seed: int, optional
+        Seed for the random number generator numpy.random.default_rng(seed).
+        All random functions in the class will use this generator, 
+        unless a different generator is passed in as an argument to the function, by default None.
 
-    vebose: boolean
+    vebose: boolean, optional
         True for verbose output.
+
+    Attributes
+    ----------
+    star_systems: astropy.table.Table
+        Table containing the properties of the primary stars (or stellar systems, if multiplicity is used). The columns include:
+            mass: primary mass
+            isMultiple: boolean for whether the star is in a multiple system
+            systemMass: total initial mass of the stellar system (primary + companions)
+            Teff: effective temperature of the star
+            L: luminosity of the star in L_sun
+            logg: surface gravity of the star in cgs
+            isWR: boolean for whether the star is a Wolf-Rayet star
+            mass_current: current mass of the star
+            phase: evolutionary phase of the star, as defined by the isochrone model
+            metallicity: metallicity of the star
+            filter columns: magnitude of the star in each filter defined by the isochrone model
+    
+    companions: astropy.table.Table (only if multiplicity is used in the IMF object)
+        Table containing the properties of the companion stars. The columns include:
+            system_idx: index of the stellar system this companion belongs to, which can be used to match to the star_systems table
+            mass: initial mass of the companion star
+            Teff: effective temperature of the companion star
+            L: luminosity of the companion star in L_sun
+            logg: surface gravity of the companion star in cgs
+            isWR: boolean for whether the companion star is a Wolf-Rayet star
+            mass_current: current mass of the companion star
+            phase: evolutionary phase of the companion star, as defined by the isochrone model
+            metallicity: metallicity of the companion star
+            filter columns: magnitude of the companion star in each filter defined by the isochrone model
+            If multiplicity properties are defined in the IMF object, additional columns for those properties (e.g., log_a, e, i, Omega, omega) are included.
     """
     def __init__(self, iso, imf, cluster_mass, ifmr=None, verbose=True,
                      seed=None, keep_low_mass_stars=False):
@@ -159,13 +179,13 @@ class ResolvedCluster(Cluster):
         # Provide a user warning is random seed is set
         if seed is not None and verbose:
             print('WARNING: random seed set to %i' % seed)
-            # imf.rng = self.rng
-        
+            imf.rng = self.rng
+
         #####
         # Sample the IMF to build up our cluster mass.
         #####
         # start0 = time.time()
-        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass, seed=seed)
+        mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
         # end0 = time.time()
         # print('IMF sampling took {0:f} s.'.format(end0 - start0))
 
@@ -328,11 +348,11 @@ class ResolvedCluster(Cluster):
 
         if isinstance(self.imf._multi_props, multiplicity.MultiplicityResolvedDK):
             companions.add_column(Column(self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx']]), name='log_a'))
-            companions.add_column(Column(self.imf._multi_props.random_e(np.random.rand(N_comp_tot)), name='e'))
+            companions.add_column(Column(self.imf._multi_props.random_e(self.rng.random(N_comp_tot)), name='e'))
             companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(
-                np.random.rand(N_comp_tot),
-                np.random.rand(N_comp_tot),
-                np.random.rand(N_comp_tot)
+                self.rng.random(N_comp_tot),
+                self.rng.random(N_comp_tot),
+                self.rng.random(N_comp_tot)
             )
 
         companions['mass'] = compMass.compressed()
@@ -441,11 +461,11 @@ class ResolvedCluster(Cluster):
             for ii in range(len(companions)):
                 companions['log_a'][ii] = self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx'][ii]])
 
-            companions['e'] = self.imf._multi_props.random_e(np.random.rand(N_comp_tot))
+            companions['e'] = self.imf._multi_props.random_e(self.rng.random(N_comp_tot))
             companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(
-                np.random.rand(N_comp_tot),
-                np.random.rand(N_comp_tot),
-                np.random.rand(N_comp_tot)
+                self.rng.random(N_comp_tot),
+                self.rng.random(N_comp_tot),
+                self.rng.random(N_comp_tot)
             )
 
 
@@ -493,12 +513,12 @@ class ResolvedCluster(Cluster):
                 bad = np.where( (companions_phase_non_nan > 5) &
                                 (companions_phase_non_nan < 101) &
                                 (companions_phase_non_nan != 9) &
-                                (companions_phase_non_nan != -99))
+                                (companions_phase_non_nan != -99))[0]
                 # Print warning, if desired
                 verbose=False
                 if verbose:
-                    for ii in range(len(bad[0])):
-                        print('WARNING: changing phase {0} to 5'.format(companions['phase'][bad[0][ii]]))
+                    for ii in range(len(bad)):
+                        print('WARNING: changing phase {0} to 5'.format(companions['phase'][bad[ii]]))
                 companions['phase'][bad] = 5
 
                 for filt in self.filt_names:
@@ -518,8 +538,8 @@ class ResolvedCluster(Cluster):
 
                     # If *both* objects are dark, then keep the magnitude
                     # as np.nan. Otherwise, add fluxes together
-                    good = np.where( (f1 != 0) | (f2 != 0) )
-                    bad = np.where( (f1 == 0) & (f2 == 0) )
+                    good = np.where( (f1 != 0) | (f2 != 0) )[0]
+                    bad = np.where( (f1 == 0) & (f2 == 0) )[0]
 
                     star_systems[filt][idx[good]] = -2.5 * np.log10(f1[good] + f2[good])
                     star_systems[filt][idx[bad]] = np.nan
@@ -544,7 +564,7 @@ class ResolvedCluster(Cluster):
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
-            good = np.where(r_id_tmp > 0)
+            good = np.where(r_id_tmp > 0)[0]
             cdx_rem_good = cdx_rem[good]
 
             companions['mass_current'][cdx_rem_good] = r_mass_tmp[good]
@@ -573,7 +593,7 @@ class ResolvedCluster(Cluster):
 
         return star_systems, companions
 
-    
+
     def _remove_bad_systems(self, star_systems, compMass, keep_low_mass_stars):
         """
         Helper function to remove stars with masses outside the isochrone
@@ -607,7 +627,7 @@ class ResolvedCluster(Cluster):
             idx =   (star_systems_teff_non_nan > 0) | \
                     (star_systems_phase_non_nan >= 0) | \
                     (star_systems['mass'] < np.min(self.iso.points['mass']))
-        
+
         n_out_of_range = N_systems - sum(idx)
         if self.verbose and n_out_of_range > 0:
             print( 'Found {0:d} stars out of mass range'.format(n_out_of_range))
@@ -659,21 +679,55 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         from which the delta_AKs values will be drawn from for each individual
         system.
 
-    ifmr: ifmr object or None
+    ifmr: ifmr object, optional
         If ifmr object is defined, will create compact remnants
         produced by the cluster at the given isochrone age. Otherwise,
         no compact remnants are produced.
 
-    seed: int
-        If set to non-None, all random sampling will be seeded with the
-        specified seed, forcing identical output.
-        Default None
+    seed: int, optional
+        Seed for the random number generator numpy.random.default_rng(seed).
+        All random functions in the class will use this generator, 
+        unless a different generator is passed in as an argument to the function, by default None.
 
-    vebose: boolean
+
+    vebose: boolean, optional
         True for verbose output.
+
+
+    Attributes
+    ----------
+    star_systems: astropy.table.Table
+        Table containing the properties of the primary stars (or stellar systems, if multiplicity is used). The columns include:
+            mass: primary mass
+            isMultiple: boolean for whether the star is in a multiple system
+            systemMass: total initial mass of the stellar system (primary + companions)
+            Teff: effective temperature of the star
+            L: luminosity of the star in L_sun
+            logg: surface gravity of the star in cgs
+            isWR: boolean for whether the star is a Wolf-Rayet star
+            mass_current: current mass of the star
+            phase: evolutionary phase of the star, as defined by the isochrone model
+            metallicity: metallicity of the star
+            filter columns: magnitude of the star in each filter defined by the isochrone model, which have been perturbed by differential reddening according to the delta_AKs parameter
+            AKs_f: the final AKs value for each star, which is the original AKs value from the isochrone plus the differential reddening drawn from the Gaussian distribution defined by delta_AKs
+
+    companions: astropy.table.Table, optional
+        If multiplicity is used, this table contains the properties of the companion stars. The columns include:
+            system_idx: index of the primary star's system in the star_systems table
+            mass: mass of the companion star
+            Teff: effective temperature of the companion star
+            L: luminosity of the companion star in L_sun
+            logg: surface gravity of the companion star in cgs
+            isWR: boolean for whether the companion star is a Wolf-Rayet star
+            mass_current: current mass of the companion star
+            phase: evolutionary phase of the companion star, as defined by the isochrone model
+            metallicity: metallicity of the companion star
+            filter columns: magnitude of the companion star in each filter defined by the isochrone model, which have been perturbed by differential reddening according to the delta_AKs parameter
+            If multiplicity properties are defined in the IMF object, additional columns for those properties (e.g., log_a, e, i, Omega, omega) are included.
+    
     """
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
-                 ifmr=None, verbose=False, seed=None, keep_low_mass_stars=False):
+                 ifmr=None, verbose=False, seed=None):
 
         ResolvedCluster.__init__(self, iso, imf, cluster_mass, ifmr=ifmr, verbose=verbose,
                                      seed=seed)
@@ -701,7 +755,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         # Perturb all of star systems' photometry by a random amount corresponding to
         # differential de-reddening. The distribution is normal with a width of
         # Aks +/- deltaAKs in each filter
-        rand_red = np.random.randn(len(self.star_systems))
+        rand_red = self.rng.standard_normal(len(self.star_systems))
 
         for filt in self.filt_names:
             self.star_systems[filt] += rand_red * delta_red_filt[filt]
@@ -743,8 +797,23 @@ class UnresolvedCluster(Cluster):
         Define the minumum and maximum wavelengths of the final
         output spectrum, in Angstroms. Array should be [min_wave, max_wave]
 
-    vebose: boolean
-        True for verbose output.
+    vebose: boolean, optional
+        True for verbose output, by default False.
+
+    Attributes
+    ----------
+    mass_all: numpy array
+        The mass of each star in the cluster, in M_sun.
+    spec_list: list of spectra
+        List of the spectra of each star in the cluster, resampled to a common wavelength grid
+    spec_list_trim: list of spectra
+        List of the spectra of each star in the cluster, resampled to a common wavelength grid and trimmed to the wavelength range defined by wave_range
+    spec_tot_full: numpy array
+        The total spectrum of the cluster, obtained by summing the spectra of all stars in spec_list, before trimming to wave_range
+    spec_trim: numpy array
+        The total spectrum of the cluster, obtained by summing the spectra of all stars in spec_list_trim, which have been trimmed to the wavelength range defined by wave_range
+    wave_trim: numpy array
+        The wavelength grid corresponding to spec_trim, which is the same as the wavelength grid of the individual spectra in spec_list_trim
     """
     def __init__(self, iso, imf, cluster_mass,
                  wave_range=[3000, 52000], verbose=False):
@@ -978,7 +1047,7 @@ class Isochrone(object):
         tab.meta['WAVEMAX'] = wave_range[1]
 
         self.points = tab
-        
+
         if self.verbose:
             t2 = time.time()
             print( 'Isochrone generation took {0:f} s.'.format(t2-t1))
@@ -1131,24 +1200,33 @@ class IsochronePhot(Isochrone):
         # For solar metallicity case, allow for legacy isochrones (which didn't have
         # metallicity tag since they were all solar metallicity) to be read
         # properly
-        
+
         # Set save file name
         metal_value = round(abs(metallicity), 2)
         metal_sign = 'm' if metallicity < 0 else 'p'
-        self.save_file = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}_{metal_sign}{metal_value:.2f}.fits'
 
-        if metallicity == 0.0:            
-            self.save_file_legacy = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}.fits'
+        self.save_file  = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}_{metal_sign}{metal_value:.2f}.fits'
+        older_file      = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}_{metal_sign}{metal_value*10:02.0f}.fits'
+        oldest_file     = f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(round(distance)).zfill(5)}.fits'
+
+        new_file_exists = check_save_file(self.save_file, evo_model, atm_func, red_law, verbose=verbose)
+
+        if new_file_exists:
+            self.save_file_legacy = None
+        elif check_save_file(older_file, evo_model, atm_func, red_law, verbose=verbose):
+            self.save_file_legacy = older_file
+        elif metallicity == 0.0 and check_save_file(oldest_file, evo_model, atm_func, red_law, verbose=verbose):
+            self.save_file_legacy = oldest_file
         else:
-            self.save_file_legacy = self.save_file
+            self.save_file_legacy = None
 
         # Expected filters
         self.filters = filters
 
         # Recalculate isochrone if save_file doesn't exist or recomp == True
-        file_exists = self.check_save_file(evo_model, atm_func, red_law, verbose=verbose)
+        file_exists = new_file_exists or (self.save_file_legacy is not None)
 
-        if (not file_exists) | (recomp==True):
+        if  (recomp==True) or (not file_exists):
             self.recalc = True
             if verbose:
                 print(f'Generating new isochrone of log(t)={logAge:.2f}, AKs={AKs:.2f}, d={distance} pc')
@@ -1172,12 +1250,12 @@ class IsochronePhot(Isochrone):
                 print(f'Isochrone saved to {self.save_file}')
         else:
             self.recalc = False
-            try:
+            if new_file_exists:
                 self.points = Table.read(self.save_file)
-            except:
+                print(f'Isochrone loaded from existing file: {self.save_file}')
+            else:
                 self.points = Table.read(self.save_file_legacy)
-            # print(f'Isochrone loaded from existing file: {self.save_file}')
-            # Add some error checking.
+                print(f'Isochrone loaded from existing file: {self.save_file_legacy}')
 
         # Next: do we have all the filters we need?
         comp_filters = []
@@ -1216,9 +1294,9 @@ class IsochronePhot(Isochrone):
                 # Convert into flux observed at Earth (unreddened)
                 star *= (R / self.points.meta["DISTANCE"])**2  # in erg s^-1 cm^-2 A^-1
                 # Redden the spectrum. This doesn't take much time at all.
-                red = red_law.reddening(AKs).resample(star.wave) 
+                red = red_law.reddening(AKs).resample(star.wave)
                 star *= red
-                # Save the final spectrum to our spec_list for later use.            
+                # Save the final spectrum to our spec_list for later use.
                 self.spec_list.append(star)
 
             self.make_photometry(rebin=rebin, vega=vega, comp_filters=comp_filters)
@@ -1226,7 +1304,7 @@ class IsochronePhot(Isochrone):
         return
 
     def make_photometry(self, rebin=True, vega=vega, comp_filters=None):
-        """ 
+        """
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
         photometry.
@@ -1285,51 +1363,6 @@ class IsochronePhot(Isochrone):
 
         return
 
-    def check_save_file(self, evo_model, atm_func, red_law, verbose=False):
-        """
-        Check to see if save_file exists, as saved by the save_file
-        and save_file_legacy objects. If the filename exists, check the
-        meta-data as well.
-
-        returns a boolean: True is file exists, false otherwise
-        """
-        out_bool = False
-
-        if os.path.exists(self.save_file) | os.path.exists(self.save_file_legacy):
-            try:
-                tmp = Table.read(self.save_file)
-            except:
-                tmp = Table.read(self.save_file_legacy)
-
-
-            # See if the meta-data matches: evo model, atm_func, redlaw
-            if ( (tmp.meta['EVOMODEL'] == type(evo_model).__name__) &
-                (tmp.meta['ATMFUNC'] == atm_func.__name__) &
-                 (tmp.meta['REDLAW'] == red_law.name) ):
-                out_bool = True
-            else:
-                # If out_bool is false, print out what doesn't match
-                if verbose:
-                    print(f'Isochrone file {self.save_file} exists, but meta-data does not match.')
-                    if tmp.meta['EVOMODEL'] != type(evo_model).__name__:
-                        print(f'  EVOMODEL: {tmp.meta["EVOMODEL"]} != {type(evo_model).__name__}')
-                    if tmp.meta['ATMFUNC'] != atm_func.__name__:
-                        print(f'  ATMFUNC: {tmp.meta["ATMFUNC"]} != {atm_func.__name__}')
-                    if tmp.meta['REDLAW'] != red_law.name:
-                        print(f'  REDLAW: {tmp.meta["REDLAW"]} != {red_law.name}')
-
-            # Check model version if it was logged
-            if 'EVOMODELVERSION' in tmp.meta:
-                if tmp.meta['EVOMODELVERSION'] != evo_model.model_version_name:
-                    out_bool=False
-                    if verbose:
-                        print(f'EVOMODELVERSION does not match: The recorded {tmp.meta["EVOMODELVERSION"]} does not matched the existing version {evo_model.model_version_name}')
-
-        else:
-            if verbose:
-                print(f'Isochrone file {self.save_file} or {self.save_file_legacy} does not exist, generating new one.')
-
-        return out_bool
 
     def plot_CMD(self, mag1, mag2, savefile=None):
         """
@@ -1561,18 +1594,18 @@ class iso_table(object):
             # extinction law
             if dAKs != 0:
                 if dist == 'gaussian':
-                    AKs_act = np.random.normal(loc=AKs, scale=dAKs)
+                    AKs_act = self.rng.normal(loc=AKs, scale=dAKs)
                     # Apply dAKs_max if desired. Redo if diff > dAKs_max
                     if dAKs_max != None:
                         diff = abs(AKs_act - AKs)
                         while diff > dAKs_max:
                             print('While loop active')
-                            AKs_act = np.random.normal(loc=AKs, scale=dAKs)
+                            AKs_act = self.rng.normal(loc=AKs, scale=dAKs)
                             diff = abs(AKs_act - AKs)
                 elif dist == 'uniform':
                     low = AKs - dAKs
                     high = AKs + dAKs
-                    AKs_act = np.random.uniform(low=low, high=high)
+                    AKs_act = self.rng.uniform(low=low, high=high)
                 else:
                     print('dist {0} undefined'.format(dist))
                     return
@@ -1637,6 +1670,49 @@ class iso_table(object):
 
         return
 
+def check_save_file(save_file_path, evo_model, atm_func, red_law, verbose=False):
+    """
+    Check to see if save_file exists, as saved by the save_file
+    and save_file_legacy objects. If the filename exists, check the
+    meta-data as well.
+
+    returns a boolean: True is file exists, false otherwise
+    """
+    out_bool = False
+
+    if not os.path.exists(save_file_path):
+        if verbose: print(f'Isochrone file {save_file_path} does not exist.')
+        return out_bool
+
+    tmp = Table.read(save_file_path)
+
+    # See if the meta-data matches: evo model, atm_func, redlaw
+    if ( (tmp.meta['EVOMODEL'] == type(evo_model).__name__) &
+        (tmp.meta['ATMFUNC'] == atm_func.__name__) &
+            (tmp.meta['REDLAW'] == red_law.name) ):
+        out_bool = True
+    else:
+        # If out_bool is false, print out what doesn't match
+        if verbose:
+            print(f'Isochrone file {save_file_path} exists, but meta-data does not match.')
+            if tmp.meta['EVOMODEL'] != type(evo_model).__name__:
+                print(f'  EVOMODEL: {tmp.meta["EVOMODEL"]} != {type(evo_model).__name__}')
+            if tmp.meta['ATMFUNC'] != atm_func.__name__:
+                print(f'  ATMFUNC: {tmp.meta["ATMFUNC"]} != {atm_func.__name__}')
+            if tmp.meta['REDLAW'] != red_law.name:
+                print(f'  REDLAW: {tmp.meta["REDLAW"]} != {red_law.name}')
+
+    # Check model version if it was logged
+    if 'EVOMODELVERSION' in tmp.meta:
+        if tmp.meta['EVOMODELVERSION'] != evo_model.model_version_name:
+            out_bool=False
+            if verbose:
+                print(f'EVOMODELVERSION does not match: The recorded {tmp.meta["EVOMODELVERSION"]} does not matched the existing version {evo_model.model_version_name}')
+
+
+    return out_bool
+
+
 def get_filter_info(name, vega=vega, rebin=True):
     """
     Define filter functions, setting ZP according to
@@ -1700,7 +1776,7 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('euclid'):
         filt = filters.get_euclid_filt(filterName)
-        
+
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
         try:
