@@ -63,6 +63,7 @@ class IMF(object):
 
         If identical output is desired over each run, the random state can be reset before running the function, e.g.
         ::
+
             imf.rng = np.random.default_rng(seed=42)
             result1 = imf.generate_cluster()
             imf.rng = np.random.default_rng(seed=42)
