@@ -1249,8 +1249,10 @@ def test_ResolvedCluster_random_state():
     imf_test = imf.IMF_broken_powerlaw(imf_limits, imf_powers, multiplicity=imf_multi)
 
     # Test that the same random seed produces the same cluster
-    result1 = imf_test.generate_cluster(cluster_mass, rng=np.random.default_rng(seed=42))
-    result2 = imf_test.generate_cluster(cluster_mass, rng=np.random.default_rng(seed=42))
+    imf_test.rng = np.random.default_rng(seed=42)
+    result1 = imf_test.generate_cluster(cluster_mass)
+    imf_test.rng = np.random.default_rng(seed=42)
+    result2 = imf_test.generate_cluster(cluster_mass)
     np.testing.assert_equal(result1, result2)
 
     # Test that two clusters generated with the same seed have the same star systems and companions
