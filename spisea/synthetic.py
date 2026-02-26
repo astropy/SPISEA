@@ -1,33 +1,21 @@
+import os
+import time
+import math
+import scipy
+import inspect
+import warnings
 import numpy as np
 import pylab as plt
-from spisea import reddening
-from spisea import evolution
+import matplotlib.pyplot as plt
+from spisea import reddening, evolution, filters
 from spisea import atmospheres as atm
-from spisea import filters
-from spisea.imf import imf, multiplicity
-from scipy import interpolate
-from scipy import stats
-from scipy.special import erf
+from scipy.spatial import cKDTree as KDTree
+from spisea.imf import multiplicity
 from pysynphot import spectrum
 from pysynphot import ObsBandpass
 from pysynphot import observation as obs
-import pysynphot
 from astropy import constants, units
-from astropy.table import Table, Column, MaskedColumn
-import pickle
-import time, datetime
-import math
-import os, glob
-import tempfile
-import scipy
-import matplotlib
-import matplotlib.pyplot as plt
-import time
-import warnings
-import pdb
-from scipy.spatial import cKDTree as KDTree
-import inspect
-import astropy.modeling
+from astropy.table import Table, Column
 
 default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
@@ -525,12 +513,12 @@ class ResolvedCluster(Cluster):
                 bad = np.where( (companions_phase_non_nan > 5) &
                                 (companions_phase_non_nan < 101) &
                                 (companions_phase_non_nan != 9) &
-                                (companions_phase_non_nan != -99))
+                                (companions_phase_non_nan != -99))[0]
                 # Print warning, if desired
                 verbose=False
                 if verbose:
-                    for ii in range(len(bad[0])):
-                        print('WARNING: changing phase {0} to 5'.format(companions['phase'][bad[0][ii]]))
+                    for ii in range(len(bad)):
+                        print('WARNING: changing phase {0} to 5'.format(companions['phase'][bad[ii]]))
                 companions['phase'][bad] = 5
 
                 for filt in self.filt_names:
@@ -550,8 +538,8 @@ class ResolvedCluster(Cluster):
 
                     # If *both* objects are dark, then keep the magnitude
                     # as np.nan. Otherwise, add fluxes together
-                    good = np.where( (f1 != 0) | (f2 != 0) )
-                    bad = np.where( (f1 == 0) & (f2 == 0) )
+                    good = np.where( (f1 != 0) | (f2 != 0) )[0]
+                    bad = np.where( (f1 == 0) & (f2 == 0) )[0]
 
                     star_systems[filt][idx[good]] = -2.5 * np.log10(f1[good] + f2[good])
                     star_systems[filt][idx[bad]] = np.nan
@@ -576,7 +564,7 @@ class ResolvedCluster(Cluster):
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
-            good = np.where(r_id_tmp > 0)
+            good = np.where(r_id_tmp > 0)[0]
             cdx_rem_good = cdx_rem[good]
 
             companions['mass_current'][cdx_rem_good] = r_mass_tmp[good]

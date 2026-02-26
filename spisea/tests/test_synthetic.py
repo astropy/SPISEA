@@ -161,7 +161,7 @@ def test_IsochronePhot(plot=False):
     )
     endTime = time.time()
     print('IsochronePhot generated in: %d seconds' % (endTime - startTime))
-    # Typically takes 120 seconds if file is regenerated.
+    # Typically takes 40 seconds if file is regenerated.
     # Limited by pysynphot.Icat call in atmospheres.py
 
     assert iso.points.meta['LOGAGE'] == logAge
