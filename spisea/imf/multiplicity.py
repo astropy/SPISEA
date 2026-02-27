@@ -219,6 +219,10 @@ class MultiplicityUnresolved(object):
         """
         Helper function: calculate number of companions.
         """
+        # bd stipulation since mf=0
+        if MF <= 0:
+            return 0
+        
         n_comp = 1 + np.random.poisson((CSF / MF) - 1)
         
         if self.companion_max == True:
