@@ -183,6 +183,8 @@ class MultiplicityUnresolved(object):
                 csf = self.multiplicity_fraction(mass)
         else:
             csf[csf > self.CSF_max] = self.CSF_max
+            bd = mass <= 0.08
+            csf[bd] = self.multiplicity_fraction(mass[bd])
 
         return csf
 
