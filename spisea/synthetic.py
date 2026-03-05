@@ -1554,7 +1554,7 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('nsfcam'):
         filt = filters.get_nsfcam_filt(filterName)
-        
+
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
         try:
@@ -1701,7 +1701,8 @@ def get_obs_str(col):
                  'euclid_VIS':'euclid,VIS',
                  'euclid_Y':'euclid,Y',
                  'euclid_J':'euclid,J',
-                 'euclid_H':'euclid,H'}
+                 'euclid_H':'euclid,H',
+                 'nsfcam_L':'nsfcam,L'}
 
     obs_str = filt_list[name]
 
