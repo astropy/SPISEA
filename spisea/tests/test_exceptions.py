@@ -32,6 +32,6 @@ def test_grid_number_exception():
     # Case 3: installed model grid is higher than required grid (no error)
     required_grid = installed_grid - 1.0
 
-    evolution.check_evo_grid_number(required_grid, models_dir)    
+    evolution.check_evo_grid_number(required_grid, models_dir)
 
     return

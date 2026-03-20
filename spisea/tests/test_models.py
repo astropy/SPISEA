@@ -1,21 +1,19 @@
 # Test functions for the different stellar evolution and atmosphere models
-from spisea import evolution
+from spisea import evolution, atmospheres, synthetic
 import numpy as np
 import pdb
 
 def test_evo_model_grid_num():
     """
-    Make sure evolution models have both evo_grid_num 
+    Make sure evolution models have both evo_grid_num
     and evo_grid_min (e.g., make sure these functions
     are working). Try it on one evolution model here;
     we'll test on all evo models in another function.
     """
-    from spisea import evolution
-    
     # Make MIST evolution model, check evo grid variables
     evo = evolution.MISTv1()
     assert isinstance(evo.evo_grid_min, float)
-    
+
     return
 
 def test_evolution_models():
@@ -32,7 +30,7 @@ def test_evolution_models():
     metal_solar = [0]
 
     # Array of evolution models to test
-    evo_models = [evolution.MISTv1(version=1.2), evolution.MergedBaraffePisaEkstromParsec(), 
+    evo_models = [evolution.MISTv1(version=1.2), evolution.MergedBaraffePisaEkstromParsec(),
                       evolution.Parsec(), evolution.Baraffe15(), evolution.Ekstrom12(), evolution.Pisa()]
 
 
@@ -68,12 +66,12 @@ def test_evolution_models():
                     raise Exception('EVO TEST FAILED: {0}, age = {1}, metal = {2}'.format(evo, kk, jj))
 
         print('Done {0}'.format(evo))
-        
+
     return
 
 def test_synthpop_MIST_extension():
     """
-    Testing the synthpop MIST extension to consistently lower masses 
+    Testing the synthpop MIST extension to consistently lower masses
     """
     evo1_grid = evolution.MISTv1(version=1.2, synthpop_extension=False)
     evo2_grid = evolution.MISTv1(version=1.2, synthpop_extension=True)
@@ -93,11 +91,17 @@ def test_atmosphere_models():
     """
     Test the rebinned atmosphere models used for synthetic photometry
     """
-    from spisea import atmospheres as atm
-
     # Array of atmospheres
-    atm_arr = [atm.get_merged_atmosphere, atm.get_castelli_atmosphere, atm.get_phoenixv16_atmosphere, atm.get_BTSettl_2015_atmosphere,
-                   atm.get_BTSettl_atmosphere, atm.get_kurucz_atmosphere, atm.get_phoenix_atmosphere, atm.get_wdKoester_atmosphere]
+    atm_arr = [
+        atmospheres.get_merged_atmosphere, 
+        atmospheres.get_castelli_atmosphere, 
+        atmospheres.get_phoenixv16_atmosphere, 
+        atmospheres.get_BTSettl_2015_atmosphere,
+        atmospheres.get_BTSettl_atmosphere, 
+        atmospheres.get_kurucz_atmosphere, 
+        atmospheres.get_phoenix_atmosphere, 
+        atmospheres.get_wdKoester_atmosphere
+    ]
 
     # Array of metallicities
     metals_range = [-2.0, 0, 0.15]
@@ -116,12 +120,12 @@ def test_atmosphere_models():
                 test = atm_func(metallicity=jj)
             except:
                 raise Exception('ATM TEST FAILED: {0}, metal = {1}'.format(atm_func, jj))
-                
+
         print('Done {0}'.format(atm_func))
-        
+
     # Test get_merged_atmospheres at different temps
     temp_range = [2000, 3500, 4000, 5250, 6000, 12000]
-    atm_func = atm.get_merged_atmosphere
+    atm_func = atmospheres.get_merged_atmosphere
     for ii in metals_range:
         for jj in temp_range:
             try:
@@ -131,30 +135,28 @@ def test_atmosphere_models():
 
 
     print('get_merged_atmosphere: all temps/metallicities passed')
-    
+
     # Test get_bb_atmosphere at different temps
     # This func only requests temp
     temp_range = [2000, 3500, 4000, 5250, 6000, 12000]
-    atm_func = atm.get_bb_atmosphere
+    atm_func = atmospheres.get_bb_atmosphere
     for jj in temp_range:
         try:
             test = atm_func(temperature=jj, verbose=True)
         except:
             raise Exception('ATM TEST FAILED: {0}, temp = {2}'.format(atm_func, jj))
-    
+
     print('get_bb_atmosphere: all temps passed')
-    
+
     return
 
 def test_filters():
     """
     Test to make sure all of the filters work as expected
     """
-    from spisea import synthetic
-
     # Define vega spectrum
     vega = synthetic.Vega()
-    
+
     # Filter list to test
     filt_list = ['wfc3,ir,f127m','acs,wfc1,f814w',
                      '2mass,J', '2mass,H','2mass,Ks',
@@ -193,7 +195,7 @@ def test_filters():
         filt = synthetic.get_filter_info(ii, rebin=True, vega=vega)
 
     print('get_filter_info pass')
-    
+
     # Loop through filters to test that they work: get_obs_str
     for ii in filt_list:
         # Test going from col_name to obs_str
