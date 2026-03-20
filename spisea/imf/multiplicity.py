@@ -103,6 +103,7 @@ class MultiplicityUnresolved(object):
                  CSF_amp=0.50, CSF_power=0.45, CSF_max=3,
                  q_power=-0.4, q_min=0.01, companion_max = False):
          
+        self.resolved=False
         self.MF_amp = MF_amp
         self.MF_pow = MF_power
         self.CSF_amp = CSF_amp
@@ -194,7 +195,7 @@ class MultiplicityUnresolved(object):
 
         return  q
 
-    def get_resolved_companions(self, mass1)
+    def get_resolved_companions(self, mass1):
         """
         Function that generates companion masses and orbital
         parameters.
@@ -204,7 +205,6 @@ class MultiplicityUnresolved(object):
         """
         raise NotImplementedError("Function get_resolved_companions is not"
             " defined for MultiplicityUnresolved, only its resolved subclasses.")
-
 
     def random_is_multiple(self, x, MF):
         """
@@ -252,6 +252,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
     def __init__(self, a_amp = 379.79953034, a_break = 4.90441533, a_slope1 = -1.80171539, 
                  a_slope2 = 4.23325571, a_std_slope = 1.19713084, a_std_intercept = 1.28974264, **kwargs):
         super(MultiplicityResolvedDK, self).__init__(**kwargs)
+        self.resolved=True
         self.a_amp = a_amp
         self.a_break = a_break
         self.a_slope1 = a_slope1
@@ -375,6 +376,8 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         ----------
         kwargs
         """
+        self.resolved=True
+        self.CSF_max = 1
 
         # Setup the allowed ranges for M1 (primary mass) and M2 (companion masses)
         self.M1min = 0.08
@@ -870,6 +873,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
             # Given M1 & P, determine mass ratio distribution.
             # If M1 < 0.8 Msun, truncate q distribution and consider
             # only mass ratios q > q_min = 0.08 / M1
+            if True: # TODO: fix this conditional
                 mycumqdist = self.cumqdist[:, indlogP, indM1].flatten()
                 if(myM1 < 0.8):
                     q_min = 0.08 / myM1
