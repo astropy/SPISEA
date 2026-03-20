@@ -9,7 +9,10 @@ total extinction, and metallicity, along with the :ref:`atmo_models`,
 :ref:`evo_models`, and :ref:`ext_law`. 
 
 If the IsochronePhot sub-class is used then synthetic photometry
-will be produced. The :ref:`filters` are defined as additional inputs.
+will be produced. The :ref:`filters` are defined as additional
+inputs. The output photometry is in terms of vega mags, but the user
+can also calculate the required conversion to AB mags or ST mags using
+the functions in :ref:`phot_conversions`
 
 An example of making an IsochronePhot object::
 
@@ -76,10 +79,9 @@ Tips and Tricks: The IsochronePhot Object
 
   * **WARNING**: When IsochronePhot checks to see if the desired
     isochrone table already exists, it checks all isochrone properties
-    except for the photometric filters (evolution models, atmosphere
-    models, and reddening law are encoded in the table meta-data).
+    (evolution models, atmosphere models, and reddening law are encoded in the table meta-data).
     If any of these parameters do not match, then the isochrone will
-    be re-calculated.
+    be re-calculated. 
 
     However, to keep the isochrone filenames reasonable, only the
     age, extinction, distance, and metallicity are encoded in the
@@ -91,13 +93,6 @@ Tips and Tricks: The IsochronePhot Object
     that users specify different iso_dir paths when making isochrones
     with different evolution models, atmosphere models, or reddening
     laws.*
-    
-  * **WARNING**: IsochronePhot does not check existing
-    isochrone tables to see if the photometric filters match
-    those specified by the user. *So, if the user wishes to generate an
-    isochrone with different filters, we recommend either using a
-    different iso_dir path or setting the keyword recomp=True (see
-    docs below).*
 
 Base Isochrone Class
 ----------------------------
@@ -112,3 +107,13 @@ Isochrone Sub-classes
 .. autoclass:: synthetic.IsochronePhot
 	       :show-inheritance:
 		:members: make_photometry, plot_CMD, plot_mass_magnitude
+
+
+Photometry Conversion Functions
+-----------------------------
+.. _phot_conversions:
+
+.. autofunction:: synthetic.calc_ab_vega_filter_conversion
+
+.. autofunction:: synthetic.calc_st_vega_filter_conversion
+
