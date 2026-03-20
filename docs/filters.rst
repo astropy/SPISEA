@@ -35,6 +35,7 @@ Available filters:
 * GAIA
 * HAWK-I
 * Hubble Space Telescope
+* IRTF
 * Johnson-Cousins
 * Johnson-Glass
 * JWST
