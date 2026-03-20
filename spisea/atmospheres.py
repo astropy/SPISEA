@@ -18,7 +18,7 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     """
     # Open catalog fits file and break out row indices
     catalog = Table.read('{0}/grid/{1}/catalog.fits'.format(os.environ['PYSYN_CDBS'], model_dir))
-    
+
     teff_arr = []
     z_arr = []
     logg_arr = []
@@ -36,11 +36,11 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     metal_list = np.unique(np.array(z_arr))
     metal_idx = np.argmin(np.abs(metal_list - metallicity))
     metallicity_new = metal_list[metal_idx]
-    
+
     z_filt = np.where(z_arr == metal_list[metal_idx])
     teff_arr = teff_arr[z_filt]
     logg_arr = logg_arr[z_filt]
-    
+
     # # Now find the closest atmosphere in parameter space to
     # # the one we want. We'll find the match with the lowest
     # # fractional difference
@@ -52,38 +52,38 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     #
     # temperature_new = teff_arr[idx_f]
     # gravity_new = logg_arr[idx_f]
-    
+
     # First check if temperature within bounds
     temperature_new = temperature
     if temperature > np.max(teff_arr):
         temperature_new = np.max(teff_arr)
     if temperature < np.min(teff_arr):
         temperature_new = np.min(teff_arr)
-    
+
     # If temperature within bounds, then check if metallicity within bounds
     teff_diff = np.abs(teff_arr - temperature)
     sorted_min_diffs = np.unique(teff_diff)
-    
+
     ## Find two closest temperatures
     teff_close_1 = teff_arr[np.where(teff_diff == sorted_min_diffs[0])[0][0]]
     teff_close_2 = teff_arr[np.where(teff_diff == sorted_min_diffs[1])[0][0]]
-    
+
     logg_arr_1 = logg_arr[np.where(teff_arr == teff_close_1)]
     logg_arr_2 = logg_arr[np.where(teff_arr == teff_close_2)]
-    
+
     ## Switch to most conservative bound of logg out of two closest temps
     gravity_new = gravity
     if gravity > np.min([np.max(logg_arr_1), np.max(logg_arr_2)]):
         gravity_new = np.min([np.max(logg_arr_1), np.max(logg_arr_2)])
     if gravity < np.max([np.min(logg_arr_1), np.min(logg_arr_2)]):
         gravity_new = np.max([np.min(logg_arr_1), np.min(logg_arr_2)])
-    
+
     if verbose:
         # Print out changes, if any
         if temperature_new != temperature:
             teff_msg = 'Changing to T={0:6.0f} for met={1:4.2f} T={2:6.0f} logg={3:4.2f}'
             print( teff_msg.format(temperature_new, metallicity, temperature, gravity))
-        
+
         if gravity_new != gravity:
             logg_msg = 'Changing to logg={0:4.2f} for met={1:4.2f} T={2:6.0f} logg={3:4.2f}'
             print( logg_msg.format(gravity_new, metallicity, temperature, gravity))
@@ -91,12 +91,12 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     if metallicity_new != metallicity:
         logg_msg = 'Changing to met={0:4.2f} for met={1:4.2f} T={2:6.0f} logg={3:4.2f}'
         print( logg_msg.format(metallicity_new, metallicity, temperature, gravity))
-    
+
     return (temperature_new, gravity_new, metallicity_new)
 
 def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=False):
     """
-    Return atmosphere from the Kurucz pysnphot grid 
+    Return atmosphere from the Kurucz pysnphot grid
     (`Kurucz 1993 <http://www.stsci.edu/hst/observatory/crds/k93models.html>`_).
 
     Grid Range:
@@ -115,7 +115,7 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=Fal
 
     gravity: float
         The stellar gravity, in cgs units
-        
+
     rebin: boolean
         Always false for this particular function
     """
@@ -127,7 +127,7 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=Fal
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
-    
+
         sp = pysynphot.Icat('k93models', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -142,10 +142,10 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=Fal
 
 def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=False):
     """
-    Return atmospheres from the pysynphot ATLAS9 atlas 
+    Return atmospheres from the pysynphot ATLAS9 atlas
     (`Castelli & Kurucz 2004 <http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html>`_).
 
-    Grid Range: 
+    Grid Range:
 
     * Teff: 3500 - 50000 K
     * gravity: 0 - 5.0 cgs
@@ -161,7 +161,7 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=F
 
     gravity: float
         The stellar gravity, in cgs units
-        
+
     rebin: boolean
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
@@ -178,9 +178,9 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=F
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
-    
+
         sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
-        
+
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
@@ -205,7 +205,7 @@ def get_nextgen_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=Fal
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
-    
+
         sp = pysynphot.Icat('nextgen', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -239,7 +239,7 @@ def get_amesdusty_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=F
 def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
                                rebin=False):
     """
-    Return atmosphere from the pysynphot 
+    Return atmosphere from the pysynphot
     `PHOENIX atlas <http://www.stsci.edu/hst/observatory/crds/SIfileInfo/pysynphottables/index_phoenix_models_html>`_.
 
     Parameters
@@ -252,7 +252,7 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
 
     gravity: float
         The stellar gravity, in cgs units
-        
+
     rebin: boolean
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
@@ -267,7 +267,7 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
-    
+
         sp = pysynphot.Icat('phoenix', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -294,12 +294,12 @@ def get_cmfgenRot_atmosphere(metallicity=0, temperature=24000, gravity=4.3, rebi
         if verbose:
             print( logg_msg.format(4.3, temperature, gravity))
         gravity = 4.3
-        
+
     if rebin:
         sp = pysynphot.Icat('cmfgen_rot_rebin', temperature, metallicity, gravity)
     else:
         sp = pysynphot.Icat('cmfgen_rot', temperature, metallicity, gravity)
-        
+
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
@@ -313,7 +313,7 @@ def get_cmfgenRot_atmosphere(metallicity=0, temperature=24000, gravity=4.3, rebi
 def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4.3, rebin=True,
                                          verbose=False):
     """
-    For a given stellar atmosphere, get extract the closest possible match in 
+    For a given stellar atmosphere, get extract the closest possible match in
     Teff/logg space. Note that this is different from the normal routine
     which interpolates along the input grid to get final spectrum. We can't
     do this here because the Fierro+15 atmosphere grid is so sparse
@@ -348,7 +348,7 @@ def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4
     # fractional difference
     teff_diff = (teff_arr - temperature) / temperature
     logg_diff = (logg_arr - gravity) / gravity
-    
+
     diff_tot = abs(teff_diff) + abs(logg_diff)
     idx_f = np.where(diff_tot == min(diff_tot))[0][0]
 
@@ -356,7 +356,7 @@ def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4
     # pysynphot object
     infile = cat[idx_f]['FILENAME'].split('.')
     spec = Table.read('{0}/{1}.fits'.format(root_dir, infile[0]))
-    
+
     # Now, the CMFGEN atmospheres assume a distance of 1 kpc, while the the
     # ATLAS models are in FLAM at the surface. So, we need to multiply the
     # CMFGEN atmospheres by (1000/R)**2. in order to convert to FLAM on surface.
@@ -370,13 +370,13 @@ def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4
 
     radius = np.sqrt( lum / (4.0 * np.pi * teff**4. * sigma) ) # in cm
     radius /= 3.08*10**18 # in pc
-    
+
 
     # Make the pysynphot spectrum
     w = spec['Wavelength']
     f = spec['Flux'] * (1000 / radius)**2.
     sp = pysynphot.ArraySpectrum(w,f)
-    
+
     #sp = pysynphot.FileSpectrum('{0}/{1}.fits'.format(root_dir, infile[0]))
 
     # Print out parameters of match, if desired
@@ -398,7 +398,7 @@ def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=22500, gravity=3.98, r
         sp = pysynphot.Icat('cmfgen_norot_rebin', temperature, metallicity, gravity)
     else:
         sp = pysynphot.Icat('cmfgen_norot', temperature, metallicity, gravity)
-        
+
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
@@ -429,9 +429,9 @@ def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=30000, gravity=4.14):
 
 def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=True):
     """
-    Return PHOENIX v16 atmospheres from  
-    `Husser et al. 2013 <https://ui.adsabs.harvard.edu/abs/2013A%26A...553A...6H/abstract>`_. 
-    
+    Return PHOENIX v16 atmospheres from
+    `Husser et al. 2013 <https://ui.adsabs.harvard.edu/abs/2013A%26A...553A...6H/abstract>`_.
+
     Models originally downloaded via `ftp <http://phoenix.astro.physik.uni-goettingen.de/?page_id=15>`_.
     Solar metallicity and [alpha/Fe] is used.
 
@@ -451,7 +451,7 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
 
     gravity: float
         The stellar gravity, in cgs units
-        
+
     rebin: boolean
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
@@ -472,9 +472,9 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
-    
+
         sp = pysynphot.Icat(atm_model_name, temperature, metallicity, gravity)
-    
+
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
@@ -487,14 +487,14 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
 
 def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebin=True):
     """
-    Return atmosphere from CIFIST2011_2015 grid 
-    (`Allard et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012RSPTA.370.2765A/abstract>`_, 
+    Return atmosphere from CIFIST2011_2015 grid
+    (`Allard et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012RSPTA.370.2765A/abstract>`_,
     `Baraffe et al. 2015 <https://ui.adsabs.harvard.edu/abs/2015A%26A...577A..42B/abstract>`_ )
 
     Grid originally downloaded from `website <https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/FITS/>`_.
 
     Grid Range:
-    
+
     * Teff: 1200 - 7000 K
     * gravity: 2.5 - 5.5 cgs
     * [M/H] = 0
@@ -509,11 +509,11 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
 
     gravity: float
         The stellar gravity, in cgs units
-        
+
     rebin: boolean
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
-        which is often sufficient synthetic photometry in most cases.    
+        which is often sufficient synthetic photometry in most cases.
     """
     if rebin == True:
         atm_name = 'BTSettl_2015_rebin'
@@ -528,10 +528,10 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
-    
+
         sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
-        
-    
+
+
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
@@ -544,7 +544,7 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
 
 def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=True):
     """
-    Return atmosphere from CIFIST2011 grid 
+    Return atmosphere from CIFIST2011 grid
     (`Allard et al. 2012 <https://ui.adsabs.harvard.edu/abs/2012RSPTA.370.2765A/abstract>`_)
 
     Grid originally downloaded `here <https://phoenix.ens-lyon.fr/Grids/BT-Settl/>`_
@@ -552,16 +552,16 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
     Notes
     ------
     Grid Range:
-    
+
     * [M/H] = -2.5, -2.0, -1.5, -1.0, -0.5, 0, 0.5
-    
+
     Teff and gravity ranges depend on metallicity:
 
     [M/H] = -2.5
 
     * Teff: 2600 - 4600 K
     * gravity: 4.5 - 5.5
-    
+
     [M/H] = -2.0
 
     * Teff: 2600 - 7000
@@ -575,7 +575,7 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
     [M/H] = -1.0
 
     * Teff: 2600 - 7000
-    * gravity: Teff < 3200 --> 4.5 - 5.5; Teff > 3200 --> 2.5 - 5.5 
+    * gravity: Teff < 3200 --> 4.5 - 5.5; Teff > 3200 --> 2.5 - 5.5
 
     [M/H] = -0.5
 
@@ -609,7 +609,7 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
 
     gravity: float
         The stellar gravity, in cgs units
-        
+
     rebin: boolean
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
@@ -628,10 +628,10 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
-    
+
         sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
-        
-    
+
+
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
@@ -644,7 +644,7 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
 
 def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
     """
-    Return white dwarf atmospheres from  
+    Return white dwarf atmospheres from
     `Koester et al. 2010 <https://ui.adsabs.harvard.edu/abs/2010MmSAI..81..921K/abstract>`_
 
     Parameters
@@ -657,7 +657,7 @@ def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
 
     gravity: float
         The stellar gravity, in cgs units
-        
+
     rebin: boolean
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
@@ -672,14 +672,14 @@ def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
         print( '  temperature = %d' % temperature)
         print( '  metallicity = %.1f' % metallicity)
         print( '  log gravity = %.1f' % gravity)
-        
+
     return sp
 
 def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     """
     Return atmosphere that is a linear merge of atlas ck04 model and phoenixV16.
 
-    Only valid for temps between 5000 - 5500K, gravity from 0 = 5.0 
+    Only valid for temps between 5000 - 5500K, gravity from 0 = 5.0
     """
     try:
         sp = pysynphot.Icat('merged_atlas_phoenix', temperature, metallicity, gravity)
@@ -689,7 +689,7 @@ def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
-    
+
         sp = pysynphot.Icat('merged_atlas_phoenix', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -707,7 +707,7 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     Return atmosphere that is a linear merge of BTSettl_CITFITS2011_2015 model
     and phoenixV16.
 
-    Only valid for temps between 3200 - 3800K, gravity from 2.5 - 5.5 
+    Only valid for temps between 3200 - 3800K, gravity from 2.5 - 5.5
     """
     try:
         sp = pysynphot.Icat('merged_BTSettl_phoenix', temperature, metallicity, gravity)
@@ -717,7 +717,7 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
-    
+
         sp = pysynphot.Icat('merged_BTSettl_phoenix', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -734,7 +734,7 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
 def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose=False,
                               rebin=True):
     """
-    Return a stellar atmosphere from a suite of different model grids, 
+    Return a stellar atmosphere from a suite of different model grids,
     depending  on the input temperature, (all values in K).
 
     Parameters
@@ -747,7 +747,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
 
     gravity: float
         The stellar gravity, in cgs units
-        
+
     rebin: boolean
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
@@ -758,7 +758,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
 
     Notes
     -----
-    The underlying stellar model grid used changes as a function of 
+    The underlying stellar model grid used changes as a function of
     stellar temperature (in K):
 
     * T > 20,000: ATLAS
@@ -769,14 +769,14 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
     For T < 3800, there is an additional gravity and metallicity
     dependence:
 
-    If T < 3800 and [M/H] = 0: 
-    
+    If T < 3800 and [M/H] = 0:
+
     * T < 3800, logg < 2.5: PHOENIX v16
     * 3200 <= T < 3800, logg > 2.5: BTSettl_CIFITS2011_2015/PHOENIXV16 merge
     * 3200 < T <= 1200, logg > 2.5: BTSettl_CIFITS2011_2015
 
     Otherwise, if T < 3800 and [M/H] != 0:
-    
+
     * T < 3800: PHOENIX v16
 
     References:
@@ -785,21 +785,21 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
     * PHOENIXv16 (`Husser et al. 2013 <https://ui.adsabs.harvard.edu/abs/2013A%26A...553A...6H/abstract>`_)
     * BTSettl_CIFITS2011_2015: Baraffee+15, Allard+ (https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/)
 
-    LTE WARNING: 
+    LTE WARNING:
 
     The ATLAS atmospheres are calculated with LTE, and so they
     are less accurate when non-LTE conditions apply (e.g. T > 20,000
     K). Ultimately we'd like to add a non-LTE atmosphere grid for
     the hottest stars in the future.
 
-    HOW BOUNDARIES BETWEEN MODELS ARE TREATED: 
+    HOW BOUNDARIES BETWEEN MODELS ARE TREATED:
 
-    At the boundary between two models grids a temperature range is defined 
-    where the resulting atmosphere is a weighted average between the two 
+    At the boundary between two models grids a temperature range is defined
+    where the resulting atmosphere is a weighted average between the two
     grids. Near one boundary one model
-    is weighted more heavily, while at the other boundary the other 
-    model is weighted more heavily. These are calculated in the 
-    temperature ranges where we switch between model grids, to 
+    is weighted more heavily, while at the other boundary the other
+    model is weighted more heavily. These are calculated in the
+    temperature ranges where we switch between model grids, to
     ensure a smooth transition.
     """
     # For T < 3800, atmosphere depends on metallicity + gravity.
@@ -815,7 +815,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
                                                 temperature=temperature,
                                                 gravity=gravity,
                                                 rebin=rebin)
- 
+
         if (temperature >= 3200) & (temperature < 3800) & (gravity > 2.5):
             if verbose:
                 print( 'BTSettl/Phoenixv16 merged atmosphere')
@@ -831,7 +831,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
                                             temperature=temperature,
                                             gravity=gravity,
                                             rebin=rebin)
-        
+
     if (temperature <= 3800) & (metallicity != 0):
         if verbose:
             print( 'Phoenixv16 atmosphere')
@@ -855,7 +855,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
         return get_atlas_phoenix_atmosphere(metallicity=metallicity,
                                         temperature=temperature,
                                         gravity=gravity)
-    
+
     if (temperature >= 5500) & (temperature < 20000):
         if verbose:
             print( 'ATLAS merged atmosphere')
@@ -875,14 +875,14 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
         #                               temperature=temperature,
         #                               gravity=gravity)
 
-    
+
 
 
 def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False):
     """
-    Return the white dwarf atmosphere from 
-    `Koester et al. 2010 <https://ui.adsabs.harvard.edu/abs/2010MmSAI..81..921K/abstract>`_. 
-    If desired parameters are 
+    Return the white dwarf atmosphere from
+    `Koester et al. 2010 <https://ui.adsabs.harvard.edu/abs/2010MmSAI..81..921K/abstract>`_.
+    If desired parameters are
     outside of grid, return a blackbody spectrum instead
 
     Parameters
@@ -895,7 +895,7 @@ def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False
 
     gravity: float
         The stellar gravity, in cgs units
-        
+
     rebin: boolean
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
@@ -911,7 +911,7 @@ def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False
         return get_wdKoester_atmosphere(metallicity=metallicity,
                                             temperature=temperature,
                                             gravity=gravity)
-    
+
     except pysynphot.exceptions.ParameterOutOfBounds:
         # Use a black-body atmosphere.
         bbspec = get_bb_atmosphere(temperature=temperature, verbose=verbose)
@@ -942,29 +942,29 @@ def get_bb_atmosphere(metallicity=None, temperature=20_000, gravity=None,
         warnings.warn(
             'Only `temperature` keyword is used for black-body atmosphere'
         )
-    
+
     if verbose:
         print('Black-body atmosphere')
-    
+
     # Modify pysynphot's default waveset to specified bounds
     pysynphot.refs.set_default_waveset(
         minwave=wave_min, maxwave=wave_max, num=wave_num
     )
-        
+
     # Get black-body atmosphere for specified temperature from pysynphot
     bbspec = pysynphot.spectrum.BlackBody(temperature)
-    
+
     # pysynphot `BlackBody` generates spectrum in `photlam`, need in `flam`
     bbspec.convert('flam')
-    
+
     # `BlackBody` spectrum is normalized to solar radius star at 1 kiloparsec.
     # Need to remove this normalization for SPISEA by multiplying bbspec
     # by (1000 * 1 parsec / 1 Rsun)**2 = (1000 * 3.08e18 cm / 6.957e10 cm)**2
     bbspec *= (1000 * 3.086e18 / 6.957e10)**2
-    
+
     return bbspec
 
-    
+
 #--------------------------------------#
 # Atmosphere formatting functions
 #--------------------------------------#
@@ -980,7 +980,7 @@ def download_CMFGEN_atmospheres(Table_rot, Table_norot):
     Fierro+15 paper
 
     Website addresses are hardcoded
-    
+
     Puts downloaded models in the current working directory.
     """
     print( 'WARNING: THIS DOES NOT COMPLETELY WORK')
@@ -1049,7 +1049,7 @@ def organize_CMFGEN_atmospheres(path_to_dir):
     """
     # First, record current working directory to return to later
     start_dir = os.getcwd()
-    
+
     # Enter atmosphere directory, collect rotating and non-rotating
     # file names (assumed to all start with "t")
     os.chdir(path_to_dir)
@@ -1074,10 +1074,10 @@ def organize_CMFGEN_atmospheres(path_to_dir):
     # Also move Tables with model parameters into correct directory
     os.system('mv Table_rot.txt cmfgenF15_rot')
     os.system('mv Table_noRot.txt cmfgenF15_noRot')
-    
+
     # Return to original directory
     os.chdir(start_dir)
-        
+
     return
 
 def make_CMFGEN_catalog(path_to_dir):
@@ -1099,10 +1099,10 @@ def make_CMFGEN_catalog(path_to_dir):
     """
     # Record current working directory for later
     start_dir = os.getcwd()
-    
+
     # Enter atmosphere directory
     os.chdir(path_to_dir)
-   
+
     # Extract parameters for each atmosphere
     # Note: can't rely on filename for this because not precise enough!!
 
@@ -1117,7 +1117,7 @@ def make_CMFGEN_catalog(path_to_dir):
     #    lum = float(lumtmp[0][:-5]) * 1000.0 # In L_sun
 
     #    mass = float(lumtmp[0][5:-1]) # In M_sun
-        
+
         # Need to calculate log g from T and L (cgs)
     #    lum_sun = 3.846 * 10**33 # erg/s
     #    M_sun = 2 * 10**33 # g
@@ -1145,18 +1145,18 @@ def make_CMFGEN_catalog(path_to_dir):
         #---NOTE: THE FOLLOWING DEPENDS ON FINAL LOCATION OF CATALOG FILE---#
         #path = path_to_dir + '/' + names[i]
         path = names[i] + '.fits[Flux]'
-        
+
         index_str.append(index)
         name_str.append(path)
-    
+
     catalog = Table([index_str, name_str], names = ('INDEX', 'FILENAME'))
 
     # Create catalog.fits file in directory with the models
     catalog.write('catalog.fits', format = 'fits')
-    
+
     # Move back to original directory, create the catalog.fits file
     os.chdir(start_dir)
-    
+
     return
 
 def cdbs_cmfgen(path_to_dir, path_to_cdbs_dir):
@@ -1192,23 +1192,23 @@ def cdbs_cmfgen(path_to_dir, path_to_cdbs_dir):
         unique = np.unique(wave, return_index=True)
         wave = wave[unique[1]]
         flux = flux[unique[1]]
-        
-        # Make fits table from individual columns. 
+
+        # Make fits table from individual columns.
         c0 = fits.Column(name='Wavelength', format='D', array=wave)
         c1 = fits.Column(name='Flux', format='E', array=flux)
 
         cols = fits.ColDefs([c0, c1])
         tbhdu = fits.BinTableHDU.from_columns(cols)
 
-        #Adding unit keywords        
+        #Adding unit keywords
         tbhdu.header['TUNIT1'] = 'ANGSTROM'
         tbhdu.header['TUNIT2'] = 'FLAM'
 
         prihdu = fits.PrimaryHDU()
-    
+
         finalhdu = fits.HDUList([prihdu, tbhdu])
         finalhdu.writeto(i[:-4]+'.fits', overwrite=True)
-        
+
         print( 'Done {0:2.0f} of {1:2.0f}'.format(counter, len(files)))
 
     # Return to original directory, copy over new .fits files to cdbs directory
@@ -1225,7 +1225,7 @@ def rebin_cmfgen(cdbs_path, rot=True):
 
     cdbs_path: path to cdbs directory
     rot=True for rotating models (cmfgen_rot), False for non-rotating models
-    
+
     makes new directory in cdbs/grid: cmfgen_rot_rebin or cmfgen_norot_rebin
     """
     # Get an atlas ck04 model, we will use this to set wavelength grid
@@ -1241,7 +1241,7 @@ def rebin_cmfgen(cdbs_path, rot=True):
         tmp = cdbs_path+'/grid/cmfgen_norot/t0200l0007m009n.fits'
         path = cdbs_path+'/grid/cmfgen_norot_rebin/'
         orig_path = cdbs_path+'/grid/cmfgen_norot/'
-        
+
     cmfgen_hdu = fits.open(tmp)
     header0 = cmfgen_hdu[0].header
     # Create rebin directories if they don't already exist. Copy over
@@ -1256,7 +1256,7 @@ def rebin_cmfgen(cdbs_path, rot=True):
     files_all = [cat[ii][1].split('[')[0] for ii in range(len(cat))]
 
     # First column in new files will be for [atlas] wavelength
-    c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)   
+    c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
 
     # For each catalog.fits entry, read the unbinned spectrum and rebin to
     # the atlas resolution. Make a new fits file in rebin directory
@@ -1268,16 +1268,16 @@ def rebin_cmfgen(cdbs_path, rot=True):
         temp = float(vals[0])
         metal = float(vals[1])
         grav = float(vals[2])
-    
+
         # Fetch the spectrum
-        if rot == True:           
+        if rot == True:
             sp = pysynphot.Icat('cmfgen_rot', temp, metal, grav)
         else:
             sp = pysynphot.Icat('cmfgen_norot', temp, metal, grav)
 
         # Rebin
         flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
-        c1 = fits.Column(name='Flux', format='E', array=flux_rebin)                
+        c1 = fits.Column(name='Flux', format='E', array=flux_rebin)
 
         # Make the FITS file from the columns with header
         cols = fits.ColDefs([c0,c1])
@@ -1302,7 +1302,7 @@ def organize_PHOENIXv16_atmospheres(path_to_dir, met_str='m00'):
 
     path_to_dir is the path to the directory containing all of the downloaded
     files
-    
+
     met_str is the name of the current metallicity
 
     Creates new fits files for each atmosphere: phoenix<metallicity>_<temp>.fits,
@@ -1319,7 +1319,7 @@ def organize_PHOENIXv16_atmospheres(path_to_dir, met_str='m00'):
         pass
     else:
         os.mkdir(sub_dir)
-    
+
     # Extract wavelength array, make column for later
     wavefile = fits.open('WAVE_PHOENIX-ACES-AGSS-COND-2011.fits')
     wave = wavefile[0].data
@@ -1342,7 +1342,7 @@ def organize_PHOENIXv16_atmospheres(path_to_dir, met_str='m00'):
         for f in files:
             # Extract the logg out of filename
             logg = f[9:13]
-            
+
             # Extract fluxes from file
             spectrum = fits.open(f)
             flux = spectrum[0].data
@@ -1351,11 +1351,11 @@ def organize_PHOENIXv16_atmospheres(path_to_dir, met_str='m00'):
             # Make Column object with fluxes, add to table
             col = Column(flux, name = 'g{0:2.1f}'.format(float(logg)))
             t.add_column(col)
-            
+
         # Now, construct final fits file for the given temp
         outname = 'phoenix{0}_{1:05d}.fits'.format(met_str, temp)
-        t.write('{0}/{1}'.format(sub_dir, outname), format = 'fits', overwrite = True) 
-        
+        t.write('{0}/{1}'.format(sub_dir, outname), format = 'fits', overwrite = True)
+
         # Progress counter for user
         i += 1
         print( 'Done {0:d} of {1:d}'.format(i, len(temp_arr)))
@@ -1372,18 +1372,18 @@ def make_PHOENIXv16_catalog(path_to_dir, met_str='m00'):
 
     path_to_directory is the path to the directory with the reformatted
     models (i.e. the output from construct_atmospheres, phoenix[met_str])
-    
+
     Puts catalog.fits file in directory the user starts in
     """
     # Save starting directory for later, move into working directory
     start_dir = os.getcwd()
     os.chdir(path_to_dir)
-    
+
     # Extract metallicity from metallicity string
     met = float(met_str[1]) + (float(met_str[2]) * 0.1)
     if 'm' in met_str:
         met *= -1.
-    
+
     # Collect the filenames. Each is a unique temp with many different log g's
     files = glob.glob('phoenix*.fits')
     files.sort()
@@ -1396,7 +1396,7 @@ def make_PHOENIXv16_catalog(path_to_dir, met_str='m00'):
         t = Table.read(i, format='fits')
         keys = t.keys()
         logg_vals = keys[1:]
-        
+
         # Extract temp from filename
         name = i.split('_')
         temp = float(name[1][:-5])
@@ -1409,20 +1409,20 @@ def make_PHOENIXv16_catalog(path_to_dir, met_str='m00'):
             filename_arr.append(filename)
 
     catalog = Table([index_arr, filename_arr], names=('INDEX', 'FILENAME'))
-    
+
     # Return to starting directory, write catalog
     os.chdir(start_dir)
-    
+
     if os.path.exists('catalog.fits'):
         from astropy.table import vstack
-        
+
         prev_catalog = Table.read('catalog.fits', format='fits')
         joined_catalog = vstack([prev_catalog, catalog])
-        
+
         joined_catalog.write('catalog.fits', format='fits', overwrite=True)
     else:
         catalog.write('catalog.fits', format='fits', overwrite=True)
-    
+
     return
 
 def cdbs_PHOENIXv16(path_to_cdbs_dir):
@@ -1443,7 +1443,7 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
 
     # Collect the filenames, make necessary changes to each one
     files = glob.glob('phoenix*.fits')
-    
+
     ## Need to sort filenames; glob doesn't always give them in order
     files.sort()
 
@@ -1451,28 +1451,28 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
     counter = 0
     for i in files:
         counter += 1
-        
+
         # Read in current FITS table
         cur_table = Table.read(i, format='fits')
-        
+
         cur_table.columns[0].name = 'Wavelength'
-        
+
         num_cols = len(cur_table.colnames)
-        
-        # Multiplying each flux column by 10^-8 for conversion        
+
+        # Multiplying each flux column by 10^-8 for conversion
         for cur_col_index in range(1, num_cols, 1):
             cur_col_name = cur_table.colnames[cur_col_index]
             cur_table[cur_col_name] = cur_table[cur_col_name] * 10.**-8
-        
-        
+
+
         # Construct new FITS file based on old one
         hdu = fits.open(i)
         header_0 = hdu[0].header
         header_1 = hdu[1].header
         sci = hdu[1].data
-        
+
         tbhdu = fits.table_to_hdu(cur_table)
-        
+
         # Copying over the older headers, adding unit keywords
         prihdu = fits.PrimaryHDU(header=header_0)
         tbhdu.header['TUNIT1'] = 'ANGSTROM'
@@ -1489,17 +1489,17 @@ def cdbs_PHOENIXv16(path_to_cdbs_dir):
         tbhdu.header['TUNIT12'] = 'FLAM'
         tbhdu.header['TUNIT13'] = 'FLAM'
         tbhdu.header['TUNIT14'] = 'FLAM'
-        
+
         # Construct and write out final FITS file
         finalhdu = fits.HDUList([prihdu, tbhdu])
         finalhdu.writeto(i, overwrite=True)
-        
+
         hdu.close()
         print( 'Done {0:2.0f} of {1:2.0f}'.format(counter, len(files)))
-    
+
     # Change back to starting directory
     os.chdir(start_dir)
-    
+
     return
 
 def rebin_phoenixV16(cdbs_path):
@@ -1524,7 +1524,7 @@ def rebin_phoenixV16(cdbs_path):
     path = cdbs_path+'/grid/phoenix_v16_rebin/'
     if not os.path.exists(path):
         os.mkdir(path)
-    
+
 
     # Read in the existing catalog.fits file and rebin every spectrum.
     cat = fits.getdata(cdbs_path + '/grid/phoenix_v16/catalog.fits')
@@ -1539,51 +1539,51 @@ def rebin_phoenixV16(cdbs_path):
         temp_arr[ff] = float(vals[0])
         metal_arr[ff] = float(vals[1])
         logg_arr[ff] = float(vals[2])
-    
+
 
     metal_uniq = np.unique(metal_arr)
     temp_uniq = np.unique(temp_arr)
-    
+
     for mm in range(len(metal_uniq)):
         metal = metal_uniq[mm] # metallicity
-        
+
         # Construct str for metallicity (for appropriate directory name)
         met_str = str(int(np.abs(metal))) + str(int((metal % 1.0)*10))
         if metal > 0:
             met_str = 'p' + met_str
         else:
             met_str = 'm' + met_str
-        
+
         # Make directory for current metallicity if it does not exist yet
         if not os.path.exists(path + 'phoenix' + met_str):
             os.mkdir(path + 'phoenix' + met_str)
-        
+
         for tt in range(len(temp_uniq)):
             temp = temp_uniq[tt] # temperature
 
-            # Pick out the list of gravities for this T, Z combo            
+            # Pick out the list of gravities for this T, Z combo
             idx = np.where((metal_arr == metal) & (temp_arr == temp))[0]
             logg_exist = logg_arr[idx]
-            
+
             # All gravities will go in one file. Here is the output
             # file name.
             outfile = path + files_all[idx[0]].split('[')[0]
-            
+
             ## If the rebinned file already exists, continue
             if os.path.exists(outfile):
                 continue
-            
+
             # Build a columns array. One column for each gravity.
             cols_arr = []
 
             # Make the wavelength column, which is first in the cols array.
             c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
             cols_arr.append(c0)
-            
+
             for gg in range(len(logg_exist)):
                 grav = logg_exist[gg] # gravity
 
-                # Fetch the spectrum                
+                # Fetch the spectrum
                 sp = pysynphot.Icat('phoenix_v16', temp, metal, grav)
                 flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
 
@@ -1591,7 +1591,7 @@ def rebin_phoenixV16(cdbs_path):
                 name = 'g{0:3.1f}'.format(grav)
                 col = fits.Column(name=name, format='E', array=flux_rebin)
                 cols_arr.append(col)
-                
+
 
             # Make the FITS file from the columns with header.
             cols = fits.ColDefs(cols_arr)
@@ -1607,7 +1607,7 @@ def rebin_phoenixV16(cdbs_path):
             finalhdu.writeto(outfile)
 
             print( 'Finished file ' + outfile + ' with gravities: ', logg_exist)
-            
+
 
     return
 
@@ -1622,7 +1622,7 @@ def rebin_spec(wave, specin, wavnew):
     f = np.ones(len(wave))
     filt = pysynphot.spectrum.ArraySpectralElement(wave, f, waveunits='angstrom')
     obs = pysynphot.observation.Observation(spec, filt, binset=wavnew, force='taper')
- 
+
     return obs.binflux
 
 def organize_BTSettl_2015_atmospheres(path_to_dir):
@@ -1653,7 +1653,7 @@ def organize_BTSettl_2015_atmospheres(path_to_dir):
         spec = hdu[1].data
         header_0 = hdu[0].header
         header_1 = hdu[1].header
-        
+
         wave = spec.field(0)
         flux = spec.field(1)
 
@@ -1674,13 +1674,13 @@ def organize_BTSettl_2015_atmospheres(path_to_dir):
         tbhdu.header['TUNIT1'] = 'ANGSTROM'
         tbhdu.header['TUNIT2'] = 'FLAM'
         hdu_new = fits.HDUList([prihdu, tbhdu])
-        
+
         # Write new fits table in cdbs directory
         hdu_new.writeto(os.environ['PYSYN_CDBS']+'grid/BTSettl_2015/'+i, overwrite=True)
 
         hdu.close()
         hdu_new.close()
-    
+
     # Return to original directory
     os.chdir(start_dir)
     return
@@ -1697,10 +1697,10 @@ def make_BTSettl_2015_catalog(path_to_dir):
     """
     # Record current working directory for later
     start_dir = os.getcwd()
-    
+
     # Enter atmosphere directory
     os.chdir(path_to_dir)
-   
+
     # Extract parameters for each atmosphere from the filename,
     # construct columns for catalog file
     files = glob.glob("*spec.fits")
@@ -1719,10 +1719,10 @@ def make_BTSettl_2015_catalog(path_to_dir):
 
     # Create catalog.fits file in directory with the models
     catalog.write('catalog.fits', format = 'fits', overwrite=True)
-    
+
     # Move back to original directory, create the catalog.fits file
     os.chdir(start_dir)
-    
+
     return
 
 def rebin_BTSettl_2015(cdbs_path=os.environ['PYSYN_CDBS']):
@@ -1765,8 +1765,8 @@ def rebin_BTSettl_2015(cdbs_path=os.environ['PYSYN_CDBS']):
 
         # Make new output
         c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
-        c1 = fits.Column(name='Flux', format='E', array=flux_rebin) 
-        
+        c1 = fits.Column(name='Flux', format='E', array=flux_rebin)
+
         cols = fits.ColDefs([c0, c1])
         tbhdu = fits.BinTableHDU.from_columns(cols)
         prihdu = fits.PrimaryHDU(header=header0)
@@ -1775,7 +1775,7 @@ def rebin_BTSettl_2015(cdbs_path=os.environ['PYSYN_CDBS']):
 
         outfile = path + files_all[ff].split('[')[0]
         finalhdu = fits.HDUList([prihdu, tbhdu])
-        finalhdu.writeto(outfile, overwrite=True)        
+        finalhdu.writeto(outfile, overwrite=True)
 
     return
 
@@ -1794,7 +1794,7 @@ def make_wavelength_unique(files, dirname):
 
         if len(t) != len(test[0]):
             t = t[test[1]]
-            
+
             c0 = fits.Column(name='Wavelength', format='D', array=t['Wavelength'])
             c1 = fits.Column(name='Flux', format='E', array=t['Flux'])
             cols = fits.ColDefs([c0, c1])
@@ -1832,14 +1832,14 @@ def organize_BTSettl_atmospheres():
     """
     Construct cdbs-ready atmospheres for the BTSettl grid (CIFITS2011).
     The code expects tp be run in cdbs/grid/BTSettl, and expects that the
-    individual model files have been downloaded from online 
+    individual model files have been downloaded from online
     (https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011/SPECTRA/)
-    and processed into python-readable ascii files. 
+    and processed into python-readable ascii files.
     """
     orig_dir = os.getcwd()
     dirs = ['btm25', 'btm20', 'btm15', 'btm10', 'btm05', 'btp00', 'btp05']
     #dirs = ['btm10', 'btm05', 'btp00', 'btp05']
-    
+
 
     # Go through each directory, turning each spectrum into a cdbs-ready file.
     # Will convert flux into Ergs/sec/cm**2/A (FLAM) units and save as a fits file,
@@ -1871,13 +1871,13 @@ def organize_BTSettl_atmospheres():
             tbhdu.header['TUNIT1'] = 'ANGSTROM'
             tbhdu.header['TUNIT2'] = 'FLAM'
             hdu_new = fits.HDUList([prihdu, tbhdu])
-        
+
             # Write new fits table in cdbs directory
             hdu_new.writeto('{0}.fits'.format(jj[:-4]), overwrite=True)
             hdu_new.close()
             count += 1
             print('Done {0} of {1}'.format(count, len(files)))
-            
+
         # Now, clean up all the files made when unzipping the spectra
         cmd1 = 'rm *.bz2'
         cmd2 = 'rm *.tmp'
@@ -1888,7 +1888,7 @@ def organize_BTSettl_atmospheres():
         print('==============================')
         print('Done {0}'.format(ii))
         print('==============================')
-        
+
         # Go back to original directory, move to next metallicity directory
         os.chdir(orig_dir)
 
@@ -1924,7 +1924,7 @@ def make_BTSettl_catalog():
             metal_flag = -1 * float(ii[3:])*0.1
         else:
             metal_flag = float(ii[3:])*0.1
-            
+
         # Now collect the info from the files
         for jj in files:
             tmp = jj.split('-')
@@ -1938,7 +1938,7 @@ def make_BTSettl_catalog():
             else:
                 temp = float(tmp[0][3:]) * 100.0 # In kelvin
                 logg = float(tmp[1])
-            
+
             index_str.append('{0},{1},{2:3.2f}'.format(int(temp), metal_flag, logg))
             name_str.append('{0}/{1}[Flux]'.format(ii, jj))
 
@@ -1951,10 +1951,10 @@ def make_BTSettl_catalog():
 
     # Create catalog.fits file in directory with the models
     catalog.write('catalog.fits', format = 'fits', overwrite=True)
-    
+
     # Move back to original directory, create the catalog.fits file
     os.chdir(start_dir)
-    
+
     return
 
 def rebin_BTSettl(make_unique=False):
@@ -1985,7 +1985,7 @@ def rebin_BTSettl(make_unique=False):
     #        tmp.append(ii)
     #files_all = tmp
     #=============================#
-    
+
     print( 'Rebinning BTSettl spectra')
     if make_unique:
         print('Making unique')
@@ -2005,14 +2005,14 @@ def rebin_BTSettl(make_unique=False):
 
             # Make new output
             c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
-            c1 = fits.Column(name='Flux', format='E', array=flux_rebin) 
-        
+            c1 = fits.Column(name='Flux', format='E', array=flux_rebin)
+
             cols = fits.ColDefs([c0, c1])
             tbhdu = fits.BinTableHDU.from_columns(cols)
             prihdu = fits.PrimaryHDU()
             tbhdu.header['TUNIT1'] = 'ANGSTROM'
             tbhdu.header['TUNIT2'] = 'FLAM'
-            
+
             outfile = path + files_all[ff].split('[')[0]
             finalhdu = fits.HDUList([prihdu, tbhdu])
             finalhdu.writeto(outfile, overwrite=True)
@@ -2022,9 +2022,9 @@ def rebin_BTSettl(make_unique=False):
             outfile = path + files_all[ff].split('[')[0]
             cmd = 'cp {0} {1}'.format(orig_file, outfile)
             os.system(cmd)
-            
+
         print('Done {0} of {1}'.format(ff, len(files_all)))
-        
+
     return
 
 def organize_WDKoester_atmospheres(path_to_dir):
@@ -2048,7 +2048,7 @@ def organize_WDKoester_atmospheres(path_to_dir):
 
     for i in files:
         data = Table.read(i, format='ascii')
-        
+
         wave = data['col1']   # angstrom
         flux = data['col2']   # erg/s/cm^2/A
 
@@ -2064,12 +2064,12 @@ def organize_WDKoester_atmospheres(path_to_dir):
         tbhdu.header['TUNIT1'] = 'ANGSTROM'
         tbhdu.header['TUNIT2'] = 'FLAM'
         hdu_new = fits.HDUList([prihdu, tbhdu])
-        
+
         # Write new fits table in cdbs directory
         hdu_new.writeto(os.environ['PYSYN_CDBS']+'/grid/wdKoester/'+i.replace('.txt', '.fits'), overwrite=True)
 
         hdu_new.close()
-    
+
     # Return to original directory
     os.chdir(start_dir)
     return
@@ -2086,10 +2086,10 @@ def make_WDKoester_catalog(path_to_dir):
     """
     # Record current working directory for later
     start_dir = os.getcwd()
-    
+
     # Enter atmosphere directory
     os.chdir(path_to_dir)
-   
+
     # Extract parameters for each atmosphere from the filename,
     # construct columns for catalog file
     files = glob.glob("*dk.dat.fits")
@@ -2109,10 +2109,10 @@ def make_WDKoester_catalog(path_to_dir):
 
     # Create catalog.fits file in directory with the models
     catalog.write('catalog.fits', format = 'fits', overwrite=True)
-    
+
     # Move back to original directory, create the catalog.fits file
     os.chdir(start_dir)
-    
+
     return
 
 def rebin_WDKoester(cdbs_path=os.environ['PYSYN_CDBS']):
@@ -2155,8 +2155,8 @@ def rebin_WDKoester(cdbs_path=os.environ['PYSYN_CDBS']):
 
         # Make new output
         c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
-        c1 = fits.Column(name='Flux', format='E', array=flux_rebin) 
-        
+        c1 = fits.Column(name='Flux', format='E', array=flux_rebin)
+
         cols = fits.ColDefs([c0, c1])
         tbhdu = fits.BinTableHDU.from_columns(cols)
         prihdu = fits.PrimaryHDU(header=header0)
@@ -2165,8 +2165,8 @@ def rebin_WDKoester(cdbs_path=os.environ['PYSYN_CDBS']):
 
         outfile = path + files_all[ff].split('[')[0]
         finalhdu = fits.HDUList([prihdu, tbhdu])
-        finalhdu.writeto(outfile, overwrite=True)        
+        finalhdu.writeto(outfile, overwrite=True)
 
     return
-            
-    
+
+

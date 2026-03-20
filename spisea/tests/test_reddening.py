@@ -39,7 +39,7 @@ def test_RedLawBrokenPowerLaw(plots=False):
 
     # Compare law_test and the output from the redlaw object
     law_output = red_law.broken_powerlaw(wave_test, 1)
-    
+
     assert len(law_test) == len(law_output)
     assert np.sum(np.isnan(law_output)) == 0
 
@@ -62,7 +62,7 @@ def test_RedLawBrokenPowerLaw(plots=False):
     idx2 = np.where(abs(wave_test-2.1) == np.min(abs(wave_test-2.1)))
     slope = (log_output[idx1] - log_output[idx2]) / (log_wave[idx1] - log_wave[idx2])
     assert abs(slope - (-1.0 * alpha1)) < 10**-4
-    
+
     # If desired (debug only), make plot to see what law looks like
     if plots:
         # Test plot: these should match nearly exactly
@@ -109,7 +109,7 @@ def test_RedLawBrokenPowerLaw(plots=False):
     idx = np.where( (wave_test >= 1.27) & (wave_test < 1.63))
     coeff  = (1.63 ** (-1*alpha1)) / (1.63 ** (-1*alpha2))
     law_test[idx] = coeff * wave_test[idx] ** (-1*alpha2)
-    
+
     # 1.27 - 0.8
     idx = np.where( (wave_test >= 0.8) & (wave_test < 1.27))
     coeff1 = (1.63 ** (-1*alpha1)) / (1.63 ** (-1*alpha2))
@@ -124,7 +124,7 @@ def test_RedLawBrokenPowerLaw(plots=False):
     coeff3 = (0.8 ** (-1*alpha3)) / (0.8 ** (-1*alpha4))
     coeff_f = coeff1 * coeff2 * coeff3
     law_test[idx] = coeff_f * wave_test[idx] ** (-1*alpha4)
-    
+
     assert np.sum(np.isnan(law_test)) == 0
 
     # Put in terms of A_lambda / A_Ks, like the reddening object
@@ -133,7 +133,7 @@ def test_RedLawBrokenPowerLaw(plots=False):
 
     # Compare law_test and the output from the redlaw object
     law_output = red_law.broken_powerlaw(wave_test, 1)
-    
+
     assert len(law_test) == len(law_output)
     assert np.sum(np.isnan(law_output)) == 0
 
@@ -166,7 +166,7 @@ def test_RedLawBrokenPowerLaw(plots=False):
     idx2 = np.where(abs(wave_test-0.7) == np.min(abs(wave_test-0.7)))
     slope = (log_output[idx1] - log_output[idx2]) / (log_wave[idx1] - log_wave[idx2])
     assert abs(slope - (-1.0 * alpha4)) < 10**-4
-    
+
     # If desired (debug only), make plot to see what law looks like
     if plots:
         # Test plot: these should match nearly exactly
@@ -195,9 +195,9 @@ def test_red_law_IsochronePhot():
     metallicity = 0 # Metallicity in [M/H]
 
     # Define evolution/atmosphere models and extinction law
-    evo_model = evolution.MISTv1() 
+    evo_model = evolution.MISTv1()
     atm_func = atmospheres.get_merged_atmosphere
-    
+
     # Also specify filters for synthetic photometry.
     filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f153m', 'nirc2,H', 'nirc2,Kp']
 
@@ -206,7 +206,7 @@ def test_red_law_IsochronePhot():
                       'RL85', 'D16', 'F09,2.5,3', 'S16,1.55,0', 'DM16',
                       'H18b', 'NL18', 'C89,3.1', 'pl,2.12,0.9,2.4',
                       'broken_pl,[2.3,1.63,0.9],[2.23, 3.0],2.12']
-        
+
     aks_arr = [2.62, 2.46, 1.67, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3]
     for ii in range(len(redlaw_arr)):
         redlaw = reddening.get_red_law(redlaw_arr[ii])
@@ -215,15 +215,15 @@ def test_red_law_IsochronePhot():
 
         # Try to run isochrone phot
         iso_test = synthetic.IsochronePhot(
-            logAge, 
-            aks, 
-            dist, 
+            logAge,
+            aks,
+            dist,
             metallicity=0,
-            evo_model=evo_model, 
+            evo_model=evo_model,
             atm_func=atm_func,
-            red_law=redlaw, 
+            red_law=redlaw,
             filters=filt_list,
-            min_mass=0.95, 
+            min_mass=0.95,
             max_mass=1.05,
             iso_dir='isochrones/',
             recomp=True
