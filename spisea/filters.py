@@ -340,12 +340,12 @@ def get_gaia_filt(version, name):
     the revised DR2 zeropoints from
     Evans+18.
 
-    version: specify dr1, dr2, dr2_rev, edr3
+    version: specify dr1, dr2, or dr2_rev
     name: filter name
     """
     # Assert that we are using the revised DR2 zeropoints
-    if version not in ['dr2_rev', 'edr3']:
-        msg = 'Gaia version {0} not supported, use dr2_rev or edr3 instead'.format(version)
+    if version != 'dr2_rev':
+        msg = 'Gaia version {0} not supported, use dr2_rev instead'.format(version)
         raise ValueError(msg)
 
     # Set the filter directory
@@ -355,8 +355,6 @@ def get_gaia_filt(version, name):
         path = '{0}/gaia/dr2/'.format(filters_dir)
     elif version == 'dr2_rev':
         path = '{0}/gaia/dr2_rev/'.format(filters_dir)
-    elif version == 'edr3':
-        path = '{0}/gaia/edr3/'.format(filters_dir)
     else:
         raise ValueError('GAIA filter version {0} not understood. Please use dr1, dr2, or dr2_rev'.format(version))
 
