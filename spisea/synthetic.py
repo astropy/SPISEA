@@ -2075,10 +2075,10 @@ def calc_ab_vega_filter_conversion(filt_str):
     Note: this conversion is just the vega magnitude in
     AB system
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     filt_str: string
-        Filter identification string
+        SPISEA filter identification string (see Photometric Filters doc page)
     """
     # Get filter info
     filt = get_filter_info(filt_str)
@@ -2138,10 +2138,10 @@ def calc_st_vega_filter_conversion(filt_str):
     Note: this conversion is just the vega magnitude in 
     ST system
 
-    Parameters:
-    -----------
+    Parameters
+    ----------
     filt_str: string
-        Filter identification string
+        SPISEA filter identification string (see Photometric Filters doc page)
     """
     # Get filter info
     filt = get_filter_info(filt_str)
