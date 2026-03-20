@@ -1274,7 +1274,7 @@ class COSMIC(StellarEvolution):
             self.BSEDict = BSEDict
 
         self.external_evol = True
-        self.z_solar = 0.014
+        self.z_solar = 0.02 #0.014
         self.keep_disrupted_companions = keep_disrupted_companions
         self.keep_COSMIC_tables = keep_COSMIC_tables
         self.model_version_name = "COSMIC"
@@ -1312,7 +1312,13 @@ class COSMIC(StellarEvolution):
             self.kick_info = kick_info
             
         final_binaries = bcm[bcm['tphys'] > 0] #only gives the first and last idx, so this takes final one
+
+        # Add number for system idx since we're about to manipuluate them a bunch
+        star_systems['system_idx'] = np.arange(len(star_systems))
         
+        # Remove systems that don't show up in bcm final (very few)
+        if len(final_binaries) != len(star_systems):
+            raise Exception("Some binaries didn't make it. Something went wrong with COSMIC")
         
         star_systems['mass_current'] = final_binaries['mass_1']
         star_systems['Teff'] = final_binaries['teff_1']
@@ -1336,24 +1342,28 @@ class COSMIC(StellarEvolution):
         fixed_phases1[np.where(final_binaries['kstar_1'] == 14)[0]] = 103
         star_systems['phase'] = fixed_phases1
         
-        fixed_phases2 = final_binaries['kstar_2'].to_numpy()
-        fixed_phases2[np.where((final_binaries['kstar_2'] >= 10) & (final_binaries['kstar_2'] <= 12))[0]] = 101
-        fixed_phases2[np.where(final_binaries['kstar_2'] == 13)[0]] = 102
-        fixed_phases2[np.where(final_binaries['kstar_2'] == 14)[0]] = 103
-        companions['phase'] = fixed_phases2[companion_system_idxs]
+        fixed_phases2 = final_binaries['kstar_2'][companion_system_idxs].to_numpy()
+        fixed_phases2[np.where((final_binaries['kstar_2'][companion_system_idxs] >= 10) & (final_binaries['kstar_2'][companion_system_idxs] <= 12))[0]] = 101
+        fixed_phases2[np.where(final_binaries['kstar_2'][companion_system_idxs] == 13)[0]] = 102
+        fixed_phases2[np.where(final_binaries['kstar_2'][companion_system_idxs] == 14)[0]] = 103
+        companions['phase'] = fixed_phases2
         
         # maybe add WR designation
+
 
         # Take the disrupted binaries and put the companions into the star_system table (if desired)
         # don't include massless remnant companions
         disrupted_binary_companion_idxs = np.where((final_binaries['bin_state'][companion_system_idxs] == 2) & (final_binaries['kstar_2'][companion_system_idxs] != 15))[0]
+        disrupted_binary_companions_num = 0
         if self.keep_disrupted_companions and len(disrupted_binary_companion_idxs) > 0:
             disrupted_binary_companions = companions[disrupted_binary_companion_idxs]
             disrupted_binary_companions['systemMass'] = disrupted_binary_companions['mass_current']
             disrupted_binary_companions['isMultiple'] = [False]*len(disrupted_binary_companions)
             disrupted_binary_companions['N_companions'] = [0]*len(disrupted_binary_companions)
             disrupted_binary_companions.remove_columns(['system_idx', 'log_a', 'e', 'i', 'Omega', 'omega'])
+            disrupted_binary_companions['system_idx'] = np.arange(len(disrupted_binary_companions)) + len(star_systems)
             star_systems = vstack([star_systems, disrupted_binary_companions])
+            disrupted_binary_companions_num = len(disrupted_binary_companions)
 
         #Drop merged companions and totally disappeared systems
         # Also promote companions to primaries when the initial primary "merged" (if desired)
@@ -1370,8 +1380,14 @@ class COSMIC(StellarEvolution):
         primaries_to_deleted_companion_idxs = companions[delete_companion_idxs]['system_idx']
         
         #Fix binary specification of primaries that lost their companions
-        star_systems['isMultiple'][primaries_to_deleted_companion_idxs] = False
-        star_systems['N_companions'][primaries_to_deleted_companion_idxs] = 0
+        #star_systems['isMultiple'][primaries_to_deleted_companion_idxs] = False
+        #star_systems['N_companions'][primaries_to_deleted_companion_idxs] = 0
+
+        mask = np.isin(star_systems['system_idx'],
+               primaries_to_deleted_companion_idxs)
+
+        star_systems['N_companions'][mask] = 0
+        star_systems['isMultiple'][mask] = False
         
         # Promote the companions to merged primaries to primaries
         if self.keep_disrupted_companions and len(companions_to_mr_primaries_idxs) > 0:
@@ -1380,13 +1396,23 @@ class COSMIC(StellarEvolution):
             companions_to_mr_primaries['isMultiple'] = [False]*len(companions_to_mr_primaries)
             companions_to_mr_primaries['N_companions'] = [0]*len(companions_to_mr_primaries)
             companions_to_mr_primaries.remove_columns(['system_idx', 'log_a', 'e', 'i', 'Omega', 'omega'])
-            
+            companions_to_mr_primaries['system_idx'] = np.arange(len(companions_to_mr_primaries)) + len(star_systems) + disrupted_binary_companions_num
             star_systems = vstack([star_systems, companions_to_mr_primaries])
         
         star_systems.remove_rows(delete_primary_idxs)
         companions.remove_rows(delete_companion_idxs) #if kstar 1 is 15 take the seocnd star and if kstar2 is 15 take the other
 
+        #Reassign system_idx vals
+        star_systems['system_idx_new'] = np.arange(len(star_systems))
+        mapping = np.empty(star_systems['system_idx'].max() + 1, dtype=int)
+        mapping[star_systems['system_idx']] = star_systems['system_idx_new']
+        companions['system_idx'] = mapping[companions['system_idx']]
+        star_systems.remove_columns(['system_idx', 'system_idx_new'])
+
         #FIXME add assertion about mass_current not being zero
+
+        # Make sure we didn't break anything by manipulating the number of companions
+        assert star_systems['N_companions'].sum() == len(companions)
 
         return star_systems, companions
 
