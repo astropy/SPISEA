@@ -139,8 +139,8 @@ class ResolvedCluster(Cluster):
         no compact remnants are produced.
 
     keep_low_mass_stars: boolean (default False)
-        If True, the cluster will not cut out stars below the isochrone grid 
-        on initial mass. They are assigned a current mass equal to their initial 
+        If True, the cluster will not cut out stars below the isochrone grid
+        on initial mass. They are assigned a current mass equal to their initial
         mass, a phase of 98, and no other evolutionary properties or photometry.
         If False, stars below the isochrone initial mass limit are cut out.
 
@@ -573,7 +573,7 @@ class ResolvedCluster(Cluster):
 
         return star_systems, companions
 
-    
+
     def _remove_bad_systems(self, star_systems, compMass, keep_low_mass_stars):
         """
         Helper function to remove stars with masses outside the isochrone
@@ -1216,9 +1216,9 @@ class IsochronePhot(Isochrone):
                 # Convert into flux observed at Earth (unreddened)
                 star *= (R / self.points.meta["DISTANCE"])**2  # in erg s^-1 cm^-2 A^-1
                 # Redden the spectrum. This doesn't take much time at all.
-                red = red_law.reddening(AKs).resample(star.wave) 
+                red = red_law.reddening(AKs).resample(star.wave)
                 star *= red
-                # Save the final spectrum to our spec_list for later use.            
+                # Save the final spectrum to our spec_list for later use.
                 self.spec_list.append(star)
 
             self.make_photometry(rebin=rebin, vega=vega, comp_filters=comp_filters)
@@ -1226,7 +1226,7 @@ class IsochronePhot(Isochrone):
         return
 
     def make_photometry(self, rebin=True, vega=vega, comp_filters=None):
-        """ 
+        """
         Make synthetic photometry for the specified filters. This function
         udpates the self.points table to include new columns with the
         photometry.
@@ -1700,7 +1700,10 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('euclid'):
         filt = filters.get_euclid_filt(filterName)
-        
+
+    elif name.startswith('nsfcam'):
+        filt = filters.get_nsfcam_filt(filterName)
+
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
         try:
@@ -1847,7 +1850,8 @@ def get_obs_str(col):
                  'euclid_VIS':'euclid,VIS',
                  'euclid_Y':'euclid,Y',
                  'euclid_J':'euclid,J',
-                 'euclid_H':'euclid,H'}
+                 'euclid_H':'euclid,H',
+                 'nsfcam_L':'nsfcam,L'}
 
     obs_str = filt_list[name]
 
@@ -2041,4 +2045,3 @@ def calc_ab_vega_filter_conversion(filt_str):
     #vega_mag_ab2 = -2.5 * np.log10(numerator2 / denominator2) - 48.6
 
     return vega_mag_ab
-
