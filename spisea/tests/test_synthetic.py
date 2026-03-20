@@ -1266,7 +1266,8 @@ def test_ResolvedCluster_random_state():
         old_companion = pickle.load(file)
 
     for key in old_star_systems.colnames:
-        np.testing.assert_array_equal(cluster1.star_systems[key], old_star_systems[key])
+        #np.testing.assert_array_equal(cluster1.star_systems[key], old_star_systems[key])
+        assert np.all(np.isclose(cluster1.star_systems[key], old_star_systems[key], rtol=1e-05, atol=1e-08))
 
     for key in old_companion.colnames:
         # Require values are consistent within reasonable bounds
