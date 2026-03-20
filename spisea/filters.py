@@ -472,3 +472,21 @@ def get_euclid_filt(name):
                                        name='euclid_{0}'.format(name))
 
     return spectrum
+
+def get_nsfcam_filt(name):
+
+    """
+    Define irtf nsfcam filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/nsfcam/{1}.dat'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find nsfcam filter {0} in {1}/nsfcam'.format(name, filters_dir))
+
+    # Wavelength already in angstrom and and transmission in fraction
+    wave = t['col1']
+    trans = t['col2']
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='nsfcam_{0}'.format(name))
+
+    return spectrum
