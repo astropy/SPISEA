@@ -7,16 +7,16 @@ Photometric Filters
 The user can specify what filters are used for synthetic photometry
 when defining the :ref:`isochrone_objects`.  Each filter is
 identified by a unique string, and an array of such strings
-are passed into the Isochrone call. 
+are passed into the Isochrone call.
 
 For example::
-  
+
     # Use the HST WFC3-IR F127M and F153M filters, along with NIRC2 Kp
     filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f153m', 'nirc2,Kp']
     my_iso = synthetic.IsochronePhot(logAge, AKs, dist, metallicity=0,
                             evo_model=evo_model, atm_func=atm_func,
                             red_law=red_law, filters=filt_list)
-    
+
 These strings follow the format ``<telescope/filter_set>,<filter>``.
 Note that there is no space after the comma, and case matters.
 
@@ -35,12 +35,13 @@ Available filters:
 * GAIA
 * HAWK-I
 * Hubble Space Telescope
+* IRTF
 * Johnson-Cousins
 * Johnson-Glass
 * JWST
 * Keck NIRC
 * Keck NIRC2
-* NACO 
+* NACO
 * PanStarrs 1
 * Roman Space Telescope
 * UKIRT
@@ -48,11 +49,11 @@ Available filters:
 * VISTA
 * ZTF
 
-  
+
 Filter Sets
 ------------
 
-   
+
 **2MASS**
 
 `Two-Micron Sky Survey <https://old.ipac.caltech.edu/2mass/>`_
@@ -83,7 +84,7 @@ Example: ``'decam,r'``
 
 **Euclid**
 
-Euclid space telescope `NISP filters <https://doi.org/10.5270/esa-kx8w57c>`_ 
+Euclid space telescope `NISP filters <https://doi.org/10.5270/esa-kx8w57c>`_
 and `VIS single filter <https://svo2.cab.inta-csic.es/svo/theory/fps/index.php?id=Euclid/VIS.vis>`_
 
 Filters: VIS, Y, J, H
@@ -146,10 +147,10 @@ Example: ``'jg,K'``
 
 JWST NIRCam filters, downloaded from `NIRCam website <https://jwst-docs.stsci.edu/display/JTI/NIRCam+Filters#NIRCamFilters-filt_trans>`_. The filter functions in the nircam_throughputs/modAB_mean/nrc_plus_ote folder is used.
 
-Filters: F070W, F090W,  F115W, F140M, F150W, F150W2, F162M, F164N, F182M, F187N, F200W, F210M, F212N, F250M, F277W, F300M, F322W2, F323N, F335M, F356W, F360M, F405N, F410M, F430M,  F444W, F460M, F466N, F470N, F480M 
+Filters: F070W, F090W,  F115W, F140M, F150W, F150W2, F162M, F164N, F182M, F187N, F200W, F210M, F212N, F250M, F277W, F300M, F322W2, F323N, F335M, F356W, F360M, F405N, F410M, F430M,  F444W, F460M, F466N, F470N, F480M
 
 Example: ``'jwst,F356W'``
-						
+
 
 **Keck NIRC**
 
@@ -237,3 +238,11 @@ Example: ``'vista,Y'``
 Filters: g, r, i
 
 Example: ``'ztf,g'``
+
+**IRTF**
+
+`IRTF NSFCam <https://irtfweb.ifa.hawaii.edu/~nsfcam2/Filter_Profiles.html>`_
+
+Filters: L
+
+Example: ``'nsfcam,L'``
