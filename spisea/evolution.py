@@ -66,8 +66,8 @@ class StellarEvolution(object):
     """
     Base Stellar evolution class.
 
-    Parameters
-    ----------
+    Subclasses must define the following parameters:
+    ------------------------------------------------
     model_dir: path
         Directory path to evolution model files
 
@@ -83,6 +83,9 @@ class StellarEvolution(object):
     model_version_name: string
         Name of the model class plus additional details like version
         numbers and rotation if relevant.
+
+    AKs_grid_age_list: list
+        Sparser list of ages to use for AKs interpolation grid
     """
     def __init__(self, model_dir, age_list, mass_list, z_list):
         self.model_dir = model_dir
@@ -113,9 +116,7 @@ class Geneva(StellarEvolution):
         age_list = age_list
 
         # specify location of model files
-        model_dir = models_dir + 'geneva/'
-
-        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+        self.model_dir = models_dir + 'geneva/'
 
         self.z_solar = 0.02
         self.z_file_map = {0.01: 'z01/', 0.02: 'z02/', 0.03: 'z03/'}
@@ -1048,6 +1049,8 @@ class MISTv1(StellarEvolution):
 
         # populate list of isochrone ages (log scale)
         self.age_list = np.arange(5.01, 10.30+0.005, 0.01)
+        self.AKs_grid_age_list = np.linspace(5.0,10.3,107)
+        self.AKs_grid_age_list[0] = 5.01
 
         # Set version directory
         self.version = version
@@ -1286,8 +1289,7 @@ class MergedBaraffePisaEkstromParsec(StellarEvolution):
         age_list = np.arange(6.0, 10.091, 0.01).tolist()
 
         # specify location of model files
-        model_dir = models_dir + 'merged/baraffe_pisa_ekstrom_parsec/'
-        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+        self.model_dir = models_dir + 'merged/baraffe_pisa_ekstrom_parsec/'
         self.z_solar = 0.015
 
         # Switch to specify rotating/non-rotating models
@@ -1393,8 +1395,7 @@ class MergedPisaEkstromParsec(StellarEvolution):
         age_list = np.arange(6.0, 8.001, 0.01).tolist()
 
         # specify location of model files
-        model_dir = models_dir + 'merged/pisa_ekstrom_parsec/'
-        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+        self.model_dir = models_dir + 'merged/pisa_ekstrom_parsec/'
         self.z_solar = 0.015
 
         #Switch to specify rot/notot
@@ -1508,8 +1509,7 @@ class MergedSiessGenevaPadova(StellarEvolution):
         age_list.append(9.78)
 
         # specify location of model files
-        model_dir = models_dir + 'merged/siess_meynetMaeder_padova/'
-        StellarEvolution.__init__(self, model_dir, age_list, mass_list, z_list)
+        self.model_dir = models_dir + 'merged/siess_meynetMaeder_padova/'
         self.z_solar = 0.02
 
         # Metallicity map

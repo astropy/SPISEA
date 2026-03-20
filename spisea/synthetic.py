@@ -1179,6 +1179,14 @@ class IsochronePhot(Isochrone):
         Define what filters the synthetic photometry
         will be calculated for, via the filter string
         identifier.
+
+    verbose : bool
+        Determines whether certain information gets printed
+
+    interp_AKs_grid : bool
+        If true, interpolate over existing grid for AKs values, instead of
+        re-generating all photometry from scratch. If False, re-generate all
+        photometry from scratch if the file does not already exist.
     """
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
@@ -1189,7 +1197,8 @@ class IsochronePhot(Isochrone):
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
                           'ubv,R', 'ubv,I'],
-                verbose=False):
+                verbose=False,
+                interp_AKs_grid=False):
         self.metallicity = metallicity
         self.verbose=verbose
 
@@ -1842,6 +1851,8 @@ def get_filter_col_name(obs_str):
         # Catch Gaia filter cases. Otherwise, it is HST filter
         if 'dr2_rev' in tmp:
             filt_name = 'gaiaDR2_{0}'.format(tmp[-1])
+        elif 'edr3' in tmp:
+            filt_name = 'gaiaEDR3_{0}'.format(tmp[-1])
         elif 'roman' in tmp:
             filt_name = 'roman_{0}'.format(tmp[-1])
         else:
@@ -1913,6 +1924,7 @@ def get_obs_str(col):
                  'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i',
                  'gaiaDR2_G': 'gaia,dr2_rev,G', 'gaiaDR2_Gbp':'gaia,dr2_rev,Gbp',
                  'gaiaDR2_Grp':'gaia,dr2_rev,Grp',
+                 'gaiaEDR3_G': 'gaia,edr3,G', 'gaiaEDR3_Gbp':'gaia,edr3,Gbp', 'gaiaEDR3_Grp':'gaia,edr3,Grp',
                  'hawki_J': 'hawki,J',
                  'hawki_H': 'hawki,H',
                  'hawki_Ks': 'hawki,Ks',
