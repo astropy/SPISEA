@@ -214,15 +214,22 @@ def test_red_law_IsochronePhot():
         aks = aks_arr[ii]
 
         # Try to run isochrone phot
-        iso_test = synthetic.IsochronePhot(logAge, aks, dist, metallicity=0,
-                                               evo_model=evo_model, atm_func=atm_func,
-                                               red_law=redlaw, filters=filt_list,
-                                               min_mass=0.95, max_mass=1.05)
-        # Now remove the iso file to make sure we recalc each time
-        cmd = 'rm iso_6.70_*_08000_p00.fits'
-        os.system(cmd)
+        iso_test = synthetic.IsochronePhot(
+            logAge, 
+            aks, 
+            dist, 
+            metallicity=0,
+            evo_model=evo_model, 
+            atm_func=atm_func,
+            red_law=redlaw, 
+            filters=filt_list,
+            min_mass=0.95, 
+            max_mass=1.05,
+            iso_dir='isochrones/',
+            recomp=True
+        )
         print('----EL {0} works OK!-----'.format(redlaw_arr[ii]))
-        
+
     return
 
 def test_all_EL():

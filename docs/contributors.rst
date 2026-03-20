@@ -37,7 +37,9 @@ what operating system is used
 
 Sage Hironaka Remulla -- added Rubin Observatory filters
 
-Lingfeng Wei -- bugfix to improve creation of iso_dir in IsochronePhot
+Lingfeng Wei -- bugfix to improve creation of iso_dir in
+IsochronePhot, implemented faster cluster generation and test
+functions for primary and companion star mass generation (v2.3)
 
 Macy Huston -- New metallicity bound + isochrone filter checks,
 imf_mass_lim bugfix, roman filter bugfix, added Euclid filters, Synthpop compatibility

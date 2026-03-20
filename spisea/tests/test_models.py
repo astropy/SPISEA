@@ -35,7 +35,7 @@ def test_evolution_models():
     evo_models = [evolution.MISTv1(version=1.2), evolution.MergedBaraffePisaEkstromParsec(), 
                       evolution.Parsec(), evolution.Baraffe15(), evolution.Ekstrom12(), evolution.Pisa()]
 
-    
+
     # Array of age_ranges for the specific evolution models to test
     age_vals = [age_all_MIST_arr, age_all_arr, age_all_arr, age_young_arr, age_young_arr, age_young_arr]
 
@@ -190,24 +190,18 @@ def test_filters():
 
     # Loop through filters to test that they work: get_filter_info
     for ii in filt_list:
-        try:
-            filt = synthetic.get_filter_info(ii, rebin=True, vega=vega)
-        except:
-            raise Exception('get_filter_info TEST FAILED for {0}'.format(ii))
+        filt = synthetic.get_filter_info(ii, rebin=True, vega=vega)
 
     print('get_filter_info pass')
     
     # Loop through filters to test that they work: get_obs_str
     for ii in filt_list:
-        try:
-            # Test going from col_name to obs_str
-            col_name = synthetic.get_filter_col_name(ii)
-            obs_str = synthetic.get_obs_str('m_{0}'.format(col_name))
-            # Does the obs_str work?
-            filt_info = synthetic.get_filter_info(obs_str)
-        except:
-            raise Exception('get_obs_str TEST FAILED for {0}'.format(ii)) 
-            
+        # Test going from col_name to obs_str
+        col_name = synthetic.get_filter_col_name(ii)
+        obs_str = synthetic.get_obs_str('m_{0}'.format(col_name))
+        # Does the obs_str work?
+        filt_info = synthetic.get_filter_info(obs_str)
+
     print('get_obs_str pass')
     print('Filters done')
 

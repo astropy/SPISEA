@@ -12,7 +12,7 @@ import warnings
 
 log = logging.getLogger('atmospheres')
 
-def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4):
+def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4, verbose=False):
     """
     Given atmosphere model, get temperature and gravity bounds
     """
@@ -78,14 +78,15 @@ def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4
     if gravity < np.max([np.min(logg_arr_1), np.min(logg_arr_2)]):
         gravity_new = np.max([np.min(logg_arr_1), np.min(logg_arr_2)])
     
-    # Print out changes, if any
-    if temperature_new != temperature:
-        teff_msg = 'Changing to T={0:6.0f} for met={1:4.2f} T={2:6.0f} logg={3:4.2f}'
-        print( teff_msg.format(temperature_new, metallicity, temperature, gravity))
-    
-    if gravity_new != gravity:
-        logg_msg = 'Changing to logg={0:4.2f} for met={1:4.2f} T={2:6.0f} logg={3:4.2f}'
-        print( logg_msg.format(gravity_new, metallicity, temperature, gravity))
+    if verbose:
+        # Print out changes, if any
+        if temperature_new != temperature:
+            teff_msg = 'Changing to T={0:6.0f} for met={1:4.2f} T={2:6.0f} logg={3:4.2f}'
+            print( teff_msg.format(temperature_new, metallicity, temperature, gravity))
+        
+        if gravity_new != gravity:
+            logg_msg = 'Changing to logg={0:4.2f} for met={1:4.2f} T={2:6.0f} logg={3:4.2f}'
+            print( logg_msg.format(gravity_new, metallicity, temperature, gravity))
 
     if metallicity_new != metallicity:
         logg_msg = 'Changing to met={0:4.2f} for met={1:4.2f} T={2:6.0f} logg={3:4.2f}'
@@ -279,7 +280,7 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
 
     return sp
 
-def get_cmfgenRot_atmosphere(metallicity=0, temperature=24000, gravity=4.3, rebin=True):
+def get_cmfgenRot_atmosphere(metallicity=0, temperature=24000, gravity=4.3, rebin=True, verbose=False):
     """
     metallicity = [M/H] (def = 0)
     temperature = Kelvin (def = 24000)
@@ -290,7 +291,8 @@ def get_cmfgenRot_atmosphere(metallicity=0, temperature=24000, gravity=4.3, rebi
     # Take care of atmospheres outside the catalog boundaries
     logg_msg = 'Changing to logg={0:3.1f} for T={1:6.0f} logg={2:4.2f}'
     if gravity > 4.3:
-        print( logg_msg.format(4.3, temperature, gravity))
+        if verbose:
+            print( logg_msg.format(4.3, temperature, gravity))
         gravity = 4.3
         
     if rebin:

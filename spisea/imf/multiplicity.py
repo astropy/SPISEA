@@ -1,6 +1,7 @@
 import numpy as np
 import astropy.modeling
 from random import choice
+from scipy.stats import truncnorm
 
 defaultMF_amp = 0.44
 defaultMF_power = 0.51
@@ -249,29 +250,34 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         
         Parameters
         ----------
-        mass : float
-            Mass of primary star
+        mass : array-like
+            Mass array of primary star
 
         Returns
         -------
-        log_semimajoraxis : float
+        log_semimajoraxis : array-like
             Log of the semimajor axis/separation between the stars in units of AU
         """
         a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(amplitude=self.a_amp, x_break=self.a_break, alpha_1=self.a_slope1, alpha_2=self.a_slope2)
         log_a_mean = np.log10(a_mean_func(mass)) #mean log(a)
         log_a_std_func = astropy.modeling.models.Linear1D(slope=self.a_std_slope, intercept=self.a_std_intercept)
         log_a_std = log_a_std_func(np.log10(mass)) #sigma_log(a)
-        if mass >= 2.9:
-            log_a_std = log_a_std_func(np.log10(2.9)) #sigma_log(a)
-        if log_a_std < 0.1:
-            log_a_std = 0.1
-            
-        log_semimajoraxis = np.random.normal(log_a_mean, log_a_std)
-        while 10**log_semimajoraxis > 2000 or log_semimajoraxis < -2: #AU
-            log_semimajoraxis = np.random.normal(log_a_mean, log_a_std)
-            
+        
+        large_mass_idx = mass >= 2.9
+        log_a_std[large_mass_idx] = log_a_std_func(np.log10(2.9)) #sigma_log(a)
+        log_a_std = np.clip(log_a_std, 0.1, None)
+
+        # Trunc normal distribution between -2 and 2000 AU
+        log_a_lower = np.log10(0.01)
+        log_a_upper = np.log10(2000)
+
+        # Convert bounds to standard normal space
+        a_lower_std = (log_a_lower - log_a_mean) / log_a_std
+        a_upper_std = (log_a_upper - log_a_mean) / log_a_std
+
+        log_semimajoraxis = truncnorm.rvs(a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std)            
         return log_semimajoraxis
-    
+
     def random_e(self, x):
         """
         Generate random eccentricity from the inverse of the CDF where the PDF is f(e) = 2e from Duchene and Kraus 2013
