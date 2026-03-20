@@ -12,7 +12,7 @@ If the IsochronePhot sub-class is used then synthetic photometry
 will be produced. The :ref:`filters` are defined as additional
 inputs. The output photometry is in terms of vega mags, but the user
 can also calculate the required conversion to AB mags or ST mags using
-the functions in :ref:`phot_conversions`
+the functions in :ref:`Photometry Conversion Functions <phot_conversions>`. 
 
 An example of making an IsochronePhot object::
 
