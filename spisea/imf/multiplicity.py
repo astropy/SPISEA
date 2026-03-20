@@ -157,6 +157,18 @@ class MultiplicityUnresolved(object):
             Companion Star Fraction, the expected number of companions
             for a star at this mass.
         """
+        
+        # Companion Star Fraction
+        #csf = self.CSF_amp * mass ** self.CSF_pow
+        #if np.isscalar(csf):
+        #    if csf > self.CSF_max:
+        #        csf = self.CSF_max
+        #else:
+        #    csf[csf > self.CSF_max] = self.CSF_max
+        #return csf
+        # TODO: was removing all that the right move?
+        # We may still want the option for >1 companions ?
+        
         return self.multiplicity_fraction(mass)
 
     def random_q(self, x):
