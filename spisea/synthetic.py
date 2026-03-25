@@ -159,7 +159,7 @@ class ResolvedCluster(Cluster):
             self.filt_names = self.set_filter_names()
         except:
             self.filt_names = iso.filters
-        #self.cluster_mass = cluster_mass FIXME
+        self.cluster_mass = cluster_mass #FIXME?
 
         # Check if using an external evolution model (i.e. COSMIC)
         if hasattr(iso, 'external_evol'):
@@ -183,7 +183,8 @@ class ResolvedCluster(Cluster):
             interp_keys = self.filt_names
             self.iso_interps = {}
             for ikey in interp_keys:
-                self.iso_interps[ikey] = LinearNDInterpolator((self.iso.points['Teff'], self.iso.points['logg'], self.iso.points['metallicity']), self.iso.points[ikey],
+                self.iso_interps[ikey] = LinearNDInterpolator((self.iso.points['Teff'], self.iso.points['logg'], 
+                                                               self.iso.points['metallicity']), self.iso.points[ikey],
                                                                 fill_value=np.nan)
         
         ##### 
@@ -193,7 +194,7 @@ class ResolvedCluster(Cluster):
         
         # Trim out bad systems; specifically, stars with masses outside those provided
         # by the model isochrone (except for compact objects).
-
+        # Assumes external evolution software (i.e. COSMIC) will handle systems that fall outside of range
         if self.external_evol == False:
             star_systems, compMass = self._remove_bad_systems(star_systems, compMass, keep_low_mass_stars)
 
@@ -203,100 +204,52 @@ class ResolvedCluster(Cluster):
         if self.imf.make_multiples:
             companions = self._make_companions_table(star_systems, compMass)
 
+        # Assigns atmospheres based on grid for external evolution software
+        # Must be done here instead of in Isochrone() since the systems are evolved after generation above
         if self.external_evol:
             star_systems, companions = iso.evo_model.evolve(star_systems, companions, iso.logAge, iso.metallicity)
+         
+            for filt in self.filt_names:
+                filt_name = filt.split('_')
+                filt_val = get_filter_info(filt_name[1] + ',' + filt_name[2], rebin=False, vega=vega)
 
-            individual_atm = False
+                # Rescale magnitudes to correct radius
+                # Since original grid was done assuming 1 Rsun
+                star_systems[filt] = self.iso_interps[filt](star_systems['Teff'], star_systems['logg'], iso.metallicity)
+                flux_val = filt_val.flux0*(10**(-(star_systems[filt] - filt_val.mag0)/2.5))
+                R_vals = np.sqrt((star_systems['L']*(units.Lsun)/(4*np.pi*c.sigma_sb.cgs*(star_systems['Teff']*units.K)**4)).to('pc^2')).value
+                flux_rescaled = flux_val*((R_vals / iso.distance)**2)/((float(1*units.Rsun.to('pc')) / iso.distance)**2)
+                m_rescaled = -2.5*np.log10(flux_rescaled/filt_val.flux0) + filt_val.mag0
+                star_systems[filt] = m_rescaled
 
-            if individual_atm:
-            
-                # Loop through radii too!
-                # Do WD and stars separately
-                # For each temperature extract the synthetic photometry.
+                companions[filt] = self.iso_interps[filt](companions['Teff'], companions['logg'], iso.metallicity)
+                flux_val = filt_val.flux0*(10**(-(companions[filt] - filt_val.mag0)/2.5))
+                R_vals = np.sqrt((companions['L']*(units.Lsun)/(4*np.pi*c.sigma_sb.cgs*(companions['Teff']*units.K)**4)).to('pc^2')).value
+                flux_rescaled = flux_val*((R_vals / iso.distance)**2)/((float(1*units.Rsun.to('pc')) / iso.distance)**2)
+                m_rescaled = -2.5*np.log10(flux_rescaled/filt_val.flux0) + filt_val.mag0
+                companions[filt] = m_rescaled
+
+                # Add companions masses to primaries
+                N_comp_max = np.max(star_systems['N_companions'])
+                comp_index = np.zeros((len(star_systems), N_comp_max), dtype=int)
+                kk = 0
                 for ii in range(len(star_systems)):
-                    # Loop is currently taking about 0.11 s per iteration
-                    gravity = star_systems['logg'][ii]
-                    T = star_systems['Teff'][ii]
-                    metallicity = iso.metallicity
-                    phase = star_systems['phase'][ii]
-                    R = np.sqrt((star_systems['L']*(units.erg/units.s)/(4*np.pi*c.sigma_sb.cgs*(star_systems['Teff']*units.K)**4)).to('pc^2')).value[ii]
-                    
-                    # Get the atmosphere model now. Wavelength is in Angstroms
-                    # This is the time-intensive call... everything else is negligable.
-                    # If source is a star, pull from star atmospheres. If it is a WD,
-                    # pull from WD atmospheres
-                    nan_mag = False
-                    if phase == 101:
-                        star = iso.wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
-                                              verbose=False)
-                    elif phase < 100:
-                        star = iso.atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
-                                        rebin=False)#rebin)
-                    else:
-                        nan_mag = True
+                    for cc in range(star_systems['N_companions'][ii]):
+                        comp_index[ii][cc] = kk
+                        kk += 1
+
+                # Find all the systems with at least one companion... add the flux
+                # of that companion to the primary. Repeat for 2 companions,
+                # 3 companions, etc.
+                for cc in range(1, N_comp_max+1):
+                    # All systems with at least cc companions.
+                    idx = np.where(star_systems['N_companions'] >= cc)[0]
         
-                    # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
-                    star = spectrum.trimSpectrum(star, iso.wave_range[0], iso.wave_range[1])
-        
-                    # Convert into flux observed at Earth (unreddened)
-                    star *= (R / iso.distance)**2  # in erg s^-1 cm^-2 A^-1
-        
-                    # Redden the spectrum. This doesn't take much time at all.
-                    red = iso.red_law.reddening(iso.AKs).resample(star.wave) 
-                    star *= red
-    
-                    for filt in self.filt_names:
-                        if nan_mag == True:
-                            star_systems[filt] = np.nan
-                        else:
-                            filt_name = filt.split('_')
-                            filt_val = get_filter_info(filt_name[1] + ',' + filt_name[2], rebin=False, vega=vega)
-                            mag = mag_in_filter(star, filt_val)
-                            star_systems[filt] = mag
+                    # Get the location in the companions array for each system and
+                    # the cc'th companion. 
+                    cdx = comp_index[idx, cc-1]
+                    star_systems = self._calc_system_mag(star_systems, companions, idx, cdx, filt)
                 
-                
-            if individual_atm == False:              
-                for filt in self.filt_names:
-                    filt_name = filt.split('_')
-                    filt_val = get_filter_info(filt_name[1] + ',' + filt_name[2], rebin=False, vega=vega)
-
-                    # Rescale magnitudes to correct radius
-                    # Since original grid was done assuming 1 Rsun
-                    star_systems[filt] = self.iso_interps[filt](star_systems['Teff'], star_systems['logg'], iso.metallicity)
-                    flux_val = filt_val.flux0*(10**(-(star_systems[filt] - filt_val.mag0)/2.5))
-                    R_vals = np.sqrt((star_systems['L']*(units.Lsun)/(4*np.pi*c.sigma_sb.cgs*(star_systems['Teff']*units.K)**4)).to('pc^2')).value
-                    flux_rescaled = flux_val*((R_vals / iso.distance)**2)/((float(1*units.Rsun.to('pc')) / iso.distance)**2)
-                    m_rescaled = -2.5*np.log10(flux_rescaled/filt_val.flux0) + filt_val.mag0
-                    star_systems[filt] = m_rescaled
-
-                    companions[filt] = self.iso_interps[filt](companions['Teff'], companions['logg'], iso.metallicity)
-                    flux_val = filt_val.flux0*(10**(-(companions[filt] - filt_val.mag0)/2.5))
-                    R_vals = np.sqrt((companions['L']*(units.Lsun)/(4*np.pi*c.sigma_sb.cgs*(companions['Teff']*units.K)**4)).to('pc^2')).value
-                    flux_rescaled = flux_val*((R_vals / iso.distance)**2)/((float(1*units.Rsun.to('pc')) / iso.distance)**2)
-                    m_rescaled = -2.5*np.log10(flux_rescaled/filt_val.flux0) + filt_val.mag0
-                    companions[filt] = m_rescaled
-
-                    # Add companions masses to primaries
-                    N_comp_max = np.max(star_systems['N_companions'])
-                    comp_index = np.zeros((len(star_systems), N_comp_max), dtype=int)
-                    kk = 0
-                    for ii in range(len(star_systems)):
-                        for cc in range(star_systems['N_companions'][ii]):
-                            comp_index[ii][cc] = kk
-                            kk += 1
-
-                    # Find all the systems with at least one companion... add the flux
-                    # of that companion to the primary. Repeat for 2 companions,
-                    # 3 companions, etc.
-                    for cc in range(1, N_comp_max+1):
-                        # All systems with at least cc companions.
-                        idx = np.where(star_systems['N_companions'] >= cc)[0]
-            
-                        # Get the location in the companions array for each system and
-                        # the cc'th companion. 
-                        cdx = comp_index[idx, cc-1]
-                        star_systems = self._calc_system_mag(star_systems, companions, idx, cdx, filt)
-                    
             #star_systems, companions = self._remove_bad_systems_and_companions(star_systems, companions)
             
         #####
