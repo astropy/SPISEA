@@ -2,6 +2,8 @@ import time
 import numpy as np
 import pylab as plt
 import numpy as np
+import pickle
+import spisea
 from spisea import reddening, evolution, atmospheres, ifmr
 from spisea import synthetic as syn
 from spisea.imf import imf
@@ -10,6 +12,8 @@ import pysynphot
 import os
 import pdb
 from scipy.spatial import cKDTree as KDTree
+
+spisea_path = os.path.dirname(spisea.__file__)
 
 def test_isochrone(plot=False):
     logAge = 6.7
@@ -26,11 +30,11 @@ def test_isochrone(plot=False):
     assert iso.points.meta['AKS'] == AKs
     assert iso.points.meta['DISTANCE'] == distance
     assert len(iso.points) > 100
-    
+
     if plot:
-        plt.figure(1) 
+        plt.figure(1)
         iso.plot_HR_diagram()
-        
+
         plt.figure(2)
         iso.plot_mass_luminosity()
 
@@ -38,21 +42,23 @@ def test_isochrone(plot=False):
 
 def test_iso_wave():
     """
-    Test to make sure isochrones generated have spectra with the proper 
+    Test to make sure isochrones generated have spectra with the proper
     wavelength range, and that the user has control over that wavelength
     range (propagated through IsochronePhot)
     """
     # Define isochrone parameters
-    logAge = np.log10(5*10**6.) # Age in log(years)
-    AKs = 0.8 # extinction in mags
+    logAge = 6.7 # Age in log(years)
+    AKs = 2.7 # extinction in mags
     dist = 4000 # distance in parsec
+    metal = 0.0 # metallicity
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Define evolution/atmosphere models and extinction law (optional)
-    evo_model = evolution.MergedBaraffePisaEkstromParsec() 
+    evo_model = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
     red_law = reddening.RedLawHosek18b()
 
-    # Also specify filters for synthetic photometry (optional). Here we use 
+    # Also specify filters for synthetic photometry (optional). Here we use
     # the HST WFC3-IR F127M, F139M, and F153M filters
     filt_list = ['wfc3,ir,f127m']
 
@@ -65,11 +71,18 @@ def test_iso_wave():
     # Make Isochrone object. Will use wave_range = [3000,52000].
     # Make sure range matches to resolution of atmosphere.
     wave_range1 = [3000, 52000]
-    my_iso = syn.IsochronePhot(logAge, AKs, dist,
-                            evo_model=evo_model, atm_func=atm_func,
-                            red_law=red_law, filters=filt_list,
-                            mass_sampling=10, wave_range=wave_range1,
-                            recomp=True)
+    my_iso = syn.IsochronePhot(
+        logAge, AKs, dist,
+        metallicity=metal,
+        evo_model=evo_model, 
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        mass_sampling=10,
+        wave_range=wave_range1,
+        recomp=True,
+        iso_dir=iso_dir
+    )
 
     test = my_iso.spec_list[0]
 
@@ -79,11 +92,19 @@ def test_iso_wave():
     # Now let's try changing the wave range. Is it carried through
     # properly?
     wave_range2 = [1200, 90000]
-    my_iso = syn.IsochronePhot(logAge, AKs, dist,
-                            evo_model=evo_model, atm_func=atm_func,
-                            red_law=red_law, filters=filt_list,
-                            mass_sampling=10, wave_range=wave_range2,
-                            recomp=True)
+    my_iso = syn.IsochronePhot(
+        logAge,
+        AKs,
+        dist,
+        evo_model=evo_model,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        mass_sampling=10,
+        wave_range=wave_range2,
+        recomp=True,
+        iso_dir=iso_dir
+    )
 
     test2 = my_iso.spec_list[0]
 
@@ -93,13 +114,21 @@ def test_iso_wave():
     # Does the error exception catch the bad wave_range?
     wave_range3 = [1200, 1000000]
     try:
-        my_iso = syn.IsochronePhot(logAge, AKs, dist,
-                                evo_model=evo_model, atm_func=atm_func,
-                                red_law=red_law, filters=filt_list,
-                                mass_sampling=10, wave_range=wave_range3,
-                                recomp=True)
+        my_iso = syn.IsochronePhot(
+            logAge,
+            AKs,
+            dist,
+            evo_model=evo_model,
+            atm_func=atm_func,
+            red_law=red_law,
+            filters=filt_list,
+            mass_sampling=10,
+            wave_range=wave_range3,
+            recomp=True,
+            iso_dir=iso_dir
+        )
         print('WAVE TEST FAILED!!! Should have crashed here, wavelength range out of bounds')
-        raise ValueError() 
+        raise ValueError()
     except:
         print('Wavelength out of bound condition passed. Test is good')
         pass
@@ -111,20 +140,28 @@ def test_IsochronePhot(plot=False):
     distance = 4000
     filt_list = ['wfc3,ir,f127m', 'nirc2,J']
     mass_sampling=1
-    iso_dir = 'iso/'
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     evo_model = evolution.MISTv1()
     atm_func = atmospheres.get_merged_atmosphere
     redlaw = reddening.RedLawNishiyama09()
 
     startTime = time.time()
-    iso = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo_model,
-                                atm_func=atm_func, red_law=redlaw,
-                                filters=filt_list,
-                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+    iso = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo_model,
+        atm_func=atm_func,
+        red_law=redlaw,
+        filters=filt_list,
+        mass_sampling=mass_sampling,
+        iso_dir=iso_dir,
+        recomp=True
+    )
     endTime = time.time()
     print('IsochronePhot generated in: %d seconds' % (endTime - startTime))
-    # Typically takes 120 seconds if file is regenerated.
+    # Typically takes 40 seconds if file is regenerated.
     # Limited by pysynphot.Icat call in atmospheres.py
 
     assert iso.points.meta['LOGAGE'] == logAge
@@ -135,42 +172,64 @@ def test_IsochronePhot(plot=False):
     assert 'm_nirc2_J' in iso.points.colnames
 
     if plot:
-        plt.figure(1) 
+        plt.figure(1)
         iso.plot_CMD('mag814w', 'mag160w')
-        
+
         plt.figure(2)
         iso.plot_mass_magnitude('mag160w')
 
     # Finally, let's test the isochronePhot file generation
-    assert os.path.exists('{0}/iso_{1:.2f}_{2:4.2f}_{3:4s}_p00.fits'.format(iso_dir, logAge,
-                                                                                AKs, str(distance).zfill(5)))
-    
+    metal_value = 0.
+    metal_sign = 'm' if metal_value < 0 else 'p'
+    assert os.path.exists(f'{iso_dir}/iso_{logAge:.2f}_{AKs:4.2f}_{str(distance).zfill(5)}_{metal_sign}{metal_value:.2f}.fits')
+
     # Check 1: If we try to remake the isochrone, does it read the file rather than
     # making a new one
-    iso_new = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo_model,
-                                atm_func=atm_func, red_law=redlaw,
-                                filters=filt_list,
-                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+    iso_new = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo_model,
+        atm_func=atm_func,
+        red_law=redlaw,
+        filters=filt_list,
+        mass_sampling=mass_sampling,
+        iso_dir=iso_dir
+    )
 
     assert iso_new.recalc == False
-    
+
     # Check 2: Confirm that adding a new column to an existing isochrone works properly.
     #    Does the new filter get added to the isochrone? And the old ones still there?
     #    Does the computed data for the new filter match the same result if you fully regenerate the isochrone?
-    iso_new_addfilt = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo_model,
-                                atm_func=atm_func, red_law=redlaw,
-                                filters=filt_list+['2mass,Ks'],
-                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+    iso_new_addfilt = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo_model,
+        atm_func=atm_func,
+        red_law=redlaw,
+        filters=filt_list+['2mass,Ks'],
+        mass_sampling=mass_sampling,
+        iso_dir=iso_dir
+    )
 
     assert iso_new_addfilt.recalc == False
     assert 'm_2mass_Ks' in iso_new_addfilt.points.colnames
     assert 'm_nirc2_J' in iso_new_addfilt.points.colnames
-    
-    iso_new_3filt = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo_model,
-                                atm_func=atm_func, red_law=redlaw,
-                                filters=filt_list+['2mass,Ks'],
-                                mass_sampling=mass_sampling, iso_dir=iso_dir,
-                                recomp=True)
+
+    iso_new_3filt = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo_model,
+        atm_func=atm_func,
+        red_law=redlaw,
+        filters=filt_list+['2mass,Ks'],
+        mass_sampling=mass_sampling,
+        recomp=True,
+        iso_dir=iso_dir
+    )
     np.testing.assert_almost_equal(iso_new_addfilt.points['m_2mass_Ks'], iso_new_3filt.points['m_2mass_Ks'])
     assert iso_new_3filt.recalc==True
 
@@ -179,26 +238,47 @@ def test_IsochronePhot(plot=False):
     evo2 = evolution.MergedBaraffePisaEkstromParsec()
     mass_sampling=20
 
-    iso_new = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo2,
-                                atm_func=atm_func, red_law=redlaw,
-                                filters=filt_list,
-                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+    iso_new = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo2,
+        atm_func=atm_func,
+        red_law=redlaw,
+        filters=filt_list,
+        mass_sampling=mass_sampling,
+        iso_dir=iso_dir
+    )
 
     assert iso_new.recalc == True
 
     redlaw2 = reddening.RedLawHosek18b()
-    iso_new = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo2,
-                                atm_func=atm_func, red_law=redlaw2,
-                                filters=filt_list,
-                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+    iso_new = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo2,
+        atm_func=atm_func,
+        red_law=redlaw2,
+        filters=filt_list,
+        mass_sampling=mass_sampling,
+        iso_dir=iso_dir
+    )
 
     assert iso_new.recalc == True
 
     atm2 = atmospheres.get_castelli_atmosphere
-    iso_new = syn.IsochronePhot(logAge, AKs, distance, evo_model=evo2,
-                                atm_func=atm2, red_law=redlaw2,
-                                filters=filt_list,
-                                mass_sampling=mass_sampling, iso_dir=iso_dir)
+    iso_new = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo2,
+        atm_func=atm2,
+        red_law=redlaw2,
+        filters=filt_list,
+        mass_sampling=mass_sampling,
+        iso_dir=iso_dir
+    )
 
     assert iso_new.recalc == True
 
@@ -211,21 +291,30 @@ def test_ResolvedCluster():
     distance = 4000
     cluster_mass = 10**5.
     mass_sampling=5
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Test filters
     filt_list = ['nirc2,J', 'nirc2,Kp']
 
     startTime = time.time()
-    
+
     evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
 
     red_law = reddening.RedLawNishiyama09()
-    
-    iso = syn.IsochronePhot(logAge, AKs, distance,
-                            evo_model=evo, atm_func=atm_func,
-                            red_law=red_law, filters=filt_list,
-                            mass_sampling=mass_sampling)
+
+    iso = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        mass_sampling=mass_sampling,
+        iso_dir=iso_dir,
+        recomp=True
+    )
 
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
@@ -239,7 +328,7 @@ def test_ResolvedCluster():
     my_imf1 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=None)
     print('Constructed IMF: %d seconds' % (time.time() - startTime))
-    
+
     cluster1 = syn.ResolvedCluster(iso, my_imf1, cluster_mass)
     clust1 = cluster1.star_systems
     print('Constructed cluster: %d seconds' % (time.time() - startTime))
@@ -267,7 +356,7 @@ def test_ResolvedCluster():
     my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=multi)
     print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
-    
+
     cluster2 = syn.ResolvedCluster(iso, my_imf2, cluster_mass)
     clust2 = cluster2.star_systems
     print('Constructed cluster with multiples: %d seconds' % (time.time() - startTime))
@@ -277,7 +366,7 @@ def test_ResolvedCluster():
     assert np.sum(clust2['N_companions']) == len(cluster2.companions)
 
     ##########
-    # Plots 
+    # Plots
     ##########
     # Plot an IR CMD and compare cluster members to isochrone.
     plt.figure(1)
@@ -287,7 +376,7 @@ def test_ResolvedCluster():
     plt.plot(iso.points['m_nirc2_J'] - iso.points['m_nirc2_Kp'], iso.points['m_nirc2_J'], 'c-')
     plt.gca().invert_yaxis()
     plt.xlabel('J - Kp (mag)')
-    plt.ylabel('J (mag')
+    plt.ylabel('J (mag)')
 
     # Plot a mass-magnitude relationship.
     plt.figure(2)
@@ -297,7 +386,7 @@ def test_ResolvedCluster():
     plt.gca().invert_yaxis()
     plt.xlabel('Mass (Msun)')
     plt.ylabel('J (mag)')
-    
+
     # # Plot the spectrum of the most massive star
     # idx = cluster.mass.argmax()
     # plt.clf()
@@ -317,21 +406,29 @@ def test_ResolvedClusterDiffRedden():
     cluster_mass = 10**5.
     deltaAKs = 0.05
     mass_sampling=5
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Test filters
     filt_list = ['nirc2,J', 'nirc2,Kp']
-    
+
     startTime = time.time()
-    
+
     evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
 
     red_law = reddening.RedLawNishiyama09()
-    
-    iso = syn.IsochronePhot(logAge, AKs, distance,
-                            evo_model=evo, atm_func=atm_func,
-                            red_law=red_law, filters=filt_list,
-                                mass_sampling=mass_sampling)
+
+    iso = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        mass_sampling=mass_sampling,
+        iso_dir=iso_dir
+    )
 
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
@@ -344,13 +441,13 @@ def test_ResolvedClusterDiffRedden():
     my_imf1 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=None)
     print('Constructed IMF: %d seconds' % (time.time() - startTime))
-    
+
     cluster1 = syn.ResolvedClusterDiffRedden(iso, my_imf1, cluster_mass, deltaAKs)
     clust1 = cluster1.star_systems
     print('Constructed cluster: %d seconds' % (time.time() - startTime))
 
     assert len(clust1) > 0
-    
+
     plt.figure(3)
     plt.clf()
     plt.plot(clust1['m_nirc2_J'] - clust1['m_nirc2_Kp'], clust1['m_nirc2_J'], 'r.')
@@ -367,7 +464,7 @@ def test_ResolvedClusterDiffRedden():
     my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=multi)
     print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
-    
+
     cluster2 = syn.ResolvedClusterDiffRedden(iso, my_imf2, cluster_mass, deltaAKs)
     clust2 = cluster2.star_systems
     print('Constructed cluster with multiples: %d seconds' % (time.time() - startTime))
@@ -377,7 +474,7 @@ def test_ResolvedClusterDiffRedden():
     assert np.sum(clust2['N_companions']) == len(cluster2.companions)
 
     ##########
-    # Plots 
+    # Plots
     ##########
     # Plot an IR CMD and compare cluster members to isochrone.
     plt.figure(1)
@@ -399,7 +496,7 @@ def test_ResolvedClusterDiffRedden():
     plt.ylabel('J (mag)')
 
     return
-    
+
 def test_UnresolvedCluster():
     log_age = 6.7
     AKs = 0.0
@@ -407,7 +504,7 @@ def test_UnresolvedCluster():
     metallicity=0
     cluster_mass = 10**4.
 
-    startTime = time.time()    
+    startTime = time.time()
     multi = multiplicity.MultiplicityUnresolved()
     imf_in = imf.Kroupa_2001(multiplicity=multi)
     evo = evolution.MergedBaraffePisaEkstromParsec()
@@ -434,22 +531,30 @@ def test_ifmr_multiplicity():
     distance = 1000
     cluster_mass = 1e6
     mass_sampling = 5
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Test all filters
     filt_list = ['nirc2,Kp', 'nirc2,H', 'nirc2,J']
 
     startTime = time.time()
-    
+
     evo = evolution.MISTv1()
     atm_func = atmospheres.get_merged_atmosphere
     ifmr_obj = ifmr.IFMR_Raithel18()
 
     red_law = reddening.RedLawNishiyama09()
-    
-    iso = syn.IsochronePhot(logAge, AKs, distance,
-                            evo_model=evo, atm_func=atm_func,
-                            red_law=red_law, filters=filt_list,
-                            mass_sampling=mass_sampling)
+
+    iso = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        mass_sampling=mass_sampling,
+        iso_dir=iso_dir
+    )
 
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
@@ -462,13 +567,13 @@ def test_ifmr_multiplicity():
     ##########
     my_imf1 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=None)
-    print('Constructed IMF: %d seconds' % (time.time() - startTime)) 
-    
+    print('Constructed IMF: %d seconds' % (time.time() - startTime))
+
     cluster1 = syn.ResolvedCluster(iso, my_imf1, cluster_mass, ifmr=ifmr_obj)
     clust1 = cluster1.star_systems
     print('Constructed cluster: %d seconds' % (time.time() - startTime))
 
-   
+
     ##########
     # Test with multiplicity and IFMR
     ##########
@@ -476,7 +581,7 @@ def test_ifmr_multiplicity():
     my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=multi)
     print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
-    
+
     cluster2 = syn.ResolvedCluster(iso, my_imf2, cluster_mass, ifmr=ifmr_obj)
     clust2 = cluster2.star_systems
     comps2 = cluster2.companions
@@ -512,35 +617,53 @@ def test_metallicity():
     Test isochrone generation at different metallicities
     """
     # Define isochrone parameters
-    logAge = np.log10(5*10**6.) 
-    AKs = 0.8 
-    dist = 4000 
+    logAge = np.log10(5*10**6.)
+    AKs = 0.8
+    dist = 4000
     evo_model = evolution.MISTv1()
     atm_func = atmospheres.get_phoenixv16_atmosphere
     red_law = reddening.RedLawHosek18b()
     filt_list = ['wfc3,ir,f127m', 'wfc3,ir,f139m', 'wfc3,ir,f153m']
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
-    # Start with a solar metallicity isochrone    
-    metallicity= 0.0
+    # Start with a solar metallicity isochrone
+    metallicity= 0.
+    metal_sign = 'm' if metallicity < 0 else 'p'
 
     # Make Isochrone object, with high mass_sampling to decrease compute time
-    my_iso = syn.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
-                            evo_model=evo_model, atm_func=atm_func,
-                            red_law=red_law, filters=filt_list,
-                            mass_sampling=10)
+    my_iso = syn.IsochronePhot(
+        logAge,
+        AKs,
+        dist,
+        metallicity=metallicity,
+        evo_model=evo_model,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        mass_sampling=10,
+        iso_dir=iso_dir
+    )
 
     # Test isochrone properties
     assert my_iso.points.meta['METAL_IN'] == 0.0
-    assert os.path.exists('iso_6.70_0.80_04000_p00.fits')
+    assert os.path.exists(f'{iso_dir}/iso_6.70_0.80_04000_p0.00.fits')
 
     # Now for non-solar metallicity
     metallicity= -1.5
 
     # Make Isochrone object, with high mass_sampling to decrease compute time
-    my_iso = syn.IsochronePhot(logAge, AKs, dist, metallicity=metallicity,
-                            evo_model=evo_model, atm_func=atm_func,
-                            red_law=red_law, filters=filt_list,
-                            mass_sampling=10)
+    my_iso = syn.IsochronePhot(
+        logAge,
+        AKs,
+        dist,
+        metallicity=metallicity,
+        evo_model=evo_model,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        mass_sampling=10,
+        iso_dir=iso_dir
+    )
 
     # MIST model sub-directory names changed in SPISEA v2.1.4 update;
     # changing what "metal_act" value was. version 1 of MIST grid
@@ -555,12 +678,12 @@ def test_metallicity():
         metal_act = np.log10(0.00047 / 0.0142) # For Mist isochrones
     else:
         metal_act = np.log10(0.00045 / 0.0142) # For Mist isochrones
-        
+
     # Test isochrone properties
     assert my_iso.points.meta['METAL_IN'] == -1.5
     assert np.isclose(my_iso.points.meta['METAL_ACT'], metal_act)
-    assert os.path.exists('iso_6.70_0.80_04000_m15.fits')
-    
+    assert os.path.exists(f'{iso_dir}/iso_6.70_0.80_04000_m1.50.fits')
+
     return
 
 def test_cluster_mass():
@@ -570,21 +693,29 @@ def test_cluster_mass():
     distance = 4000
     cluster_mass = 10**5.
     mass_sampling = 5
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Test filters
     filt_list = ['nirc2,J', 'nirc2,Kp']
 
     startTime = time.time()
-    
+
     # Define evolution/atmosphere models and extinction law
-    evo = evolution.MISTv1() 
+    evo = evolution.MISTv1()
     atm_func = atmospheres.get_merged_atmosphere
     red_law = reddening.RedLawHosek18b()
-    
-    iso = syn.IsochronePhot(logAge, AKs, distance,
-                            evo_model=evo, atm_func=atm_func,
-                            red_law=red_law, filters=filt_list,
-                            mass_sampling=mass_sampling)
+
+    iso = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        mass_sampling=mass_sampling,
+        iso_dir=iso_dir
+    )
 
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
@@ -594,7 +725,7 @@ def test_cluster_mass():
 
     # IFMR
     my_ifmr = ifmr.IFMR_Raithel18()
-    
+
 
     ##########
     # Start without multiplicity
@@ -602,7 +733,7 @@ def test_cluster_mass():
     my_imf1 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=None)
     print('Constructed IMF: %d seconds' % (time.time() - startTime))
-    
+
     cluster1 = syn.ResolvedCluster(iso, my_imf1, cluster_mass, ifmr=my_ifmr)
     clust1 = cluster1.star_systems
     print('Constructed cluster: %d seconds' % (time.time() - startTime))
@@ -628,7 +759,7 @@ def test_cluster_mass():
     my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
                                       multiplicity=multi)
     print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
-    
+
     cluster2 = syn.ResolvedCluster(iso, my_imf2, cluster_mass, ifmr=my_ifmr)
     clust2 = cluster2.star_systems
     print('Constructed cluster with multiples: %d seconds' % (time.time() - startTime))
@@ -642,7 +773,7 @@ def test_cluster_mass():
 
 def test_keep_low_mass_stars():
     """
-    Test "keep_low_mass_stars = True" functionality introduced in v2.2 
+    Test "keep_low_mass_stars = True" functionality introduced in v2.2
     """
     # Define cluster parameters, pulling on an isochrone generated in an earlier test (since
     # we don't care about isochrone generation here
@@ -651,26 +782,34 @@ def test_keep_low_mass_stars():
     distance = 4000
     cluster_mass = 10**5.
     mass_sampling = 5
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Test filters
     filt_list = ['nirc2,J', 'nirc2,Kp']
-    
+
     # Define evolution/atmosphere models and extinction law
-    evo = evolution.MISTv1() 
+    evo = evolution.MISTv1()
     atm_func = atmospheres.get_merged_atmosphere
     red_law = reddening.RedLawHosek18b()
-    
-    iso = syn.IsochronePhot(logAge, AKs, distance,
-                            evo_model=evo, atm_func=atm_func,
-                            red_law=red_law, filters=filt_list,
-                            mass_sampling=mass_sampling)
+
+    iso = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        mass_sampling=mass_sampling,
+        iso_dir=iso_dir
+    )
 
     # Get the minimum mass in the isochrones. This should be the lowest
     # mass psosbile when keep_low_mass_stars == False.
     # Make sure this min mass is low enough for a reasonalbe test
     min_mass_iso = np.min(iso.points['mass'])
     assert min_mass_iso >= 0.05
-    
+
     # Define IMF + IFMR. Make sure IMF goes to really low masses,
     # below the 0.08 Msun limit of the MIST isochrones
     imf_min = 0.01
@@ -698,33 +837,41 @@ def test_keep_low_mass_stars():
 
     return
 
-        
+
 def test_compact_object_companions():
-    
+
     # Define cluster parameters
     logAge = 6.7
     AKs = 2.4
     distance = 4000
     cluster_mass = 10**4.
     mass_sampling=5
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Test filters
     filt_list = ['nirc2,J', 'nirc2,Kp']
 
     startTime = time.time()
-    
+
     evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
 
     red_law = reddening.RedLawNishiyama09()
-    
-    iso = syn.IsochronePhot(logAge, AKs, distance,
-                            evo_model=evo, atm_func=atm_func,
-                            red_law=red_law, filters=filt_list,
-                            mass_sampling=mass_sampling)
+
+    iso = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        mass_sampling=mass_sampling,
+        iso_dir=iso_dir
+    )
 
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
-    
+
     clust_multiplicity = multiplicity.MultiplicityResolvedDK()
 
     massLimits = np.array([0.2, 0.5, 1, 120]) # mass segments
@@ -748,17 +895,25 @@ def time_test_cluster():
     AKs = 2.7
     distance = 4000
     cluster_mass = 10**4
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     startTime = time.time()
-    
+
     evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
     red_law = reddening.RedLawNishiyama09()
     filt_list = ['nirc2,J', 'nirc2,Kp']
-    
-    iso = syn.IsochronePhot(logAge, AKs, distance,
-                            evo_model=evo, atm_func=atm_func,
-                            red_law=red_law, filters=filt_list)
+
+    iso = syn.IsochronePhot(
+        logAge,
+        AKs,
+        distance,
+        evo_model=evo,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        iso_dir=iso_dir
+    )
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
     imf_limits = np.array([0.07, 0.5, 150])
@@ -766,23 +921,30 @@ def time_test_cluster():
     multi = multiplicity.MultiplicityUnresolved()
     my_imf = imf.IMF_broken_powerlaw(imf_limits, imf_powers, multiplicity=multi)
     print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
-    
+
     cluster = syn.ResolvedCluster(iso, my_imf, cluster_mass)
     print('Constructed cluster: %d seconds' % (time.time() - startTime))
 
     return
-    
+
 def model_young_cluster_object(resolved=False):
     log_age = 6.5
     AKs = 0.1
     distance = 8000.0
     cluster_mass = 10000.
-    
+
     multi = multiplicity.MultiplicityUnresolved()
     imf_in = imf.Kroupa_2001(multiplicity=multi)
-    evo = evolution.MergedPisaEkstromParsec()
+    evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
-    iso = syn.Isochrone(log_age, AKs, distance, evo, mass_sampling=10)
+    iso = syn.Isochrone(
+        log_age,
+        AKs,
+        distance,
+        evo_model=evo,
+        atm_func=atm_func,
+        mass_sampling=10
+    )
 
     if resolved:
         cluster = syn.ResolvedCluster(iso, imf_in, cluster_mass)
@@ -804,30 +966,31 @@ def model_young_cluster_object(resolved=False):
     plt.plot(wave, flux, 'k.')
 
     return
-    
+
 def time_test_mass_match():
     log_age = 6.7
     AKs = 2.7
     distance = 4000
     cluster_mass = 5e3
-    
+    iso_dir = f'{spisea_path}/tests/isochrones'
+
     imf_in = imf.Kroupa_2001(multiplicity=None)
 
     start_time = time.time()
-    iso = syn.IsochronePhot(log_age, AKs, distance)
+    iso = syn.IsochronePhot(log_age, AKs, distance, iso_dir=iso_dir)
     iso_masses = iso.points['mass']
     print('Generated iso masses in {0:.0f} s'.format(time.time() - start_time))
 
     start_time = time.time()
     star_masses, isMulti, compMass, sysMass = imf_in.generate_cluster(cluster_mass)
     print('Generated cluster masses in {0:.0f} s'.format(time.time() - start_time))
-    
+
     def match_model_masses1(isoMasses, starMasses):
         indices = np.empty(len(starMasses), dtype=int)
-        
+
         for ii in range(len(starMasses)):
             theMass = starMasses[ii]
-            
+
             dm = np.abs(isoMasses - theMass)
             mdx = dm.argmin()
 
@@ -838,12 +1001,12 @@ def time_test_mass_match():
                 indices[ii] = mdx
 
         return indices
-            
+
 
     def match_model_masses2(isoMasses, starMasses):
         isoMasses_tmp = isoMasses.reshape((len(isoMasses), 1))
         kdt = KDTree(isoMasses_tmp)
- 
+
         starMasses_tmp = starMasses.reshape((len(starMasses), 1))
         q_results = kdt.query(starMasses_tmp, k=1)
         indices = q_results[1]
@@ -852,7 +1015,7 @@ def time_test_mass_match():
 
         idx = np.where(dm_frac > 0.1)[0]
         indices[idx] = -1
-        
+
         return indices
 
     print('Test #1 START')
@@ -883,7 +1046,7 @@ def generate_Spera15_IFMR():
     metal = np.array([2.0e-4, 1.0e-3, 2.0e-3, 2.0e-2]) #ensure that all Spera metallicity regimes are represented
 
     FeH = FeH_from_Z(metal) #generate death mass takes metallicty as [Fe/H]
-    #want to get a good range of masses for Spera, should expect 8 invalids, 8 WDs, 3 NSs, and 9 BHs 
+    #want to get a good range of masses for Spera, should expect 8 invalids, 8 WDs, 3 NSs, and 9 BHs
     ZAMS = np.array([-0.2*np.ones(len(FeH)), 0.2*np.ones(len(FeH)), 4.0*np.ones(len(FeH)), 9.2*np.ones(len(FeH)),
                     15.0*np.ones(len(FeH)), 30.0*np.ones(len(FeH)), 150.0*np.ones(len(FeH))])
 
@@ -975,7 +1138,7 @@ def test_Spera15_IFMR_7():
     assert len(BH_idx) == 10 , "There are not the right number of BHs for the Spera15 IFMR"
 
     return
-    
+
 def generate_Raithel18_IFMR():
     """
     Make a set of objects using the Raithel18 IFMR for the purposes of testing
@@ -984,7 +1147,7 @@ def generate_Raithel18_IFMR():
     """
 
     Raithel = ifmr.IFMR_Raithel18()
-    ZAMS = np.array([-0.2, 0.2, 1.0, 7.0, 10.0, 14.0, 16.0, 18.0, 18.6, 22.0, 26.0, 28.0, 50.0, 61.0, 119.0, 121.0]) 
+    ZAMS = np.array([-0.2, 0.2, 1.0, 7.0, 10.0, 14.0, 16.0, 18.0, 18.6, 22.0, 26.0, 28.0, 50.0, 61.0, 119.0, 121.0])
     #3 invalid indices, 2 WDs, cannot make statements about #of BHs and NSs because the Raithel IFMR has some randomness
 
     output_array = Raithel.generate_death_mass(ZAMS)
@@ -1050,5 +1213,63 @@ def test_Raithel18_IFMR_5():
     bad_idx, WD_idx, NS_idx, BH_idx, rem_mass = generate_Raithel18_IFMR()
 
     assert len(WD_idx) == 2 , "There are not the right number of WDs for the Raithel18 IFMR"
+
+    return
+
+def test_ResolvedCluster_random_state():
+    """
+    Test that the random state is properly set in ResolvedCluster, such that two clusters with the same seed have the same stars.
+    """
+    log_age = 6.7
+    AKs = 2.7
+    distance = 4000
+    cluster_mass = 10**4.
+    iso_dir = f'{spisea_path}/tests/isochrones'
+
+    evo = evolution.MergedBaraffePisaEkstromParsec()
+    atm_func = atmospheres.get_merged_atmosphere
+    red_law = reddening.RedLawNishiyama09()
+    filt_list = ['nirc2,J', 'nirc2,Kp']
+
+    iso = syn.IsochronePhot(
+        log_age,
+        AKs,
+        distance,
+        evo_model=evo,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        mass_sampling=10,
+        iso_dir=iso_dir
+    )
+
+    imf_limits = np.array([0.07, 0.5, 150])
+    imf_powers = np.array([-1.3, -2.35])
+    imf_multi = multiplicity.MultiplicityUnresolved()
+    imf_test = imf.IMF_broken_powerlaw(imf_limits, imf_powers, multiplicity=imf_multi)
+
+    # Test that the same random seed produces the same cluster
+    imf_test.rng = np.random.default_rng(seed=42)
+    result1 = imf_test.generate_cluster(cluster_mass)
+    imf_test.rng = np.random.default_rng(seed=42)
+    result2 = imf_test.generate_cluster(cluster_mass)
+    np.testing.assert_equal(result1, result2)
+
+    # Test that two clusters generated with the same seed have the same star systems and companions
+    cluster1 = syn.ResolvedCluster(iso, imf_test, cluster_mass, seed=42)
+    cluster2 = syn.ResolvedCluster(iso, imf_test, cluster_mass, seed=42)
+    np.testing.assert_array_equal(cluster1.star_systems, cluster2.star_systems)
+
+    with open(f'{spisea_path}/tests/test_data/star_systems.pkl', 'rb') as file:
+        old_star_systems = pickle.load(file)
+    with open(f'{spisea_path}/tests/test_data/companions.pkl', 'rb') as file:
+        old_companion = pickle.load(file)
+
+    for key in old_star_systems.colnames:
+        np.testing.assert_array_equal(cluster1.star_systems[key], old_star_systems[key])
+
+    for key in old_companion.colnames:
+        # Require values are consistent within reasonable bounds
+        assert np.all(np.isclose(cluster1.companions[key], old_companion[key], rtol=1e-05, atol=1e-08))
 
     return

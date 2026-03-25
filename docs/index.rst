@@ -82,6 +82,16 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.3 (2026-02-10)
+  * Achieves faster cluster generation (factor of about 2x) by using
+    replacing ragged arrays with masked arrays when calculating
+    multiplicity properties
+  * Added new test functions (and associated test data files) ensuring
+    that the primary mass and companion
+    mass distibutions remain the same as generated with SPISEA <= v2.2
+  * Added support to Euclid VIS filter
+    
+
 2.2 (2026-01-16)
   * Compatibility updates for SPISEA to work with `SynthPop
     <https://synthpop.readthedocs.io/en/latest/>`_. Updates include:
