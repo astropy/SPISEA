@@ -220,7 +220,7 @@ class ResolvedCluster(Cluster):
             interp_keys = ['Teff', 'L', 'logg', 'isWR', 'mass_current', 'phase'] + self.filt_names
             self.iso_interps = {}
             for ikey in interp_keys:
-            self.iso_interps[ikey] = Interpolator(self.iso.points['mass'], self.iso.points[ikey])
+                self.iso_interps[ikey] = Interpolator(self.iso.points['mass'], self.iso.points[ikey])
 
         else:
             from scipy.interpolate import LinearNDInterpolator
@@ -231,6 +231,9 @@ class ResolvedCluster(Cluster):
                 self.iso_interps[ikey] = LinearNDInterpolator((self.iso.points['Teff'], self.iso.points['logg'], 
                                                                self.iso.points['metallicity']), self.iso.points[ikey],
                                                                 fill_value=np.nan)
+                self.iso_interps['Teff'] = self.iso.points['Teff']
+                self.iso_interps['logg'] = self.iso.points['logg']
+                self.iso_interps['metallicity'] = self.iso.points['metallicity']
 
         #####
         # Make a table to contain all the information about each stellar system.
@@ -1689,7 +1692,8 @@ class IsochronePhotExternalEvolution(IsochronePhot):
         self.filters = filters
 
         # Recalculate atmosphere grid if save_file doesn't exist or recomp == True
-        file_exists = self.check_save_file(evo_model, atm_func, red_law)
+        file_exists = check_save_file(self.save_file, evo_model, atm_func, red_law) | check_save_file(self.save_file_legacy, evo_model, atm_func, red_law)
+
 
         if (not file_exists) | (recomp==True):
             self.recalc = True
@@ -1844,7 +1848,7 @@ class IsochronePhotExternalEvolution(IsochronePhot):
         print( '     Starting at: ', datetime.datetime.now(), '  Usually takes ~5 minutes')
 
         npoints = len(self.points)
-        verbose_fmt = 'M = {0:7.3f} Msun  T = {1:5.0f} K  m_{2:s} = {3:4.2f}'
+        verbose_fmt = 'M = {0:7.3f} Msun  T = {1:5.0f} K  logg = {2:1.3f}  m_{3:s} = {4:4.2f}'
 
         #Calculate all filters, or select filters
         if comp_filters is None:
@@ -1873,8 +1877,14 @@ class IsochronePhotExternalEvolution(IsochronePhot):
                 self.points[col_name][ss] = star_mag
         
                 if (self.verbose and (ss % 100) == 0):
-                    print( verbose_fmt.format(self.points['Teff'][ss], self.points['logg'][ss],
-                                             filt_name, star_mag))
+                    try:
+                        print( verbose_fmt.format(self.points['mass'][ss],
+                                                 self.points['Teff'][ss], self.points['logg'][ss],
+                                                 filt_name, star_mag))
+                    except:
+                        print( verbose_fmt.format(np.nan,
+                                                 self.points['Teff'][ss], self.points['logg'][ss],
+                                                 filt_name, star_mag))
 
         endTime = time.time()
         print( '      Time taken: {0:.2f} seconds'.format(endTime - startTime))
