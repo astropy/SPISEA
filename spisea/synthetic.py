@@ -211,7 +211,7 @@ class ResolvedCluster(Cluster):
          
             for filt in self.filt_names:
                 filt_name = filt.split('_')
-                filt_val = get_filter_info(filt_name[1] + ',' + filt_name[2], rebin=False, vega=vega)
+                filt_val = get_filter_info(get_obs_str(filt), rebin=False, vega=vega) 
 
                 # Rescale magnitudes to correct radius
                 # Since original grid was done assuming 1 Rsun
