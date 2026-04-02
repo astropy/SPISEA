@@ -1,10 +1,107 @@
+[project]
+name = "SPISEA"
+description = "SPISEA (Stellar Population Interface for Synthetic Evolution and Atmospheres) is a package that generates single-age, single-metallicity populations (i.e. star clusters)"
+version = "2.4.1"
+authors = [
+    {name = "Matt Hosek Jr.", email = "mwhosek@astro.ucla.edu"},
+    {name = "Jessica R. Lu", email = "jlu.astro@berkeley.edu"},
+    {name = "Samantha Rose"},
+    {name = "Casey Lam"},
+    {name = "Natasha Abrams"},
+    {name = "Michael Medford"},
+    {name = "Lingfeng Wei"},
+    {name = "Macy Huston"},
+    {name = "Abhimat Gautam"},
+    {name = "Kelly Lockhart"},
+    {name = "Dongwon Kim"},
+    {name = "Siyao Jia"}
+]
+requires-python = ">=3.11"
+readme = "README.md"
+license = "GPL-3.0-or-later"
+license-files = ["LICENSE*"]
+
+dependencies = [
+    "numpy>=1.24.3",
+    "scipy>=1.10.1",
+    "matplotlib",
+    "astropy",
+    "pysynphot"
+]
+
+optional-dependencies.dev = [
+    "setuptools>=61.0",
+    "setuptools-scm",
+    "wheel",
+    "numpydoc",
+    "sphinx_rtd_theme",
+    "pytest"
+]
+
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Programming Language :: Python :: 3.11",
+    "Operating System :: OS Independent",
+    "Intended Audience :: Developers"
+]
+
+[project.urls]
+Homepage = "https://github.com/astropy/SPISEA"
+Issues = "https://github.com/astropy/SPISEA/issues"
+
 [build-system]
-
-requires = ["setuptools",
-            "setuptools_scm",
-            "wheel",
-            "extension-helpers",
-            "oldest-supported-numpy",
-            "cython==0.29.14"]
-
+requires = [
+    "setuptools>=61.0",
+    "setuptools-scm",
+    "wheel",
+    "numpydoc",
+    "sphinx_rtd_theme",
+    "pytest"
+]
 build-backend = 'setuptools.build_meta'
+
+[tool.setuptools.package-data]
+spisea = ["data/*"]
+
+[tool.pytest]
+minversion = "9.0"
+addopts = ["-ra", "-q"]
+testpaths = [
+    "spisea",
+    "docs",
+]
+
+### Stuff from setup.cfg that hasn't been ported over.
+### Not sure if anyone was using test coverage.
+#[coverage:run]
+#omit =
+#    spisea/_astropy_init*
+#    spisea/conftest.py
+#    spisea/*setup_package*
+#    spisea/tests/*
+#    spisea/*/tests/*
+#    spisea/extern/*
+#    spisea/version*
+#    */spisea/_astropy_init*
+#    */spisea/conftest.py
+#    */spisea/*setup_package*
+#    */spisea/tests/*
+#    */spisea/*/tests/*
+#    */spisea/extern/*
+#    */spisea/version*
+#
+#[coverage:report]
+#exclude_lines =
+#    # Have to re-enable the standard pragma
+#    pragma: no cover
+#    # Don't complain about packages we have installed
+#    except ImportError
+#    # Don't complain if tests don't hit assertions
+#    raise AssertionError
+#    raise NotImplementedError
+#    # Don't complain about script hooks
+#    def main\(.*\):
+#    # Ignore branches that don't pertain to this version of Python
+#    pragma: py{ignore_python_version}
+#    # Don't complain about IPython completion helper
+#    def _ipython_key_completions_
