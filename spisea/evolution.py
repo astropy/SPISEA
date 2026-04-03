@@ -1321,7 +1321,11 @@ class COSMIC(StellarEvolution):
         
         # Remove systems that don't show up in bcm final (very few)
         if len(final_binaries) != len(star_systems):
-            raise Exception("Some binaries didn't make it. Something went wrong with COSMIC")
+            import pandas as pd
+            initC.to_hdf('initiC_fail.hf', key="df", mode="w")
+            mask = ~bcm.loc[bcm['tphys'] == 0, 'bin_num'].isin(final_binaries['bin_num'])
+            print('missing binaries', bcm.loc[bcm['tphys'] == 0].loc[mask])
+            raise Exception("Some binaries didn't make it. Something went wrong with COSMIC. intC saved to {}".format('initiC_fail.hf'))
         
         star_systems['mass_current'] = final_binaries['mass_1']
         star_systems['Teff'] = final_binaries['teff_1']
