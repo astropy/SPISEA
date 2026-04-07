@@ -1,17 +1,14 @@
-import time
-import numpy as np
-import pylab as plt
-import numpy as np
-import pickle
-import spisea
-from spisea import reddening, evolution, atmospheres, ifmr
-from spisea import synthetic as syn
-from spisea.imf import imf
-from spisea.imf import multiplicity
-import pysynphot
 import os
 import pdb
+import time
+import spisea
+import numpy as np
+import pylab as plt
+from astropy.table import Table
 from scipy.spatial import cKDTree as KDTree
+from spisea import synthetic as syn
+from spisea.imf import imf, multiplicity
+from spisea import reddening, evolution, atmospheres, ifmr
 
 spisea_path = os.path.dirname(spisea.__file__)
 
@@ -1260,17 +1257,16 @@ def test_ResolvedCluster_random_state():
     cluster2 = syn.ResolvedCluster(iso, imf_test, cluster_mass, seed=42)
     np.testing.assert_array_equal(cluster1.star_systems, cluster2.star_systems)
 
-    with open(f'{spisea_path}/tests/test_data/star_systems.pkl', 'rb') as file:
-        old_star_systems = pickle.load(file)
-    with open(f'{spisea_path}/tests/test_data/companions.pkl', 'rb') as file:
-        old_companion = pickle.load(file)
+    old_star_systems = Table.read(f'{spisea_path}/tests/test_data/star_systems.fits')
+    old_companion = Table.read(f'{spisea_path}/tests/test_data/companions.fits')
 
     for key in old_star_systems.colnames:
         #np.testing.assert_array_equal(cluster1.star_systems[key], old_star_systems[key])
-        assert np.all(np.isclose(cluster1.star_systems[key], old_star_systems[key], rtol=1e-05, atol=1e-08))
+        np.testing.assert_allclose(cluster1.star_systems[key], old_star_systems[key], rtol=1e-5, atol=1e-8)
 
     for key in old_companion.colnames:
         # Require values are consistent within reasonable bounds
-        assert np.all(np.isclose(cluster1.companions[key], old_companion[key], rtol=1e-05, atol=1e-08))
+        # np.testing.assert_array_equal(cluster1.companions[key], old_companion[key])
+        np.testing.assert_allclose(cluster1.companions[key], old_companion[key], rtol=1e-5, atol=1e-8)
 
     return
