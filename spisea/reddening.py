@@ -63,7 +63,8 @@ def get_red_law(str):
                      'S16': RedLawSchlafly16,
                      'H18b': RedLawHosek18b,
                      'NL18': RedLawNoguerasLara18,
-                     'NL20': RedLawNoguerasLara20
+                     'NL20': RedLawNoguerasLara20,
+                     'SODC': SODC
                     }
 
     # Make reddening law object, including params if necessary.
@@ -372,6 +373,139 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         return output
 
     def Cardelli89(self, wavelength, AKs):
+        """
+        Return the extinction at a given wavelength assuming the
+        extinction law and an overall `AKs` value.
+
+        Parameters
+        ----------
+        wavelength : float or array
+            Wavelength to return extinction for, in microns
+        AKs : float
+            Total extinction in AKs, in mags
+        """
+        # If input entry is a single float, turn it into an array
+        try:
+            len(wavelength)
+        except:
+            wavelength = [wavelength]
+
+        # Return error if any wavelength is beyond interpolation range of
+        # extinction law
+        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+            return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
+
+        # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * (10**-4)
+        law = self.obscuration
+
+        # Find the value of the law at the closest points
+        # to wavelength
+        A_AKs_at_wave = []
+        for ii in wavelength:
+            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
+            A_AKs_at_wave.append(law[idx][0])
+
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = np.array(A_AKs_at_wave) * AKs
+
+        return A_at_wave
+
+class RedLawSODC(pysynphot.reddening.CustomRedLaw):
+    r"""
+    Defines the SODC extinction law from SynthPop, described by
+    `Klüter & Huston et al. (2025) <https://ui.adsabs.harvard.edu/abs/2025AJ....169..317K/abstract>`_.
+    The law is defined from 0.25 - 3.5 microns, and in terms
+    of :math:`A_{\lambda} / A_{Ks}`, where Ks is 2.174 microns.
+
+    Parameters
+    ----------
+    Rv : float
+        Ratio of absolute to selective extinction, :math:`A(V) / E(B-V)`.
+        The standard value for the diffuse ISM is 3.1. Toward the Galactic
+        bulge, 2.5 is more typical.
+    """
+    def __init__(self, Rv):
+        # Fetch the extinction curve, pre-interpolate across 0.3-3 microns
+        wave = np.arange(0.25, 3.5, 0.001)
+
+        # This will eventually be scaled by AKs when you
+        # call reddening(). Produces A_lambda for AKs = 1, which will be
+        # scaled later. Expects wavelength in microns
+        Alambda_scaled = RedLawSODC._derive_sodc(wave, Rv)
+
+        # Convert wavelength to angstrom
+        wave *= 10 ** 4
+
+        pysynphot.reddening.CustomRedLaw.__init__(self, wave=wave,
+                                                  waveunits='angstrom',
+                                                  Avscaled=Alambda_scaled,
+                                                  name='SODC',
+                                                  litref='Klüter & Huston + 2025')
+
+        # Set the upper/lower wavelength limits of law (in angstroms)
+        self.low_lim = min(wave)
+        self.high_lim = max(wave)
+
+        # other info
+        self.scale_lambda = 0.549
+        self.name = 'SODC,{0}'.format(Rv)
+
+    @staticmethod
+    def _derive_sodc(wavelength, Rv):
+        """
+        SODC extinction law. This produces extinction values expected
+        for AKs = 1
+        """
+        x = 1.0 / np.array(wavelength)
+
+        # check for applicability
+        if (np.min(wavelength) < 0.25):
+            print( 'wavelength is shorter than applicable range for SODC law')
+            return None
+
+        if (np.max(wavelength) > 3.5):
+            print( 'wavelength is longer than applicable range for SODC law')
+            return None
+
+        # Set up some arrays for coefficients that we will need
+        a = np.zeros(len(x), dtype=float)
+        b = np.zeros(len(x), dtype=float)
+
+        y = x - 1.82
+
+        # Calculate coefficients for long wavelengths (low wavenumber)
+        # Wavenumger <= 1.1 
+        idx = np.where(x <= 1.1)[0]
+        a[idx] =  0.53974  * x[idx] ** 2.255
+        b[idx] = -0.495567 * x[idx] ** 2.255
+
+        # Calculate coefficients for short wavelengths
+        # 1.1 < wavenumber
+        idx = np.where((x > 1.1))[0]
+        yy = y[idx]
+        a[idx] = 1 + (0.104 * yy) - (0.609 * yy ** 2) + \
+            (0.701 * yy ** 3) + (1.137* yy ** 4) - \
+            (1.718 * yy ** 5) - (0.827 * yy ** 6) + \
+            (1.647 * yy ** 7) - (0.505 * yy ** 8)
+        b[idx] = (1.952 * yy) + (2.908 * yy ** 2) - \
+            (3.989 * yy ** 3) - (7.985 * yy ** 4) + \
+            (11.102 * yy ** 5) + (5.491 * yy ** 6) - \
+            (10.805 * yy ** 7) + (3.347 * yy ** 8)
+
+        # A(lam) / A(V), from Eq. 1
+        extinction = a + b/Rv
+
+        # Now, want to produce A_lambda / AKs, to match other laws
+        k_ind = np.argmin(abs(x-0.46))
+        Aks_Av = a[k_ind] + b[k_ind]/Rv # Aks / Av
+        Av_Aks = 1.0 / Aks_Av # Av / Aks
+
+        output = extinction * Av_Aks # (A(lamb) / Av) * (Av / Aks) = (A(lamb) / Aks)
+
+        return output
+
+    def SODC(self, wavelength, AKs):
         """
         Return the extinction at a given wavelength assuming the
         extinction law and an overall `AKs` value.
