@@ -13,6 +13,7 @@ from spisea.utils import objects
 from spisea import exceptions
 import astropy.units as u
 import astropy.constants as c
+from astropy import coordinates as coords
 
 logger = logging.getLogger('evolution')
 
@@ -1326,19 +1327,57 @@ class COSMIC(StellarEvolution):
             mask = ~bcm.loc[bcm['tphys'] == 0, 'bin_num'].isin(final_binaries['bin_num'])
             print('missing binaries', bcm.loc[bcm['tphys'] == 0].loc[mask])
             raise Exception("Some binaries didn't make it. Something went wrong with COSMIC. intC saved to {}".format('initiC_fail.hf'))
+
+        
+        # initializes kick columns with zeros
+        star_systems['kick_x'] = 0
+        star_systems['kick_y'] = 0
+        star_systems['kick_z'] = 0
+
+        # rotates output kicks from cosmic to inclination
+        # picks random direction for singles
+        inclinations = np.arccos(2 * np.random.rand(len(star_systems)) - 1.0) # initializes random inclinations in radians
+        existing_inclinations = np.deg2rad(companions['i'])
+        inclinations[companion_system_idxs] = existing_inclinations 
+        inclinations = np.repeat(inclinations, 2) # accounts for two rows per system in kick table
+        rotated_kick_values_1 = self.get_kick_differential(kick_info['delta_vsysx_1'], kick_info['delta_vsysy_1'], 
+                                                         kick_info['delta_vsysz_1'], inclination = inclinations)
+        rotated_kick_values_2 = self.get_kick_differential(kick_info['delta_vsysx_2'], kick_info['delta_vsysy_2'], 
+                                                         kick_info['delta_vsysz_2'], inclination = inclinations)
+        kick_info['delta_vsysx_1_rot'] = rotated_kick_values_1.d_x
+        kick_info['delta_vsysy_1_rot'] = rotated_kick_values_1.d_y
+        kick_info['delta_vsysz_1_rot'] = rotated_kick_values_1.d_z
+        
+        kick_info['delta_vsysx_2_rot'] = rotated_kick_values_2.d_x
+        kick_info['delta_vsysy_2_rot'] = rotated_kick_values_2.d_y
+        kick_info['delta_vsysz_2_rot'] = rotated_kick_values_2.d_z
+        
         
         star_systems['mass_current'] = final_binaries['mass_1']
         star_systems['Teff'] = final_binaries['teff_1']
         star_systems['L'] = final_binaries['lum_1']
         star_systems['logg'] = self.calc_logg(final_binaries['mass_1'], final_binaries['rad_1'])
-        # for kick, just take total since we will assign a random direction later anyway in PopSyCLE
-        star_systems['kick'] = kick_info.groupby(level=0).nth(0)['vsys_1_total'] # takes first row with priamry info
+        
+        # Takes second row with priamry info for binaries
+        # This allows for if first object is kicked but not disrupted
+        multiples_mask = star_systems['isMultiple'] == 1
+        star_systems['kick_x'][multiples_mask] = kick_info.groupby(level=0).nth(1).loc[multiples_mask, 'delta_vsysx_1_rot']
+        star_systems['kick_y'][multiples_mask] = kick_info.groupby(level=0).nth(1).loc[multiples_mask, 'delta_vsysy_1_rot']
+        star_systems['kick_z'][multiples_mask] = kick_info.groupby(level=0).nth(1).loc[multiples_mask, 'delta_vsysz_1_rot']
+        # Takes first row with primary info for singles since second row is blank
+        singles_mask = star_systems['isMultiple'] == 0
+        star_systems['kick_x'][singles_mask] = kick_info.groupby(level=0).nth(0).loc[singles_mask, 'delta_vsysx_1_rot']
+        star_systems['kick_y'][singles_mask] = kick_info.groupby(level=0).nth(0).loc[singles_mask, 'delta_vsysy_1_rot']
+        star_systems['kick_z'][singles_mask] = kick_info.groupby(level=0).nth(0).loc[singles_mask, 'delta_vsysz_1_rot']
         
         companions['mass_current'] = final_binaries['mass_2'][companion_system_idxs]
         companions['Teff'] = final_binaries['teff_2'][companion_system_idxs]
         companions['L'] = final_binaries['lum_2'][companion_system_idxs]
         companions['logg'] = self.calc_logg(final_binaries['mass_2'][companion_system_idxs], final_binaries['rad_2'][companion_system_idxs])
-        companions['kick'] = kick_info.groupby(level=0).nth(1)['vsys_2_total'][companion_system_idxs] # takes second row with companion info
+        # Takes second row with companion info
+        companions['kick_x'] = kick_info.groupby(level=0).nth(1)['delta_vsysx_2_rot'][companion_system_idxs] 
+        companions['kick_y'] = kick_info.groupby(level=0).nth(1)['delta_vsysy_2_rot'][companion_system_idxs] 
+        companions['kick_z'] = kick_info.groupby(level=0).nth(1)['delta_vsysz_2_rot'][companion_system_idxs]
         
         loga = np.log10(final_binaries['sep'][companion_system_idxs]*u.Rsun.to('AU'))
         companions['log_a'] = loga
@@ -1440,6 +1479,47 @@ class COSMIC(StellarEvolution):
             Log10 surface gravity in cgs
         """
         return np.log10(((np.array(c.G.to('Rsun^3/(Msun*s^2)').value*masses/((radii)**2))*u.Rsun/u.s**2).to('cm/s^2')).value)
+
+    def get_kick_differential(self, delta_v_sys_x, delta_v_sys_y, delta_v_sys_z, phase=None, inclination=None):
+        """Calculate the :class:`~astropy.coordinates.CylindricalDifferential` from a combination of the natal
+        kick, Blauuw kick and orbital motion.
+    
+        via cogsworth https://github.com/TomWagg/cogsworth/blob/main/cogsworth/kicks.py
+    
+        Parameters
+        ----------
+        delta_v_sys_x : :class:`~astropy.units.Quantity` [velocity]
+            Change in systemic velocity due to natal and Blauuw kicks in BSE :math:`(v_x, v_y, v_z)` frame
+            (see Fig A1 of `Hurley+02 <https://ui.adsabs.harvard.edu/abs/2002MNRAS.329..897H/abstract>`_)
+        delta_v_sys_y : :class:`~astropy.units.Quantity` [velocity]
+            Change in systemic velocity due to natal and Blauuw kicks in BSE :math:`(v_x, v_y, v_z)` frame
+            (see Fig A1 of `Hurley+02 <https://ui.adsabs.harvard.edu/abs/2002MNRAS.329..897H/abstract>`_)
+        delta_v_sys_z : :class:`~astropy.units.Quantity` [velocity]
+            Change in systemic velocity due to natal and Blauuw kicks in BSE :math:`(v_x, v_y, v_z)` frame
+            (see Fig A1 of `Hurley+02 <https://ui.adsabs.harvard.edu/abs/2002MNRAS.329..897H/abstract>`_)
+        phase : np.array
+            Orbital phase angle in radians
+        inclination : np.array
+            Inclination to the Galactic plane in radians
+    
+        Returns
+        -------
+        kick_differential : :class:`~astropy.coordinates.CylindricalDifferential`
+            Kick differential
+        """
+        # orbital phase angle and inclination to Galactic plane
+        thetas = np.random.uniform(0, 2 * np.pi, size = len(delta_v_sys_x)) if phase is None else phase
+        phis = np.arccos(2 * np.random.rand(len(delta_v_sys_x)) - 1.0) if inclination is None else inclination
+    
+        # rotate BSE (v_x, v_y, v_z) into Galactocentric (v_X, v_Y, v_Z)
+        v_X = delta_v_sys_x * np.cos(thetas) - delta_v_sys_y * np.sin(thetas) * np.cos(phis)\
+            + delta_v_sys_z * np.sin(thetas) * np.sin(phis)
+        v_Y = delta_v_sys_x * np.sin(thetas) + delta_v_sys_y * np.cos(thetas) * np.cos(phis)\
+            - delta_v_sys_z * np.cos(thetas) * np.sin(phis)
+        v_Z = delta_v_sys_y * np.sin(phis) + delta_v_sys_z * np.cos(phis)
+        kick_differential = coords.CartesianDifferential(v_X, v_Y, v_Z)
+    
+        return kick_differential
 
 
 #==============================#
