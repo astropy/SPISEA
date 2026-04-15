@@ -1309,24 +1309,65 @@ class COSMIC(StellarEvolution):
                                                    kstar1=kstar1s, kstar2=kstar2s, metallicity=[self.z_solar*10**metallicity]*len(m1s))
         
         bpp, bcm, initC, kick_info = Evolve.evolve(initialbinarytable=binary_pop, BSEDict=self.BSEDict)
-        if self.keep_COSMIC_tables:
-            self.bpp = bpp
-            self.bcm = bcm
-            self.initC = initC
-            self.kick_info = kick_info
-            
+        
         final_binaries = bcm[bcm['tphys'] > 0] #only gives the first and last idx, so this takes final one
-
+        
         # Add number for system idx since we're about to manipuluate them a bunch
         star_systems['system_idx'] = np.arange(len(star_systems))
         
         # Remove systems that don't show up in bcm final (very few)
         if len(final_binaries) != len(star_systems):
-            import pandas as pd
-            initC.to_hdf('initiC_fail.hf', key="df", mode="w")
+            # Save or append to initC
+            initC_fail_path = 'initC_fail.csv'
+            exists = os.path.exists(initC_fail_path)
+            initC.to_csv(
+                    initC_fail_path,
+                    mode='a' if exists else 'w',
+                    header=not exists,
+                    index=False
+                    )
+
+            # Save or append failing binary bcm values to table
             mask = ~bcm.loc[bcm['tphys'] == 0, 'bin_num'].isin(final_binaries['bin_num'])
+            failing_binaries = bcm.loc[bcm['tphys'] == 0].loc[mask]
+            
             print('missing binaries', bcm.loc[bcm['tphys'] == 0].loc[mask])
-            raise Exception("Some binaries didn't make it. Something went wrong with COSMIC. intC saved to {}".format('initiC_fail.hf'))
+            missing_binary_csv_path = 'missing_cosmic_binaries_bcm.csv'
+            exists = os.path.exists( missing_binary_csv_path)
+            failing_binaries.to_csv(
+                    missing_binary_csv_path,
+                    mode='a' if exists else 'w',
+                    header=not exists,
+                    index=False
+                    )
+
+            # Remove failing binaries from all tables and redefine quantites
+            for bin_num in failing_binaries['bin_num']:
+                bad_ss = np.where(star_systems['system_idx'] == bin_num)
+                star_systems.remove_rows(bad_ss) 
+                bad_companions = np.where(companions['system_idx'] == bin_num)
+                companions.remove_rows(bad_companions)
+                
+                companion_system_idxs = companions['system_idx']
+                m1s = star_systems['mass']
+                m2s = np.zeros(len(star_systems))
+                m2s[companion_system_idxs] = companions['mass']
+                
+                a_Rsuns = (10**companions['log_a'])*u.AU.to('Rsun')
+                porbs = np.zeros(len(star_systems))
+                porbs[companion_system_idxs] = p_from_a(a_Rsuns, m1s[companion_system_idxs], m2s[companion_system_idxs])
+                
+                eccs = np.zeros(len(star_systems))
+                eccs[companion_system_idxs] = companions['e']
+                
+                kstar1s = (m1s >= 0.7).astype(int) # 1 if MS above 0.7 and 0 if MS below 0.7
+                kstar2s = (m2s >= 0.7).astype(int) # 1 if MS above 0.7 and 0 if MS below 0.7
+                
+                bpp = bpp[bpp['bin_num'] != bin_num]
+                bcm = bcm[bcm['bin_num'] != bin_num]
+                kick_info = kick_info[kick_info['bin_num'] != bin_num]
+            
+            print("WARNING: Some binaries didn't make it. Something went wrong with COSMIC. Saved to initC_fail.csv and missing_cosmic_binaries_bcm.csv")
 
         
         # initializes kick columns with zeros
@@ -1459,6 +1500,12 @@ class COSMIC(StellarEvolution):
 
         # Make sure we didn't break anything by manipulating the number of companions
         assert star_systems['N_companions'].sum() == len(companions)
+        
+        if self.keep_COSMIC_tables:
+            self.bpp = bpp
+            self.bcm = bcm
+            self.initC = initC
+            self.kick_info = kick_info
 
         return star_systems, companions
 
