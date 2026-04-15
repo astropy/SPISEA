@@ -1250,7 +1250,7 @@ class COSMIC(StellarEvolution):
     def __init__(self, BSEDict='default', keep_disrupted_companions=True, keep_COSMIC_tables=False): 
         if BSEDict == 'default':
             self.BSEDict = {
-                                        "pts1": 0.001, "pts2": 0.01, "pts3": 0.02, "zsun": 0.014, "windflag": 3,
+                                        "pts1": 0.001, "pts2": 0.01, "pts3": 0.02, "zsun": 0.02, "windflag": 3,
                                         "eddlimflag": 0, "neta": 0.5, "bwind": 0.0, "hewind": 0.5, "beta": 0.125,
                                         "xi": 0.5, "acc2": 1.5, "LBV_flag": 1, "alpha1": 1.0, "lambdaf": 0.0,
                                         "ceflag": 1, "cekickflag": 2, "cemergeflag": 1, "cehestarflag": 0,
