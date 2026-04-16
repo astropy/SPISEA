@@ -1309,7 +1309,9 @@ class COSMIC(StellarEvolution):
                                                    kstar1=kstar1s, kstar2=kstar2s, metallicity=[self.z_solar*10**metallicity]*len(m1s))
         
         bpp, bcm, initC, kick_info = Evolve.evolve(initialbinarytable=binary_pop, BSEDict=self.BSEDict)
-        
+
+        #import pandas as pd
+        #bcm = pd.concat([bcm.iloc[:1], bcm.iloc[2:]]) 
         final_binaries = bcm[bcm['tphys'] > 0] #only gives the first and last idx, so this takes final one
         
         # Add number for system idx since we're about to manipuluate them a bunch
@@ -1342,30 +1344,52 @@ class COSMIC(StellarEvolution):
                     )
 
             # Remove failing binaries from all tables and redefine quantites
-            for bin_num in failing_binaries['bin_num']:
-                bad_ss = np.where(star_systems['system_idx'] == bin_num)
-                star_systems.remove_rows(bad_ss) 
-                bad_companions = np.where(companions['system_idx'] == bin_num)
-                companions.remove_rows(bad_companions)
-                
-                companion_system_idxs = companions['system_idx']
-                m1s = star_systems['mass']
-                m2s = np.zeros(len(star_systems))
-                m2s[companion_system_idxs] = companions['mass']
-                
-                a_Rsuns = (10**companions['log_a'])*u.AU.to('Rsun')
-                porbs = np.zeros(len(star_systems))
-                porbs[companion_system_idxs] = p_from_a(a_Rsuns, m1s[companion_system_idxs], m2s[companion_system_idxs])
-                
-                eccs = np.zeros(len(star_systems))
-                eccs[companion_system_idxs] = companions['e']
-                
-                kstar1s = (m1s >= 0.7).astype(int) # 1 if MS above 0.7 and 0 if MS below 0.7
-                kstar2s = (m2s >= 0.7).astype(int) # 1 if MS above 0.7 and 0 if MS below 0.7
-                
-                bpp = bpp[bpp['bin_num'] != bin_num]
-                bcm = bcm[bcm['bin_num'] != bin_num]
-                kick_info = kick_info[kick_info['bin_num'] != bin_num]
+            bad_bin_nums = failing_binaries['bin_num']
+            bad_mask_ss = np.isin(star_systems['system_idx'], bad_bin_nums)
+            star_systems.remove_rows(np.where(bad_mask_ss)[0])
+            
+            bad_mask_comp = np.isin(companions['system_idx'], bad_bin_nums)
+            companions.remove_rows(np.where(bad_mask_comp)[0])
+
+            bpp = bpp[~bpp['bin_num'].isin(bad_bin_nums)]
+            bcm = bcm[~bcm['bin_num'].isin(bad_bin_nums)]
+            kick_info = kick_info[~kick_info['bin_num'].isin(bad_bin_nums)]
+
+            # Redefine system idx since companions refer to the positions
+            star_systems['old_system_idx'] = star_systems['system_idx']
+            star_systems['system_idx'] = np.arange(len(star_systems))
+            idx_map = dict(zip(star_systems['old_system_idx'], star_systems['system_idx']))
+            companions['system_idx'] = np.array([idx_map[i] for i in companions['system_idx']])
+
+            # redefine the bin_num to the new values too
+            bpp['bin_num'] = bpp['bin_num'].map(idx_map)
+            bcm['bin_num'] = bcm['bin_num'].map(idx_map)
+            kick_info['bin_num'] = kick_info['bin_num'].map(idx_map)
+
+            assert(set(companions['system_idx']) - set(star_systems['system_idx']) == set())
+            assert(set(bpp['bin_num']) - set(star_systems['system_idx']) == set())
+            assert(set(bcm['bin_num']) - set(star_systems['system_idx']) == set())
+            assert(set(kick_info['bin_num']) - set(star_systems['system_idx']) == set())
+
+            # reset the index to the bin_num column
+            bpp = bpp.set_index('bin_num', drop=False)
+            bcm = bcm.set_index('bin_num', drop=False)
+            kick_info = kick_info.set_index('bin_num', drop=False)
+            
+            companion_system_idxs = companions['system_idx']
+            m1s = star_systems['mass']
+            m2s = np.zeros(len(star_systems))
+            m2s[companion_system_idxs] = companions['mass']
+            
+            a_Rsuns = (10**companions['log_a'])*u.AU.to('Rsun')
+            porbs = np.zeros(len(star_systems))
+            porbs[companion_system_idxs] = p_from_a(a_Rsuns, m1s[companion_system_idxs], m2s[companion_system_idxs])
+            
+            eccs = np.zeros(len(star_systems))
+            eccs[companion_system_idxs] = companions['e']
+            
+            kstar1s = (m1s >= 0.7).astype(int) # 1 if MS above 0.7 and 0 if MS below 0.7
+            kstar2s = (m2s >= 0.7).astype(int) # 1 if MS above 0.7 and 0 if MS below 0.7
             
             print("WARNING: Some binaries didn't make it. Something went wrong with COSMIC. Saved to initC_fail.csv and missing_cosmic_binaries_bcm.csv")
 
