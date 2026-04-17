@@ -276,7 +276,8 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         by fitting the data from fitting the semimajor axis data as a function of mass in table 1 of Duchene and Kraus 2013.
         Then a random semimajor axis is drawn from a log normal distribution with that mean and standard deviation.
 
-        The brown dwarf range is described by mean seperation and std values given in Fontanive et al. (2018).
+        The brown dwarf range is covered by mass-dependent scaling of both the characteristic separation and dispersion
+        matching trends described in Fontanive et al. (2018).
         
         Parameters
         ----------
@@ -288,22 +289,46 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         log_semimajoraxis : float
             Log of the semimajor axis/separation between the stars in units of AU
         """
-        a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(amplitude=self.a_amp, x_break=self.a_break, alpha_1=self.a_slope1, alpha_2=self.a_slope2)
-        log_a_mean = np.log10(a_mean_func(mass)) #mean log(a)
-        log_a_std_func = astropy.modeling.models.Linear1D(slope=self.a_std_slope, intercept=self.a_std_intercept)
-        log_a_std = log_a_std_func(np.log10(mass)) #sigma_log(a)
+        a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(
+            amplitude=self.a_amp,
+            x_break=self.a_break,
+            alpha_1=self.a_slope1,
+            alpha_2=self.a_slope2
+        )
+        log_a_mean_star = np.log10(a_mean_func(mass)) #mean log(a)
+        log_a_std_func = astropy.modeling.models.Linear1D(
+            slope=self.a_std_slope,
+            intercept=self.a_std_intercept
+        )
+        log_a_std_star = log_a_std_func(np.log10(mass)) #sigma_log(a)
+        
         if mass >= 2.9:
-            log_a_std = log_a_std_func(np.log10(2.9)) #sigma_log(a)
-        if log_a_std < 0.1:
-            log_a_std = 0.1
-        if mass <= 0.08:
-            log_a_mean = np.log10(2.9)
-            log_a_std = 0.21
-            
+            log_a_std_star = log_a_std_func(np.log10(2.9)) #sigma_log(a)
+        if log_a_std_star < 0.1:
+            log_a_std_star = 0.1
+
+        # additions for BD regime
+        logm = np.log10(mass)
+        log_a_mean_bd = np.interp(
+            logm,
+            [np.log10(0.01), np.log10(0.08)],
+            [np.log10(2.5), np.log10(8.0)]
+        )
+        log_a_std_bd = np.interp(
+            logm,
+            [np.log10(0.01), np.log10(0.08)],
+            [0.25, 0.5]
+        )
+
+        # weighted transition for substellar --> stellar
+        w = 1 / (1 + np.exp(-(logm - np.log10(0.08)) / 0.15))
+        log_a_mean = (1 - w) * log_a_mean_bd + w * log_a_mean_star
+        log_a_std  = (1 - w) * log_a_std_bd  + w * log_a_std_star
         log_semimajoraxis = np.random.normal(log_a_mean, log_a_std)
-        while 10**log_semimajoraxis > 2000 or log_semimajoraxis < -2: #AU
+
+        while 10**log_semimajoraxis > 2000 or log_semimajoraxis < -2:
             log_semimajoraxis = np.random.normal(log_a_mean, log_a_std)
-            
+
         return log_semimajoraxis
     
     def random_e(self, x):
