@@ -1310,8 +1310,6 @@ class COSMIC(StellarEvolution):
         
         bpp, bcm, initC, kick_info = Evolve.evolve(initialbinarytable=binary_pop, BSEDict=self.BSEDict)
 
-        #import pandas as pd
-        #bcm = pd.concat([bcm.iloc[:1], bcm.iloc[2:]]) 
         final_binaries = bcm[bcm['tphys'] > 0] #only gives the first and last idx, so this takes final one
         
         # Add number for system idx since we're about to manipuluate them a bunch
@@ -1390,9 +1388,10 @@ class COSMIC(StellarEvolution):
             
             kstar1s = (m1s >= 0.7).astype(int) # 1 if MS above 0.7 and 0 if MS below 0.7
             kstar2s = (m2s >= 0.7).astype(int) # 1 if MS above 0.7 and 0 if MS below 0.7
+
+            final_binaries = bcm[bcm['tphys'] > 0] #only gives the first and last idx, so this takes final one
             
             print("WARNING: Some binaries didn't make it. Something went wrong with COSMIC. Saved to initC_fail.csv and missing_cosmic_binaries_bcm.csv")
-
         
         # initializes kick columns with zeros
         star_systems['kick_x'] = 0
