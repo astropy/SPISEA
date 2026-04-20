@@ -34,3 +34,5 @@ Javier Moldón -- installation using Docker containers and Singularity
 
 Winston Zhang -- bugfix to make redlaw paths correct regardless of
 what operating system is used
+
+Caitlin Begbie -- added brown dwarf physics and capabilities

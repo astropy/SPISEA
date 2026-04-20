@@ -58,3 +58,7 @@ Model Atmosphere Classes
 
 .. autofunction:: atmospheres.get_phoenix_atmosphere
 
+.. autofunction:: atmospheres.get_Phillips2020_atmosphere
+
+.. autofunction:: atmospheres.get_Meisner2023_atmosphere
+

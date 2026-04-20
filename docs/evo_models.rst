@@ -78,4 +78,9 @@ Specific Evolution Model Classes
 
 .. autoclass:: evolution.Pisa
 	       :show-inheritance:
+
+.. autoclass:: evolution.MergedPhillipsBaraffePisaEkstromParsec
+	       :show-inheritance:
    
+.. autoclass:: evolution.Phillips2020
+	       :show-inheritance:
