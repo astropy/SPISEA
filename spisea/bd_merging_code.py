@@ -1,3 +1,6 @@
+### Code used to incorporate new brown dwarf evolution/atmosphere models into pre-existing code.
+### Messy, ask Caitlin Begbie if there are questions
+
 import math
 import logging
 from numpy import genfromtxt
@@ -632,10 +635,6 @@ def merge_isochrone_baraffe_pisa(logAge, metallicity='solar'):
 
     return iso
 
-
-import matplotlib.pyplot as plt
-import numpy as np
-
 """def plot_merged_isochrone(iso):
     ""
     Function to plot the merged isochrone model to visualize the transition
@@ -696,9 +695,6 @@ import numpy as np
     plt.tight_layout()
     plt.show()
 """
-
-import numpy as np
-import matplotlib.pyplot as plt
 
 def plot_merged_isochrone(iso):
     """
