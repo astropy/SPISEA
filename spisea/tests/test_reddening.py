@@ -254,5 +254,6 @@ def test_all_EL():
     red_law = reddening.RedLawSchoedel10()
     red_law = reddening.RedLawNoguerasLara18()
     red_law = reddening.RedLawNoguerasLara20()
+    red_law = reddening.RedLawSODC(2.5)
 
     return
