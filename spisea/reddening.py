@@ -64,7 +64,7 @@ def get_red_law(str):
                      'H18b': RedLawHosek18b,
                      'NL18': RedLawNoguerasLara18,
                      'NL20': RedLawNoguerasLara20,
-                     'SODC': SODC
+                     'SODC': RedLawSODC
                     }
 
     # Make reddening law object, including params if necessary.
