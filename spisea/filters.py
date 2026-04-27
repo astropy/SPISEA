@@ -465,7 +465,8 @@ def get_euclid_filt(name):
     transmission = t[t.keys()[1]]
 
     # Convert wavelength to Angstroms
-    wavelength = wavelength * 10
+    if name.lower() != 'vis':
+        wavelength = wavelength * 10
 
     # Make spectrum object
     spectrum = pysynphot.ArrayBandpass(wavelength, transmission, waveunits='angstrom',

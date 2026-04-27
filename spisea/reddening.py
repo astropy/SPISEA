@@ -415,6 +415,10 @@ class RedLawSODC(pysynphot.reddening.CustomRedLaw):
     r"""
     Defines the SODC extinction law from SynthPop, described by
     `Klüter & Huston et al. (2025) <https://ui.adsabs.harvard.edu/abs/2025AJ....169..317K/abstract>`_.
+    It is based on the `Cardelli et al. (1989) <https://ui.adsabs.harvard.edu/abs/1989ApJ...345..245C/abstract>`_
+    formulation with an updated optical end from `O'Donnell et al (1994) 
+    <https://ui.adsabs.harvard.edu/abs/1994ApJ...422..158O/abstract>`_ and infrared side adjusted to match
+    `Surot et al. (2020) <https://ui.adsabs.harvard.edu/abs/2020A%26A...644A.140S/abstract>`_.
     The law is defined from 0.25 - 3.5 microns, and in terms
     of :math:`A_{\lambda} / A_{Ks}`, where Ks is 2.174 microns.
 
