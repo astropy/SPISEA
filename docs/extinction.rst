@@ -36,6 +36,7 @@ Available extinction laws:
 * RedLawHosek18b
 * RedLawNoguerasLara18
 * RedLawNoguerasLara20
+* RedLawSODC
 
 
 Extinction Law Classes
@@ -89,5 +90,8 @@ Extinction Law Classes
 
 .. autoclass:: reddening.RedLawNoguerasLara20
 	       :members: NoguerasLara20
+
+.. autoclass:: reddening.RedLawSODC
+	       :members: SODC
 
 
