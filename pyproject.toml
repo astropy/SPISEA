@@ -26,7 +26,8 @@ dependencies = [
     "scipy>=1.10.1",
     "matplotlib",
     "astropy",
-    "pysynphot"
+    "synphot>=1.5",
+    "stsynphot>=1.4",
 ]
 
 optional-dependencies.dev = [
@@ -61,7 +62,7 @@ requires = [
 build-backend = 'setuptools.build_meta'
 
 [tool.setuptools]
-packages = ["spisea"]
+packages = ["spisea", "spisea.utils"]
 
 [tool.setuptools.package-data]
 spisea = ["data/*"]

@@ -2,6 +2,7 @@ matplotlib
 numpy
 numpydoc
 astropy
-pysynphot
+synphot>=1.5
+stsynphot>=1.4
 scipy
 docutils<0.18

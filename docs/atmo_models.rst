@@ -13,16 +13,16 @@ To call an atmosphere for a particular star, user must define the
 metallicity ([Z]), temperature (in K), and gravity (in cgs)::
 
   spectrum = atmo(metallicity=0, temperature=5800, gravity=4)
-  wave = spectrum.wave # Wavelength in Angstroms
-  flux = spectrum.flux # Flux in ergs s^-1 cm^-2 Angstrom^-1
-  (pysynphot Flam units)
+  from astropy import units
+  wave = spectrum.waveset.to(units.AA).value   # Wavelength in Angstroms
+  flux = spectrum(spectrum.waveset)  # Flux (synphot Quantity; typically FLAM)
 
 The atmosphere function is an input for the :ref:`isochrone_objects`,
 and will automatically be used to define the
 spectrum of each star in the isochrone model.
 
-PopStar uses the pysynphot framework to extract the model atmosphere,
-and the the output spectrum is a `pysynphot.Icat object <https://pysynphot.readthedocs.io/en/latest/ref_api.html#pysynphot.catalog.Icat>`_.
+PopStar uses the stsynphot/synphot stack to extract the model atmosphere,
+and the output spectrum is a synphot ``SourceSpectrum`` built from the CDBS grid via ``stsynphot.grid_to_spec``.
 
 Below is a table of atmosphere model grids currently supported by
 SPISEA. Note that the resolution column reports the original

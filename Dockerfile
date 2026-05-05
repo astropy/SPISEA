@@ -4,7 +4,8 @@ RUN apt-get update && apt-get upgrade -y && apt-get clean
 
 RUN apt-get install -y curl python3 python3-dev python3-distutils python3-pip git wget
 
-RUN pip3 install astropy pysynphot scipy numpy matplotlib 
+# synphot + stsynphot replace deprecated pysynphot; set PYSYN_CDBS to your CDBS tree (see below).
+RUN pip3 install astropy synphot stsynphot scipy numpy matplotlib
 
 RUN ln -s /usr/bin/python3 /usr/bin/python
 
@@ -32,6 +33,7 @@ WORKDIR /cdbs/models
 RUN wget http://astro.berkeley.edu/~jlu/spisea/spisea_models.tar.gz && wget http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs.tar.gz
 RUN tar -xvf spisea_cdbs.tar.gz && tar -xvf spisea_models.tar.gz && rm spisea_cdbs.tar.gz && rm spisea_models.tar.gz
 
+# stsynphot reads throughput/model grids from this path (same convention as legacy pysynphot).
 ENV PYSYN_CDBS /cdbs/models/cdbs/
 ENV SPISEA_MODELS /cdbs/models
 

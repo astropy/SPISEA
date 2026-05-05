@@ -3,6 +3,7 @@ from spisea import reddening, synthetic, evolution, atmospheres
 import pylab as py
 import os
 import pdb
+from astropy import units as u
 
 
 def test_RedLawBrokenPowerLaw(plots=False):
@@ -11,8 +12,8 @@ def test_RedLawBrokenPowerLaw(plots=False):
     #===============================#
     alpha1 = 2.23
     alpha2 = 3.0
-    lambda_limits = [2.16, 1.63, 1.27]
-    alpha_vals = [alpha1, alpha2]
+    lambda_limits = [1.27, 1.63, 2.16]
+    alpha_vals = [alpha2, alpha1]
     K_wave = 2.14
 
     red_law = reddening.RedLawBrokenPowerLaw(lambda_limits, alpha_vals, K_wave)
@@ -36,6 +37,7 @@ def test_RedLawBrokenPowerLaw(plots=False):
     # Put in terms of A_lambda / A_Ks, like the reddening object
     idx_K = np.where(abs(wave_test - K_wave) == min(abs(wave_test - K_wave)))
     law_test /= law_test[idx_K]
+    law_test *= u.mag
 
     # Compare law_test and the output from the redlaw object
     law_output = red_law.broken_powerlaw(wave_test, 1)
@@ -45,13 +47,13 @@ def test_RedLawBrokenPowerLaw(plots=False):
 
     # Calculate the difference between test calc and code output.
     # Make sure they agree within tolerance
-    diff = law_output - law_test
+    diff = (law_output - law_test) / u.mag
     assert np.all(diff < 10**-4)
 
     # Let's also make sure the slope of the extinction law
     # in log-log space matches what it should be
     log_wave = np.log10(wave_test)
-    log_output = np.log10(law_output)
+    log_output = np.log10(law_output / u.mag)
 
     idx1 = np.where(abs(wave_test-1.28) == np.min(abs(wave_test-1.28)))
     idx2 = np.where(abs(wave_test-1.53) == np.min(abs(wave_test-1.53)))
@@ -85,11 +87,11 @@ def test_RedLawBrokenPowerLaw(plots=False):
     #===============================#
     # Test 1: 4-segment law
     #===============================#
-    alpha1 = 2.23
-    alpha2 = 3.0
-    alpha3 = 2.5
-    alpha4 = 3.7
-    lambda_limits = [2.16, 1.63, 1.27, 0.8, 0.4]
+    alpha1 = 3.7
+    alpha2 = 2.5
+    alpha3 = 3.0
+    alpha4 = 2.23
+    lambda_limits = [0.4, 0.8, 1.27, 1.63, 2.16]
     alpha_vals = [alpha1, alpha2, alpha3, alpha4]
     K_wave = 2.14
 
@@ -100,36 +102,37 @@ def test_RedLawBrokenPowerLaw(plots=False):
     wave_test = np.arange(0.4, 2.15+0.001, 0.01)
     law_test = np.ones(len(wave_test)) * np.nan
 
-    # 2.14 - 1.63
-    idx = np.where( (wave_test >= 1.63) & (wave_test < 2.17))
-    coeff = 1
-    law_test[idx] = coeff * wave_test[idx] ** (-1*alpha1)
-
-    # 1.63 - 1.27
-    idx = np.where( (wave_test >= 1.27) & (wave_test < 1.63))
-    coeff  = (1.63 ** (-1*alpha1)) / (1.63 ** (-1*alpha2))
-    law_test[idx] = coeff * wave_test[idx] ** (-1*alpha2)
-
-    # 1.27 - 0.8
-    idx = np.where( (wave_test >= 0.8) & (wave_test < 1.27))
-    coeff1 = (1.63 ** (-1*alpha1)) / (1.63 ** (-1*alpha2))
-    coeff2 = (1.27 ** (-1*alpha2)) / (1.27 ** (-1*alpha3))
-    coeff_f = coeff1 * coeff2
-    law_test[idx] = coeff_f * wave_test[idx] ** (-1*alpha3)
-
-    # 0.8 - 0.4
+    # 0.4 - 0.8
     idx = np.where( (wave_test >= 0.4) & (wave_test < 0.8))
-    coeff1 = (1.63 ** (-1*alpha1)) / (1.63 ** (-1*alpha2))
-    coeff2 = (1.27 ** (-1*alpha2)) / (1.27 ** (-1*alpha3))
-    coeff3 = (0.8 ** (-1*alpha3)) / (0.8 ** (-1*alpha4))
+    coeff = 1
+    law_test[idx] = coeff * wave_test[idx] ** (-1.0 * alpha1)
+
+    # 0.8 - 1.27
+    idx = np.where( (wave_test >= 0.8) & (wave_test < 1.27))
+    coeff  = (0.8 ** (-1.0 * alpha1)) / (0.8 ** (-1.0 * alpha2))
+    law_test[idx] = coeff * wave_test[idx] ** (-1.0 * alpha2)
+
+    # 1.27 - 1.63
+    idx = np.where( (wave_test >= 1.27) & (wave_test < 1.63))
+    coeff1 = (0.8 ** (-1.0 * alpha1)) / (0.8 ** (-1.0 * alpha2))
+    coeff2 = (1.27 ** (-1.0 * alpha2)) / (1.27 ** (-1.0 * alpha3))
+    coeff_f = coeff1 * coeff2
+    law_test[idx] = coeff_f * wave_test[idx] ** (-1.0 * alpha3)
+
+    # 1.63 - 2.14
+    idx = np.where( (wave_test >= 1.63) & (wave_test < 2.16))
+    coeff1 = (0.80 ** (-1.0 * alpha1)) / (0.80 ** (-1.0 *  alpha2))
+    coeff2 = (1.27 ** (-1.0 * alpha2)) / (1.27 ** (-1.0 * alpha3))
+    coeff3 = (1.63 ** (-1.0 * alpha3)) / (1.63 ** (-1.0 * alpha4))
     coeff_f = coeff1 * coeff2 * coeff3
-    law_test[idx] = coeff_f * wave_test[idx] ** (-1*alpha4)
+    law_test[idx] = coeff_f * wave_test[idx] ** (-1.0 * alpha4)
 
     assert np.sum(np.isnan(law_test)) == 0
 
     # Put in terms of A_lambda / A_Ks, like the reddening object
     idx_K = np.where(abs(wave_test - K_wave) == min(abs(wave_test - K_wave)))
     law_test /= law_test[idx_K]
+    law_test *= u.mag
 
     # Compare law_test and the output from the redlaw object
     law_output = red_law.broken_powerlaw(wave_test, 1)
@@ -139,33 +142,34 @@ def test_RedLawBrokenPowerLaw(plots=False):
 
     # Calculate the difference between test calc and code output.
     # Make sure they agree within tolerance
-    diff = law_output - law_test
-    assert np.all(diff < 10**-4)
+    diff = (law_output - law_test) / u.mag
+    assert np.all(diff < 10**-4) 
 
     # Let's also make sure the slope of the extinction law
     # in log-log space matches what it should be
     log_wave = np.log10(wave_test)
-    log_output = np.log10(law_output)
+    log_output = np.log10(law_output / u.mag)
 
-    idx1 = np.where(abs(wave_test-1.28) == np.min(abs(wave_test-1.28)))
-    idx2 = np.where(abs(wave_test-1.53) == np.min(abs(wave_test-1.53)))
-    slope = (log_output[idx1] - log_output[idx2]) / (log_wave[idx1] - log_wave[idx2])
-    assert abs(slope - (-1.0 * alpha2)) < 10**-4
-
-    idx1 = np.where(abs(wave_test-1.7) == np.min(abs(wave_test-1.7)))
-    idx2 = np.where(abs(wave_test-2.1) == np.min(abs(wave_test-2.1)))
-    slope = (log_output[idx1] - log_output[idx2]) / (log_wave[idx1] - log_wave[idx2])
+    idx1 = np.argmin(abs(wave_test-0.45))
+    idx2 = np.argmin(abs(wave_test-0.7))
+    slope = (log_output[idx2] - log_output[idx1]) / (log_wave[idx2] - log_wave[idx1])
     assert abs(slope - (-1.0 * alpha1)) < 10**-4
 
-    idx1 = np.where(abs(wave_test-0.9) == np.min(abs(wave_test-0.9)))
-    idx2 = np.where(abs(wave_test-1.2) == np.min(abs(wave_test-1.2)))
-    slope = (log_output[idx1] - log_output[idx2]) / (log_wave[idx1] - log_wave[idx2])
+    idx1 = np.argmin(abs(wave_test-0.9))
+    idx2 = np.argmin(abs(wave_test-1.2))
+    slope = (log_output[idx2] - log_output[idx1]) / (log_wave[idx2] - log_wave[idx1])
+    assert abs(slope - (-1.0 * alpha2)) < 10**-4
+
+    idx1 = np.argmin(abs(wave_test-1.28))
+    idx2 = np.argmin(abs(wave_test-1.53))
+    slope = (log_output[idx2] - log_output[idx1]) / (log_wave[idx2] - log_wave[idx1])
     assert abs(slope - (-1.0 * alpha3)) < 10**-4
 
-    idx1 = np.where(abs(wave_test-0.45) == np.min(abs(wave_test-0.45)))
-    idx2 = np.where(abs(wave_test-0.7) == np.min(abs(wave_test-0.7)))
-    slope = (log_output[idx1] - log_output[idx2]) / (log_wave[idx1] - log_wave[idx2])
+    idx1 = np.argmin(abs(wave_test-1.7))
+    idx2 = np.argmin(abs(wave_test-2.1))
+    slope = (log_output[idx2] - log_output[idx1]) / (log_wave[idx2] - log_wave[idx1])
     assert abs(slope - (-1.0 * alpha4)) < 10**-4
+
 
     # If desired (debug only), make plot to see what law looks like
     if plots:
@@ -184,6 +188,7 @@ def test_RedLawBrokenPowerLaw(plots=False):
         py.title('4-segment Extlaw: should match')
 
     return
+
 
 def test_red_law_IsochronePhot():
     """
@@ -205,7 +210,7 @@ def test_red_law_IsochronePhot():
     redlaw_arr = ['F11', 'S10', 'NL20', 'I05', 'N09', 'RZ07',
                       'RL85', 'D16', 'F09,2.5,3', 'S16,1.55,0', 'DM16',
                       'H18b', 'NL18', 'C89,3.1', 'pl,2.12,0.9,2.4',
-                      'broken_pl,[2.3,1.63,0.9],[2.23, 3.0],2.12']
+                      'broken_pl,[0.9,1.63,2.3],[3.0,2.23],2.12']
 
     aks_arr = [2.62, 2.46, 1.67, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3]
     for ii in range(len(redlaw_arr)):

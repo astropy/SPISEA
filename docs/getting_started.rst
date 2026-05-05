@@ -26,7 +26,8 @@ Other dependencies:
 
 * python (>=3.7, < 3.12)
 * astropy
-* pysynphot
+* synphot
+* stsynphot
 * scipy
 * numpy (>= 1.17, < 2.0)
 * matplotlib
