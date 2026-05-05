@@ -25,7 +25,7 @@ def test_isochrone(plot=False):
     distance = 4000
 
     startTime = time.time()
-    iso = syn.Isochrone(logAge, AKs, distance, verbose=True)
+    iso = syn.Isochrone(logAge, AKs, distance, verbose=plot)
     print('Test completed in: %d seconds' % (time.time() - startTime))
     # Typically takes 104 - 120 seconds.
     # Limited by stsynphot grid_to_spec / atmosphere lookup in atmospheres.py
@@ -318,7 +318,7 @@ def test_ResolvedCluster():
         mass_sampling=mass_sampling,
         iso_dir=iso_dir,
         recomp=True,
-        verbose=True
+        verbose=False
     )
 
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
@@ -1248,7 +1248,7 @@ def test_ResolvedCluster_random_state():
         mass_sampling=10,
         iso_dir=iso_dir,
         recomp=False,
-        verbose=True
+        verbose=False
     )
 
     imf_limits = np.array([0.07, 0.5, 150])

@@ -29,7 +29,7 @@ def test_rebin_spec_matches_synphot_observation():
     w_out = w_in[::28]
     filt = _unit_flat_bandpass(w_in)
 
-    got = atm.rebin_spec(w_in, vega, w_out)
+    got = atm.rebin_spec(w_in, vega, w_out).value
     obs = Observation(vega, filt, binset=w_out, force="taper")
     expected = np.asarray(obs.binflux.value, dtype=np.float64).ravel()
 
