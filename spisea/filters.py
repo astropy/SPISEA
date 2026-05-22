@@ -492,3 +492,93 @@ def get_nsfcam_filt(name):
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='nsfcam_{0}'.format(name))
 
     return spectrum
+
+def get_tess_filt(name):
+
+    """
+    Define the TESS filter as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/tess/{1}.dat'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find tess filter {0} in {1}/tess'.format(name, filters_dir))
+
+    # Wavelength from nanometers to angstroms and and transmission in fraction
+    wave = t['col1']*10
+    trans = t['col2']
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='tess,{0}'.format(name))
+
+    return spectrum
+
+def get_washington_filt(name):
+
+    """
+    Define the Washington filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/washington/{1}.dat'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find washington filter {0} in {1}/washington'.format(name, filters_dir))
+
+    # Wavelength from nanometers to angstroms and and transmission in fraction
+    wave = t['col1']*10
+    trans = t['col2']
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='washington,{0}'.format(name))
+
+    return spectrum
+
+def get_hipparcos_filt(name):
+
+    """
+    Define the Hipparcos filter as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/hipparcos/{1}.dat'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find hipparcos filter {0} in {1}/hipparcos'.format(name, filters_dir))
+
+    # Wavelength in angstroms and and transmission in fraction
+    wave = t['col1']
+    trans = t['col2']
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='hipparcos,{0}'.format(name))
+
+    return spectrum
+
+def get_tycho_filt(name):
+
+    """
+    Define the Tycho filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/tycho/{1}.dat'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find tycho filter {0} in {1}/tycho'.format(name, filters_dir))
+
+    # Wavelength in angstroms and and transmission in fraction
+    wave = t['col1']
+    trans = t['col2']
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='tycho,{0}'.format(name))
+
+    return spectrum
+
+def get_kepler_filt(name):
+
+    """
+    Define the Kepler filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/kepler/{1}.dat'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find kepler filter {0} in {1}/kepler'.format(name, filters_dir))
+
+    # Wavelength in angstroms and and transmission in fraction
+    wave = t['col1']
+    trans = t['col2']
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='kepler,{0}'.format(name))
+
+    return spectrum

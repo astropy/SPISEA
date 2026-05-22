@@ -189,7 +189,10 @@ def test_filters():
                      'roman,wfi,f184', 'rubin,g', 'rubin,i', 'rubin,r',
                      'rubin,u', 'rubin,z', 'rubin,y',
                      'euclid,VIS', 'euclid,Y', 'euclid,J', 'euclid,H',
-                     'nsfcam,L']
+                     'nsfcam,L', 'tess,tess',
+                     'washington,C', 'washington,M', 'washington,T1', 'washington,T2',
+                     'hipparcos,Hp', 'tycho,B', 'tycho,V',
+                     'kepler,Kp']
 
     # Loop through filters to test that they work: get_filter_info
     for ii in filt_list:

@@ -44,6 +44,7 @@ Available filters:
 * NACO
 * PanStarrs 1
 * Roman Space Telescope
+* TESS
 * UKIRT
 * Vera C. Rubin Observatory
 * VISTA
@@ -116,6 +117,14 @@ Filters: J, H, Ks
 
 Example: ``'hawki,J'``
 
+**Hipparcos**
+
+`Hipparcos Hp filter <http://ulisse.pd.astro.it/Astro/ADPS/Systems/Sys_135/index_135.html>`_
+
+Filters: Hp
+
+Example: ``'hipparcos,Hp'``
+
 **Hubble Space Telescope**
 
 HST filters are defined by their `pysynphot OBSMODE strings
@@ -171,6 +180,14 @@ Filters: J, H, Hcont, K, Kp, Ks, Kcont, Lp, Ms, Brgamma, FeII
 
 Example: ``'nirc2,Ks'``
 
+**Kepler**
+
+`Kepler Kp filter <http://svo2.cab.inta-csic.es/theory/fps/index.php?mode=browse&gname=Kepler&asttype=>`_
+
+Filters: Kp
+
+Example: ``'kepler,Kp'``
+
 
 **NACO**
 
@@ -206,11 +223,27 @@ Filters: F062, F087, F106, F129, F158, W146, F184, F213
 
 Example: ``'roman,wfi,f062'``
 
+**TESS**
+
+TESS filter: a single wide, red-optical `bandpass <https://heasarc.gsfc.nasa.gov/docs/tess/telescope_information.html>`_
+
+Filters: tess
+
+Example: ``'tess,tess'``
+
+**Tycho**
+
+`Tycho filters <http://ulisse.pd.astro.it/Astro/ADPS/Systems/Sys_135/index_135.html>`_
+
+Filters: B, V
+
+Example: ``'tycho,B'``
+
 **UKIRT**
 
 `UKIRT Telescope filters <http://www.ukidss.org/technical/photom/photom.html>`_
 
-Filters: J, H, K
+Filters: Z, Y, J, H, K
 
 Example: ``'ukirt,K'``
 
@@ -230,6 +263,14 @@ Example: ``'rubin,g'``
 Filters: Z, Y, J, H, K
 
 Example: ``'vista,Y'``
+
+**Washington**
+
+Washington filter system from `Bessell et al. 2001 <https://ui.adsabs.harvard.edu/abs/2001PASP..113...66B/abstract>`_
+
+Filters: C, M, T1, T2
+
+Example: ``'washington,C'``
 
 **ZTF**
 

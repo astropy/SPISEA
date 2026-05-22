@@ -1787,6 +1787,21 @@ def get_filter_info(name, vega=vega, rebin=True):
     elif name.startswith('nsfcam'):
         filt = filters.get_nsfcam_filt(filterName)
 
+    elif name.startswith('tess'):
+        filt = filters.get_tess_filt(filterName)
+
+    elif name.startswith('washington'):
+        filt = filters.get_washington_filt(filterName)
+
+    elif name.startswith('hipparcos'):
+        filt = filters.get_hipparcos_filt(filterName)
+
+    elif name.startswith('tycho'):
+        filt = filters.get_tycho_filt(filterName)
+
+    elif name.startswith('kepler'):
+        filt = filters.get_kepler_filt(filterName)
+
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
         try:
@@ -1934,7 +1949,12 @@ def get_obs_str(col):
                  'euclid_Y':'euclid,Y',
                  'euclid_J':'euclid,J',
                  'euclid_H':'euclid,H',
-                 'nsfcam_L':'nsfcam,L'}
+                 'nsfcam_L':'nsfcam,L',
+                 'tess_tess':'tess,tess',
+                 'washington_C':'washington,C', 'washington_M':'washington,M',
+                 'washington_T1':'washington,T1', 'washington_T2':'washington,T2',
+                 'hipparcos_Hp':'hipparcos,Hp', 'tycho_B':'tycho,B', 'tycho_V':'tycho,V',
+                 'kepler_Kp':'kepler,Kp'}
 
     obs_str = filt_list[name]
 
