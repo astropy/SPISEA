@@ -103,7 +103,7 @@ def get_decam_filt(name):
     # Read in filter info
     try:
         t = Table.read('{0}/decam/DECam_filters.txt'.format(filters_dir), format='ascii')
-        t.rename_column('Y', 'y')
+        t['y'] = t['Y']
 
         cols = np.array(t.keys())
         idx = np.where(cols == name)[0][0]
@@ -139,6 +139,7 @@ def get_PS1_filt(name):
         t.rename_column('col5', 'i')
         t.rename_column('col6', 'z')
         t.rename_column('col7', 'y')
+        t.rename_column('col8', 'w')
 
         cols = np.array(t.keys())
         idx = np.where(cols == name)[0][0]
