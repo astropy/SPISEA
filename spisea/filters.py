@@ -582,3 +582,21 @@ def get_kepler_filt(name):
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='kepler,{0}'.format(name))
 
     return spectrum
+
+def get_ogle_filt(name):
+
+    """
+    Define the OGLE filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/ogle/{1}.dat'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find ogle filter {0} in {1}/ogle'.format(name, filters_dir))
+
+    # Wavelength in nm->angstroms and and transmission in fraction
+    wave = np.flip(t['col1'])*10
+    trans = np.flip(t['col2'])/100
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='ogle,{0}'.format(name))
+
+    return spectrum

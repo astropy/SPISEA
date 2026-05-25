@@ -1802,6 +1802,9 @@ def get_filter_info(name, vega=vega, rebin=True):
     elif name.startswith('kepler'):
         filt = filters.get_kepler_filt(filterName)
 
+    elif name.startswith('ogle'):
+        filt = filters.get_ogle_filt(filterName)
+
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
         try:
@@ -1954,7 +1957,7 @@ def get_obs_str(col):
                  'washington_C':'washington,C', 'washington_M':'washington,M',
                  'washington_T1':'washington,T1', 'washington_T2':'washington,T2',
                  'hipparcos_Hp':'hipparcos,Hp', 'tycho_B':'tycho,B', 'tycho_V':'tycho,V',
-                 'kepler_Kp':'kepler,Kp'}
+                 'kepler_Kp':'kepler,Kp', 'ogle_Rw':'ogle,Rw'}
 
     obs_str = filt_list[name]
 

@@ -198,6 +198,14 @@ IB_2.30, IB_2.33, IB_2.36
 
 Example: ``'naco,H'``
 
+**OGLE**
+
+OGLE R-wide filter, provided by Andrzej Udalski
+
+Filters: Rw
+
+Example: ``'ogle,Rw'``
+
 
 **PanStarrs1**
 

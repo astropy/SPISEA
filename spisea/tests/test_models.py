@@ -192,7 +192,7 @@ def test_filters():
                      'nsfcam,L', 'tess,tess',
                      'washington,C', 'washington,M', 'washington,T1', 'washington,T2',
                      'hipparcos,Hp', 'tycho,B', 'tycho,V',
-                     'kepler,Kp']
+                     'kepler,Kp', 'ogle,Rw']
 
     # Loop through filters to test that they work: get_filter_info
     for ii in filt_list:
