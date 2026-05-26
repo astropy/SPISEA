@@ -476,7 +476,6 @@ def get_euclid_filt(name):
     return spectrum
 
 def get_nsfcam_filt(name):
-
     """
     Define irtf nsfcam filters as pysynphot object
     """
@@ -494,7 +493,6 @@ def get_nsfcam_filt(name):
     return spectrum
 
 def get_tess_filt(name):
-
     """
     Define the TESS filter as pysynphot object
     """
@@ -512,7 +510,6 @@ def get_tess_filt(name):
     return spectrum
 
 def get_washington_filt(name):
-
     """
     Define the Washington filters as pysynphot object
     """
@@ -530,7 +527,6 @@ def get_washington_filt(name):
     return spectrum
 
 def get_hipparcos_filt(name):
-
     """
     Define the Hipparcos filter as pysynphot object
     """
@@ -548,7 +544,6 @@ def get_hipparcos_filt(name):
     return spectrum
 
 def get_tycho_filt(name):
-
     """
     Define the Tycho filters as pysynphot object
     """
@@ -566,7 +561,6 @@ def get_tycho_filt(name):
     return spectrum
 
 def get_kepler_filt(name):
-
     """
     Define the Kepler filters as pysynphot object
     """
@@ -584,7 +578,6 @@ def get_kepler_filt(name):
     return spectrum
 
 def get_ogle_filt(name):
-
     """
     Define the OGLE filters as pysynphot object
     """
@@ -593,7 +586,7 @@ def get_ogle_filt(name):
     except:
         raise ValueError('Could not find ogle filter {0} in {1}/ogle'.format(name, filters_dir))
 
-    # Wavelength in nm->angstroms and and transmission in fraction
+    # Wavelength in nm->angstroms and and transmission in percent->fraction
     wave = np.flip(t['col1'])*10
     trans = np.flip(t['col2'])/100
 
