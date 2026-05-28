@@ -1883,91 +1883,27 @@ def get_obs_str(col):
     # Remove the trailing m_
     name = col[2:]
 
-    # Define dictionary for filters
-    filt_list = {'hst_f127m': 'wfc3,ir,f127m', 'hst_f139m': 'wfc3,ir,f139m', 'hst_f153m': 'wfc3,ir,f153m',
-                 'hst_f814w': 'acs,wfc1,f814w', 'hst_f125w': 'wfc3,ir,f125w', 'hst_f160w': 'wfc3,ir,f160w',
-                 'decam_y': 'decam,y', 'decam_Y': 'decam,Y', 'decam_i': 'decam,i', 'decam_z': 'decam,z',
-                 'decam_u':'decam,u', 'decam_g':'decam,g', 'decam_r':'decam,r',
-                 'vista_Y':'vista,Y', 'vista_Z':'vista,Z', 'vista_J': 'vista,J',
-                 'vista_H': 'vista,H', 'vista_Ks': 'vista,Ks',
-                 'ps1_z':'ps1,z', 'ps1_g':'ps1,g', 'ps1_r': 'ps1,r',
-                 'ps1_i': 'ps1,i', 'ps1_y':'ps1,y', 'ps1_w': 'ps1,w',
-                 'jwst_F090W': 'jwst,F090W', 'jwst_F164N': 'jwst,F164N', 'jwst_F212N': 'jwst,F212N',
-                 'jwst_F323N':'jwst,F323N', 'jwst_F466N': 'jwst,F466N',
-                 'jwst_F070W': 'jwst,F070W',
-                 'jwst_F115W': 'jwst,F115W',
-                 'jwst_F140M': 'jwst,F140M',
-                 'jwst_F150W': 'jwst,F150W',
-                 'jwst_F150W2': 'jwst,F150W2',
-                 'jwst_F162M': 'jwst,F162M',
-                 'jwst_F182M': 'jwst,F182M',
-                 'jwst_F187N': 'jwst,F187N',
-                 'jwst_F200W': 'jwst,F200W',
-                 'jwst_F210M': 'jwst,F210M',
-                 'jwst_F250M': 'jwst,F250M',
-                 'jwst_F277W': 'jwst,F277W',
-                 'jwst_F300M': 'jwst,F300M',
-                 'jwst_F322W2': 'jwst,F322W2',
-                 'jwst_F335M': 'jwst,F335M',
-                 'jwst_F356W': 'jwst,F356W',
-                 'jwst_F360M': 'jwst,F360M',
-                 'jwst_F405N': 'jwst,F405N',
-                 'jwst_F410M': 'jwst,F410M',
-                 'jwst_F430M': 'jwst,F430M',
-                 'jwst_F444W': 'jwst,F444W',
-                 'jwst_F440W': 'jwst,F440W',
-                 'jwst_F460M': 'jwst,F460M',
-                 'jwst_F470N': 'jwst,F470N',
-                 'jwst_F480M': 'jwst,F480M',
-                 'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
-                 'nirc2_Lp': 'nirc2,Lp', 'nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
-                 'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
-                 '2mass_J': '2mass,J', '2mass_H': '2mass,H', '2mass_Ks': '2mass,Ks',
-                 'ubv_U':'ubv,U', 'ubv_B':'ubv,B', 'ubv_V':'ubv,V', 'ubv_R':'ubv,R',
-                 'ubv_I':'ubv,I',
-                 'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K',
-                 'nirc1_K':'nirc1,K', 'nirc1_H':'nirc1,H',
-                 'naco_J':'naco,J', 'naco_H':'naco,H', 'naco_Ks':'naco,Ks',
-                 'naco_IB_2.00': 'naco,IB_2.00', 'naco_IB_2.03':'naco,IB_2.03', 'naco_IB_2.06':'naco,IB_2.06',
-                 'naco_IB_2.24':'naco,IB_2.24', 'naco_IB_2.27':'naco,IB_2.27',
-                 'naco_IB_2.30':'naco,IB_2.30', 'naco_IB_2.33':'naco,IB_2.33',
-                 'naco_IB_2.36':'naco,IB_2.36',
-                 'ukirt_J':'ukirt,J', 'ukirt_H':'ukirt,H', 'ukirt_K':'ukirt,K',
-                 'ctio_osiris_H': 'ctio_osiris,H', 'ctio_osiris_K': 'ctio_osiris,K',
-                 'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i',
-                 'gaiaDR1_G': 'gaia,dr1,G',     'gaiaDR1_Gbp':'gaia,dr1,Gbp',     'gaiaDR1_Grp':'gaia,dr1,Grp',
+    # This mostly follows a standard form, but we'll account for some special cases
+    if name[:4]=='hst_':
+        hst_filts = {'hst_f127m': 'wfc3,ir,f127m', 'hst_f139m': 'wfc3,ir,f139m', 'hst_f153m': 'wfc3,ir,f153m',
+                 'hst_f814w': 'acs,wfc1,f814w', 'hst_f125w': 'wfc3,ir,f125w', 'hst_f160w': 'wfc3,ir,f160w'}
+        obs_str = hst_filts[name]
+    elif name[:6]=='roman_':
+        tmp = name.split('_')
+        obs_str = 'roman,wfi,'+tmp[1]
+    elif name[:4]=='gaia':
+        gaia_filts = {'gaiaDR1_G': 'gaia,dr1,G',     'gaiaDR1_Gbp':'gaia,dr1,Gbp',     'gaiaDR1_Grp':'gaia,dr1,Grp',
                  'gaiaDR2old_G': 'gaia,dr2,G',  'gaiaDR2old_Gbp':'gaia,dr2,Gbp',  'gaiaDR2old_Grp':'gaia,dr2,Grp',
                  'gaiaDR2_G': 'gaia,dr2_rev,G', 'gaiaDR2_Gbp':'gaia,dr2_rev,Gbp', 'gaiaDR2_Grp':'gaia,dr2_rev,Grp',
-                 'gaiaEDR3_G': 'gaia,edr3,G',   'gaiaEDR3_Gbp':'gaia,edr3,Gbp',   'gaiaEDR3_Grp':'gaia,edr3,Grp',
-                 'hawki_J': 'hawki,J',
-                 'hawki_H': 'hawki,H',
-                 'hawki_Ks': 'hawki,Ks',
-                 'roman_f062': 'roman,wfi,f062',
-                 'roman_f087': 'roman,wfi,f087',
-                 'roman_f106': 'roman,wfi,f106',
-                 'roman_f129': 'roman,wfi,f129',
-                 'roman_f158': 'roman,wfi,f158',
-                 'roman_f146': 'roman,wfi,f146',
-                 'roman_f213': 'roman,wfi,f213',
-                 'roman_f184': 'roman,wfi,f184',
-                 'rubin_g':'rubin,g',
-                 'rubin_i':'rubin,i',
-                 'rubin_r':'rubin,r',
-                 'rubin_u':'rubin,u',
-                 'rubin_z':'rubin,z',
-                 'rubin_y':'rubin,y',
-                 'euclid_VIS':'euclid,VIS',
-                 'euclid_Y':'euclid,Y',
-                 'euclid_J':'euclid,J',
-                 'euclid_H':'euclid,H',
-                 'nsfcam_L':'nsfcam,L',
-                 'tess_tess':'tess,tess',
-                 'washington_C':'washington,C', 'washington_M':'washington,M',
-                 'washington_T1':'washington,T1', 'washington_T2':'washington,T2',
-                 'hipparcos_Hp':'hipparcos,Hp', 'tycho_B':'tycho,B', 'tycho_V':'tycho,V',
-                 'kepler_Kp':'kepler,Kp', 'ogle_Rw':'ogle,Rw'}
-
-    obs_str = filt_list[name]
+                 'gaiaEDR3_G': 'gaia,edr3,G',   'gaiaEDR3_Gbp':'gaia,edr3,Gbp',   'gaiaEDR3_Grp':'gaia,edr3,Grp'}
+        obs_str = gaia_filts[name]
+    elif name[:8]=='naco_IB_':
+        obs_str = name.replace('_', ',', 1)
+    elif name[:12]=='ctio_osiris_':
+        tmp = name.split('_')
+        obs_str = tmp[0]+'_'+tmp[1]+','+tmp[2]
+    else:
+        obs_str = ','.join(name.split('_'))
 
     return obs_str
 
