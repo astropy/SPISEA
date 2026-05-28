@@ -34,7 +34,9 @@ Available filters:
 * Euclid
 * GAIA
 * HAWK-I
+* Hipparcos
 * Hubble Space Telescope
+* Kepler
 * IRTF
 * Johnson-Cousins
 * Johnson-Glass
@@ -42,12 +44,15 @@ Available filters:
 * Keck NIRC
 * Keck NIRC2
 * NACO
+* OGLE
 * PanStarrs 1
 * Roman Space Telescope
 * TESS
+* Tycho
 * UKIRT
 * Vera C. Rubin Observatory
 * VISTA
+* Washington
 * ZTF
 
 
