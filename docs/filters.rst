@@ -213,7 +213,7 @@ Example: ``'ogle,Rw'``
 
 PanStarrs 1 filters from `Tonry et al. 2012 <https://ui.adsabs.harvard.edu/#abs/arXiv:1203.0297>`_
 
-Filters: g, r, i, z, y
+Filters: g, r, i, z, y, w
 
 Example: ``'ps1, g'``
 
