@@ -589,3 +589,20 @@ def get_ogle_filt(name):
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='ogle,{0}'.format(name))
 
     return spectrum
+
+def get_subaru_filt(instrument, name):
+    """
+    Define the subaru filters as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/subaru/{1}/{2}.dat'.format(filters_dir, instrument, name), format='ascii')
+    except:
+        raise ValueError('Could not find Subaru filter {0} in {1}/subaru/{2}'.format(name, filters_dir, instrument))
+
+    # Wavelength in nm->angstroms and and transmission in percent->fraction
+    wave = t['col1']
+    trans = t['col2']
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='subaru,{0},{1}'.format(instrument, name))
+
+    return spectrum

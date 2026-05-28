@@ -47,6 +47,7 @@ Available filters:
 * OGLE
 * PanStarrs 1
 * Roman Space Telescope
+* Subaru
 * TESS
 * Tycho
 * UKIRT
@@ -237,6 +238,16 @@ work. See :ref:`getting_started` for how to download these files.
 Filters: F062, F087, F106, F129, F158, W146, F184, F213
 
 Example: ``'roman,wfi,f062'``
+
+**Subaru**
+
+Subaru filters from the `SVO Filter Profile Service <http://svo2.cab.inta-csic.es/theory/fps/index.php?mode=browse&gname=Subaru&gname2=HSC&asttype=>`_.
+
+Filters: g, r, i, z, Y, nb387, nb468, nb515, nb527, nb656, nb718, nb816, nb921, nb926, nb973
+
+Instruments: hsc
+
+Example: ``'subaru,hsc,i'``
 
 **TESS**
 

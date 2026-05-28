@@ -1805,6 +1805,10 @@ def get_filter_info(name, vega=vega, rebin=True):
     elif name.startswith('ogle'):
         filt = filters.get_ogle_filt(filterName)
 
+    elif name.startswith('subaru'):
+        inst = tmp[1]
+        filt = filters.get_subaru_filt(inst, filterName)
+
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
         try:
@@ -1868,6 +1872,8 @@ def get_filter_col_name(obs_str):
             filt_name = 'gaiaEDR3_{0}'.format(tmp[-1])
         elif 'roman' in tmp:
             filt_name = 'roman_{0}'.format(tmp[-1])
+        elif tmp[0] == 'subaru':
+            filt_name = '_'.join(tmp)
         else:
             filt_name = 'hst_{0}'.format(tmp[-1])
     else:
