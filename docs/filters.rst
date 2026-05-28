@@ -95,17 +95,19 @@ Example: ``'euclid,Y'``
 **GAIA**
 
 The `GAIA Space Telescope filters <https://www.cosmos.esa.int/web/gaia/iow_20180316>`_.
-Note that three sets are available: the pre-launch passbands used in DR1
+Note that four sets are available: the pre-launch passbands used in DR1
 (`Jordi+10
 <https://ui.adsabs.harvard.edu/abs/2010A%26A...523A..48J/abstract>`_),
-the passbands used for the DR2 published photometry, and
-the *revised* DR2 passbands based on the DR2 data (October 2017).
-ONLY THE REVISED DR2 PASSBANDS ARE SUPPORTED BY SPISEA.
+the passbands used for the DR2 published photometry,
+the *revised* DR2 passbands based on the DR2 data (October 2017),
+and the `(E)DR3 passbands <https://www.cosmos.esa.int/web/gaia/edr3-passbands>`_.
 
 Filters: G, Gbp, Grp
 
-Example (gaia G filter from revised DR2 passbands):
-``'gaia,dr2_rev,G'``
+Versions: dr1, dr2, dr2_rev, edr3
+
+Example (gaia G filter from (E)DR3 passbands):
+``'gaia,edr3,G'``
 
 **HAWK-I**
 

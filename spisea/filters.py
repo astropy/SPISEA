@@ -337,17 +337,14 @@ def get_keck_osiris_filt(name):
 def get_gaia_filt(version, name):
     """
     Define Gaia filters as pysynphot object.
-    To avoid confusion, we will only support
-    the revised DR2 zeropoints from
-    Evans+18.
 
-    version: specify dr1, dr2, or dr2_rev
+    version: specify dr1, dr2, dr2_rev, or edr3
     name: filter name
     """
-    # Assert that we are using the revised DR2 zeropoints
-    if version != 'dr2_rev':
-        msg = 'Gaia version {0} not supported, use dr2_rev instead'.format(version)
-        raise ValueError(msg)
+    # Warn if not using latest version
+    if version != 'edr3':
+        msg = 'Gaia version {0} not recommended, use edr3 for the latest version'.format(version)
+        warnings.warn(msg)
 
     # Set the filter directory
     if version == 'dr1':
@@ -356,8 +353,10 @@ def get_gaia_filt(version, name):
         path = '{0}/gaia/dr2/'.format(filters_dir)
     elif version == 'dr2_rev':
         path = '{0}/gaia/dr2_rev/'.format(filters_dir)
+    elif version == 'edr3':
+        path = '{0}/gaia/edr3/'.format(filters_dir)
     else:
-        raise ValueError('GAIA filter version {0} not understood. Please use dr1, dr2, or dr2_rev'.format(version))
+        raise ValueError('GAIA filter version {0} not understood. Please use dr1, dr2, dr2_rev, or edr3'.format(version))
 
     # Get the filter info
     try:
@@ -371,17 +370,14 @@ def get_gaia_filt(version, name):
             t.rename_column('col4', 'Gbp')
             t.rename_column('col6', 'Grp')
 
-        cols = np.array(t.keys())
-        idx = np.where(cols == name)[0][0]
-
-        trans = t[cols[idx]]
+        trans = t[name]
 
         # Change 99 values where filters are undefined into 0, to ensure that
         # it doesn't mess up our flux values
         bad = np.where(trans > 90)
         trans[bad] = 0
     except:
-        raise ValueError('Could not find Gaia filter {0}'.format(name))
+        raise ValueError('Could not find Gaia filter {0} for version {1}'.format(name, version))
 
     # Convert wavelengths to angstroms (from nm)
     wave = t['LAMBDA'] * 10

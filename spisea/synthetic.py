@@ -1772,7 +1772,7 @@ def get_filter_info(name, vega=vega, rebin=True):
         filt = filters.get_ztf_filt(filterName)
 
     elif name.startswith('gaia'):
-        version = tmp[1]
+        version = tmp[1] if len(tmp)==3 else 'edr3'
         filt = filters.get_gaia_filt(version, filterName)
 
     elif name.startswith('hawki'):
@@ -1858,8 +1858,14 @@ def get_filter_col_name(obs_str):
 
     if len(tmp) == 3:
         # Catch Gaia filter cases. Otherwise, it is HST filter
-        if 'dr2_rev' in tmp:
+        if 'dr1' in tmp:
+            filt_name = 'gaiaDR1_{0}'.format(tmp[-1])
+        elif 'dr2' in tmp:
+            filt_name = 'gaiaDR2old_{0}'.format(tmp[-1])
+        elif 'dr2_rev' in tmp:
             filt_name = 'gaiaDR2_{0}'.format(tmp[-1])
+        elif 'edr3' in tmp:
+            filt_name = 'gaiaEDR3_{0}'.format(tmp[-1])
         elif 'roman' in tmp:
             filt_name = 'roman_{0}'.format(tmp[-1])
         else:
@@ -1929,8 +1935,10 @@ def get_obs_str(col):
                  'ukirt_J':'ukirt,J', 'ukirt_H':'ukirt,H', 'ukirt_K':'ukirt,K',
                  'ctio_osiris_H': 'ctio_osiris,H', 'ctio_osiris_K': 'ctio_osiris,K',
                  'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i',
-                 'gaiaDR2_G': 'gaia,dr2_rev,G', 'gaiaDR2_Gbp':'gaia,dr2_rev,Gbp',
-                 'gaiaDR2_Grp':'gaia,dr2_rev,Grp',
+                 'gaiaDR1_G': 'gaia,dr1,G',     'gaiaDR1_Gbp':'gaia,dr1,Gbp',     'gaiaDR1_Grp':'gaia,dr1,Grp',
+                 'gaiaDR2old_G': 'gaia,dr2,G',  'gaiaDR2old_Gbp':'gaia,dr2,Gbp',  'gaiaDR2old_Grp':'gaia,dr2,Grp',
+                 'gaiaDR2_G': 'gaia,dr2_rev,G', 'gaiaDR2_Gbp':'gaia,dr2_rev,Gbp', 'gaiaDR2_Grp':'gaia,dr2_rev,Grp',
+                 'gaiaEDR3_G': 'gaia,edr3,G',   'gaiaEDR3_Gbp':'gaia,edr3,Gbp',   'gaiaEDR3_Grp':'gaia,edr3,Grp',
                  'hawki_J': 'hawki,J',
                  'hawki_H': 'hawki,H',
                  'hawki_Ks': 'hawki,Ks',
