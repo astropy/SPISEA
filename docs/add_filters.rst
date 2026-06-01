@@ -12,8 +12,10 @@ If the user wants to add new photometric filters to SPISEA, there are 4 main ste
      call the new function in ``filters.py`` when the new filter
      string is called.
   4) Edit the ``get_obs_str()`` function in ``synthetic.py`` to
-      convert between column name and filter string (e.g input string
-      for get_filter_info) for the new filters.
+     convert between column name and filter string (e.g input string
+     for get_filter_info) for the new filters.
+  5) Add the filter to the ``filt_list`` in the ``test_filters()`` function in ``tests/test_models.py`` to
+     ensure the filter can be loaded properly.
 
 Additional documentation on this is coming soon. In the meantime, let us know on the  Github `issue tracker
 <https://github.com/astropy/SPISEA/issues>`_ if you'd like to

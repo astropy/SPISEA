@@ -24,12 +24,11 @@ The basic SPISEA installation requires ~20 GB of memory, which is
 primarily for the suite of stellar evolution and atmosphere models.
 Other dependencies:
 
-* python (>=3.7; preferably via AstroConda, as it includes some necessary
-  packages, like astropy and pysynphot)
+* python (>=3.7, < 3.12)
 * astropy
 * pysynphot
 * scipy
-* numpy (>= v1.17)
+* numpy (>= 1.17, < 2.0)
 * matplotlib
 * `pytest-astropy-header <https://github.com/astropy/pytest-astropy-header>`_
 * STScI CDBS data package (See :ref:`set-up-cdbs` below for instructions)
@@ -83,6 +82,9 @@ called ``comp``, ``mtab``, and ``grid``.
 You will add additional atmosphere models to ``cdbs/grid`` in
 the :ref:`models` section below.
 
+Note: To use the Roman filters, the CDBS data version should be from
+2024-03-22 or later.
+
 
 .. _models:
 
@@ -96,15 +98,15 @@ STScI CDBS conventions and should be placed in the ``cdbs/grid`` directory.
 You will need to download 2 files:
 
 * `spisea_models.tar.gz
-  <http://astro.berkeley.edu/~jlu/spisea/spisea_models.tar.gz>`_ (3.4 GB; 18 GB unzipped)
+  <https://w.astro.berkeley.edu/~jlu/spisea/spisea_models.tar.gz>`_ (3.4 GB; 18 GB unzipped)
 
-* `spisea_cdbs.tar.gz <http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs.tar.gz>`_  (142 MB; 248 MB unzipped)
+* `spisea_cdbs.tar.gz <https://w.astro.berkeley.edu/~jlu/spisea/spisea_cdbs.tar.gz>`_  (142 MB; 248 MB unzipped)
 
 You may **optionally** download a third file, which contains
 higher-resolution stellar atmospheres. Note that this file is quite
 large, and is not necessary for most SPISEA use cases:
 
-* `spisea_cdbs_highres.tar.gz <http://astro.berkeley.edu/~jlu/spisea/spisea_cdbs_highres.tar.gz>`_ (50 GB; 74 GB unzipped)
+* `spisea_cdbs_highres.tar.gz <https://w.astro.berkeley.edu/~jlu/spisea/spisea_cdbs_highres.tar.gz>`_ (50 GB; 74 GB unzipped)
 
 SPISEA uses the low-resolution atmospheres (R = 250) in
 ``spisea_cdbs.tar.gz`` by default, as

@@ -82,6 +82,62 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.4 (2026-03-20)
+  * Added backward compatibility for isochrone file names created
+    before v2.3
+  * When reading isochrone from existing file, only keep user
+    requested filters in resulting table.
+  * Changed the global random seed to a random generator within each class,
+    but still retaining the reproducibility. Test cluster files in
+    test_data also updated accordingly for testing purposes
+  * Added filter support for IRTF L-band
+  * Added conversion function between ST mags and Vega mags
+
+2.3 (2026-02-10)
+  * Achieves faster cluster generation (factor of about 2x) by using
+    replacing ragged arrays with masked arrays when calculating
+    multiplicity properties
+  * Added new test functions (and associated test data files) ensuring
+    that the primary mass and companion
+    mass distibutions remain the same as generated with SPISEA <= v2.2
+  * Added support to Euclid VIS filter
+    
+
+2.2 (2026-01-16)
+  * Compatibility updates for SPISEA to work with `SynthPop
+    <https://synthpop.readthedocs.io/en/latest/>`_. Updates include:
+   * Low mass objects below the isochrone grid can optionally be kept
+     in clusters (off by default) and will have
+     ``current_mass=initial_mass`` and ``phase=98``, with no other
+     evolutionary information or photometry.
+   * Evolution model versions are now logged in IsochronePhot files
+     and checked if present.
+   * The option ``synthpop_extension`` is now available for MISTv1
+     version=1.2 evolution. This fills in the missing parameter space
+     down to initial mass 0.1Msun in isochrones where needed. Use of
+     this option will require downloading updated isochrone files.
+   * Added support for Euclid filters. 
+    
+2.1.15 (2025-10-25)
+  * Updated Roman filter name from outdated w146 to current f146. From
+    now on a STScI CDBS data version from 2024-03-22 or later is
+    required to use the Roman filter photometry.
+
+2.1.14 (2025-10-23)
+  * Added support for NACO intermediate bands
+  * Added metallicity bounds check when calling atmosphere model grid
+  * Added check to make sure desired filter columns are present in
+    isochrone file when deciding whether a new isochrone needs to be
+    calculated
+  * Small bugfix: ensures that imf_mass_limit is reset properly when
+    generating multiple clusters from same imf object
+
+2.1.13 (2024-12-10)
+  * Small bugfix to make iso_dir creation more robust
+    
+2.1.12 (2024-12-02)
+  * Added support for Rubin Observatory filters
+
 2.1.11 (2023-09-15)
   * Small bugfix to RedLawFritz11 so paths work regardless of
     operating system used

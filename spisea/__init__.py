@@ -1,14 +1,7 @@
-# Licensed under a 3-clause BSD style license - see LICENSE.rst
+import importlib.metadata
 
-# Packages may add whatever they like to this file, but
-# should keep this content at the top.
-# ----------------------------------------------------------------------------
-from ._astropy_init import *   # noqa
-# ----------------------------------------------------------------------------
-
-__all__ = []
-from spisea import *   # noqa
-# Then you can be explicit to control what ends up in the namespace,
-__all__ += ['do_primes']   # noqa
-# or you can keep everything from the subpackage with the following instead
-# __all__ += example_mod.__all__
+try:
+    __version__ = importlib.metadata.version(__package__)
+except importlib.metadata.PackageNotFoundError:
+    # Fallback for development mode if not installed
+    __version__ = "2.4.1"
