@@ -266,7 +266,10 @@ class IMF(object):
         # so we can put in uniform arrays in _multi_props.random_q.
         comp_unique = np.unique(comp_nums)
         comp_indices = [np.where(comp_nums == i)[0] for i in comp_unique]
-        compMasses = np.zeros((len(newMasses), max(comp_unique)))
+        if np.any(newIsMultiple):
+            compMasses = np.zeros((len(newMasses), max(comp_unique)))
+        else:
+            compMasses = np.zeros((len(newMasses), 1))
 
         for comp_num, comp_index in zip(comp_unique, comp_indices):
             # Calculate masses of companions
