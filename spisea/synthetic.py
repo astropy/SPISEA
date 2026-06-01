@@ -416,7 +416,7 @@ class ResolvedCluster(Cluster):
         if self.verbose and sum(companions_teff_non_nan > 0) != N_comp_tot:
             print(f'Found {N_comp_tot - sum(companions_teff_non_nan > 0):d} companions out of stellar mass range')
 
-        if len(companions)>0:
+        if len(companions['mass'][companions_teff_non_nan > 0])>0:
             assert companions['mass'][companions_teff_non_nan > 0].min() > 0, "Companion mass is not positive"
 
         return star_systems, companions
