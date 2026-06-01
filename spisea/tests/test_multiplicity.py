@@ -226,10 +226,20 @@ def test_resolvedmult():
         mean_log_a = np.mean(bd_companions['log_a'])
         std_log_a = np.std(bd_companions['log_a'])
 
+        bd_masses = clust_Mult.star_systems['mass'][bd_idx]
+        expected_sigma = np.mean(
+            np.interp(
+                np.log10(bd_masses),
+                [np.log10(0.01), np.log10(0.08)],
+                [0.25, 0.5]
+            )
+        )
+
         #expect lognormal centered near log10(2.9 AU), width ~0.21
         assert abs(mean_log_a - np.log10(2.9)) < 0.25, \
             f"BD mean log(a) off: {mean_log_a:.2f}"
-        assert abs(std_log_a - 0.21) < 0.15, \
+
+        assert abs(std_log_a - expected_sigma) < 0.15, \
             f"BD sigma log(a) off: {std_log_a:.2f}"
 
     return

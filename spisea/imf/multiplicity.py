@@ -294,11 +294,12 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         logm = np.log10(mass)
 
         # Stellar mean and std (Duchene & Kraus 2013)
-        a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(amplitude=self.a_amp, x_break=self.a_break, alpha_1=self.a_slope1, alpha_2=self.a_slope2)
-        log_a_mean_star = np.log10(a_mean_func(mass)) #mean log(a)
+        a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(amplitude=self.a_amp, x_break=self.a_break,
+                                                                  alpha_1=self.a_slope1, alpha_2=self.a_slope2)
+        log_a_mean_star = np.log10(a_mean_func(mass))  # mean log(a)
         log_a_std_func = astropy.modeling.models.Linear1D(slope=self.a_std_slope, intercept=self.a_std_intercept)
-        log_a_std_star = log_a_std_func(logm) #sigma_log(a)
-        log_a_std_star[mass >= 2.9] = log_a_std_func(np.log10(2.9)) #sigma_log(a)
+        log_a_std_star = log_a_std_func(logm)  # sigma_log(a)
+        log_a_std_star[mass >= 2.9] = log_a_std_func(np.log10(2.9))  # sigma_log(a)
         log_a_std_star = np.clip(log_a_std_star, 0.1, None)
 
         # BD mean and std (Fontanive+18): interpolated over substellar range
@@ -316,7 +317,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         # Sigmoid blend: smoothly transitions from BD to stellar regime at 0.08 M_sun
         w = 1.0 / (1.0 + np.exp(-(logm - np.log10(0.08)) / 0.15))
         log_a_mean = (1 - w) * log_a_mean_bd + w * log_a_mean_star
-        log_a_std  = (1 - w) * log_a_std_bd  + w * log_a_std_star
+        log_a_std = (1 - w) * log_a_std_bd + w * log_a_std_star
 
         # Trunc normal distribution between log10(0.01) AU and log10(2000) AU
         log_a_lower = np.log10(0.01)

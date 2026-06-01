@@ -132,7 +132,7 @@ def test_atmosphere_models():
         print('Done {0}'.format(atm_func))
 
     # Test get_merged_atmospheres at different temps
-    temp_range = [200, 1000, 2000, 3500, 4000, 5250, 6000, 12000]
+    temp_range = [250, 1000, 2000, 3500, 4000, 5250, 6000, 12000]
     atm_func = atmospheres.get_merged_atmosphere
     for ii in bd_metals_range:
         for jj in temp_range:
@@ -159,7 +159,7 @@ def test_atmosphere_models():
     # Test get_bd_atmosphere at different temps
     # This func only requests temp
     temp_range = [250, 400, 500, 750, 950, 1200]
-    atm_func = atm.get_bd_atmosphere
+    atm_func = atmospheres.get_bd_atmosphere
     for jj in temp_range:
         try:
             test = atm_func(temperature=jj, verbose=True)

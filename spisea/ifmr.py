@@ -48,14 +48,10 @@ class IFMR(object):
         result = 0.109*MZAMS + 0.394
 
         final = np.zeros(len(MZAMS))
-        
-        bad_idx = np.where((MZAMS < 0.5) | (MZAMS >= 9))
-        final[bad_idx] = -99
 
-        good_idx = np.where((MZAMS >= 0.5) & (MZAMS < 9))
+        good_idx = (MZAMS >= 0.5) & (MZAMS < 9)
         final[good_idx] = result[good_idx]
         final[~good_idx] = -99
-
 
         return final
 

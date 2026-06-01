@@ -82,7 +82,7 @@ class IMF(object):
     a GNU General Public License.
 
     """
-    def __init__(self, massLimits=np.array([0.01,150]), multiplicity=None):
+    def __init__(self, massLimits=np.array([0.01,150]), multiplicity=None, seed=None):
         self._multi_props = multiplicity
         self._mass_limits = np.atleast_1d(massLimits)
         self.rng = np.random.default_rng(seed)
@@ -302,6 +302,7 @@ class IMF(object):
         newIsMultiple = np.any(~compMasses.mask, axis=1)
 
         return compMasses, newSystemMasses, newIsMultiple
+
 
 class IMF_broken_powerlaw(IMF):
     """

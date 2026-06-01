@@ -300,7 +300,7 @@ class ResolvedCluster(Cluster):
             (star_systems_phase_non_nan > 5) &
             (star_systems_phase_non_nan < 101) &
             (star_systems_phase_non_nan != 9) &
-            (star_systems_phase_non_nan != 90) &   # exclude BD phase
+            (star_systems_phase_non_nan != 90) &  # exclude BD phase
             (star_systems_phase_non_nan != -99)
         )
         star_systems['phase'][bad] = 5
@@ -383,6 +383,10 @@ class ResolvedCluster(Cluster):
 
         companions['metallicity'] = np.ones(N_comp_tot) * self.iso.metallicity
 
+        bd_mask = (companions['mass'] >= 0.01) & (companions['mass'] <= 0.08)
+        companions['phase'][bd_mask] = 90
+        companions['mass_current'][bd_mask] = companions['mass'][bd_mask]
+
         # For a very small fraction of stars, the star phase falls on integers in-between
         # the ones we have definition for, as a result of the interpolation. For these
         # stars, round phase down to nearest defined phase (e.g., if phase is 71,
@@ -393,6 +397,7 @@ class ResolvedCluster(Cluster):
             (companions_phase_non_nan > 5) &
             (companions_phase_non_nan < 101) &
             (companions_phase_non_nan != 9) &
+            (companions_phase_non_nan != 90) &
             (companions_phase_non_nan != -99)
         ] = 5
 
@@ -530,7 +535,7 @@ class ResolvedCluster(Cluster):
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
 
                 # reinforce BD phase of 90 and invariant masses
-                bd_mask = (companions['mass'] >= 0.01) & (companions['mass'] < 0.08)
+                bd_mask = (companions['mass'] >= 0.01) & (companions['mass'] <= 0.08)
                 companions['phase'][bd_mask] = 90
                 companions['mass_current'][bd_mask] = companions['mass'][bd_mask]
 
@@ -641,12 +646,25 @@ class ResolvedCluster(Cluster):
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
         if (self.ifmr == None) and (not keep_low_mass_stars):
             print('Remove low mass stars below grid and compact objects')
-            # Keep only those stars with Teff assigned.
-            idx = star_systems_teff_non_nan > 0
+            # Keep only those stars with Teff assigned and masses in grid
+            min_iso = np.min(self.iso.points['mass'])
+            max_iso = np.max(self.iso.points['mass'])
+            mass = star_systems['mass']
+            on_grid = (mass >= min_iso) & (mass <= max_iso) & (star_systems_teff_non_nan > 0)
+            idx = on_grid
+
         elif not keep_low_mass_stars:
             print('Remove low mass stars, keep compact objects')
             # Keep stars (with Teff) and any other compact objects (with phase info).
-            idx = (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0)
+            min_iso = np.min(self.iso.points['mass'])
+            max_iso = np.max(self.iso.points['mass'])
+            mass = star_systems['mass']
+            on_grid = (mass >= min_iso) & (mass <= max_iso) & (star_systems_teff_non_nan > 0)
+            above_grid = (mass > max_iso) & (
+                (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 101)
+            )
+            idx = on_grid | above_grid
+            
         elif self.ifmr == None:
             print('Remove compact objects, keep low mass stars below grid')
             # Keep stars (with Teff) and objects below mass grid

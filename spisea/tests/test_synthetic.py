@@ -535,7 +535,7 @@ def test_ifmr_multiplicity():
 
     startTime = time.time()
     
-    evo = evolution.MergedBaraffePisaEkstromParsec()
+    evo = evolution.MergedPhillipsBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
     ifmr_obj = ifmr.IFMR_Raithel18()
 
@@ -657,6 +657,7 @@ def test_ifmr_multiplicity():
     comp_non_bd_idx = np.where((comps2['phase'] != 90) &
                                (comps2['mass'] >= BD_MIN_MASS) &
                                (comps2['mass'] <= BD_MAX_MASS))
+    print(comps2[comp_non_bd_idx]['phase', 'mass'])
     assert len(comp_non_bd_idx[0]) == 0  # asserting no non-brown dwarf companions in BD mass range
 
     # Ensure BD temperature assignment is working correctly
@@ -854,7 +855,8 @@ def test_keep_low_mass_stars():
         red_law=red_law,
         filters=filt_list,
         mass_sampling=mass_sampling,
-        iso_dir=iso_dir
+        iso_dir=iso_dir,
+        recomp=True
     )
 
     # Get the minimum mass in the isochrones. This should be the lowest
@@ -1293,7 +1295,8 @@ def test_ResolvedCluster_random_state():
         red_law=red_law,
         filters=filt_list,
         mass_sampling=10,
-        iso_dir=iso_dir
+        iso_dir=iso_dir,
+        recomp=True
     )
 
     imf_limits = np.array([0.07, 0.5, 150])
