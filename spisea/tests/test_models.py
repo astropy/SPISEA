@@ -200,7 +200,7 @@ def test_filters():
                      'nirc2,Kp', 'nirc2,K', 'nirc2,Lp', 'nirc2,Hcont',
                      'nirc2,FeII', 'nirc2,Brgamma', 'ps1,z',
                      'ps1,g', 'ps1,r','ps1,i', 'ps1,y',
-                     'ukirt,J', 'ukirt,H', 'ukirt,K',
+                     'ukirt,Z','ukirt,Y','ukirt,J', 'ukirt,H', 'ukirt,K',
                      'vista,Y', 'vista,Z', 'vista,J',
                      'vista,H',  'vista,Ks', 'ztf,g', 'ztf,r', 'ztf,i',
                      'hawki,J', 'hawki,H', 'hawki,Ks', 'roman,wfi,f062',

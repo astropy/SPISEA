@@ -1961,7 +1961,7 @@ def get_obs_str(col):
                  'naco_IB_2.24':'naco,IB_2.24', 'naco_IB_2.27':'naco,IB_2.27',
                  'naco_IB_2.30':'naco,IB_2.30', 'naco_IB_2.33':'naco,IB_2.33',
                  'naco_IB_2.36':'naco,IB_2.36',
-                 'ukirt_J':'ukirt,J', 'ukirt_H':'ukirt,H', 'ukirt_K':'ukirt,K',
+                 'ukirt_Z':'ukirt,Z','ukirt_Y':'ukirt,Y','ukirt_J':'ukirt,J', 'ukirt_H':'ukirt,H', 'ukirt_K':'ukirt,K',
                  'ctio_osiris_H': 'ctio_osiris,H', 'ctio_osiris_K': 'ctio_osiris,K',
                  'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i',
                  'gaiaDR2_G': 'gaia,dr2_rev,G', 'gaiaDR2_Gbp':'gaia,dr2_rev,Gbp',
