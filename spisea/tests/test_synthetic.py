@@ -1274,3 +1274,36 @@ def test_ResolvedCluster_random_state():
         assert np.all(np.isclose(cluster1.companions[key], old_companion[key], rtol=1e-05, atol=1e-08))
 
     return
+
+def test_ResolvedCluster_no_companions():
+    """
+    Test case where no companions get generated to
+    make sure we don't get any errors. This relies on using
+    a specific seed that results in no companions being generated.
+    """
+    
+    # Define cluster parameters
+    logAge = 6.7
+    AKs = 2.4
+    distance = 4000
+    cluster_mass = 10**2
+    iso_dir = f'{spisea_path}/tests/isochrones'
+
+    # Test filters
+    filt_list = ['nirc2,J', 'nirc2,Kp']
+    evo = evolution.MergedBaraffePisaEkstromParsec()
+    atm_func = atmospheres.get_merged_atmosphere
+    red_law = reddening.RedLawNishiyama09()
+
+    iso = syn.IsochronePhot(logAge, AKs, distance, metallicity=0,
+                            evo_model=evo, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                                iso_dir=iso_dir)
+                                
+    imf_multi = multiplicity.MultiplicityResolvedDK()
+    my_imf = imf.Kroupa_2001(multiplicity=imf_multi)
+    
+    cluster = syn.ResolvedCluster(iso, my_imf, cluster_mass,
+                    keep_low_mass_stars=True, seed=1074)
+                    
+    assert(~np.any(cluster.star_systems['isMultiple']))
