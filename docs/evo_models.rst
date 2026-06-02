@@ -14,10 +14,69 @@ The evolution object is an input for the :ref:`isochrone_objects`.
   
 Below is a table of the evolution model grids currently supported by SPISEA.
 
-.. figure:: images/evo_models_f2.png
-	    :width: 900
-            :height: 210
-	    :align: center
+.. list-table:: Evolution Models
+   :header-rows: 2
+   :widths: 30 15 18 30 25
+
+   * - Model Name
+     - Mass Range
+     - log(Age) Range
+     - Metallicity Values
+     - Ref
+   * -
+     - M\ :sub:`⊙`
+     - Years
+     - [Fe/H]
+     -
+   * - ``MISTv1``
+     - 0.10 – 300
+     - 5.01 – 10.30
+     - -4.0, -3.5, -3.0, -2.5, -2.0, -1.75, -1.5, -1.25, -1.0, -0.75, -0.5, -0.25, 0, 0.25, 0.5
+     - v1.2; Choi et al. (2016)
+   * - ``MergedBaraffePisaEkstromParsec``
+     - 0.08 – 120
+     - 6.00 – 10.09
+     - 0
+     - Appendix B; Hosek et al. (2020)
+   * - ``MergedPhillipsBaraffePisaEkstromParsec``
+     - 0.01 – 120
+     - 6.00 – 10.00
+     - 0
+     - Appendix; Begbie et al. (2026)
+   * - ``Parsec``
+     - 0.10 – 65
+     - 6.60 – 10.12
+     - 0
+     - Bressan et al. (2012)
+   * - ``Baraffe15``
+     - 0.07 – 1.4
+     - 5.70 – 10.0
+     - 0
+     - Baraffe et al. (2015)
+   * - ``Ekstrom12``
+     - 0.80 – 300
+     - 6.00 – 8.0
+     - 0
+     - Ekström et al. (2012)
+   * - ``Pisa``
+     - 0.20 – 7
+     - 6.00 – 8.0
+     - 0
+     - Tognelli et al. (2011)
+   * - ``Phillips2020``
+     - 0.0005–0.075
+     - 6.00 - 10.00
+     - 0
+     - Phillips et al. (2020)
+   * - ``Marley2021``
+     - 0.0005–0.083\ :sup:`a`
+     - 6.00 - 10.00
+     - -0.5, 0, 0.5
+     - Marley et al. (2021)
+
+.. rubric:: Footnotes
+ 
+:sup:`a` Actual maximum value given by the Sonora models (Marley et al., 2021) relies on the age of the cluster. For example, for log(Age)=6.0, the mass range is limited to 0.0005 - 0.011 M\ :sub:`⊙`.
 
 Please note the stellar mass range, age range, and metallicity values of the evolution
 model grid you choose:

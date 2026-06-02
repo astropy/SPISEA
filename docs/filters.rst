@@ -210,7 +210,7 @@ Example: ``'roman,wfi,f062'``
 
 `UKIRT Telescope filters <http://www.ukidss.org/technical/photom/photom.html>`_
 
-Filters: J, H, K
+Filters: Z, Y, J, H, K
 
 Example: ``'ukirt,K'``
 
