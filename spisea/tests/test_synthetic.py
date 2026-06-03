@@ -38,7 +38,7 @@ def test_isochrone(plot=False):
         plt.figure(2)
         iso.plot_mass_luminosity()
 
-    return iso
+    #return iso
 
 def test_iso_wave():
     """
