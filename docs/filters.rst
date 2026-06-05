@@ -83,7 +83,7 @@ Example: ``'ctio_osiris,H'``
 
 **DeCam**
 
-`Dark Energy Camera <http://www.ctio.noao.edu/noao/content/DECam-filter-information>`_
+`Dark Energy Camera <https://noirlab.edu/science/documents/scidoc0472>`_
 
 Filters: u, g, r, i, z, Y
 

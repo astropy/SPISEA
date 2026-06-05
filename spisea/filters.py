@@ -105,22 +105,16 @@ def get_decam_filt(name):
         t = Table.read('{0}/decam/DECam_filters.txt'.format(filters_dir), format='ascii')
         t['y'] = t['Y']
 
-        cols = np.array(t.keys())
-        idx = np.where(cols == name)[0][0]
-
-        trans = t[cols[idx]]
+        trans = t[name]
     except:
         raise ValueError('Could not find DECAM filter {0} in {1}/decam/DECam_filters.txt'.format(name, filters_dir))
 
-    # Limit to unmasked regions only
-    mask = np.ma.getmask(trans)
-    good = np.where(mask == False)
+    # Don't allow negative transmission
+    trans[trans<0] = 0.0
 
     # Convert wavelengths from nm to angstroms, while eliminating masked regions
-    wave = t['wavelength'][good] * 10.
-    trans = trans[good]
-    wave = np.ma.filled(wave)
-    trans = np.ma.filled(trans)
+    wave = t['wavelength'] * 10.
+    trans = trans
 
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='decam_{0}'.format(name))
 
