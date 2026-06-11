@@ -82,6 +82,27 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
+2.4 (2026-03-20)
+  * Added backward compatibility for isochrone file names created
+    before v2.3
+  * When reading isochrone from existing file, only keep user
+    requested filters in resulting table.
+  * Changed the global random seed to a random generator within each class,
+    but still retaining the reproducibility. Test cluster files in
+    test_data also updated accordingly for testing purposes
+  * Added filter support for IRTF L-band
+  * Added conversion function between ST mags and Vega mags
+
+2.3 (2026-02-10)
+  * Achieves faster cluster generation (factor of about 2x) by using
+    replacing ragged arrays with masked arrays when calculating
+    multiplicity properties
+  * Added new test functions (and associated test data files) ensuring
+    that the primary mass and companion
+    mass distibutions remain the same as generated with SPISEA <= v2.2
+  * Added support to Euclid VIS filter
+    
+
 2.2 (2026-01-16)
   * Compatibility updates for SPISEA to work with `SynthPop
     <https://synthpop.readthedocs.io/en/latest/>`_. Updates include:
