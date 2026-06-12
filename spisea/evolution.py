@@ -1716,26 +1716,30 @@ class COSMIC(StellarEvolution):
         star_systems['L'] = final_binaries['lum_1']
         star_systems['logg'] = self.calc_logg(final_binaries['mass_1'], final_binaries['rad_1'])
         
-        # Takes second row with priamry info for binaries
-        # This allows for if first object is kicked but not disrupted
-        multiples_mask = star_systems['isMultiple'] == 1
-        star_systems['kick_x'][multiples_mask] = kick_info.groupby(level=0).nth(1).loc[multiples_mask, 'delta_vsysx_1_rot']
-        star_systems['kick_y'][multiples_mask] = kick_info.groupby(level=0).nth(1).loc[multiples_mask, 'delta_vsysy_1_rot']
-        star_systems['kick_z'][multiples_mask] = kick_info.groupby(level=0).nth(1).loc[multiples_mask, 'delta_vsysz_1_rot']
-        # Takes first row with primary info for singles since second row is blank
-        singles_mask = star_systems['isMultiple'] == 0
-        star_systems['kick_x'][singles_mask] = kick_info.groupby(level=0).nth(0).loc[singles_mask, 'delta_vsysx_1_rot']
-        star_systems['kick_y'][singles_mask] = kick_info.groupby(level=0).nth(0).loc[singles_mask, 'delta_vsysy_1_rot']
-        star_systems['kick_z'][singles_mask] = kick_info.groupby(level=0).nth(0).loc[singles_mask, 'delta_vsysz_1_rot']
+        # Takes sum of the delta kicks in case there was a kick, no disruption, then second kick
+        # Even for isolated stars, take sum since second row is blank
+        primary_kick_sum = (
+                kick_info
+                .groupby(level=0)[["delta_vsysx_1_rot", "delta_vsysy_1_rot", "delta_vsysz_1_rot"]]
+                .sum()
+            )
+        star_systems["kick_x"] = primary_kick_sum["delta_vsysx_1_rot"].reindex(star_systems["system_idx"], fill_value=0).to_numpy()
+        star_systems["kick_y"] = primary_kick_sum["delta_vsysy_1_rot"].reindex(star_systems["system_idx"], fill_value=0).to_numpy()
+        star_systems["kick_z"] = primary_kick_sum["delta_vsysz_1_rot"].reindex(star_systems["system_idx"], fill_value=0).to_numpy()
         
         companions['mass_current'] = final_binaries['mass_2'][companion_system_idxs]
         companions['Teff'] = final_binaries['teff_2'][companion_system_idxs]
         companions['L'] = final_binaries['lum_2'][companion_system_idxs]
         companions['logg'] = self.calc_logg(final_binaries['mass_2'][companion_system_idxs], final_binaries['rad_2'][companion_system_idxs])
-        # Takes second row with companion info
-        companions['kick_x'] = kick_info.groupby(level=0).nth(1)['delta_vsysx_2_rot'][companion_system_idxs] 
-        companions['kick_y'] = kick_info.groupby(level=0).nth(1)['delta_vsysy_2_rot'][companion_system_idxs] 
-        companions['kick_z'] = kick_info.groupby(level=0).nth(1)['delta_vsysz_2_rot'][companion_system_idxs]
+        # Also take sum of companion kicks
+        companion_kick_sum = (
+                kick_info
+                .groupby(level=0)[["delta_vsysx_2_rot", "delta_vsysy_2_rot", "delta_vsysz_2_rot"]]
+                .sum()
+            )
+        companions['kick_x'] = companion_kick_sum["delta_vsysx_2_rot"].reindex(companion_system_idxs, fill_value=0).to_numpy()
+        companions['kick_y'] = companion_kick_sum["delta_vsysy_2_rot"].reindex(companion_system_idxs, fill_value=0).to_numpy()
+        companions['kick_z'] = companion_kick_sum["delta_vsysz_2_rot"].reindex(companion_system_idxs, fill_value=0).to_numpy()
         
         loga = np.log10(final_binaries['sep'][companion_system_idxs]*u.Rsun.to('AU'))
         companions['log_a'] = loga
