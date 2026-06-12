@@ -215,8 +215,7 @@ class ResolvedCluster(Cluster):
             interp_keys = ['Teff', 'L', 'logg', 'isWR', 'mass_current', 'phase'] + self.filt_names
             self.iso_interps = {}
             for ikey in interp_keys:
-                self.iso_interps[ikey] = Interpolator(self.iso.points['mass'], self.iso.points[ikey],
-                                                              kind='linear', bounds_error=False, fill_value=np.nan)
+                self.iso_interps[ikey] = Interpolator(self.iso.points['mass'], self.iso.points[ikey])
         else:
             from scipy.interpolate import LinearNDInterpolator
             self.iso.points.sort(['Teff', 'logg', 'metallicity'])
@@ -332,7 +331,7 @@ class ResolvedCluster(Cluster):
         # Add columns for the Teff, L, logg, isWR, mass_current, phase, and filters.
         for key in ['Teff', 'L', 'logg', 'mass_current', 'phase']:
             star_systems.add_column(Column(np.empty(N_systems, dtype=float), name=key))
-        star_systems.add_column(Column(np.zeros(N_systems, dtype=bool), name='isWR'))
+        star_systems.add_column(Column(np.zeros(N_systems, dtype=bool), name='isWR')) # for models with no WR designation, this remains 0
         star_systems['metallicity'] = np.ones(N_systems) * self.iso.metallicity
 
         # Add the filter columns to the table. They are empty so far.

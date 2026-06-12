@@ -1176,9 +1176,9 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
 
     * T < 3800, logg < 2.5: PHOENIX v16
     * 3200 <= T < 3800, logg > 2.5: BTSettl_CIFITS2011_2015/PHOENIXV16 merge
-    * 3200 < T <= 1200, logg > 2.5: BTSettl_CIFITS2011_2015
-    * 1200 < T <= 1000, logg >= 3.5: BTSettl_CIFITS2011_2015/Meisner2023 merge
-    * 1000 < T <= 250, logg > 2.5: Meisner2023
+    * 1200 < T <= 3200, logg > 2.5: BTSettl_CIFITS2011_2015
+    * 1000 <= T <= 1200, logg >= 2.5: Meisner2023
+    * 250 <= T < 1000: Meisner2023
 
     Otherwise, if T < 3800 and [M/H] != 0:
 
@@ -1406,7 +1406,9 @@ def get_merged_atmosphere_w_bb_supplement(metallicity=0, temperature=20000, grav
     
     * T < 3800, logg < 2.5: PHOENIX v16
     * 3200 <= T < 3800, logg > 2.5: BTSettl_CIFITS2011_2015/PHOENIXV16 merge
-    * 3200 < T <= 1200, logg > 2.5: BTSettl_CIFITS2011_2015
+    * 1200 < T <= 3200, logg > 2.5: BTSettl_CIFITS2011_2015
+    * 1000 <= T <= 1200, logg >= 2.5: Meisner2023
+    * 250 <= T < 1000: Meisner2023
 
     Otherwise, if T < 3800 and [M/H] != 0:
     
@@ -1417,6 +1419,7 @@ def get_merged_atmosphere_w_bb_supplement(metallicity=0, temperature=20000, grav
     * ATLAS: ATLAS9 models (`Castelli & Kurucz 2004 <http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html>`_)
     * PHOENIXv16 (`Husser et al. 2013 <https://ui.adsabs.harvard.edu/abs/2013A%26A...553A...6H/abstract>`_)
     * BTSettl_CIFITS2011_2015: Baraffee+15, Allard+ (https://phoenix.ens-lyon.fr/Grids/BT-Settl/CIFIST2011_2015/SPECTRA/)
+    * Meisner2023: ATMO 1D models (`Meisner et al. 2023 <https://ui.adsabs.harvard.edu/abs/2023AJ....166...57M/abstract>`_)
 
     LTE WARNING: 
 
@@ -1436,110 +1439,51 @@ def get_merged_atmosphere_w_bb_supplement(metallicity=0, temperature=20000, grav
     ensure a smooth transition.
     """
     
-    if (temperature <= 1000):
-        print('BB atmosphere')
-        return get_bb_atmosphere(temperature=temperature,
-                                 metallicity=metallicity,
-                                 gravity=gravity,
-                                 verbose=verbose)
     if (gravity >= 9.8):
-        print('BB atmosphere')
+        if verbose:
+            print('BB atmosphere')
         return get_bb_atmosphere(temperature=temperature,
                                  metallicity=metallicity,
                                  gravity=gravity,
                                  verbose=verbose)
     if (temperature < 4.6e3) & (gravity >= 6.5):
-        print('BB atmosphere')
+        if verbose:
+            print('BB atmosphere')
         return get_bb_atmosphere(temperature=temperature,
                                  metallicity=metallicity,
                                  gravity=gravity,
                                  verbose=verbose)
         
     if (temperature < 3.5e3) & (gravity  < 6.5) & (gravity > 6):
-        print('BB atmosphere')
+        if verbose:
+            print('BB atmosphere')
         return get_bb_atmosphere(temperature=temperature,
                                  metallicity=metallicity,
                                  gravity=gravity,
                                  verbose=verbose)
-    
-    
-    # For T < 3800, atmosphere depends on metallicity + gravity.
-    # If solar metallicity, use BTSettl 2015 grid. Only solar metallicity is
-    # currently available here, so if non-solar metallicity, just stick with
-    # the Phoenix grid
-    if (temperature <= 3800) & (metallicity == 0):
-        # High gravity are in BTSettl regime
-        if (temperature <= 3200) & (gravity > 2.5):
-            if verbose:
-                print( 'BTSettl_2015 atmosphere')
-            return get_BTSettl_2015_atmosphere(metallicity=metallicity,
-                                                temperature=temperature,
-                                                gravity=gravity,
-                                                rebin=rebin)
- 
-        if (temperature >= 3200) & (temperature < 3800) & (gravity > 2.5):
-            if verbose:
-                print( 'BTSettl/Phoenixv16 merged atmosphere')
-            return get_BTSettl_phoenix_atmosphere(metallicity=metallicity,
-                                                temperature=temperature,
-                                                gravity=gravity)
 
-        # Low gravity is PHOENIX regime
-        if gravity <= 2.5:
-            if verbose:
-                print( 'Phoenixv16 atmosphere')
-            return get_phoenixv16_atmosphere(metallicity=metallicity,
-                                            temperature=temperature,
-                                            gravity=gravity,
-                                            rebin=rebin)
-        
-    if (temperature <= 3800) & (metallicity != 0):
-        if verbose:
-            print( 'Phoenixv16 atmosphere')
-        return get_phoenixv16_atmosphere(metallicity=metallicity,
-                                        temperature=temperature,
-                                        gravity=gravity,
-                                        rebin=rebin)
-    # For T > 3800, no metallicity or gravity dependence
-    if (temperature >= 3800) & (temperature < 5000):
-        if verbose:
-            print( 'Phoenixv16 atmosphere')
-        return get_phoenixv16_atmosphere(metallicity=metallicity,
-                                      temperature=temperature,
-                                      gravity=gravity,
-                                      rebin=rebin)
-
-    if (temperature >= 5000) & (temperature < 5500):
-        if verbose:
-            print( 'ATLAS/Phoenix merged atmosphere')
-        return get_atlas_phoenix_atmosphere(metallicity=metallicity,
-                                        temperature=temperature,
-                                        gravity=gravity)
-    
-    if (temperature >= 5500) & (temperature < 20000):
-        if verbose:
-            print( 'ATLAS merged atmosphere')
-        return get_castelli_atmosphere(metallicity=metallicity,
-                                      temperature=temperature,
-                                      gravity=gravity)
-
-    if temperature >= 20000:
-        if verbose:
-            print( 'Still ATLAS merged atmosphere')
-        return get_castelli_atmosphere(metallicity=metallicity,
-                                       temperature=temperature,
-                                       gravity=gravity)
-
-    # Returns BB if outside of WD defined atmospheres
-    else:
+    if gravity > 6:
         if verbose:
             print('WD or BB atmosphere')
         return get_wd_atmosphere(metallicity=metallicity,
-                                       temperature=temperature,
-                                       gravity=gravity)
+                                 temperature=temperature,
+                                 gravity=gravity,
+                                 verbose=verbose)
+
+    return get_merged_atmosphere(metallicity=metallicity,
+                                 temperature=temperature,
+                                 gravity=gravity,
+                                 verbose=verbose,
+                                 rebin=rebin)
 
 def get_merged_atmosphere_w_bb_supplement_grid(bb_supplement_tarr='default', bb_supplement_zarr='default', bb_supplement_loggarr='default', rebin=True):
+    """
+    Return the atmosphere parameter grid used by
+    get_merged_atmosphere_w_bb_supplement.
 
+    This is the standard merged atmosphere grid plus the white dwarf grid and
+    blackbody supplement points for high-gravity regions.
+    """
     super_tarr, super_zarr, super_loggarr = get_merged_atmosphere_grid(rebin=rebin)
 
     wd_tarr, wd_zarr, wd_loggarr = get_wdKoester_atmosphere_grid()
@@ -1548,14 +1492,15 @@ def get_merged_atmosphere_w_bb_supplement_grid(bb_supplement_tarr='default', bb_
     super_loggarr = np.concatenate((super_loggarr, wd_loggarr))
 
     if bb_supplement_tarr == 'default':
-        X, Y = np.meshgrid(np.logspace(np.log10(2e3), np.log10(4.6e3), 20), np.linspace(6.5, 8.7, 10))
-        X1, Y1 = np.meshgrid(np.logspace(np.log10(2e3), np.log10(3.5e3), 15), np.linspace(6, 6.25, 2))
-        #X2, Y2 = np.meshgrid(np.logspace(np.log10(2e2), np.log10(1.1e3), 20), np.linspace(3, 4.5, 4))
-        X3, Y3 = np.meshgrid(np.logspace(np.log10(8e3), np.log10(2e4), 25), np.linspace(9.8, 11.6, 8))
-        bb_supplement_tarr = np.concatenate((X.ravel(), X1.ravel(), X3.ravel()))
-        bb_supplement_loggarr = np.concatenate((Y.ravel(), Y1.ravel(), Y3.ravel()))
-        #bb_supplement_tarr = np.concatenate((X.ravel(), X1.ravel(), X2.ravel(), X3.ravel()))
-        #bb_supplement_loggarr = np.concatenate((Y.ravel(), Y1.ravel(), Y2.ravel(), Y3.ravel()))
+        X_highg, Y_highg = np.meshgrid(np.logspace(np.log10(2e3), np.log10(2e4), 35),
+                                       np.linspace(9.8, 11.6, 8))
+        X_cool_highg, Y_cool_highg = np.meshgrid(np.logspace(np.log10(2e3), np.log10(4.6e3), 20),
+                                                 np.linspace(6.5, 9.7, 10))
+        X_cool_midg, Y_cool_midg = np.meshgrid(np.logspace(np.log10(2e3), np.log10(3.5e3), 15),
+                                               np.linspace(6.1, 6.4, 4))
+
+        bb_supplement_tarr = np.concatenate((X_highg.ravel(), X_cool_highg.ravel(), X_cool_midg.ravel()))
+        bb_supplement_loggarr = np.concatenate((Y_highg.ravel(), Y_cool_highg.ravel(), Y_cool_midg.ravel()))
         bb_supplement_zarr = np.zeros(len(bb_supplement_tarr))
         
 
