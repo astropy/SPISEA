@@ -688,9 +688,9 @@ class ResolvedCluster(Cluster):
             companions['phase'][low_mass_idxs] = 98
 
             # FIXME SHOULD BE ADDED FOR EXTERNALEVOL TOO
-            # Double check that everything behaved properly.
-            if len(idx)>0:
-                assert companions['mass'][companions_teff_non_nan > 0].min() > 0, "Companion mass is not positive"
+        # Double check that everything behaved properly.
+        if len(idx)>0:
+            assert companions['mass'][companions_teff_non_nan > 0].min() > 0, "Companion mass is not positive"
 
         return star_systems, companions
 

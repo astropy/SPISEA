@@ -1817,8 +1817,6 @@ class COSMIC(StellarEvolution):
         companions['system_idx'] = mapping[companions['system_idx']]
         star_systems.remove_columns(['system_idx', 'system_idx_new'])
 
-        #FIXME add assertion about mass_current not being zero
-
         # Preserve a scalar kick magnitude alongside the vector components.
         for table in (star_systems, companions):
             table['kick'] = np.sqrt(table['kick_x']**2 + table['kick_y']**2 + table['kick_z']**2)
