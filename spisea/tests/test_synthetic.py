@@ -2,6 +2,9 @@ import os
 import pdb
 import time
 import spisea
+import pytest
+import warnings
+import importlib
 import numpy as np
 import pylab as plt
 from astropy.table import Table
@@ -940,6 +943,160 @@ def test_compact_object_companions():
     nan_lum_companions = clust_Mult.companions[np.isnan(clust_Mult.companions['L'])]
 
     assert (len(nan_lum_companions) == 0) | (all(np.isnan(nan_lum_companions['phase'])) == False)
+
+def _require_cosmic():
+    """
+    Skip the calling test if the optional `cosmic` package is not installed,
+    emitting a warning so the skip is visible (rather than silent).
+    """
+    if importlib.util.find_spec('cosmic') is None:
+        msg = ('COSMIC integration test skipped: the optional `cosmic` package '
+               'is not installed. Run in an environment with COSMIC (e.g. '
+               '`astro_cosmic`) to exercise these tests.')
+        warnings.warn(msg)
+        pytest.skip(msg)
+
+    return
+
+def test_COSMIC_evolve():
+    """
+    Test the COSMIC external evolution model's evolve() method directly on a
+    small, hand-built set of star systems and companions. Uses a young, low-mass
+    population so no compact remnants/disruptions occur, keeping the run fast
+    and avoiding the merger/disruption branches.
+
+    Skipped (with a warning) if the optional `cosmic` package is not installed.
+    """
+    _require_cosmic()
+
+    from astropy.table import Table
+
+    # Build a minimal star_systems table: 2 binaries + 1 single
+    star_systems = Table()
+    star_systems['mass'] = np.array([1.0, 0.9, 0.5])
+    star_systems['isMultiple'] = np.array([True, True, False])
+    star_systems['N_companions'] = np.array([1, 1, 0])
+    star_systems['systemMass'] = np.array([1.5, 1.3, 0.5])
+
+    # Companions for the first two systems
+    companions = Table()
+    companions['system_idx'] = np.array([0, 1])
+    companions['mass'] = np.array([0.5, 0.4])
+    companions['log_a'] = np.array([1.0, 1.5])   # log10(AU)
+    companions['e'] = np.array([0.1, 0.2])
+    companions['i'] = np.array([30.0, 60.0])      # degrees
+    companions['Omega'] = np.array([0.0, 0.0])
+    companions['omega'] = np.array([0.0, 0.0])
+
+    evo = evolution.COSMIC(keep_disrupted_companions=False, keep_COSMIC_tables=True)
+    ss, comp = evo.evolve(star_systems, companions, logAge=8.0, metallicity=0.0)
+
+    # Check that evolve() populated the expected output columns
+    expected_cols = ['mass_current', 'Teff', 'L', 'logg', 'phase',
+                     'kick', 'kick_x', 'kick_y', 'kick_z']
+    for col in expected_cols:
+        assert col in ss.colnames, 'star_systems missing column {0}'.format(col)
+        assert col in comp.colnames, 'companions missing column {0}'.format(col)
+
+    # Core bookkeeping invariant: companion count must match companion table length
+    assert np.sum(ss['N_companions']) == len(comp)
+
+    # Scalar kick must be the magnitude of the kick vector components
+    np.testing.assert_allclose(
+        ss['kick'], np.sqrt(ss['kick_x']**2 + ss['kick_y']**2 + ss['kick_z']**2))
+    np.testing.assert_allclose(
+        comp['kick'], np.sqrt(comp['kick_x']**2 + comp['kick_y']**2 + comp['kick_z']**2))
+
+    # Young, low-mass stars should remain stellar (no compact remnants here).
+    # Compact-object phase codes are 101 (WD), 102 (NS), 103 (BH).
+    assert np.all(ss['phase'] < 100)
+    assert np.all(comp['phase'] < 100)
+
+    # keep_COSMIC_tables=True should store the raw COSMIC output tables
+    for attr in ['bpp', 'bcm', 'initC', 'kick_info']:
+        assert hasattr(evo, attr), 'COSMIC model missing table {0}'.format(attr)
+
+    return
+
+def test_COSMIC_ResolvedCluster():
+    """
+    Test the full COSMIC cluster pipeline, mirroring the Cluster_w_COSMIC
+    tutorial: build an IsochronePhotExternalEvolution, then a ResolvedCluster
+    with binary multiplicity (CSF_max=1, companion_max=True), and check the
+    output tables.
+
+    Skipped (with a warning) if the optional `cosmic` package is not installed.
+    """
+    _require_cosmic()
+
+    # Cluster/isochrone parameters (kept small/cheap)
+    logAge = 9.0
+    AKs = 0.0
+    distance = 4000
+    metallicity = 0.0
+    cluster_mass = 10**3.
+    mass_sampling = 10
+    atm_grid_dir = f'{spisea_path}/tests/atm_cosmic'
+
+    filt_list = ['ubv,V']
+
+    # External evolution model (keep tables so we can verify them)
+    evo = evolution.COSMIC(keep_COSMIC_tables=True)
+    atm_func = atmospheres.get_merged_atmosphere_w_bb_supplement
+    red_law = reddening.RedLawCardelli(3.1)
+
+    iso = syn.IsochronePhotExternalEvolution(
+        logAge,
+        AKs,
+        distance,
+        metallicity=metallicity,
+        evo_model=evo,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        atm_grid_dir=atm_grid_dir,
+        mass_sampling=mass_sampling,
+        recomp=False
+    )
+
+    # COSMIC only supports binaries: resolved multiplicity, no higher-order systems
+    clust_multiplicity = multiplicity.MultiplicityResolvedDK(CSF_max=1, companion_max=True)
+    my_imf = imf.Kroupa_2001(multiplicity=clust_multiplicity)
+
+    cluster = syn.ResolvedCluster(iso, my_imf, cluster_mass)
+    star_systems = cluster.star_systems
+    companions = cluster.companions
+
+    # Basic sanity: stars and companions were produced
+    assert len(star_systems) > 0
+    assert len(companions) > 0
+
+    # Core bookkeeping invariant
+    assert np.sum(star_systems['N_companions']) == len(companions)
+
+    # Kick columns present and self-consistent on both tables
+    for tab in (star_systems, companions):
+        for col in ['kick', 'kick_x', 'kick_y', 'kick_z']:
+            assert col in tab.colnames
+        np.testing.assert_allclose(
+            tab['kick'], np.sqrt(tab['kick_x']**2 + tab['kick_y']**2 + tab['kick_z']**2))
+
+    # Synthetic photometry column should exist
+    assert 'm_ubv_V' in star_systems.colnames
+
+    # All phase codes should be in the allowed set:
+    # 0-9 stellar phases, 101 (WD), 102 (NS), 103 (BH)
+    allowed_phases = set(range(0, 10)) | {101, 102, 103}
+    ss_phases = set(np.unique(star_systems['phase']).astype(int).tolist())
+    comp_phases = set(np.unique(companions['phase']).astype(int).tolist())
+    assert ss_phases.issubset(allowed_phases), 'Unexpected star phases: {0}'.format(ss_phases - allowed_phases)
+    assert comp_phases.issubset(allowed_phases), 'Unexpected companion phases: {0}'.format(comp_phases - allowed_phases)
+
+    # keep_COSMIC_tables=True should expose the raw COSMIC tables on the evo model
+    for attr in ['bpp', 'bcm', 'initC', 'kick_info']:
+        assert hasattr(iso.evo_model, attr), 'COSMIC model missing table {0}'.format(attr)
+
+    return
 
 #=================================#
 # Additional timing functions

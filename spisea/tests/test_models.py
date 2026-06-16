@@ -91,6 +91,82 @@ def test_synthpop_MIST_extension():
 
     return
 
+def test_COSMIC_init():
+    """
+    Test the COSMIC external evolution model constructor: default flags,
+    default BSEDict, and that user-supplied options are stored.
+    """
+    # Default construction
+    evo = evolution.COSMIC()
+    assert evo.external_evol is True
+    assert evo.z_solar == 0.02
+    assert evo.model_version_name == 'COSMIC'
+    assert evo.keep_disrupted_companions is True
+    assert evo.keep_COSMIC_tables is False
+
+    # Default BSEDict should be a populated dictionary of BSE parameters
+    assert isinstance(evo.BSEDict, dict)
+    assert len(evo.BSEDict) > 0
+
+    # User-supplied options should be stored
+    custom_dict = {'windflag': 3, 'neta': 0.5}
+    evo2 = evolution.COSMIC(BSEDict=custom_dict, keep_disrupted_companions=False,
+                            keep_COSMIC_tables=True)
+    assert evo2.BSEDict == custom_dict
+    assert evo2.keep_disrupted_companions is False
+    assert evo2.keep_COSMIC_tables is True
+
+    return
+
+def test_COSMIC_calc_logg():
+    """
+    Test the COSMIC.calc_logg helper. For the Sun (M=1 Msun, R=1 Rsun)
+    the surface gravity should be logg ~ 4.438 (cgs).
+    """
+    evo = evolution.COSMIC()
+
+    # Scalar solar value
+    assert np.isclose(evo.calc_logg(1.0, 1.0), 4.438, atol=0.01)
+
+    # Array input should be handled element-wise
+    masses = np.array([1.0, 2.0])
+    radii = np.array([1.0, 2.0])
+    logg = evo.calc_logg(masses, radii)
+    assert np.isclose(logg[0], 4.438, atol=0.01)
+    # logg scales as log10(M/R^2); doubling both M and R lowers logg by log10(2)
+    assert np.isclose(logg[0] - logg[1], np.log10(2.0), atol=0.01)
+
+    return
+
+def test_COSMIC_get_kick_differential():
+    """
+    Test the COSMIC.get_kick_differential helper. The transformation is a
+    pure rotation (Rz(theta) * Rx(phi)) of the kick vector, so it must
+    preserve the vector magnitude. A zero kick must map to a zero kick.
+    """
+    evo = evolution.COSMIC()
+
+    # Zero kick in -> zero kick out
+    zeros = np.zeros(3)
+    phase = np.array([0.3, 1.1, 2.0])
+    incl = np.array([0.5, 1.5, 2.5])
+    kd_zero = evo.get_kick_differential(zeros, zeros, zeros, phase=phase, inclination=incl)
+    assert np.allclose(kd_zero.d_x.value, 0.0)
+    assert np.allclose(kd_zero.d_y.value, 0.0)
+    assert np.allclose(kd_zero.d_z.value, 0.0)
+
+    # Magnitude is preserved under the rotation
+    vx = np.array([10.0, -5.0, 3.0])
+    vy = np.array([2.0, 7.0, -1.0])
+    vz = np.array([-4.0, 1.0, 8.0])
+    kd = evo.get_kick_differential(vx, vy, vz, phase=phase, inclination=incl)
+
+    mag_in = np.sqrt(vx**2 + vy**2 + vz**2)
+    mag_out = np.sqrt(kd.d_x.value**2 + kd.d_y.value**2 + kd.d_z.value**2)
+    np.testing.assert_allclose(mag_out, mag_in, rtol=1e-10)
+
+    return
+
 def test_atmosphere_models():
     """
     Test the rebinned atmosphere models used for synthetic photometry
