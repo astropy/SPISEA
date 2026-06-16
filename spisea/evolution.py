@@ -1744,13 +1744,13 @@ class COSMIC(StellarEvolution):
         loga = np.log10(final_binaries['sep'][companion_system_idxs]*u.Rsun.to('AU'))
         companions['log_a'] = loga
         
-        fixed_phases1 = final_binaries['kstar_1'].to_numpy()
+        fixed_phases1 = final_binaries['kstar_1'].to_numpy(copy=True)
         fixed_phases1[np.where((final_binaries['kstar_1'] >= 10) & (final_binaries['kstar_1'] <= 12))[0]] = 101
         fixed_phases1[np.where(final_binaries['kstar_1'] == 13)[0]] = 102
         fixed_phases1[np.where(final_binaries['kstar_1'] == 14)[0]] = 103
         star_systems['phase'] = fixed_phases1
         
-        fixed_phases2 = final_binaries['kstar_2'][companion_system_idxs].to_numpy()
+        fixed_phases2 = final_binaries['kstar_2'][companion_system_idxs].to_numpy(copy=True)
         fixed_phases2[np.where((final_binaries['kstar_2'][companion_system_idxs] >= 10) & (final_binaries['kstar_2'][companion_system_idxs] <= 12))[0]] = 101
         fixed_phases2[np.where(final_binaries['kstar_2'][companion_system_idxs] == 13)[0]] = 102
         fixed_phases2[np.where(final_binaries['kstar_2'][companion_system_idxs] == 14)[0]] = 103
