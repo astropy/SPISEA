@@ -1545,28 +1545,28 @@ class COSMIC(StellarEvolution):
     def __init__(self, BSEDict='default', keep_disrupted_companions=True, keep_COSMIC_tables=False): 
         if BSEDict == 'default':
             self.BSEDict = {
-                                        "pts1": 0.001, "pts2": 0.01, "pts3": 0.02, "zsun": 0.02, "windflag": 3,
-                                        "eddlimflag": 0, "neta": 0.5, "bwind": 0.0, "hewind": 0.5, "beta": 0.125,
-                                        "xi": 0.5, "acc2": 1.5, "LBV_flag": 1, "alpha1": 1.0, "lambdaf": 0.0,
-                                        "ceflag": 1, "cekickflag": 2, "cemergeflag": 1, "cehestarflag": 0,
-                                        "qcflag": 5,
-                                        "qcrit_array": [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
-                                        "kickflag": 5, "sigma": 265.0, "bhflag": 1, "bhsigmafrac": 1.0,
-                                        "sigmadiv": -20.0, "ecsn": 2.25, "ecsn_mlow": 1.6, "aic": 1, "ussn": 1,
-                                        "polar_kick_angle": 90.0,
-                                        "natal_kick_array": [[-100.0, -100.0, -100.0, -100.0, 0.0], [-100.0, -100.0, -100.0, -100.0, 0.0]],
-                                        "mm_mu_ns": 400.0, "mm_mu_bh": 200.0, "remnantflag": 4,
-                                        "fryer_mass_limit": 0, "mxns": 3.0, "rembar_massloss": 0.5,
-                                        "wd_mass_lim": 1, "maltsev_mode": 0, "maltsev_fallback": 0.5,
-                                        "maltsev_pf_prob": 0.1, "pisn": -2, "ppi_co_shift": 0.0,
-                                        "ppi_extra_ml": 0.0, "bhspinflag": 0, "bhspinmag": 0.0, "grflag": 1,
-                                        "eddfac": 10, "gamma": -2, "don_lim": -1, "acc_lim": -1, "tflag": 1,
-                                        "ST_tide": 1,
-                                        "fprimc_array": [2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0],
-                                        "ifflag": 1, "wdflag": 1, "epsnov": 0.001, "bdecayfac": 1,
-                                        "bconst": 3000, "ck": 1000, "rejuv_fac": 1.0, "rejuvflag": 0,
-                                        "bhms_coll_flag": 0, "htpmb": 1, "ST_cr": 1, "rtmsflag": 0
-                                    }
+                                "pts1": 0.001, "pts2": 0.01, "pts3": 0.02, "zsun": 0.02, "windflag": 3,
+                                "eddlimflag": 0, "neta": 0.5, "bwind": 0.0, "hewind": 0.5, "beta": 0.125,
+                                "xi": 0.5, "acc2": 1.5, "LBV_flag": 1, "alpha1": [1.0, 1.0],
+                                "lambdaf": 0.0, "ceflag": 1, "cekickflag": 2, "cemergeflag": 1,
+                                "cehestarflag": 0, "qcflag": 5,
+                                "qcrit_array": [0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0],
+                                "kickflag": 5, "sigma": 265.0, "bhflag": 1, "bhsigmafrac": 1.0,
+                                "sigmadiv": -20.0, "ecsn": 2.25, "ecsn_mlow": 1.6, "aic": 1, "ussn": 1,
+                                "polar_kick_angle": 90.0,
+                                "natal_kick_array": [[-100.0, -100.0, -100.0, -100.0, 0.0], [-100.0, -100.0, -100.0, -100.0, 0.0]],
+                                "mm_mu_ns": 400.0, "mm_mu_bh": 200.0, "remnantflag": 4,
+                                "fryer_mass_limit": 0, "mxns": 3.0, "fryer_fmix": 1.0,
+                                "fryer_mcrit_nsbh": 5.75, "rembar_massloss": 0.5, "wd_mass_lim": 1,
+                                "maltsev_mode": 0, "maltsev_fallback": 0.5, "maltsev_pf_prob": 0.1,
+                                "pisn": -2, "ppi_co_shift": 0.0, "ppi_extra_ml": 0.0, "bhspinflag": 0,
+                                "bhspinmag": 0.0, "grflag": 1, "eddfac": 10, "gamma": -2, "don_lim": -1,
+                                "acc_lim": [-1, -1], "smt_periastron_check": 0, "tflag": 1, "ST_tide": 1,
+                                "fprimc_array": [2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0,2.0/21.0],
+                                "ifflag": 1, "wdflag": 1, "epsnov": 0.001, "bdecayfac": 1,
+                                "bconst": 3000, "ck": 1000, "rejuv_fac": 1.0, "rejuvflag": 0,
+                                "bhms_coll_flag": 0, "htpmb": 1, "ST_cr": 1, "rtmsflag": 0
+                            }
 
         else:
             self.BSEDict = BSEDict
