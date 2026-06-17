@@ -419,7 +419,6 @@ class ResolvedCluster(Cluster):
         # For low-mass stars and substellar objects below isochrone, assume no mass loss and set phase to 98
         low_mass_idxs = (companions['mass']<np.min(self.iso.points['mass']))
         companions['mass_current'][low_mass_idxs] = companions['mass'][low_mass_idxs]
-        pdb.set_trace()
         companions['phase'][low_mass_idxs] = 98
 
         if len(companions['mass'][companions_teff_non_nan > 0])>0:

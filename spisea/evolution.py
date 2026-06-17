@@ -1114,8 +1114,8 @@ class MISTv1(StellarEvolution):
         if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
             raise ValueError(f'Requested age {log_age} is out of bounds between {np.min(self.age_list)} and {np.max(self.age_list)}.')
 
-        if ((z_defined < np.min(self.z_list)) or
-                (z_defined > np.max(self.z_list))):
+        if ((z_defined < np.min(self.z_list)-0.1) or
+                (z_defined > np.max(self.z_list)+0.1)):
             raise ValueError(f'Requested metallicity {z_defined} is out of bounds between {np.min(self.z_list)} and {np.max(self.z_list)}.')
 
         # Find nearest age in grid to input grid
