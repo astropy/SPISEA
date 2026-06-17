@@ -415,6 +415,12 @@ class ResolvedCluster(Cluster):
         companions_teff_non_nan = np.nan_to_num(companions['Teff'], nan=-99)
         if self.verbose and sum(companions_teff_non_nan > 0) != N_comp_tot:
             print(f'Found {N_comp_tot - sum(companions_teff_non_nan > 0):d} companions out of stellar mass range')
+            
+        # For low-mass stars and substellar objects below isochrone, assume no mass loss and set phase to 98
+        low_mass_idxs = (companions['mass']<np.min(self.iso.points['mass']))
+        companions['mass_current'][low_mass_idxs] = companions['mass'][low_mass_idxs]
+        pdb.set_trace()
+        companions['phase'][low_mass_idxs] = 98
 
         if len(companions['mass'][companions_teff_non_nan > 0])>0:
             assert companions['mass'][companions_teff_non_nan > 0].min() > 0, "Companion mass is not positive"
@@ -586,8 +592,9 @@ class ResolvedCluster(Cluster):
         # For low-mass stars and substellar objects below isochrone, assume no mass loss and set phase to 98
         low_mass_idxs = (companions['mass']<np.min(self.iso.points['mass']))
         companions['mass_current'][low_mass_idxs] = companions['mass'][low_mass_idxs]
+        pdb.set_trace()
         companions['phase'][low_mass_idxs] = 98
-
+        
         # Double check that everything behaved properly.
         if len(idx) > 0:
             assert companions['mass'][companions_teff_non_nan > 0].min() > 0, "Companion mass is not positive"
@@ -635,13 +642,6 @@ class ResolvedCluster(Cluster):
 
         if keep_low_mass_stars:
             lm_idx = star_systems['mass']<np.min(self.iso.points['mass'])
-            # Adjust the properties as needed
-            star_systems['mass_current'][lm_idx] = star_systems['mass'][lm_idx]
-            star_systems['phase'][lm_idx] = 98
-            #pdb.set_trace()
-
-        if keep_low_mass_stars:
-            lm_idx = star_systems['mass'] < np.min(self.iso.points['mass'])
             # Adjust the properties as needed
             star_systems['mass_current'][lm_idx] = star_systems['mass'][lm_idx]
             star_systems['phase'][lm_idx] = 98
