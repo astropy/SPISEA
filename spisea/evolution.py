@@ -573,7 +573,7 @@ class Phillips2020(StellarEvolution):
         self.age_list = np.arange(6.0, 10.0, 0.001)
 
         # define required evo_grid number
-        self.evo_grid_min = 1.0
+        self.evo_grid_min = 3.0
 
     def isochrone(self, age= 1.e8, metallicity=0.0):
         r"""
@@ -722,7 +722,7 @@ class Marley2021(StellarEvolution):
         }
 
         # Define required evo_grid number
-        self.evo_grid_min = 1.0      
+        self.evo_grid_min = 3.0
 
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -1592,7 +1592,7 @@ class MergedPhillipsBaraffePisaEkstromParsec(StellarEvolution):
             self.z_file_map = {0.015: 'z015_norot/'}
 
         # Define required evo_grid number
-        self.evo_grid_min = 1.0
+        self.evo_grid_min = 3.0
         
     
     def isochrone(self, age=1.e8, metallicity=0.0):
