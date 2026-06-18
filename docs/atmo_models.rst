@@ -31,10 +31,107 @@ resolution of the atmosphere model grid. These are available in the
 uses has degraded the resolution of all atmosphere grids to R = 250
 (the `spisea_cdbs.tar.gz` file). 
 
-.. figure:: images/atm_models.png
-	    :width: 900
-            :height: 196
-	    :align: center
+.. list-table:: Atmosphere Models
+   :header-rows: 2
+   :widths: 25 15 12 15 12 18 20
+ 
+   * - Model Name
+     - T\ :sub:`eff` Range (K)
+     - log *g* Range (cgs)
+     - Metallicity Range [Fe/H]
+     - λ Range (μm)
+     - Resolution\ :sup:`a` λ/Δλ
+     - Ref
+   * - ``get_merged_atmosphere``
+     - 250 – 50000
+     - \ :sup:`b`
+     - \ :sup:`b`
+     - \ :sup:`b`
+     - \ :sup:`b`
+     - Appendix B; Hosek et al. (2020)
+   * - ``get_castelli_atmosphere``
+     - 3500 – 50000
+     - 0 – 5.0
+     - -2.5 – 0.2
+     - 0.1 – 10
+     - ~250
+     - Castelli & Kurucz (2004)
+   * - ``get_phoenixv16_atmosphere``
+     - 2300 – 12000
+     - 0.0 – 6.0
+     - -4.0 – +1.0
+     - 0.05 – 5.5
+     - 100,000 – 500,000
+     - Husser et al. (2013)
+   * - ``get_BTSettl_2015_atmosphere``
+     - 1200 – 7000
+     - 2.5 – 5.5
+     - 0
+     - 0.01 – 30
+     - 2000 – 700,000
+     - Baraffe et al. (2015)
+   * - ``get_BTSettl_atmosphere``\ :sup:`d`
+     - 2600 – 7000
+     - 4.5 – 5.5
+     - -2.5 – 0.5
+     - 0.1 – 6.9
+     - 20,000 – 250,000
+     - Allard et al. (2012b,a)
+   * - ``get_kurucz_atmosphere``
+     - 3000 – 50000
+     - 0 – 5.0
+     - -5.0 – 1.0
+     - 0.1 – 10
+     - ~250
+     - \ :sup:`c`
+   * - ``get_phoenix_atmosphere``
+     - 2100 – 69000
+     -
+     - -4.0 – 0.5
+     - 0.001 – 995
+     - ~280
+     - Allard et al. (2003, 2007)
+   * - ``get_Phillips2020_atmosphere``
+     - 200 - 3000
+     - 2.5 - 5.5
+     - 0
+     - 0.2 - ~1980.2
+     - 0.5 - 5000
+     - Phillips et al. (2020)
+   * - ``get_Meisner2023_atmosphere``
+     - 250 - 1200
+     - 2.5 - 5.5
+     - -1.0 - 0.3
+     - 0.2 - 30
+     - ~3000
+     - Meisner et al. (2023)
+   * - ``get_wd_atmosphere``\ :sup:`e`
+     - –
+     - –
+     - –
+     - 0.1 – 3.0
+     - 200 – 500,000
+     - Koester (2010)
+   * - ``get_bb_atmosphere``
+     - –
+     - –
+     - –
+     - –
+     - –
+     - Blackbody Spectrum
+ 
+.. rubric:: Footnotes
+ 
+:sup:`a` Resolution column reports the original resolution of the atmosphere model grid.
+The default SPISEA grid degrades all atmosphere grids to R = 250 (``spisea_cdbs.tar.gz``).
+ 
+:sup:`b` See Appendix B; values depend on the underlying model selected by ``get_merged_atmosphere``.
+ 
+:sup:`c` Kurucz (1993); see CDBS documentation.
+ 
+:sup:`d` Solar metallicity only for BTSettl 2015.
+ 
+:sup:`e` White dwarf atmospheres only.
 
 Model Atmosphere Classes
 -------------------------
@@ -57,4 +154,8 @@ Model Atmosphere Classes
 .. autofunction:: atmospheres.get_kurucz_atmosphere
 
 .. autofunction:: atmospheres.get_phoenix_atmosphere
+
+.. autofunction:: atmospheres.get_Phillips2020_atmosphere
+
+.. autofunction:: atmospheres.get_Meisner2023_atmosphere
 

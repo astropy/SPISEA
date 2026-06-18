@@ -35,6 +35,9 @@ Javier Moldón -- installation using Docker containers and Singularity
 Winston Zhang -- bugfix to make redlaw paths correct regardless of
 what operating system is used
 
+<<<<<<< HEAD
+Caitlin Begbie -- added brown dwarf physics and capabilities
+=======
 Sage Hironaka Remulla -- added Rubin Observatory filters
 
 Lingfeng Wei -- bugfix to improve creation of iso_dir in
@@ -43,11 +46,9 @@ functions for primary and companion star mass generation (v2.3),
 updated random state generators (v2.4)
 
 Macy Huston -- New metallicity bound + isochrone filter checks,
-imf_mass_lim bugfix, roman filter bugfix, Synthpop compatibility
-updates (v2.2), improvements for reading in/updating existing isochrone
-files, Vega mag to ST mag conversion function (v2.4), several new filter sets 
-and increased filter name flexibility for synphot
+imf_mass_lim bugfix, roman filter bugfix, added Euclid filters, Synthpop compatibility
+updates (v2.2), improvements for reading in/updated existing isochrone
+files, Vega mag to ST mag conversion function (v2.4)
 
 Anna Pusack -- Added IRTF L-band filter support
-
-Caitlin Begbie -- added brown dwarf physics and capabilities
+>>>>>>> upstream/dev

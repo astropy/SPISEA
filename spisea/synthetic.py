@@ -2,6 +2,7 @@ import os
 import time
 import math
 import scipy
+import scipy.interpolate
 import inspect
 import warnings
 import numpy as np
@@ -10,12 +11,14 @@ import matplotlib.pyplot as plt
 from spisea import reddening, evolution, filters
 from spisea import atmospheres as atm
 from scipy.spatial import cKDTree as KDTree
+from scipy.stats import truncnorm
 from spisea.imf import multiplicity
 from pysynphot import spectrum
 from pysynphot import ObsBandpass
 from pysynphot import observation as obs
 from astropy import constants, units
 from astropy.table import Table, Column
+import astropy.modeling
 
 default_evo_model = evolution.MISTv1()
 default_red_law = reddening.RedLawNishiyama09()
@@ -81,7 +84,7 @@ class Cluster(object):
 
     seed: int
         Seed for the random number generator numpy.random.default_rng(seed).
-        All random functions in the class will use this generator, 
+        All random functions in the class will use this generator,
         unless a different generator is passed in as an argument to the function, by default None.
 
     vebose: boolean
@@ -136,7 +139,7 @@ class ResolvedCluster(Cluster):
 
     seed: int, optional
         Seed for the random number generator numpy.random.default_rng(seed).
-        All random functions in the class will use this generator, 
+        All random functions in the class will use this generator,
         unless a different generator is passed in as an argument to the function, by default None.
 
     vebose: boolean, optional
@@ -157,7 +160,7 @@ class ResolvedCluster(Cluster):
             phase: evolutionary phase of the star, as defined by the isochrone model
             metallicity: metallicity of the star
             filter columns: magnitude of the star in each filter defined by the isochrone model
-    
+
     companions: astropy.table.Table (only if multiplicity is used in the IMF object)
         Table containing the properties of the companion stars. The columns include:
             system_idx: index of the stellar system this companion belongs to, which can be used to match to the star_systems table
@@ -284,10 +287,26 @@ class ResolvedCluster(Cluster):
         # Note: this only becomes relevant when the cluster is > 10**6 M-sun, this
         # effect is so small
         # Convert nan_to_num to avoid errors on greater than, less than comparisons
+
+        # Define brown dwarf mass range
+        bd_mask = (star_systems['mass'] >= 0.01) & (star_systems['mass'] <= 0.08)
+        #hard code BDs as 90 and invariant masses
+        star_systems['phase'][bd_mask] = 90
+        star_systems['mass_current'][bd_mask] = star_systems['mass'][bd_mask]
+
+        # Identify bad phases (non-brown-dwarfs only)
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
-        bad = np.where( (star_systems_phase_non_nan > 5) & (star_systems_phase_non_nan < 101) & 
-                        (star_systems_phase_non_nan != 9) & (star_systems_phase_non_nan != -99))
+        bad = np.where(
+            (star_systems_phase_non_nan > 5) &
+            (star_systems_phase_non_nan < 101) &
+            (star_systems_phase_non_nan != 9) &
+            (star_systems_phase_non_nan != 90) &  # exclude BD phase
+            (star_systems_phase_non_nan != -99)
+        )
         star_systems['phase'][bad] = 5
+        
+        for filt in self.filt_names:
+            star_systems[filt] = self.iso_interps[filt](star_systems['mass'])
 
         #####
         # Make Remnants
@@ -297,7 +316,7 @@ class ResolvedCluster(Cluster):
         # Remnants have flux = 0 in all bands if they are generated here.
         #####
         if self.ifmr != None:
-            # Identify compact objects as those with Teff = 0 or with phase > 100.
+            # Identify compact objects as those with Teff = 0 or with phase > 100 or BDs
             highest_mass_iso = self.iso.points['mass'].max()
             idx_rem = np.where((np.isnan(star_systems['Teff'])) & (star_systems['mass'] > highest_mass_iso))[0]
 
@@ -364,6 +383,10 @@ class ResolvedCluster(Cluster):
 
         companions['metallicity'] = np.ones(N_comp_tot) * self.iso.metallicity
 
+        bd_mask = (companions['mass'] >= 0.01) & (companions['mass'] <= 0.08)
+        companions['phase'][bd_mask] = 90
+        companions['mass_current'][bd_mask] = companions['mass'][bd_mask]
+
         # For a very small fraction of stars, the star phase falls on integers in-between
         # the ones we have definition for, as a result of the interpolation. For these
         # stars, round phase down to nearest defined phase (e.g., if phase is 71,
@@ -374,6 +397,7 @@ class ResolvedCluster(Cluster):
             (companions_phase_non_nan > 5) &
             (companions_phase_non_nan < 101) &
             (companions_phase_non_nan != 9) &
+            (companions_phase_non_nan != 90) &
             (companions_phase_non_nan != -99)
         ] = 5
 
@@ -508,18 +532,25 @@ class ResolvedCluster(Cluster):
                 companions['isWR'][cdx] = np.round(self.iso_interps['isWR'](comp_mass))
                 companions['mass_current'] = self.iso_interps['mass_current'](companions['mass'])
                 companions['phase'] = np.round(self.iso_interps['phase'](companions['mass']))
-                companions['metallicity'] = np.ones(N_comp_tot)*self.iso.metallicity
+                companions['metallicity'] = np.ones(N_comp_tot)*self.iso.metallicity   #****
 
                 # For a very small fraction of stars, the star phase falls on integers in-between
                 # the ones we have definition for, as a result of the interpolation. For these
                 # stars, round phase down to nearest defined phase (e.g., if phase is 71,
                 # then round it down to 5, rather than up to 101).
                 # Convert nan_to_num to avoid errors on greater than, less than comparisons
+
+                # reinforce BD phase of 90 and invariant masses
+                bd_mask = (companions['mass'] >= 0.01) & (companions['mass'] <= 0.08)
+                companions['phase'][bd_mask] = 90
+                companions['mass_current'][bd_mask] = companions['mass'][bd_mask]
+
                 companions_phase_non_nan = np.nan_to_num(companions['phase'], nan=-99)
                 bad = np.where( (companions_phase_non_nan > 5) &
                                 (companions_phase_non_nan < 101) &
                                 (companions_phase_non_nan != 9) &
-                                (companions_phase_non_nan != -99))[0]
+                                (companions_phase_non_nan != 90) &
+                                (companions_phase_non_nan != -99))
                 # Print warning, if desired
                 verbose=False
                 if verbose:
@@ -550,14 +581,17 @@ class ResolvedCluster(Cluster):
                     star_systems[filt][idx[good]] = -2.5 * np.log10(f1[good] + f2[good])
                     star_systems[filt][idx[bad]] = np.nan
 
+
         #####
         # Make Remnants with flux = 0 in all bands.
         #####
         if self.ifmr != None:
             # Identify compact objects as those with Teff = 0 or with masses above the max iso mass
+            # Exclude BDs from designation
             highest_mass_iso = self.iso.points['mass'].max()
-            cdx_rem = np.where(np.isnan(companions['Teff']) &
-                                (companions['mass'] > highest_mass_iso))[0]
+            cdx_rem = np.where((np.isnan(companions['Teff'])) &
+                               (companions['mass'] > highest_mass_iso) &
+                               (companions['mass'] >= 0.08))[0]
 
             # Calculate remnant mass and ID for compact objects; update remnant_id and
             # remnant_mass arrays accordingly
@@ -570,7 +604,7 @@ class ResolvedCluster(Cluster):
 
             # Drop remnants where it is not relevant (e.g. not a compact object or
             # outside mass range IFMR is defined for)
-            good = np.where(r_id_tmp > 0)[0]
+            good = np.where(r_id_tmp > 0)
             cdx_rem_good = cdx_rem[good]
 
             companions['mass_current'][cdx_rem_good] = r_mass_tmp[good]
@@ -610,6 +644,7 @@ class ResolvedCluster(Cluster):
         removed. If self.ifmr != None, then we will save the high mass systems
         since they will be plugged into an ifmr later.
         """
+
         N_systems = len(star_systems)
 
         # Get rid of the bad ones
@@ -618,12 +653,25 @@ class ResolvedCluster(Cluster):
         star_systems_phase_non_nan = np.nan_to_num(star_systems['phase'], nan=-99)
         if (self.ifmr == None) and (not keep_low_mass_stars):
             print('Remove low mass stars below grid and compact objects')
-            # Keep only those stars with Teff assigned.
-            idx = star_systems_teff_non_nan > 0
+            # Keep only those stars with Teff assigned and masses in grid
+            min_iso = np.min(self.iso.points['mass'])
+            max_iso = np.max(self.iso.points['mass'])
+            mass = star_systems['mass']
+            on_grid = (mass >= min_iso) & (mass <= max_iso) & (star_systems_teff_non_nan > 0)
+            idx = on_grid
+
         elif not keep_low_mass_stars:
             print('Remove low mass stars, keep compact objects')
             # Keep stars (with Teff) and any other compact objects (with phase info).
-            idx = (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 0)
+            min_iso = np.min(self.iso.points['mass'])
+            max_iso = np.max(self.iso.points['mass'])
+            mass = star_systems['mass']
+            on_grid = (mass >= min_iso) & (mass <= max_iso) & (star_systems_teff_non_nan > 0)
+            above_grid = (mass > max_iso) & (
+                (star_systems_teff_non_nan > 0) | (star_systems_phase_non_nan >= 101)
+            )
+            idx = on_grid | above_grid
+            
         elif self.ifmr == None:
             print('Remove compact objects, keep low mass stars below grid')
             # Keep stars (with Teff) and objects below mass grid
@@ -686,7 +734,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
 
     seed: int, optional
         Seed for the random number generator numpy.random.default_rng(seed).
-        All random functions in the class will use this generator, 
+        All random functions in the class will use this generator,
         unless a different generator is passed in as an argument to the function, by default None.
 
 
@@ -724,7 +772,7 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
             metallicity: metallicity of the companion star
             filter columns: magnitude of the companion star in each filter defined by the isochrone model, which have been perturbed by differential reddening according to the delta_AKs parameter
             If multiplicity properties are defined in the IMF object, additional columns for those properties (e.g., log_a, e, i, Omega, omega) are included.
-    
+
     """
     def __init__(self, iso, imf, cluster_mass, deltaAKs,
                  ifmr=None, verbose=False, seed=None):
@@ -915,8 +963,8 @@ class Isochrone(object):
         Default is get_merged_atmosphere.
 
     wd_atm_func: white dwarf model atmosphere function, optional
-        Set the stellar atmosphere models for the white dwafs.
-        Default is get_wd_atmosphere
+        Set the stellar atmosphere models for the white dwarfs.
+        Default is get_wd_atmosphere   
 
     mass_sampling : int, optional
         Sample the raw isochrone every `mass_sampling` steps. The default
@@ -984,7 +1032,7 @@ class Isochrone(object):
         evol = evol[::mass_sampling]
 
         # Give luminosity, temperature, mass, radius units (astropy units).
-        L_all = 10**evol['logL'] * c.L_sun # luminsoity in W
+        L_all = 10**evol['logL'] * c.L_sun # luminosity in W
         T_all = 10**evol['logT'] * units.K
         R_all = np.sqrt(L_all / (4.0 * math.pi * c.sigma_sb * T_all**4))
         mass_all = evol['mass'] * units.Msun # masses in solar masses
@@ -1013,6 +1061,7 @@ class Isochrone(object):
             # This is the time-intensive call... everything else is negligable.
             # If source is a star, pull from star atmospheres. If it is a WD,
             # pull from WD atmospheres
+
             if phase == 101:
                 star = wd_atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
                                        verbose=False)
@@ -1134,8 +1183,12 @@ class IsochronePhot(Isochrone):
         Default is atmospheres.get_merged_atmosphere.
 
     wd_atm_func: white dwarf model atmosphere function, optional
-        Set the stellar atmosphere models for the white dwafs.
-        Default is atmospheres.get_wd_atmosphere
+        Set the stellar atmosphere models for the white dwarfs.
+        Default is atmospheres.get_wd_atmosphere   
+
+    bd_atm_func: brown dwarf model atmosphere function, optimal
+        Set the stellar atmosphere models for the brown dwarfs.
+        Default is atmospheres.get_bd_atmosphere
 
     red_law : reddening law object, optional
         Define the reddening law for the synthetic photometry.
@@ -1183,7 +1236,7 @@ class IsochronePhot(Isochrone):
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
                  evo_model=default_evo_model, atm_func=default_atm_func,
-                 wd_atm_func = default_wd_atm_func,
+                 wd_atm_func = default_wd_atm_func, #bd_atm_func = default_bd_atm_func,
                  wave_range=[3000, 52000],
                  red_law=default_red_law, mass_sampling=1, iso_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
@@ -1304,7 +1357,7 @@ class IsochronePhot(Isochrone):
 
         # Drop filters in the saved file that we don't actually want here
         all_filters = ['m_'+get_filter_col_name(f) for f in filters]
-        drop_columns = [col for col in self.points.columns if (col[:2]=='m_' and 
+        drop_columns = [col for col in self.points.columns if (col[:2]=='m_' and
                         (col not in all_filters))]
         self.points.remove_columns(drop_columns)
 
@@ -2108,7 +2161,7 @@ def calc_st_vega_filter_conversion(filt_str):
     ST and Vega magnitudes for a given filter:
     m_ST - m_vega
 
-    Note: this conversion is just the vega magnitude in 
+    Note: this conversion is just the vega magnitude in
     ST system
 
     Parameters:
@@ -2118,7 +2171,7 @@ def calc_st_vega_filter_conversion(filt_str):
     """
     # Get filter info
     filt = get_filter_info(filt_str)
-    
+
     # Interpolate the filter function to be the exact same sampling as the
     # vega spectrum
     c = 2.997*10**18 # A / s
@@ -2126,10 +2179,10 @@ def calc_st_vega_filter_conversion(filt_str):
                                                 fill_value=0)
     s_interp = filt_interp(vega.wave)
 
-    # Calculate the numerator 
+    # Calculate the numerator
     diff = np.diff(vega.wave)
     numerator = np.sum(vega.flux[:-1] * s_interp[:-1] * diff)
-    
+
     # Now we need to intergrate the filter response for the denominator
     denominator = np.sum(s_interp[:-1] * diff)
     # Fλ must be in erg cm–2 sec–1 Å–1

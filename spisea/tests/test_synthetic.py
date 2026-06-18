@@ -1,17 +1,14 @@
-import time
-import numpy as np
-import pylab as plt
-import numpy as np
-import pickle
-import spisea
-from spisea import reddening, evolution, atmospheres, ifmr
-from spisea import synthetic as syn
-from spisea.imf import imf
-from spisea.imf import multiplicity
-import pysynphot
 import os
 import pdb
+import time
+import spisea
+import numpy as np
+import pylab as plt
+from astropy.table import Table
 from scipy.spatial import cKDTree as KDTree
+from spisea import synthetic as syn
+from spisea.imf import imf, multiplicity
+from spisea import reddening, evolution, atmospheres, ifmr
 
 spisea_path = os.path.dirname(spisea.__file__)
 
@@ -74,7 +71,7 @@ def test_iso_wave():
     my_iso = syn.IsochronePhot(
         logAge, AKs, dist,
         metallicity=metal,
-        evo_model=evo_model, 
+        evo_model=evo_model,
         atm_func=atm_func,
         red_law=red_law,
         filters=filt_list,
@@ -319,8 +316,8 @@ def test_ResolvedCluster():
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
     # Now to create the cluster.
-    imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
-    imf_powers = np.array([-1.3, -2.3, -2.3])
+    imf_mass_limits = np.array([0.01, 0.05, 0.22, 0.55, 8, 120])
+    imf_powers = np.array([-0.6, -0.25, -1.3, -2.3, -2.35])
 
     ##########
     # Start without multiplicity
@@ -506,7 +503,7 @@ def test_UnresolvedCluster():
 
     startTime = time.time()
     multi = multiplicity.MultiplicityUnresolved()
-    imf_in = imf.Kroupa_2001(multiplicity=multi)
+    imf_in = imf.Salpeter_Kirkpatrick_2024(multiplicity=multi)
     evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
     iso = syn.Isochrone(log_age, AKs, distance, metallicity=metallicity,
@@ -537,8 +534,8 @@ def test_ifmr_multiplicity():
     filt_list = ['nirc2,Kp', 'nirc2,H', 'nirc2,J']
 
     startTime = time.time()
-
-    evo = evolution.MISTv1()
+    
+    evo = evolution.MergedPhillipsBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
     ifmr_obj = ifmr.IFMR_Raithel18()
 
@@ -553,14 +550,15 @@ def test_ifmr_multiplicity():
         red_law=red_law,
         filters=filt_list,
         mass_sampling=mass_sampling,
-        iso_dir=iso_dir
+        iso_dir=iso_dir,
+        recomp=True
     )
 
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
     # Now to create the cluster.
-    imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
-    imf_powers = np.array([-1.3, -2.3, -2.3])
+    imf_mass_limits = np.array([0.01, 0.07, 0.5, 1, np.inf])
+    imf_powers = np.array([-0.3, -1.3, -2.3, -2.3])
 
     ##########
     # Start without multiplicity and IFMR
@@ -578,8 +576,7 @@ def test_ifmr_multiplicity():
     # Test with multiplicity and IFMR
     ##########
     multi = multiplicity.MultiplicityUnresolved()
-    my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
-                                      multiplicity=multi)
+    my_imf2 = imf.Salpeter_Kirkpatrick_2024(multiplicity=multi)
     print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
 
     cluster2 = syn.ResolvedCluster(iso, my_imf2, cluster_mass, ifmr=ifmr_obj)
@@ -598,17 +595,74 @@ def test_ifmr_multiplicity():
     assert len(np.where(clust2['phase'] == 102)) > 0
     assert len(np.where(clust1['phase'] == 103)) > 0   # BH
     assert len(np.where(clust2['phase'] == 103)) > 0
+    assert len(np.where(clust1['phase'] == 90)) > 0   # BD
+    assert len(np.where(clust2['phase'] == 90)) > 0
 
-    # Now check that we have companions that are WDs, NSs, and BHs
+    # Now check that we have companions that are WDs, NSs, BHs, and BDs
     assert len(np.where(comps2['phase'] == 101)) > 0
     assert len(np.where(comps2['phase'] == 102)) > 0
     assert len(np.where(comps2['phase'] == 103)) > 0
+    assert len(np.where(comps2['phase'] == 90)) > 0
 
     # Make sure no funky phase designations (due to interpolation effects)
     # slipped through
-    idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 101) & (clust1['phase'] != 9) )
-    idx2 = np.where( (comps2['phase'] > 5) & (comps2['phase'] < 101) & (comps2['phase'] != 9) )
+
+    bd_masses = np.where((clust1['mass'] >= 0.01) & (clust1['mass'] <= 0.08))
+    bd_mask = (clust1['mass'] >= 0.01) & (clust1['mass'] <= 0.08)
+    print(clust1[['mass', 'phase']][bd_masses])
+    idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 90) & (clust1['phase'] != 9) )
     assert len(idx[0]) == 0
+
+    """
+    07/2024: Added more testing criteria for brown dwarf stars to ensure they are labeled appropriately for masses from 0.01 - 0.08 M_sun.
+    """
+    # For cluster objects
+    MIN_MASS = 0.1
+    BD_MIN_MASS = 0.01
+    BD_MAX_MASS = 0.08
+
+    wd_idx = np.where(clust1['phase'] == 101)
+    ns_idx = np.where(clust1['phase'] == 102)
+    bh_idx = np.where(clust1['phase'] == 103)
+    bd_idx = np.where(clust1['phase'] == 90)
+
+    print(clust1[bd_idx])
+    assert np.all(clust1['mass'][wd_idx] > MIN_MASS)
+    assert np.all(clust1['mass'][ns_idx] > MIN_MASS)
+    assert np.all(clust1['mass'][bh_idx] > MIN_MASS)
+    assert np.all(clust1['mass'][bd_idx] < MIN_MASS)
+
+    # For companion objects
+    comp_wd_idx = np.where(comps2['phase'] == 101)
+    comp_ns_idx = np.where(comps2['phase'] == 102)
+    comp_bh_idx = np.where(comps2['phase'] == 103)
+    comp_bd_idx = np.where(comps2['phase'] == 90)
+    assert np.all(comps2['mass'][comp_wd_idx] > MIN_MASS)
+    assert np.all(comps2['mass'][comp_ns_idx] > MIN_MASS)
+    assert np.all(comps2['mass'][comp_bh_idx] > MIN_MASS)
+    assert np.all(comps2['mass'][comp_bd_idx] < MIN_MASS)
+
+    # Ensure brown dwarfs are within 0.01 and 0.08 solar masses
+    assert np.all((clust1['mass'][bd_idx] >= BD_MIN_MASS) &
+                  (clust1['mass'][bd_idx] <= BD_MAX_MASS))
+    assert np.all((comps2['mass'][comp_bd_idx] >= BD_MIN_MASS) &
+                  (comps2['mass'][comp_bd_idx] <= BD_MAX_MASS))
+
+    # Ensure no other objects are in the brown dwarf mass range
+    non_bd_idx = np.where((clust1['phase'] != 90) &
+                          (clust1['mass'] >= BD_MIN_MASS) &
+                          (clust1['mass'] <= BD_MAX_MASS))
+    assert len(non_bd_idx[0]) == 0  # asserting no non-brown dwarf objects in BD mass range
+
+    comp_non_bd_idx = np.where((comps2['phase'] != 90) &
+                               (comps2['mass'] >= BD_MIN_MASS) &
+                               (comps2['mass'] <= BD_MAX_MASS))
+    print(comps2[comp_non_bd_idx]['phase', 'mass'])
+    assert len(comp_non_bd_idx[0]) == 0  # asserting no non-brown dwarf companions in BD mass range
+
+    # Ensure BD temperature assignment is working correctly
+    assert np.all(clust1['Teff'][bd_idx] != np.nan)
+    assert np.all(comps2['Teff'][comp_bd_idx] != np.nan)
 
     return
 
@@ -801,7 +855,8 @@ def test_keep_low_mass_stars():
         red_law=red_law,
         filters=filt_list,
         mass_sampling=mass_sampling,
-        iso_dir=iso_dir
+        iso_dir=iso_dir,
+        recomp=True
     )
 
     # Get the minimum mass in the isochrones. This should be the lowest
@@ -1240,7 +1295,8 @@ def test_ResolvedCluster_random_state():
         red_law=red_law,
         filters=filt_list,
         mass_sampling=10,
-        iso_dir=iso_dir
+        iso_dir=iso_dir,
+        recomp=True
     )
 
     imf_limits = np.array([0.07, 0.5, 150])
@@ -1260,18 +1316,17 @@ def test_ResolvedCluster_random_state():
     cluster2 = syn.ResolvedCluster(iso, imf_test, cluster_mass, seed=42)
     np.testing.assert_array_equal(cluster1.star_systems, cluster2.star_systems)
 
-    with open(f'{spisea_path}/tests/test_data/star_systems.pkl', 'rb') as file:
-        old_star_systems = pickle.load(file)
-    with open(f'{spisea_path}/tests/test_data/companions.pkl', 'rb') as file:
-        old_companion = pickle.load(file)
+    old_star_systems = Table.read(f'{spisea_path}/tests/test_data/star_systems.fits')
+    old_companion = Table.read(f'{spisea_path}/tests/test_data/companions.fits')
 
     for key in old_star_systems.colnames:
         #np.testing.assert_array_equal(cluster1.star_systems[key], old_star_systems[key])
-        assert np.all(np.isclose(cluster1.star_systems[key], old_star_systems[key], rtol=1e-05, atol=1e-08))
+        np.testing.assert_allclose(cluster1.star_systems[key], old_star_systems[key], rtol=1e-5, atol=1e-8)
 
     for key in old_companion.colnames:
         # Require values are consistent within reasonable bounds
-        assert np.all(np.isclose(cluster1.companions[key], old_companion[key], rtol=1e-05, atol=1e-08))
+        # np.testing.assert_array_equal(cluster1.companions[key], old_companion[key])
+        np.testing.assert_allclose(cluster1.companions[key], old_companion[key], rtol=1e-5, atol=1e-8)
 
     return
 

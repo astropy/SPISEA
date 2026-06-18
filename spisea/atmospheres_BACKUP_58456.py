@@ -530,8 +530,14 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
                                                    gravity=gravity)
 
         sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+<<<<<<< HEAD
+        #print(dir(obj))
+        
+    
+=======
 
 
+>>>>>>> upstream/dev
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
     if len(idx) == 0:
@@ -634,10 +640,11 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
                                                    gravity=gravity)
 
         sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+<<<<<<< HEAD
         
 def get_Meisner2023_atmosphere(metallicity=0, temperature=1000, gravity=4.5, rebin=True):
     """
-    Return atmosphere from Meisner2023 grid
+    Return atmosphere from Meisner2023 grid 
     (`Meisner et al. 2023 <https://ui.adsabs.harvard.edu/abs/2023AJ....166...57M/abstract>`_)
 
     Grid originally downloaded `here <https://noctis.erc-atmo.eu/fsdownload/Q7MUSoCLR/meisner2023>`_
@@ -646,7 +653,7 @@ def get_Meisner2023_atmosphere(metallicity=0, temperature=1000, gravity=4.5, reb
     * Teff = 250 - 1200 K
     * gravity: 2.5 - 5.5 cgs (in steps of 0.5)
     * [M/H] = -1.0, -0.5, 0, +0, +0.3
-
+    
     """
     if rebin == True:
         atm_name = 'Meisner2023_rebin'
@@ -657,12 +664,15 @@ def get_Meisner2023_atmosphere(metallicity=0, temperature=1000, gravity=4.5, reb
         sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
-        (temperature, gravity, metallicity) = get_atmosphere_bounds(atm_name,
+        (temperature, gravity) = get_atmosphere_bounds(atm_name,
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
-
+    
         sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+=======
+
+>>>>>>> upstream/dev
 
     # Do some error checking
     idx = np.where(sp.flux != 0)[0]
@@ -680,7 +690,7 @@ def get_Phillips2020_atmosphere(metallicity=0, temperature=1000, gravity=4.5, re
         (`Phillips et al. 2020 <https://ui.adsabs.harvard.edu/abs/2020A%26A...637A..38P/abstract>`_)
 
         Grid originally downloaded `here <https://noctis.erc-atmo.eu/fsdownload/zyU96xA6o/phillips2020>`_
-
+        
         Grid Range:
         * Teff: 200 - 3000 K
         * gravity: 2.5 - 5.5 cgs
@@ -695,11 +705,11 @@ def get_Phillips2020_atmosphere(metallicity=0, temperature=1000, gravity=4.5, re
         sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
-        (temperature, gravity, metallicity) = get_atmosphere_bounds(atm_name,
+        (temperature, gravity) = get_atmosphere_bounds(atm_name,
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
-
+    
         sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
 
     # Do some error checking
@@ -711,7 +721,7 @@ def get_Phillips2020_atmosphere(metallicity=0, temperature=1000, gravity=4.5, re
         print( '  log gravity = %.1f' % gravity)
 
     return sp
-
+        
 def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
     """
     Return white dwarf atmospheres from
@@ -805,7 +815,7 @@ def get_BTSettl_meisner_atmosphere(metallicity=0, temperature=5250, gravity=4):
     Return atmosphere that is a linear merge of BTSettl_CITFITS2011_2015 model
     and Meisner2023.
 
-    Only valid for temps between 1000 - 1200K, gravity from 3.5 - 5.5
+    Only valid for temps between 1000 - 1200K, gravity from 3.5 - 5.5 
     """
     try:
         sp = pysynphot.Icat('merged_BTSettl_meisner', temperature, metallicity, gravity)
@@ -815,7 +825,7 @@ def get_BTSettl_meisner_atmosphere(metallicity=0, temperature=5250, gravity=4):
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
-
+    
         sp = pysynphot.Icat('merged_BTSettl_meisner', temperature, metallicity, gravity)
 
     # Do some error checking
@@ -930,7 +940,7 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
                                                     temperature=temperature,
                                                     gravity=gravity,
                                                     rebin=rebin)
-
+        
     if (temperature <= 3800) & (metallicity == 0):
         # High gravity are in BTSettl regime
         if (temperature <= 3200) & (gravity > 2.5):
@@ -1042,12 +1052,12 @@ def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False
         bbspec = get_bb_atmosphere(temperature=temperature, verbose=verbose)
         return bbspec
 
-
+    
 def get_bd_atmosphere(metallicity=0, temperature=1000, gravity=4, verbose=False):
     """
-    Return the brown dwarf atmosphere from
-    `Meisner et al. 2023 <https://ui.adsabs.harvard.edu/abs/2023AJ....166...57M/abstract>`_.
-    If desired parameters are
+    Return the brown dwarf atmosphere from 
+    `Meisner et al. 2023 <https://ui.adsabs.harvard.edu/abs/2023AJ....166...57M/abstract>`_. 
+    If desired parameters are 
     outside of grid, return a blackbody spectrum instead
 
     Parameters
@@ -1060,7 +1070,7 @@ def get_bd_atmosphere(metallicity=0, temperature=1000, gravity=4, verbose=False)
 
     gravity: float
         The stellar gravity, in cgs units
-
+        
     rebin: boolean
         If true, rebins the atmospheres so that they are the same
         resolution as the Castelli+04 atmospheres. Default is False,
@@ -1076,7 +1086,7 @@ def get_bd_atmosphere(metallicity=0, temperature=1000, gravity=4, verbose=False)
         return get_Meisner2023_atmosphere(metallicity=metallicity,
                                             temperature=temperature,
                                             gravity=gravity)
-
+    
     except pysynphot.exceptions.ParameterOutOfBounds:
         # Use a black-body atmosphere
         bbspec = get_bb_atmosphere(temperature=temperature, verbose=verbose)
@@ -2197,10 +2207,10 @@ def organize_all_Meisner2023_atmospheres():
     Construct cdbs-ready atmospheres for the Meisner2023 grid.
     The code expects tp be run in cdbs/grid/Meisner2023, and expects that the
     individual model files have been downloaded from online
-    and processed into python-readable ascii files.
+    and processed into python-readable ascii files. 
     """
     orig_dir = os.getcwd()
-    dirs = ['mm10', 'mm05', 'mp00', 'mp03']
+    dirs = ['mm10', 'mm05', 'mp00', 'mp03']   
 
     # Go through each directory, turning each spectrum into a cdbs-ready file.
     # Save as a fits file, for faster access later
@@ -2239,7 +2249,7 @@ def organize_all_Meisner2023_atmospheres():
             hdu_new.close()
             count += 1
             print('Done {0} of {1}'.format(count, len(files)))
-
+        
         # Go back to original directory, move to next metallicity directory
         os.chdir(orig_dir)
 
@@ -2278,7 +2288,7 @@ def make_Meisner2023_catalog():
             # Extract temperature, surface gravity, and metallicity
             temp = float(temp_str[1:])         # Temperature in Kelvin
             logg = float(logg_str[1:])         # Surface gravity log(g)
-
+            
             # Build metallicity value
             if metal_str.startswith('m'):
                 metallicity = -1 * float(metal_str[1:])
@@ -2298,10 +2308,10 @@ def make_Meisner2023_catalog():
 
     # Create catalog.fits file in directory with the models
     catalog.write('catalog.fits', format = 'fits', overwrite=True)
-
+    
     # Move back to original directory, create the catalog.fits file
     os.chdir(start_dir)
-
+    
     return
 
 def rebin_Meisner2023(make_unique=False):
@@ -2344,19 +2354,19 @@ def rebin_Meisner2023(make_unique=False):
 
             # Create the output FITS file
             c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
-            c1 = fits.Column(name='Flux', format='E', array=flux_rebin)
-
+            c1 = fits.Column(name='Flux', format='E', array=flux_rebin) 
+        
             cols = fits.ColDefs([c0, c1])
             tbhdu = fits.BinTableHDU.from_columns(cols)
             prihdu = fits.PrimaryHDU()
             tbhdu.header['TUNIT1'] = 'ANGSTROM'
             tbhdu.header['TUNIT2'] = 'FLAM'
-
+            
             # Write the new rebinned file in the Meisner2023_rebin directory
             outfile = os.path.join(rebin_path, os.path.basename(file))
             finalhdu = fits.HDUList([prihdu, tbhdu])
             finalhdu.writeto(outfile, overwrite=True)
-
+        
         except Exception as e:
             print(f"Error processing {file}: {e}")
             orig_file = os.path.join('Meisner2023', file)
