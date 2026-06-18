@@ -42,6 +42,11 @@ class MultiplicityUnresolved(object):
             
                 MF(mass) = MF_amp * (mass ** MF_power)
 
+    However, in the brown dwarf mass regime, it is currently recognized
+    that only binaries are possible, and the MF decreases dissimilarly
+    to higher masses (> 0.08 solar masses). The values for this range
+    are given by Aberasturi et al. (2014) and Fontanive et al. (2023).
+
     **Companion Star Fraction** -- the expected number of companions in
     a multiple system. The companion star fraction (CSF) also 
     changes with mass and this dependency can be described as
@@ -53,7 +58,10 @@ class MultiplicityUnresolved(object):
     value, CSF_max. The actual number of companions is drawn 
     from a Poisson distribution with an expectation value of CSF.
 
-    **Mass Ratio (Q)** -- The ratio between the companion star 
+    In the brown dwarf regime we impose an assumption that only
+    binary systems are possible due to current literature trends.
+
+    **Mass Ratio (Q)** -- The ratio between the companion star
     mass and primary star mass, Q = (m_comp / m_prim ) has
     a probability density function described by a powerlaw::
 
@@ -117,6 +125,9 @@ class MultiplicityUnresolved(object):
         Given a star's mass, determine the probability that the star is in a
         multiple system (multiplicity fraction = MF).
 
+        Modified to allow binary fraction to decrease in brown dwarf regime.
+        Supported by Aberasturi et al. (2014) and Fontanive et al. (2018).
+
         Parameters
         ----------
         mass : float or numpy array
@@ -134,6 +145,13 @@ class MultiplicityUnresolved(object):
         if np.isscalar(mf):
             if mf > 1:
                 mf = 1
+            # physically override mf for brown dwarfs
+            if (mass <= 0.08) & (mass > 0.06):
+                mf = 0.16
+            if (mass <= 0.06) & (mass > 0.02):
+                mf = 0.08
+            if (mass < 0.02):
+                mf = 0
         else:
             mf[mf > 1] = 1
 
@@ -142,7 +160,8 @@ class MultiplicityUnresolved(object):
     def companion_star_fraction(self, mass):
         """
         Given a star's mass, determine the average number of
-        companion stars (companion star fraction = CSF).
+        companion stars (companion star fraction = CSF). For
+        brown dwarfs we impose a hard limit of one companion.
 
         Parameters
         ----------
@@ -161,8 +180,12 @@ class MultiplicityUnresolved(object):
         if np.isscalar(csf):
             if csf > self.CSF_max:
                 csf = self.CSF_max
+            if (mass <= 0.08):
+                csf = self.multiplicity_fraction(mass)
         else:
             csf[csf > self.CSF_max] = self.CSF_max
+            bd = mass <= 0.08
+            csf[bd] = self.multiplicity_fraction(mass[bd])
 
         return csf
 
@@ -199,6 +222,10 @@ class MultiplicityUnresolved(object):
         """
         Helper function: calculate number of companions.
         """
+        # bd stipulation since mf=0
+        if MF <= 0:
+            return 0
+
         n_comp = 1 + np.random.poisson((CSF / MF) - 1)
         
         if self.companion_max == True:
@@ -211,7 +238,9 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
     """
     Sub-class of MultiplicityUnresolved that adds semimajor axis and eccentricity information 
     for multiple objects from distributions described in Duchene and Kraus 2013
-    
+
+    For brown dwarf regime, mean separation and std are given by Fontanive et al. (2018).
+
     Parameters
     --------------
     a_amp: float, optional
@@ -247,7 +276,10 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         Generate the semimajor axis for a given mass. The mean and standard deviation of a given mass are determined 
         by fitting the data from fitting the semimajor axis data as a function of mass in table 1 of Duchene and Kraus 2013.
         Then a random semimajor axis is drawn from a log normal distribution with that mean and standard deviation.
-        
+
+        The brown dwarf range is covered by mass-dependent scaling of both the characteristic separation and dispersion
+        matching trends described in Fontanive et al. (2018).
+
         Parameters
         ----------
         mass : array-like
@@ -258,24 +290,42 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         log_semimajoraxis : array-like
             Log of the semimajor axis/separation between the stars in units of AU
         """
-        a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(amplitude=self.a_amp, x_break=self.a_break, alpha_1=self.a_slope1, alpha_2=self.a_slope2)
-        log_a_mean = np.log10(a_mean_func(mass)) #mean log(a)
-        log_a_std_func = astropy.modeling.models.Linear1D(slope=self.a_std_slope, intercept=self.a_std_intercept)
-        log_a_std = log_a_std_func(np.log10(mass)) #sigma_log(a)
-        
-        large_mass_idx = mass >= 2.9
-        log_a_std[large_mass_idx] = log_a_std_func(np.log10(2.9)) #sigma_log(a)
-        log_a_std = np.clip(log_a_std, 0.1, None)
+        mass = np.atleast_1d(mass)
+        logm = np.log10(mass)
 
-        # Trunc normal distribution between -2 and 2000 AU
+        # Stellar mean and std (Duchene & Kraus 2013)
+        a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(amplitude=self.a_amp, x_break=self.a_break,
+                                                                  alpha_1=self.a_slope1, alpha_2=self.a_slope2)
+        log_a_mean_star = np.log10(a_mean_func(mass))  # mean log(a)
+        log_a_std_func = astropy.modeling.models.Linear1D(slope=self.a_std_slope, intercept=self.a_std_intercept)
+        log_a_std_star = log_a_std_func(logm)  # sigma_log(a)
+        log_a_std_star[mass >= 2.9] = log_a_std_func(np.log10(2.9))  # sigma_log(a)
+        log_a_std_star = np.clip(log_a_std_star, 0.1, None)
+
+        # BD mean and std (Fontanive+18): interpolated over substellar range
+        log_a_mean_bd = np.interp(
+            logm,
+            [np.log10(0.01), np.log10(0.08)],
+            [np.log10(2.5), np.log10(8.0)]
+        )
+        log_a_std_bd = np.interp(
+            logm,
+            [np.log10(0.01), np.log10(0.08)],
+            [0.25, 0.5]
+        )
+
+        # Sigmoid blend: smoothly transitions from BD to stellar regime at 0.08 M_sun
+        w = 1.0 / (1.0 + np.exp(-(logm - np.log10(0.08)) / 0.15))
+        log_a_mean = (1 - w) * log_a_mean_bd + w * log_a_mean_star
+        log_a_std = (1 - w) * log_a_std_bd + w * log_a_std_star
+
+        # Trunc normal distribution between log10(0.01) AU and log10(2000) AU
         log_a_lower = np.log10(0.01)
         log_a_upper = np.log10(2000)
-
-        # Convert bounds to standard normal space
         a_lower_std = (log_a_lower - log_a_mean) / log_a_std
         a_upper_std = (log_a_upper - log_a_mean) / log_a_std
 
-        log_semimajoraxis = truncnorm.rvs(a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std)            
+        log_semimajoraxis = truncnorm.rvs(a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std)
         return log_semimajoraxis
 
     def random_e(self, x):

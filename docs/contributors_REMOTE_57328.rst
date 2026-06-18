@@ -48,5 +48,3 @@ updates (v2.2), improvements for reading in/updated existing isochrone
 files, Vega mag to ST mag conversion function (v2.4)
 
 Anna Pusack -- Added IRTF L-band filter support
-
-Caitlin Begbie -- added brown dwarf physics and capabilities
