@@ -259,9 +259,12 @@ def test_filters():
                      'ctio_osiris,K', 'ctio_osiris,H',
                      'ubv,U', 'ubv,B', 'ubv,V', 'ubv,R',
                      'ubv,I', 'jg,J', 'jg,H', 'jg,K',
-                     'decam,y', 'decam,i', 'decam,z',
+                     'decam,Y', 'decam,i', 'decam,z',
                      'decam,u', 'decam,g', 'decam,r',
+                     'gaia,dr1,G', 'gaia,dr1,Gbp', 'gaia,dr1,Grp',
+                     'gaia,dr2,G', 'gaia,dr2,Gbp', 'gaia,dr2,Grp',
                      'gaia,dr2_rev,G', 'gaia,dr2_rev,Gbp', 'gaia,dr2_rev,Grp',
+                     'gaia,edr3,G', 'gaia,edr3,Gbp', 'gaia,edr3,Grp',
                      'jwst,F070W', 'jwst,F090W', 'jwst,F115W', 'jwst,F140M',
                      'jwst,F150W', 'jwst,F150W2', 'jwst,F162M', 'jwst,F164N',
                      'jwst,F182M', 'jwst,F187N', 'jwst,F200W', 'jwst,F212N',
@@ -275,7 +278,7 @@ def test_filters():
                      'nirc1,K', 'nirc1,H', 'nirc2,J', 'nirc2,H',
                      'nirc2,Kp', 'nirc2,K', 'nirc2,Lp', 'nirc2,Hcont',
                      'nirc2,FeII', 'nirc2,Brgamma', 'ps1,z',
-                     'ps1,g', 'ps1,r','ps1,i', 'ps1,y',
+                     'ps1,g', 'ps1,r','ps1,i', 'ps1,y', 'ps1,w',
                      'ukirt,Z','ukirt,Y','ukirt,J', 'ukirt,H', 'ukirt,K',
                      'vista,Y', 'vista,Z', 'vista,J',
                      'vista,H',  'vista,Ks', 'ztf,g', 'ztf,r', 'ztf,i',
@@ -285,7 +288,14 @@ def test_filters():
                      'roman,wfi,f184', 'rubin,g', 'rubin,i', 'rubin,r',
                      'rubin,u', 'rubin,z', 'rubin,y',
                      'euclid,VIS', 'euclid,Y', 'euclid,J', 'euclid,H',
-                     'nsfcam,L']
+                     'nsfcam,L', 'tess,tess',
+                     'washington,C', 'washington,M', 'washington,T1', 'washington,T2',
+                     'hipparcos,Hp', 'tycho,B', 'tycho,V',
+                     'kepler,Kp', 'ogle,Rw',
+                     'subaru,hsc,g','subaru,hsc,r','subaru,hsc,i','subaru,hsc,z','subaru,hsc,Y',
+                     'subaru,hsc,nb387', 'subaru,hsc,nb468', 'subaru,hsc,nb515', 'subaru,hsc,nb527',
+                     'subaru,hsc,nb656', 'subaru,hsc,nb718', 'subaru,hsc,nb816', 'subaru,hsc,nb921',
+                     'subaru,hsc,nb926', 'subaru,hsc,nb973']
 
     # Loop through filters to test that they work: get_filter_info
     for ii in filt_list:

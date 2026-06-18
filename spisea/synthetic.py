@@ -245,7 +245,7 @@ class ResolvedCluster(Cluster):
         #####
         if self.imf.make_multiples:
             # start3 = time.time()
-            star_systems, companions = self._make_companions_table_new(star_systems, compMass)
+            star_systems, companions = self._make_companions_table(star_systems, compMass)
             # end3 = time.time()
             # print('Companion table new took {0:f} s.'.format(end3 - start3))
 
@@ -417,7 +417,7 @@ class ResolvedCluster(Cluster):
         return star_systems
 
 
-    def _make_companions_table_new(self, star_systems, compMass):
+    def _make_companions_table(self, star_systems, compMass):
         """Make companions table for resolved clusters with multiplicity.
 
         Parameters
@@ -521,175 +521,13 @@ class ResolvedCluster(Cluster):
         companions_teff_non_nan = np.nan_to_num(companions['Teff'], nan=-99)
         if self.verbose and sum(companions_teff_non_nan > 0) != N_comp_tot:
             print(f'Found {N_comp_tot - sum(companions_teff_non_nan > 0):d} companions out of stellar mass range')
+            
+        # For low-mass stars and substellar objects below isochrone, assume no mass loss and set phase to 98
+        low_mass_idxs = (companions['mass']<np.min(self.iso.points['mass']))
+        companions['mass_current'][low_mass_idxs] = companions['mass'][low_mass_idxs]
+        companions['phase'][low_mass_idxs] = 98
 
-        if sum(companions_teff_non_nan > 0) > 0: # make sure assert always occurs if there are companions
-            assert companions['mass'][companions_teff_non_nan > 0].min() > 0, "Companion mass is not positive"
-
-        return star_systems, companions
-
-
-    def _make_companions_table(self, star_systems, compMass):
-
-        N_systems = len(star_systems)
-
-        #####
-        #    MULTIPLICITY
-        # Make a second table containing all the companion-star masses.
-        # This table will be much longer... here are the arrays:
-        #    sysIndex - the index of the system this star belongs too
-        #    mass - the mass of this individual star.
-        N_companions = np.array([len(star_masses) for star_masses in compMass])
-        star_systems.add_column( Column(N_companions, name='N_companions') )
-
-        N_comp_tot = N_companions.sum()
-        system_index = np.repeat(np.arange(N_systems), N_companions)
-
-        companions = Table([system_index], names=['system_idx'])
-
-        # Add columns for the Teff, L, logg, isWR mass_current, phase, and filters for the companion stars.
-        companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='mass') )
-        companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Teff') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='L') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='logg') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='isWR') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='mass_current') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='phase') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='metallicity') )
-        for filt in self.filt_names:
-            companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
-
-        if isinstance(self.imf._multi_props, multiplicity.MultiplicityResolvedDK):
-            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='log_a') )
-            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='e') )
-            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='i', description = 'degrees') )
-            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Omega') )
-            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='omega') )
-
-            for ii in range(len(companions)):
-                companions['log_a'][ii] = self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx'][ii]])
-
-            companions['e'] = self.imf._multi_props.random_e(self.rng.random(N_comp_tot))
-            companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(
-                self.rng.random(N_comp_tot),
-                self.rng.random(N_comp_tot),
-                self.rng.random(N_comp_tot)
-            )
-
-
-        # Make an array that maps system index (ii), companion index (cc) to
-        # the place in the 1D companions array.
-        N_comp_max = N_companions.max()
-
-        comp_index = np.zeros((N_systems, N_comp_max), dtype=int)
-        kk = 0
-        for ii in range(N_systems):
-            for cc in range(N_companions[ii]):
-                comp_index[ii][cc] = kk
-                kk += 1
-
-        # Find all the systems with at least one companion... add the flux
-        # of that companion to the primary. Repeat for 2 companions,
-        # 3 companions, etc.
-        for cc in range(1, N_comp_max+1):
-            # All systems with at least cc companions.
-            idx = np.where(N_companions >= cc)[0]
-
-            # Get the location in the companions array for each system and
-            # the cc'th companion.
-            cdx = comp_index[idx, cc-1]
-
-            # companions['mass'][cdx] = compMass[idx, cc-1]
-            companions['mass'][cdx] = [compMass[ii][cc-1] for ii in idx]
-            comp_mass = companions['mass'][cdx]
-
-            if len(idx) > 0 and self.external_evol == False:
-                companions['Teff'][cdx] = self.iso_interps['Teff'](comp_mass)
-                companions['L'][cdx] = self.iso_interps['L'](comp_mass)
-                companions['logg'][cdx] = self.iso_interps['logg'](comp_mass)
-                companions['isWR'][cdx] = np.round(self.iso_interps['isWR'](comp_mass))
-                companions['mass_current'] = self.iso_interps['mass_current'](companions['mass'])
-                companions['phase'] = np.round(self.iso_interps['phase'](companions['mass']))
-                companions['metallicity'] = np.ones(N_comp_tot)*self.iso.metallicity   #****
-
-                # For a very small fraction of stars, the star phase falls on integers in-between
-                # the ones we have definition for, as a result of the interpolation. For these
-                # stars, round phase down to nearest defined phase (e.g., if phase is 71,
-                # then round it down to 5, rather than up to 101).
-                # Convert nan_to_num to avoid errors on greater than, less than comparisons
-
-                # reinforce BD phase of 90 and invariant masses
-                bd_mask = (companions['mass'] >= 0.01) & (companions['mass'] <= 0.08)
-                companions['phase'][bd_mask] = 90
-                companions['mass_current'][bd_mask] = companions['mass'][bd_mask]
-
-                companions_phase_non_nan = np.nan_to_num(companions['phase'], nan=-99)
-                bad = np.where( (companions_phase_non_nan > 5) &
-                                (companions_phase_non_nan < 101) &
-                                (companions_phase_non_nan != 9) &
-                                (companions_phase_non_nan != 90) &
-                                (companions_phase_non_nan != -99))
-                # Print warning, if desired
-                verbose=False
-                if verbose:
-                    for ii in range(len(bad)):
-                        print('WARNING: changing phase {0} to 5'.format(companions['phase'][bad[ii]]))
-                companions['phase'][bad] = 5
-
-                for filt in self.filt_names:
-                    # Magnitude of companion
-                    companions[filt][cdx] = self.iso_interps[filt](comp_mass)
-                    star_systems = self._calc_system_mag(star_systems, companions, idx, cdx, filt)
-
-
-        #####
-        # Make Remnants with flux = 0 in all bands.
-        ##### 
-        if self.ifmr != None and self.external_evol == False:
-            # Identify compact objects as those with Teff = 0 or with masses above the max iso mass
-            # Exclude BDs from designation
-            highest_mass_iso = self.iso.points['mass'].max()
-            cdx_rem = np.where((np.isnan(companions['Teff'])) &
-                               (companions['mass'] > highest_mass_iso) &
-                               (companions['mass'] >= 0.08))[0]
-
-            # Calculate remnant mass and ID for compact objects; update remnant_id and
-            # remnant_mass arrays accordingly
-            if 'metallicity_array' in inspect.getfullargspec(self.ifmr.generate_death_mass).args:
-                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem],
-                                                                     metallicity_array=companions['metallicity'][cdx_rem])
-            else:
-                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem])
-
-
-            # Drop remnants where it is not relevant (e.g. not a compact object or
-            # outside mass range IFMR is defined for)
-            good = np.where(r_id_tmp > 0)
-            cdx_rem_good = cdx_rem[good]
-
-            companions['mass_current'][cdx_rem_good] = r_mass_tmp[good]
-            companions['phase'][cdx_rem_good] = r_id_tmp[good]
-
-            # Give remnants a magnitude of nan, so they can be filtered out later when calculating flux.
-            for filt in self.filt_names:
-                companions[filt][cdx_rem_good] = np.full(len(cdx_rem_good), np.nan)
-
-
-        # Notify if we have a lot of bad ones.
-        # Convert nan_to_num to avoid errors on greater than, less than comparisons
-        if self.external_evol == False:
-            companions_teff_non_nan = np.nan_to_num(companions['Teff'], nan=-99)
-            idx = np.where(companions_teff_non_nan > 0)[0]
-            if len(idx) != N_comp_tot and self.verbose:
-                print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
-
-            # For low-mass stars and substellar objects below isochrone, assume no mass loss and set phase to 98
-            low_mass_idxs = (companions['mass']<np.min(self.iso.points['mass']))
-            companions['mass_current'][low_mass_idxs] = companions['mass'][low_mass_idxs]
-            companions['phase'][low_mass_idxs] = 98
-
-            # FIXME SHOULD BE ADDED FOR EXTERNALEVOL TOO
-        # Double check that everything behaved properly.
-        if len(idx)>0:
+        if len(companions['mass'][companions_teff_non_nan > 0])>0:
             assert companions['mass'][companions_teff_non_nan > 0].min() > 0, "Companion mass is not positive"
 
         return star_systems, companions
@@ -799,13 +637,6 @@ class ResolvedCluster(Cluster):
 
         if keep_low_mass_stars:
             lm_idx = star_systems['mass']<np.min(self.iso.points['mass'])
-            # Adjust the properties as needed
-            star_systems['mass_current'][lm_idx] = star_systems['mass'][lm_idx]
-            star_systems['phase'][lm_idx] = 98
-            #pdb.set_trace()
-
-        if keep_low_mass_stars:
-            lm_idx = star_systems['mass'] < np.min(self.iso.points['mass'])
             # Adjust the properties as needed
             star_systems['mass_current'][lm_idx] = star_systems['mass'][lm_idx]
             star_systems['phase'][lm_idx] = 98
@@ -2286,7 +2117,7 @@ def get_filter_info(name, vega=vega, rebin=True):
         filt = filters.get_ztf_filt(filterName)
 
     elif name.startswith('gaia'):
-        version = tmp[1]
+        version = tmp[1] if len(tmp)==3 else 'edr3'
         filt = filters.get_gaia_filt(version, filterName)
 
     elif name.startswith('hawki'):
@@ -2300,6 +2131,28 @@ def get_filter_info(name, vega=vega, rebin=True):
 
     elif name.startswith('nsfcam'):
         filt = filters.get_nsfcam_filt(filterName)
+
+    elif name.startswith('tess'):
+        filt = filters.get_tess_filt(filterName)
+
+    elif name.startswith('washington'):
+        filt = filters.get_washington_filt(filterName)
+
+    elif name.startswith('hipparcos'):
+        filt = filters.get_hipparcos_filt(filterName)
+
+    elif name.startswith('tycho'):
+        filt = filters.get_tycho_filt(filterName)
+
+    elif name.startswith('kepler'):
+        filt = filters.get_kepler_filt(filterName)
+
+    elif name.startswith('ogle'):
+        filt = filters.get_ogle_filt(filterName)
+
+    elif name.startswith('subaru'):
+        inst = tmp[1]
+        filt = filters.get_subaru_filt(inst, filterName)
 
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
@@ -2354,10 +2207,18 @@ def get_filter_col_name(obs_str):
 
     if len(tmp) == 3:
         # Catch Gaia filter cases. Otherwise, it is HST filter
-        if 'dr2_rev' in tmp:
+        if 'dr1' in tmp:
+            filt_name = 'gaiaDR1_{0}'.format(tmp[-1])
+        elif 'dr2' in tmp:
+            filt_name = 'gaiaDR2old_{0}'.format(tmp[-1])
+        elif 'dr2_rev' in tmp:
             filt_name = 'gaiaDR2_{0}'.format(tmp[-1])
+        elif 'edr3' in tmp:
+            filt_name = 'gaiaEDR3_{0}'.format(tmp[-1])
         elif 'roman' in tmp:
             filt_name = 'roman_{0}'.format(tmp[-1])
+        elif tmp[0] == 'subaru':
+            filt_name = '_'.join(tmp)
         else:
             filt_name = 'hst_{0}'.format(tmp[-1])
     else:
@@ -2373,84 +2234,27 @@ def get_obs_str(col):
     # Remove the trailing m_
     name = col[2:]
 
-    # Define dictionary for filters
-    filt_list = {'hst_f127m': 'wfc3,ir,f127m', 'hst_f139m': 'wfc3,ir,f139m', 'hst_f153m': 'wfc3,ir,f153m',
-                 'hst_f814w': 'acs,wfc1,f814w', 'hst_f125w': 'wfc3,ir,f125w', 'hst_f160w': 'wfc3,ir,f160w',
-                 'decam_y': 'decam,y', 'decam_i': 'decam,i', 'decam_z': 'decam,z',
-                 'decam_u':'decam,u', 'decam_g':'decam,g', 'decam_r':'decam,r',
-                 'vista_Y':'vista,Y', 'vista_Z':'vista,Z', 'vista_J': 'vista,J',
-                 'vista_H': 'vista,H', 'vista_Ks': 'vista,Ks',
-                 'ps1_z':'ps1,z', 'ps1_g':'ps1,g', 'ps1_r': 'ps1,r',
-                 'ps1_i': 'ps1,i', 'ps1_y':'ps1,y',
-                 'jwst_F090W': 'jwst,F090W', 'jwst_F164N': 'jwst,F164N', 'jwst_F212N': 'jwst,F212N',
-                 'jwst_F323N':'jwst,F323N', 'jwst_F466N': 'jwst,F466N',
-                 'jwst_F070W': 'jwst,F070W',
-                 'jwst_F115W': 'jwst,F115W',
-                 'jwst_F140M': 'jwst,F140M',
-                 'jwst_F150W': 'jwst,F150W',
-                 'jwst_F150W2': 'jwst,F150W2',
-                 'jwst_F162M': 'jwst,F162M',
-                 'jwst_F182M': 'jwst,F182M',
-                 'jwst_F187N': 'jwst,F187N',
-                 'jwst_F200W': 'jwst,F200W',
-                 'jwst_F210M': 'jwst,F210M',
-                 'jwst_F250M': 'jwst,F250M',
-                 'jwst_F277W': 'jwst,F277W',
-                 'jwst_F300M': 'jwst,F300M',
-                 'jwst_F322W2': 'jwst,F322W2',
-                 'jwst_F335M': 'jwst,F335M',
-                 'jwst_F356W': 'jwst,F356W',
-                 'jwst_F360M': 'jwst,F360M',
-                 'jwst_F405N': 'jwst,F405N',
-                 'jwst_F410M': 'jwst,F410M',
-                 'jwst_F430M': 'jwst,F430M',
-                 'jwst_F444W': 'jwst,F444W',
-                 'jwst_F440W': 'jwst,F440W',
-                 'jwst_F460M': 'jwst,F460M',
-                 'jwst_F470N': 'jwst,F470N',
-                 'jwst_F480M': 'jwst,F480M',
-                 'nirc2_J': 'nirc2,J', 'nirc2_H': 'nirc2,H', 'nirc2_Kp': 'nirc2,Kp', 'nirc2_K': 'nirc2,K',
-                 'nirc2_Lp': 'nirc2,Lp', 'nirc2_Ms': 'nirc2,Ms', 'nirc2_Hcont': 'nirc2,Hcont',
-                 'nirc2_FeII': 'nirc2,FeII', 'nirc2_Brgamma': 'nirc2,Brgamma',
-                 '2mass_J': '2mass,J', '2mass_H': '2mass,H', '2mass_Ks': '2mass,Ks',
-                 'ubv_U':'ubv,U', 'ubv_B':'ubv,B', 'ubv_V':'ubv,V', 'ubv_R':'ubv,R',
-                 'ubv_I':'ubv,I',
-                 'jg_J': 'jg,J', 'jg_H': 'jg,H', 'jg_K': 'jg,K',
-                 'nirc1_K':'nirc1,K', 'nirc1_H':'nirc1,H',
-                 'naco_J':'naco,J', 'naco_H':'naco,H', 'naco_Ks':'naco,Ks',
-                 'naco_IB_2.00': 'naco,IB_2.00', 'naco_IB_2.03':'naco,IB_2.03', 'naco_IB_2.06':'naco,IB_2.06',
-                 'naco_IB_2.24':'naco,IB_2.24', 'naco_IB_2.27':'naco,IB_2.27',
-                 'naco_IB_2.30':'naco,IB_2.30', 'naco_IB_2.33':'naco,IB_2.33',
-                 'naco_IB_2.36':'naco,IB_2.36',
-                 'ukirt_Z':'ukirt,Z','ukirt_Y':'ukirt,Y','ukirt_J':'ukirt,J', 'ukirt_H':'ukirt,H', 'ukirt_K':'ukirt,K',
-                 'ctio_osiris_H': 'ctio_osiris,H', 'ctio_osiris_K': 'ctio_osiris,K',
-                 'ztf_g':'ztf,g', 'ztf_r':'ztf,r', 'ztf_i':'ztf,i',
-                 'gaiaDR2_G': 'gaia,dr2_rev,G', 'gaiaDR2_Gbp':'gaia,dr2_rev,Gbp',
-                 'gaiaDR2_Grp':'gaia,dr2_rev,Grp',
-                 'hawki_J': 'hawki,J',
-                 'hawki_H': 'hawki,H',
-                 'hawki_Ks': 'hawki,Ks',
-                 'roman_f062': 'roman,wfi,f062',
-                 'roman_f087': 'roman,wfi,f087',
-                 'roman_f106': 'roman,wfi,f106',
-                 'roman_f129': 'roman,wfi,f129',
-                 'roman_f158': 'roman,wfi,f158',
-                 'roman_f146': 'roman,wfi,f146',
-                 'roman_f213': 'roman,wfi,f213',
-                 'roman_f184': 'roman,wfi,f184',
-                 'rubin_g':'rubin,g',
-                 'rubin_i':'rubin,i',
-                 'rubin_r':'rubin,r',
-                 'rubin_u':'rubin,u',
-                 'rubin_z':'rubin,z',
-                 'rubin_y':'rubin,y',
-                 'euclid_VIS':'euclid,VIS',
-                 'euclid_Y':'euclid,Y',
-                 'euclid_J':'euclid,J',
-                 'euclid_H':'euclid,H',
-                 'nsfcam_L':'nsfcam,L'}
-
-    obs_str = filt_list[name]
+    # This mostly follows a standard form, but we'll account for some special cases
+    if name[:4]=='hst_':
+        hst_filts = {'hst_f127m': 'wfc3,ir,f127m', 'hst_f139m': 'wfc3,ir,f139m', 'hst_f153m': 'wfc3,ir,f153m',
+                 'hst_f814w': 'acs,wfc1,f814w', 'hst_f125w': 'wfc3,ir,f125w', 'hst_f160w': 'wfc3,ir,f160w'}
+        obs_str = hst_filts[name]
+    elif name[:6]=='roman_':
+        tmp = name.split('_')
+        obs_str = 'roman,wfi,'+tmp[1]
+    elif name[:4]=='gaia':
+        gaia_filts = {'gaiaDR1_G': 'gaia,dr1,G',     'gaiaDR1_Gbp':'gaia,dr1,Gbp',     'gaiaDR1_Grp':'gaia,dr1,Grp',
+                 'gaiaDR2old_G': 'gaia,dr2,G',  'gaiaDR2old_Gbp':'gaia,dr2,Gbp',  'gaiaDR2old_Grp':'gaia,dr2,Grp',
+                 'gaiaDR2_G': 'gaia,dr2_rev,G', 'gaiaDR2_Gbp':'gaia,dr2_rev,Gbp', 'gaiaDR2_Grp':'gaia,dr2_rev,Grp',
+                 'gaiaEDR3_G': 'gaia,edr3,G',   'gaiaEDR3_Gbp':'gaia,edr3,Gbp',   'gaiaEDR3_Grp':'gaia,edr3,Grp'}
+        obs_str = gaia_filts[name]
+    elif name[:8]=='naco_IB_':
+        obs_str = name.replace('_', ',', 1)
+    elif name[:12]=='ctio_osiris_':
+        tmp = name.split('_')
+        obs_str = tmp[0]+'_'+tmp[1]+','+tmp[2]
+    else:
+        obs_str = ','.join(name.split('_'))
 
     return obs_str
 
