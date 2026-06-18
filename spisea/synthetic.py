@@ -223,20 +223,10 @@ class ResolvedCluster(Cluster):
         #####
         if self.imf.make_multiples:
             # start3 = time.time()
-            star_systems, companions = self._make_companions_table_new(star_systems, compMass)
+            star_systems, companions = self._make_companions_table(star_systems, compMass)
             # end3 = time.time()
             # print('Companion table new took {0:f} s.'.format(end3 - start3))
             self.companions = companions
-
-            # compMass = [
-            #     [value for value, mask in zip(row, row_mask) if not mask]
-            #     for row, row_mask in zip(compMass.data, compMass.mask)
-            # ]
-            # start3 = time.time()
-            # star_systems, companions = self._make_companions_table(star_systems, compMass)
-            # end3 = time.time()
-            # print('Companion table took {0:f} s.'.format(end3-start3))
-            # self.companions = companions
 
         #####
         # Save our arrays to the object
@@ -343,7 +333,7 @@ class ResolvedCluster(Cluster):
         return star_systems
 
 
-    def _make_companions_table_new(self, star_systems, compMass):
+    def _make_companions_table(self, star_systems, compMass):
         """Make companions table for resolved clusters with multiplicity.
 
         Parameters
@@ -446,190 +436,6 @@ class ResolvedCluster(Cluster):
         companions['phase'][low_mass_idxs] = 98
 
         if len(companions['mass'][companions_teff_non_nan > 0])>0:
-            assert companions['mass'][companions_teff_non_nan > 0].min() > 0, "Companion mass is not positive"
-
-        return star_systems, companions
-
-
-    def _make_companions_table(self, star_systems, compMass):
-
-        N_systems = len(star_systems)
-
-        #####
-        #    MULTIPLICITY
-        # Make a second table containing all the companion-star masses.
-        # This table will be much longer... here are the arrays:
-        #    sysIndex - the index of the system this star belongs too
-        #    mass - the mass of this individual star.
-        N_companions = np.array([len(star_masses) for star_masses in compMass])
-        star_systems.add_column( Column(N_companions, name='N_companions') )
-
-        N_comp_tot = N_companions.sum()
-        system_index = np.repeat(np.arange(N_systems), N_companions)
-
-        companions = Table([system_index], names=['system_idx'])
-
-        # Add columns for the Teff, L, logg, isWR mass_current, phase, and filters for the companion stars.
-        companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='mass') )
-        companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Teff') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='L') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='logg') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='isWR') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='mass_current') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='phase') )
-        companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name='metallicity') )
-        for filt in self.filt_names:
-            companions.add_column( Column(np.empty(N_comp_tot, dtype=float), name=filt) )
-
-        if isinstance(self.imf._multi_props, multiplicity.MultiplicityResolvedDK):
-            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='log_a') )
-            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='e') )
-            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='i', description = 'degrees') )
-            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='Omega') )
-            companions.add_column( Column(np.zeros(N_comp_tot, dtype=float), name='omega') )
-
-            for ii in range(len(companions)):
-                companions['log_a'][ii] = self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx'][ii]])
-
-            companions['e'] = self.imf._multi_props.random_e(self.rng.random(N_comp_tot))
-            companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(
-                self.rng.random(N_comp_tot),
-                self.rng.random(N_comp_tot),
-                self.rng.random(N_comp_tot)
-            )
-
-
-        # Make an array that maps system index (ii), companion index (cc) to
-        # the place in the 1D companions array.
-        N_comp_max = N_companions.max()
-
-        comp_index = np.zeros((N_systems, N_comp_max), dtype=int)
-        kk = 0
-        for ii in range(N_systems):
-            for cc in range(N_companions[ii]):
-                comp_index[ii][cc] = kk
-                kk += 1
-
-        # Find all the systems with at least one companion... add the flux
-        # of that companion to the primary. Repeat for 2 companions,
-        # 3 companions, etc.
-        for cc in range(1, N_comp_max+1):
-            # All systems with at least cc companions.
-            idx = np.where(N_companions >= cc)[0]
-
-            # Get the location in the companions array for each system and
-            # the cc'th companion.
-            cdx = comp_index[idx, cc-1]
-
-            # companions['mass'][cdx] = compMass[idx, cc-1]
-            companions['mass'][cdx] = [compMass[ii][cc-1] for ii in idx]
-            comp_mass = companions['mass'][cdx]
-
-            if len(idx) > 0:
-                companions['Teff'][cdx] = self.iso_interps['Teff'](comp_mass)
-                companions['L'][cdx] = self.iso_interps['L'](comp_mass)
-                companions['logg'][cdx] = self.iso_interps['logg'](comp_mass)
-                companions['isWR'][cdx] = np.round(self.iso_interps['isWR'](comp_mass))
-                companions['mass_current'] = self.iso_interps['mass_current'](companions['mass'])
-                companions['phase'] = np.round(self.iso_interps['phase'](companions['mass']))
-                companions['metallicity'] = np.ones(N_comp_tot)*self.iso.metallicity   #****
-
-                # For a very small fraction of stars, the star phase falls on integers in-between
-                # the ones we have definition for, as a result of the interpolation. For these
-                # stars, round phase down to nearest defined phase (e.g., if phase is 71,
-                # then round it down to 5, rather than up to 101).
-                # Convert nan_to_num to avoid errors on greater than, less than comparisons
-
-                # reinforce BD phase of 90 and invariant masses
-                bd_mask = (companions['mass'] >= 0.01) & (companions['mass'] <= 0.08)
-                companions['phase'][bd_mask] = 90
-                companions['mass_current'][bd_mask] = companions['mass'][bd_mask]
-
-                companions_phase_non_nan = np.nan_to_num(companions['phase'], nan=-99)
-                bad = np.where( (companions_phase_non_nan > 5) &
-                                (companions_phase_non_nan < 101) &
-                                (companions_phase_non_nan != 9) &
-                                (companions_phase_non_nan != 90) &
-                                (companions_phase_non_nan != -99))
-                # Print warning, if desired
-                verbose=False
-                if verbose:
-                    for ii in range(len(bad)):
-                        print('WARNING: changing phase {0} to 5'.format(companions['phase'][bad[ii]]))
-                companions['phase'][bad] = 5
-
-                for filt in self.filt_names:
-                    # Magnitude of companion
-                    companions[filt][cdx] = self.iso_interps[filt](comp_mass)
-
-                    mag_s = star_systems[filt][idx]
-                    mag_c = companions[filt][cdx]
-
-                    # Add companion flux to system flux.
-                    f1 = 10**(-mag_s / 2.5)
-                    f2 = 10**(-mag_c / 2.5)
-
-                    # For dark objects, turn the np.nan fluxes into zeros.
-                    f1 = np.nan_to_num(f1)
-                    f2 = np.nan_to_num(f2)
-
-                    # If *both* objects are dark, then keep the magnitude
-                    # as np.nan. Otherwise, add fluxes together
-                    good = np.where( (f1 != 0) | (f2 != 0) )[0]
-                    bad = np.where( (f1 == 0) & (f2 == 0) )[0]
-
-                    star_systems[filt][idx[good]] = -2.5 * np.log10(f1[good] + f2[good])
-                    star_systems[filt][idx[bad]] = np.nan
-
-
-        #####
-        # Make Remnants with flux = 0 in all bands.
-        #####
-        if self.ifmr != None:
-            # Identify compact objects as those with Teff = 0 or with masses above the max iso mass
-            # Exclude BDs from designation
-            highest_mass_iso = self.iso.points['mass'].max()
-            cdx_rem = np.where((np.isnan(companions['Teff'])) &
-                               (companions['mass'] > highest_mass_iso) &
-                               (companions['mass'] >= 0.08))[0]
-
-            # Calculate remnant mass and ID for compact objects; update remnant_id and
-            # remnant_mass arrays accordingly
-            if 'metallicity_array' in inspect.getfullargspec(self.ifmr.generate_death_mass).args:
-                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem],
-                                                                     metallicity_array=companions['metallicity'][cdx_rem])
-            else:
-                r_mass_tmp, r_id_tmp = self.ifmr.generate_death_mass(mass_array=companions['mass'][cdx_rem])
-
-
-            # Drop remnants where it is not relevant (e.g. not a compact object or
-            # outside mass range IFMR is defined for)
-            good = np.where(r_id_tmp > 0)
-            cdx_rem_good = cdx_rem[good]
-
-            companions['mass_current'][cdx_rem_good] = r_mass_tmp[good]
-            companions['phase'][cdx_rem_good] = r_id_tmp[good]
-
-            # Give remnants a magnitude of nan, so they can be filtered out later when calculating flux.
-            for filt in self.filt_names:
-                companions[filt][cdx_rem_good] = np.full(len(cdx_rem_good), np.nan)
-
-
-        # Notify if we have a lot of bad ones.
-        # Convert nan_to_num to avoid errors on greater than, less than comparisons
-        companions_teff_non_nan = np.nan_to_num(companions['Teff'], nan=-99)
-        idx = np.where(companions_teff_non_nan > 0)[0]
-        if len(idx) != N_comp_tot and self.verbose:
-            print( 'Found {0:d} companions out of stellar mass range'.format(N_comp_tot - len(idx)))
-
-        # For low-mass stars and substellar objects below isochrone, assume no mass loss and set phase to 98
-        low_mass_idxs = (companions['mass']<np.min(self.iso.points['mass']))
-        companions['mass_current'][low_mass_idxs] = companions['mass'][low_mass_idxs]
-        pdb.set_trace()
-        companions['phase'][low_mass_idxs] = 98
-        
-        # Double check that everything behaved properly.
-        if len(idx) > 0:
             assert companions['mass'][companions_teff_non_nan > 0].min() > 0, "Companion mass is not positive"
 
         return star_systems, companions

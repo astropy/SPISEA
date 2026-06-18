@@ -183,7 +183,7 @@ def test_filters():
                      'ctio_osiris,K', 'ctio_osiris,H',
                      'ubv,U', 'ubv,B', 'ubv,V', 'ubv,R',
                      'ubv,I', 'jg,J', 'jg,H', 'jg,K',
-                     'decam,y', 'decam,Y', 'decam,i', 'decam,z',
+                     'decam,Y', 'decam,i', 'decam,z',
                      'decam,u', 'decam,g', 'decam,r',
                      'gaia,dr1,G', 'gaia,dr1,Gbp', 'gaia,dr1,Grp',
                      'gaia,dr2,G', 'gaia,dr2,Gbp', 'gaia,dr2,Grp',

@@ -103,11 +103,13 @@ def get_decam_filt(name):
     # Read in filter info
     try:
         t = Table.read('{0}/decam/DECam_filters.txt'.format(filters_dir), format='ascii')
-        t['y'] = t['Y']
 
         trans = t[name]
     except:
-        raise ValueError('Could not find DECAM filter {0} in {1}/decam/DECam_filters.txt'.format(name, filters_dir))
+        if name=='y':
+            raise ValueError('DECam has a /"Y/" filter, not /"y/". The /"y/" in SPISEA <v3.0 was a bug.')
+        else:
+            raise ValueError('Could not find DECAM filter {0} in {1}/decam/DECam_filters.txt'.format(name, filters_dir))
 
     # Don't allow negative transmission
     trans[trans<0] = 0.0
