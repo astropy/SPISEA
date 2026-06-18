@@ -159,7 +159,7 @@ class IMF(object):
         # start_while = time.time()
         while totalMassTally < totalMass:
             # Generate a random number array.
-            uniX = self.rng.random(int(newStarCount))
+            uniX = self.rng.random(newStarCount.astype(int))
             # Convert into the IMF from the inverted CDF
             newMasses = self.dice_star_cl(uniX)
 
@@ -176,7 +176,7 @@ class IMF(object):
                 MF = self._multi_props.multiplicity_fraction(newMasses)
                 CSF = self._multi_props.companion_star_fraction(newMasses)
 
-                newIsMultiple = self.rng.random(int(newStarCount)) < MF
+                newIsMultiple = self.rng.random(newStarCount.astype(int)) < MF
 
                 # Function to calculate multiple systems more efficiently
                 # start_calc = time.time()
@@ -273,7 +273,10 @@ class IMF(object):
         # so we can put in uniform arrays in _multi_props.random_q.
         comp_unique = np.unique(comp_nums)
         comp_indices = [np.where(comp_nums == i)[0] for i in comp_unique]
-        compMasses = np.zeros((len(newMasses), max(comp_unique)))
+        if np.any(newIsMultiple):
+            compMasses = np.zeros((len(newMasses), max(comp_unique)))
+        else:
+            compMasses = np.zeros((len(newMasses), 1))
 
         for comp_num, comp_index in zip(comp_unique, comp_indices):
             prim_subset = primary[comp_index]

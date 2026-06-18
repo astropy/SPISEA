@@ -34,7 +34,9 @@ Available filters:
 * Euclid
 * GAIA
 * HAWK-I
+* Hipparcos
 * Hubble Space Telescope
+* Kepler
 * IRTF
 * Johnson-Cousins
 * Johnson-Glass
@@ -42,11 +44,16 @@ Available filters:
 * Keck NIRC
 * Keck NIRC2
 * NACO
+* OGLE
 * PanStarrs 1
 * Roman Space Telescope
+* Subaru
+* TESS
+* Tycho
 * UKIRT
 * Vera C. Rubin Observatory
 * VISTA
+* Washington
 * ZTF
 
 
@@ -76,7 +83,7 @@ Example: ``'ctio_osiris,H'``
 
 **DeCam**
 
-`Dark Energy Camera <http://www.ctio.noao.edu/noao/content/DECam-filter-information>`_
+`Dark Energy Camera <https://noirlab.edu/science/documents/scidoc0472>`_
 
 Filters: u, g, r, i, z, Y
 
@@ -94,17 +101,19 @@ Example: ``'euclid,Y'``
 **GAIA**
 
 The `GAIA Space Telescope filters <https://www.cosmos.esa.int/web/gaia/iow_20180316>`_.
-Note that three sets are available: the pre-launch passbands used in DR1
+Note that four sets are available: the pre-launch passbands used in DR1
 (`Jordi+10
 <https://ui.adsabs.harvard.edu/abs/2010A%26A...523A..48J/abstract>`_),
-the passbands used for the DR2 published photometry, and
-the *revised* DR2 passbands based on the DR2 data (October 2017).
-ONLY THE REVISED DR2 PASSBANDS ARE SUPPORTED BY SPISEA.
+the passbands used for the DR2 published photometry,
+the *revised* DR2 passbands based on the DR2 data (October 2017),
+and the `(E)DR3 passbands <https://www.cosmos.esa.int/web/gaia/edr3-passbands>`_.
 
 Filters: G, Gbp, Grp
 
-Example (gaia G filter from revised DR2 passbands):
-``'gaia,dr2_rev,G'``
+Versions: dr1, dr2, dr2_rev, edr3
+
+Example (gaia G filter from (E)DR3 passbands):
+``'gaia,edr3,G'``
 
 **HAWK-I**
 
@@ -115,6 +124,14 @@ located on the ESO VLT (Unit Telescope 4).
 Filters: J, H, Ks
 
 Example: ``'hawki,J'``
+
+**Hipparcos**
+
+`Hipparcos Hp filter <http://ulisse.pd.astro.it/Astro/ADPS/Systems/Sys_135/index_135.html>`_
+
+Filters: Hp
+
+Example: ``'hipparcos,Hp'``
 
 **Hubble Space Telescope**
 
@@ -171,6 +188,14 @@ Filters: J, H, Hcont, K, Kp, Ks, Kcont, Lp, Ms, Brgamma, FeII
 
 Example: ``'nirc2,Ks'``
 
+**Kepler**
+
+`Kepler Kp filter <http://svo2.cab.inta-csic.es/theory/fps/index.php?mode=browse&gname=Kepler&asttype=>`_
+
+Filters: Kp
+
+Example: ``'kepler,Kp'``
+
 
 **NACO**
 
@@ -181,12 +206,20 @@ IB_2.30, IB_2.33, IB_2.36
 
 Example: ``'naco,H'``
 
+**OGLE**
+
+OGLE R-wide filter, provided by Andrzej Udalski
+
+Filters: Rw
+
+Example: ``'ogle,Rw'``
+
 
 **PanStarrs1**
 
 PanStarrs 1 filters from `Tonry et al. 2012 <https://ui.adsabs.harvard.edu/#abs/arXiv:1203.0297>`_
 
-Filters: g, r, i, z, y
+Filters: g, r, i, z, y, w
 
 Example: ``'ps1, g'``
 
@@ -205,6 +238,32 @@ work. See :ref:`getting_started` for how to download these files.
 Filters: F062, F087, F106, F129, F158, W146, F184, F213
 
 Example: ``'roman,wfi,f062'``
+
+**Subaru**
+
+Subaru filters from the `SVO Filter Profile Service <http://svo2.cab.inta-csic.es/theory/fps/index.php?mode=browse&gname=Subaru&gname2=HSC&asttype=>`_.
+
+Filters: g, r, i, z, Y, nb387, nb468, nb515, nb527, nb656, nb718, nb816, nb921, nb926, nb973
+
+Instruments: hsc
+
+Example: ``'subaru,hsc,i'``
+
+**TESS**
+
+TESS filter: a single wide, red-optical `bandpass <https://heasarc.gsfc.nasa.gov/docs/tess/telescope_information.html>`_
+
+Filters: tess
+
+Example: ``'tess,tess'``
+
+**Tycho**
+
+`Tycho filters <http://ulisse.pd.astro.it/Astro/ADPS/Systems/Sys_135/index_135.html>`_
+
+Filters: B, V
+
+Example: ``'tycho,B'``
 
 **UKIRT**
 
@@ -230,6 +289,14 @@ Example: ``'rubin,g'``
 Filters: Z, Y, J, H, K
 
 Example: ``'vista,Y'``
+
+**Washington**
+
+Washington filter system from `Bessell et al. 2001 <https://ui.adsabs.harvard.edu/abs/2001PASP..113...66B/abstract>`_
+
+Filters: C, M, T1, T2
+
+Example: ``'washington,C'``
 
 **ZTF**
 

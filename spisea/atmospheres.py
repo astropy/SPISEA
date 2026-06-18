@@ -872,8 +872,8 @@ def get_merged_atmosphere(metallicity=0, temperature=20000, gravity=4.5, verbose
     * T < 3800, logg < 2.5: PHOENIX v16
     * 3200 <= T < 3800, logg > 2.5: BTSettl_CIFITS2011_2015/PHOENIXV16 merge
     * 3200 < T <= 1200, logg > 2.5: BTSettl_CIFITS2011_2015
-    * 1200 < T <= 1000, logg >= 3.5: BTSettl_CIFITS2011_2015/Meisner2023 merge
-    * 1000 < T <= 250, logg > 2.5: Meisner2023
+    * 1000 < T <= 1200, logg >= 3.5: BTSettl_CIFITS2011_2015/Meisner2023 merge
+    * 250 < T <= 1000, logg > 2.5: Meisner2023
 
     Otherwise, if T < 3800 and [M/H] != 0:
 

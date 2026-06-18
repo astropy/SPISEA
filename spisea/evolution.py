@@ -573,7 +573,7 @@ class Phillips2020(StellarEvolution):
         self.age_list = np.arange(6.0, 10.0, 0.001)
 
         # define required evo_grid number
-        self.evo_grid_min = 1.0
+        self.evo_grid_min = 3.0
 
     def isochrone(self, age= 1.e8, metallicity=0.0):
         r"""
@@ -722,7 +722,7 @@ class Marley2021(StellarEvolution):
         }
 
         # Define required evo_grid number
-        self.evo_grid_min = 1.0      
+        self.evo_grid_min = 3.0
 
     def isochrone(self, age=1.e8, metallicity=0.0):
         r"""
@@ -1408,8 +1408,8 @@ class MISTv1(StellarEvolution):
         if ((log_age < np.min(self.age_list)) or (log_age > np.max(self.age_list))):
             raise ValueError(f'Requested age {log_age} is out of bounds between {np.min(self.age_list)} and {np.max(self.age_list)}.')
 
-        if ((z_defined < np.min(self.z_list)) or
-                (z_defined > np.max(self.z_list))):
+        if ((z_defined < np.min(self.z_list)-0.1) or
+                (z_defined > np.max(self.z_list)+0.1)):
             raise ValueError(f'Requested metallicity {z_defined} is out of bounds between {np.min(self.z_list)} and {np.max(self.z_list)}.')
 
         # Find nearest age in grid to input grid
@@ -1592,7 +1592,7 @@ class MergedPhillipsBaraffePisaEkstromParsec(StellarEvolution):
             self.z_file_map = {0.015: 'z015_norot/'}
 
         # Define required evo_grid number
-        self.evo_grid_min = 1.0
+        self.evo_grid_min = 3.0
         
     
     def isochrone(self, age=1.e8, metallicity=0.0):
