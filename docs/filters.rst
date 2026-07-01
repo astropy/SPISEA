@@ -29,6 +29,7 @@ directories.
 Available filters:
 
 * 2MASS
+* Bessell
 * CTIO_OSIRIS
 * DeCam
 * Euclid
@@ -69,6 +70,13 @@ Filters: J, H, Ks
 
 Example: ``'2mass,H'``
 
+**Bessell**
+
+`Bessel (1990) <https://ui.adsabs.harvard.edu/abs/1990PASP..102.1181B/abstract>`_ Johnson-Cousins UBVRI filters
+
+Filters: U, B, V, R, I
+
+Example: ``'bessell,U'``
 
 **CTIO_OSIRIS**
 
