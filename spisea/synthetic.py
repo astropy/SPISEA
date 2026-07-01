@@ -1668,6 +1668,9 @@ def get_filter_info(name, vega=vega, rebin=True):
         inst = tmp[1]
         filt = filters.get_subaru_filt(inst, filterName)
 
+    elif name.startswith('bessell'):
+        filt = filters.get_bessell_filt(filterName)
+
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
         try:

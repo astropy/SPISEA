@@ -292,6 +292,22 @@ def get_ubv_filt(name):
 
     return spectrum
 
+def get_bessell_filt(name):
+    """
+    Define ubv (Johnson-Cousin filters, as defined in Bessell 1990) as pysynphot object
+    """
+    try:
+        t = Table.read('{0}/bessell/{1}.dat'.format(filters_dir, name), format='ascii')
+    except:
+        raise ValueError('Could not find bessell filter {0} in {1}/bessell'.format(name, filters_dir))
+
+    wave = t[t.keys()[0]] 
+    trans = t[t.keys()[1]]
+
+    spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='bessell_{0}'.format(name))
+
+    return spectrum
+
 def get_ukirt_filt(name):
     """
     Define UKIRT filters as pysynphot object

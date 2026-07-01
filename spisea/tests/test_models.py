@@ -219,7 +219,8 @@ def test_filters():
                      'subaru,hsc,g','subaru,hsc,r','subaru,hsc,i','subaru,hsc,z','subaru,hsc,Y',
                      'subaru,hsc,nb387', 'subaru,hsc,nb468', 'subaru,hsc,nb515', 'subaru,hsc,nb527',
                      'subaru,hsc,nb656', 'subaru,hsc,nb718', 'subaru,hsc,nb816', 'subaru,hsc,nb921',
-                     'subaru,hsc,nb926', 'subaru,hsc,nb973']
+                     'subaru,hsc,nb926', 'subaru,hsc,nb973',
+                     'bessell,U', 'bessell,B', 'bessell,V', 'bessell,R', 'bessell,I']
 
     # Loop through filters to test that they work: get_filter_info
     for ii in filt_list:
