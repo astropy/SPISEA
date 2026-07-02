@@ -29,6 +29,7 @@ directories.
 Available filters:
 
 * 2MASS
+* Bessell
 * CTIO_OSIRIS
 * DeCam
 * Euclid
@@ -69,6 +70,13 @@ Filters: J, H, Ks
 
 Example: ``'2mass,H'``
 
+**Bessell**
+
+`Bessel (1990) <https://ui.adsabs.harvard.edu/abs/1990PASP..102.1181B/abstract>`_ Johnson-Cousins UBVRI filters
+
+Filters: U, B, V, R, I
+
+Example: ``'bessell,U'``
 
 **CTIO_OSIRIS**
 
@@ -146,6 +154,12 @@ Example: ``'wfc3,ir,f125w'``
 
 Johnson-Cousin filters (downloaded from
 http://www.aip.de/en/research/facilities/stella/instruments/data/johnson-ubvri-filter-curves).
+
+Note: As of July 2026, the link for the source is broken. We note that the I filter here is that of
+the Johnson standard filter, which has a long red tail. In the transmission curve here, it is cut off
+at 1.1 microns. We recommend careful selection for a standard I filter. Note that the Bessell (1990)
+filters are available as listed above. We also have specific filter profiles for many existing
+instruments.
 
 Filters: U, B, V, R, I
 
