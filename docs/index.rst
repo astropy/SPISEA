@@ -103,8 +103,7 @@ Change Log
     * All pysynphot filters can now be used
   * Minor bugs and case handling
     * Debug edge case for no companion stars
-    * Restore functionality where final mass = initial for companion 
-      stars with lower mass than the isochrone's range
+    * Restore functionality where final mass = initial for companion stars with lower mass than the isochrone's range
     * MIST evolution allows input metallicities within 0.1 dex 
       of the allowed range, since the nearest grid value is adopted,
       and this eliminates floating value precision issues.
