@@ -570,7 +570,16 @@ class Phillips2020(StellarEvolution):
         self.z_solar = 0.015
 
         # populate list of isochrone ages (log scale)
-        self.age_list = np.arange(6.0, 10.0, 0.001)
+        self.age_list = np.array([6.0, 6.102564101374986, 6.205128204112327, 6.307692307498837, 
+                         6.41025641041525, 6.512820513399242, 6.615384615079123, 6.717948717593952,
+                         6.820512820432055, 6.923076923041517,7.025641027630915, 7.128205127364955,
+                         7.230769230806862, 7.333333333326906, 7.43589743645667, 7.538461537884313,
+                         7.64102564151456, 7.743589743588999, 7.846153846357851, 7.948717948583871,
+                         8.051282050278353, 8.153846153753816, 8.256410257173776, 8.35897435818861,
+                         8.461538460830697, 8.564102564448598, 8.666666666328634, 8.769230769062688,
+                         8.87179487160516, 8.974358974304664, 9.076923076299368, 9.179487179310316,
+                         9.282051282920115, 9.384615385138028, 9.487179487213739, 9.589743589709178,
+                         9.692307692157154, 9.794871794783068, 9.89743589751841, 10.0])
 
         # define required evo_grid number
         self.evo_grid_min = 3.0
@@ -605,11 +614,9 @@ class Phillips2020(StellarEvolution):
         iso_path = os.path.join(self.model_dir, 'iso', z_dir)
 
         # Find nearest age in grid to input grid by parsing through available files
-        p_files = glob.glob(os.path.join(iso_path, 'iso_*.fits'))
-        p_ages = np.array([float(f.split('_')[1].replace('.fits', '')) for f in p_files])
-        close_age = np.argmin(abs(p_ages - log_age))
-        close_file = p_files[close_age]
-        print(f"Found nearest age file as {close_file} for requested age of {log_age}")
+        close_age = self.age_list[np.argmin(abs(self.age_list - log_age))]
+        close_file = iso_path+f'/iso_{close_age:.15f}.fits'
+        print(f"Found nearest age {close_age} for requested age of {log_age}")
         
         # Make sure the closest file exists
         if not os.path.exists(close_file):
