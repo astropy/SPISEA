@@ -84,15 +84,15 @@ Change Log
 ----------
 3.0 (2026-**-**)
   * Addition of brown dwarf models
-    * New evolution grids: Phillips2020, Marley2021, and 
-      mergedPhillipsMergedPhillipsBaraffePisaEkstromParsec
+    * New evolution grids: Phillips2020, Marley2021, and mergedPhillipsMergedPhillipsBaraffePisaEkstromParsec
     * New atmosphere grids: Phillips2020, Meisner2023
     * get_merged_atmosphere now uses Meisner2023 for T < 1000 K
       and interpolated BTSettl/Meisner2023 for 1000 < T <= 1200
-  * Updated evolution and atmosphere grid data sets w/ grid_version=3.0
+  * Updated evolution and atmosphere grid data sets w/
+    grid_version=3.0
     * These include the new brown dwarf models 
-    * The MISTv1.2-synthpop model extension was also modified to include 
-      denser sampling in the gap between the base MISTv1.2 grids and 0.1Msun.
+    * The MISTv1.2-synthpop model extension was also modified to
+      include denser sampling in the gap between the base MISTv1.2 grids and 0.1Msun.
   * Added SODC extinction law
   * Filter handling improvements
     * Fix bug where DECam "Y" filter was mislabeled "y", and updated
@@ -103,7 +103,8 @@ Change Log
     * All pysynphot filters can now be used
   * Minor bugs and case handling
     * Debug edge case for no companion stars
-    * Restore functionality where final mass = initial for companion stars with lower mass than the isochrone's range
+    * Restore functionality where final mass = initial for companion
+      stars with lower mass than the isochrone's range
     * MIST evolution allows input metallicities within 0.1 dex 
       of the allowed range, since the nearest grid value is adopted,
       and this eliminates floating value precision issues.
