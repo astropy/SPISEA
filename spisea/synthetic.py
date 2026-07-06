@@ -1038,6 +1038,10 @@ class IsochronePhot(Isochrone):
         Define what filters the synthetic photometry
         will be calculated for, via the filter string
         identifier.
+        
+    mag_sys : string
+        Define magnitude system for synthetic photometry. Default
+        is 'Vega', with other options 'AB' and 'ST'.
     """
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
@@ -1048,9 +1052,14 @@ class IsochronePhot(Isochrone):
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
                           'ubv,R', 'ubv,I'],
-                verbose=False):
+                 mag_sys='Vega',
+                 verbose=False):
         self.metallicity = metallicity
         self.verbose=verbose
+        
+        if mag_sys not in ['Vega', 'AB', 'ST']:
+            raise ValueError(f'Invalid mag_sys={mag_sys}. Use Vega, AB, or ST.')
+        self.mag_sys = mag_sys
 
         # Make the iso_dir, if it doesn't already exist
         if not os.path.exists(iso_dir):
@@ -1166,6 +1175,13 @@ class IsochronePhot(Isochrone):
         drop_columns = [col for col in self.points.columns if (col[:2]=='m_' and
                         (col not in all_filters))]
         self.points.remove_columns(drop_columns)
+        
+        if self.mag_sys == 'AB':
+            for i,filt in enumerate(filters):
+                self.points[all_filters[i]] += calc_ab_vega_filter_conversion(filt)
+        elif self.mag_sys == 'ST':
+            for i,filt in enumerate(filters):
+                self.points[all_filters[i]] += calc_st_vega_filter_conversion(filt)
 
         return
 
