@@ -900,6 +900,7 @@ class Isochrone(object):
         tab.meta['METAL_ACT'] = evol.meta['metallicity_act']
         tab.meta['WAVEMIN'] = wave_range[0]
         tab.meta['WAVEMAX'] = wave_range[1]
+        tab.meta['MAGSYS'] = 'Vega'
 
         self.points = tab
 
@@ -1039,9 +1040,9 @@ class IsochronePhot(Isochrone):
         will be calculated for, via the filter string
         identifier.
         
-    mag_sys : string
+    mag_sys : string, optional
         Define magnitude system for synthetic photometry. Default
-        is 'Vega', with other options 'AB' and 'ST'.
+        is 'Vega', with alternative options 'AB' and 'ST'.
     """
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
@@ -1179,9 +1180,11 @@ class IsochronePhot(Isochrone):
         if self.mag_sys == 'AB':
             for i,filt in enumerate(filters):
                 self.points[all_filters[i]] += calc_ab_vega_filter_conversion(filt)
+            tab.meta['MAGSYS'] = 'AB'
         elif self.mag_sys == 'ST':
             for i,filt in enumerate(filters):
                 self.points[all_filters[i]] += calc_st_vega_filter_conversion(filt)
+            tab.meta['MAGSYS'] = 'ST'
 
         return
 
