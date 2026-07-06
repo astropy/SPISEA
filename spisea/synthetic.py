@@ -1180,11 +1180,11 @@ class IsochronePhot(Isochrone):
         if self.mag_sys == 'AB':
             for i,filt in enumerate(filters):
                 self.points[all_filters[i]] += calc_ab_vega_filter_conversion(filt)
-            tab.meta['MAGSYS'] = 'AB'
+            self.points.meta['MAGSYS'] = 'AB'
         elif self.mag_sys == 'ST':
             for i,filt in enumerate(filters):
                 self.points[all_filters[i]] += calc_st_vega_filter_conversion(filt)
-            tab.meta['MAGSYS'] = 'ST'
+            self.points.meta['MAGSYS'] = 'ST'
 
         return
 
