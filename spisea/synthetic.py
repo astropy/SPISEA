@@ -1508,7 +1508,7 @@ class IsochronePhotExternalEvolution(IsochronePhot):
     """
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
-                 evo_model=default_evo_model, atm_func=default_atm_func,
+                 evo_model=evolution.COSMIC(), atm_func=default_atm_func,
                  wd_atm_func = default_wd_atm_func,
                  wave_range=[3000, 52000],
                  red_law=default_red_law, mass_sampling=1, atm_grid_dir='./',
