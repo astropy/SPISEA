@@ -645,7 +645,7 @@ def get_Meisner2023_atmosphere(metallicity=0, temperature=1000, gravity=4.5, reb
     Grid range:
     * Teff = 250 - 1200 K
     * gravity: 2.5 - 5.5 cgs (in steps of 0.5)
-    * [M/H] = -1.0, -0.5, 0, +0, +0.3
+    * [M/H] = -1.0, -0.5, +0, +0.3
 
     """
     if rebin == True:
