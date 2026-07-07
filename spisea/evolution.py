@@ -1541,7 +1541,27 @@ class MISTv1(StellarEvolution):
 # COSMIC Breivik+ 2020 - not normal evo model
 #===========================================#
 class COSMIC(StellarEvolution):
-    
+    """
+    Evolve objects using COSMIC
+    `Breivik et al. 2020 <hhttps://ui.adsabs.harvard.edu/abs/2019arXiv191100903B/abstract>`_.
+
+    See code website here: <https://cosmic-popsynth.github.io/>`_.
+
+    Parameters
+    ----------
+    BSEDict: dict or string, optional
+        Binary Stellar Evolution dictionary for COSMIC evolution. 
+        Default is 'default' which uses the dictionary from COSMIC docs with zsun = 0.02.
+
+    keep_disrupted_companions: bool, optional
+        When True, if the system is disrupted, the companions are added to the primary table.
+        When False, the companion is deleted.
+        Default is True.
+
+    keep_COSMIC_tables : bool, optional
+        Allows COSMIC tables to be accessible on the SPISEA evolution object.
+        Default is False.
+    """
     def __init__(self, BSEDict='default', keep_disrupted_companions=True, keep_COSMIC_tables=False): 
         if BSEDict == 'default':
             self.BSEDict = {
