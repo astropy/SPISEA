@@ -19,8 +19,8 @@ def test_generate_cluster():
     mass, isMulti, compMass, sysMass = my_imf.generate_cluster(M_cl)
 
     # Make sure that the total mass is always within the expected
-    # range of the requested mass.
-    assert np.abs(M_cl - sysMass.sum()) < 120.0
+    # range of the requested mass (2%).
+    assert np.abs(M_cl - sysMass.sum()) < M_cl*0.02
 
     # Check that enough companions were generated.
     # Should be greater than 25% of the stars with companions.

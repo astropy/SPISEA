@@ -73,10 +73,17 @@ Below is a table of the evolution model grids currently supported by SPISEA.
      - 6.00 - 10.00
      - -0.5, 0, 0.5
      - Marley et al. (2021)
+   * - ``COSMIC`` :sup:`b`
+     - 0.08 - 150
+     - -
+     - -2.3 - 0.18
+     - Breivik et al. (2020)
 
 .. rubric:: Footnotes
  
 :sup:`a` Actual maximum value given by the Sonora models (Marley et al., 2021) relies on the age of the cluster. For example, for log(Age)=6.0, the mass range is limited to 0.0005 - 0.011 M\ :sub:`⊙`.
+
+:sup:`b` COSMIC evolves the stars externally and does not use SPISEA's standard isochrone-grid architecture. Instead, it uses a custom atmosphere grid that is created on the fly. See Breivik et al. (2020) for more details on COSMIC. When COSMIC is used, the IFMR is ignored.
 
 Please note the stellar mass range, age range, and metallicity values of the evolution
 model grid you choose:
@@ -142,4 +149,7 @@ Specific Evolution Model Classes
 	       :show-inheritance:
    
 .. autoclass:: evolution.Phillips2020
+	       :show-inheritance:
+
+.. autoclass:: evolution.COSMIC
 	       :show-inheritance:
