@@ -19,7 +19,7 @@ Dongwon Kim -- code testing/debugging
 Siyao Jia -- helped with early code and documentation development
 
 Natasha Abrams -- developed resolved multiplicity capabilities
-(ResolvedMultiplicityDK class)
+(ResolvedMultiplicityDK class) and added COSMIC support.
 
 Michael Medford -- developed resolved multiplicity capabilities
 (ResolvedMultiplicityDK class)
