@@ -1797,6 +1797,12 @@ class IsochronePhotExternalEvolution(IsochronePhot):
                 self.spec_list.append(star)
 
             self.make_photometry(rebin=rebin, vega=vega, comp_filters=comp_filters)
+            
+        # Drop filters in the saved file that we don't actually want here
+        all_filters = ['m_'+get_filter_col_name(f) for f in filters]
+        drop_columns = [col for col in self.points.columns if (col[:2]=='m_' and
+                        (col not in all_filters))]
+        self.points.remove_columns(drop_columns)
         
         if self.mag_sys == 'AB':
             for i,filt in enumerate(filters):
