@@ -83,6 +83,8 @@ releases will be co-authors in future SPISEA software papers.
 Change Log
 ----------
 3.0 (2026-**-**)
+  * Modified default for MISTv1.2 isochrones: synthpop_extension will be True by default
+    to keep a consistent lower mass limit of 0.1Msun across all ages and metallicities.
   * Addition of brown dwarf models
     * New evolution grids: Phillips2020, Marley2021, and mergedPhillipsMergedPhillipsBaraffePisaEkstromParsec
     * New atmosphere grids: Phillips2020, Meisner2023
