@@ -1327,13 +1327,14 @@ class MISTv1(StellarEvolution):
         was downloaded on 8/2018 (solar metallicity)
         and 4/2019 (other metallicities). Default is 1.2.
 
-    synthpop_extension: boolean (default False)
+    synthpop_extension: boolean (default True)
         If True, the isochrones are extended down to a minimum initial
-        mass of 0.1Msun using grids interpolated via SynthPop. If False,
-        the web-downloaded MIST isochrones are used with their varying
-        lower mass limits. True option is only valid for version=1.2.
+        mass of 0.1Msun using grids interpolated via `SynthPop
+        <https://ui.adsabs.harvard.edu/abs/2025AJ....169..317K/abstract>`_.
+        If False, the web-downloaded MIST isochrones are used with their
+        varying lower mass limits. True option is only valid for version=1.2.
     """
-    def __init__(self, version=1.2, synthpop_extension=False):
+    def __init__(self, version=1.2, synthpop_extension=True):
         # define metallicity parameters for MIST models
         self.z_list = [0.0000014,   # [Fe/H] = -4.00
                        0.0000045,   # [Fe/H] = -3.50
@@ -1357,11 +1358,12 @@ class MISTv1(StellarEvolution):
         # Set version directory
         self.version = version
         self.synthpop_extension = synthpop_extension
-        if (self.version == 1.0) and (not synthpop_extension):
+        if self.version == 1.0:
             self.model_version_name = 'MISTv1.0'
             version_dir = 'v1.0/'
-        elif (self.version == 1.0) and synthpop_extension:
-            raise ValueError('Synthpop isochrone extension not supported for MISTv1.0 isochrones')
+            if synthpop_extension:
+                warnings.warn('SynthPop isochrone extension not supported for MISTv1.0 isochrones')
+                self.synthpop_extension = False
         elif self.version == 1.2:
             self.model_version_name = 'MISTv1.2'
             version_dir = 'v1.2/'

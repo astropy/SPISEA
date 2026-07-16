@@ -1108,6 +1108,7 @@ class Isochrone(object):
         tab.meta['METAL_ACT'] = evol.meta['metallicity_act']
         tab.meta['WAVEMIN'] = wave_range[0]
         tab.meta['WAVEMAX'] = wave_range[1]
+        tab.meta['MAGSYS'] = 'Vega'
 
         self.points = tab
 
@@ -1246,6 +1247,10 @@ class IsochronePhot(Isochrone):
         Define what filters the synthetic photometry
         will be calculated for, via the filter string
         identifier.
+        
+    mag_sys : string, optional
+        Define magnitude system for synthetic photometry. Default
+        is 'Vega', with alternative options 'AB' and 'ST'.
     """
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
@@ -1256,9 +1261,14 @@ class IsochronePhot(Isochrone):
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
                           'ubv,R', 'ubv,I'],
-                verbose=False):
+                 mag_sys='Vega',
+                 verbose=False):
         self.metallicity = metallicity
         self.verbose=verbose
+        
+        if mag_sys not in ['Vega', 'AB', 'ST']:
+            raise ValueError(f'Invalid mag_sys={mag_sys}. Use Vega, AB, or ST.')
+        self.mag_sys = mag_sys
 
         # Make the iso_dir, if it doesn't already exist
         if not os.path.exists(iso_dir):
@@ -1374,6 +1384,15 @@ class IsochronePhot(Isochrone):
         drop_columns = [col for col in self.points.columns if (col[:2]=='m_' and
                         (col not in all_filters))]
         self.points.remove_columns(drop_columns)
+        
+        if self.mag_sys == 'AB':
+            for i,filt in enumerate(filters):
+                self.points[all_filters[i]] += calc_ab_vega_filter_conversion(filt)
+            self.points.meta['MAGSYS'] = 'AB'
+        elif self.mag_sys == 'ST':
+            for i,filt in enumerate(filters):
+                self.points[all_filters[i]] += calc_st_vega_filter_conversion(filt)
+            self.points.meta['MAGSYS'] = 'ST'
 
         return
 
@@ -1571,6 +1590,10 @@ class IsochronePhotExternalEvolution(IsochronePhot):
         Define what filters the synthetic photometry
         will be calculated for, via the filter string 
         identifier. 
+        
+    mag_sys : string, optional
+        Define magnitude system for synthetic photometry. Default
+        is 'Vega', with alternative options 'AB' and 'ST'.
     """
     def __init__(self, logAge, AKs, distance,
                  metallicity=0.0,
@@ -1580,7 +1603,12 @@ class IsochronePhotExternalEvolution(IsochronePhot):
                  red_law=default_red_law, mass_sampling=1, atm_grid_dir='./',
                  min_mass=None, max_mass=None, rebin=True, recomp=False,
                  filters=['ubv,U', 'ubv,B', 'ubv,V',
-                          'ubv,R', 'ubv,I']):
+                          'ubv,R', 'ubv,I'],
+                 mag_sys='Vega'):
+        
+        if mag_sys not in ['Vega', 'AB', 'ST']:
+            raise ValueError(f'Invalid mag_sys={mag_sys}. Use Vega, AB, or ST.')
+        self.mag_sys = mag_sys
 
         self.evo_model = evo_model
         self.atm_func = atm_func
@@ -1705,6 +1733,7 @@ class IsochronePhotExternalEvolution(IsochronePhot):
             tab.meta['DISTANCE'] = distance
             tab.meta['WAVEMIN'] = wave_range[0]
             tab.meta['WAVEMAX'] = wave_range[1]
+            tab.meta['MAGSYS'] = 'Vega'
     
             self.points = tab
     
@@ -1768,8 +1797,21 @@ class IsochronePhotExternalEvolution(IsochronePhot):
                 self.spec_list.append(star)
 
             self.make_photometry(rebin=rebin, vega=vega, comp_filters=comp_filters)
+            
+        # Drop filters in the saved file that we don't actually want here
+        all_filters = ['m_'+get_filter_col_name(f) for f in filters]
+        drop_columns = [col for col in self.points.columns if (col[:2]=='m_' and
+                        (col not in all_filters))]
+        self.points.remove_columns(drop_columns)
         
-        
+        if self.mag_sys == 'AB':
+            for i,filt in enumerate(filters):
+                self.points[all_filters[i]] += calc_ab_vega_filter_conversion(filt)
+            self.points.meta['MAGSYS'] = 'AB'
+        elif self.mag_sys == 'ST':
+            for i,filt in enumerate(filters):
+                self.points[all_filters[i]] += calc_st_vega_filter_conversion(filt)
+            self.points.meta['MAGSYS'] = 'ST'
 
         return
 
