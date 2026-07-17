@@ -82,7 +82,7 @@ releases will be co-authors in future SPISEA software papers.
 
 Change Log
 ----------
-3.0 (2026-**-**)
+2.5 (2026-07-17)
   * Modified default for MISTv1.2 isochrones: synthpop_extension will be True by default
     to keep a consistent lower mass limit of 0.1Msun across all ages and metallicities.
   * Addition of brown dwarf models
@@ -94,7 +94,9 @@ Change Log
     grid_version=3.0
     * These include the new brown dwarf models 
     * The MISTv1.2-synthpop model extension was also modified to
-      include denser sampling in the gap between the base MISTv1.2 grids and 0.1Msun.
+      include denser sampling in the gap between the base MISTv1.2
+      grids and 0.1Msun.
+      
   * Added SODC extinction law
   * Filter handling improvements
     * Fix bug where DECam "Y" filter was mislabeled "y", and updated
