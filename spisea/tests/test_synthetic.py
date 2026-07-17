@@ -4,6 +4,8 @@ import time
 from unittest.mock import patch
 
 import pytest
+import warnings
+import importlib
 import spisea
 import numpy as np
 import pylab as plt
@@ -42,7 +44,7 @@ def test_isochrone(plot=False):
         plt.figure(2)
         iso.plot_mass_luminosity()
 
-    return iso
+    #return iso
 
 def test_iso_wave():
     """
@@ -78,7 +80,7 @@ def test_iso_wave():
     my_iso = syn.IsochronePhot(
         logAge, AKs, dist,
         metallicity=metal,
-        evo_model=evo_model, 
+        evo_model=evo_model,
         atm_func=atm_func,
         red_law=red_law,
         filters=filt_list,
@@ -324,8 +326,8 @@ def test_ResolvedCluster():
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
     # Now to create the cluster.
-    imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
-    imf_powers = np.array([-1.3, -2.3, -2.3])
+    imf_mass_limits = np.array([0.01, 0.05, 0.22, 0.55, 8, 120])
+    imf_powers = np.array([-0.6, -0.25, -1.3, -2.3, -2.35])
 
     ##########
     # Start without multiplicity
@@ -511,7 +513,7 @@ def test_UnresolvedCluster():
 
     startTime = time.time()
     multi = multiplicity.MultiplicityUnresolved()
-    imf_in = imf.Kroupa_2001(multiplicity=multi)
+    imf_in = imf.Salpeter_Kirkpatrick_2024(multiplicity=multi)
     evo = evolution.MergedBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
     iso = syn.Isochrone(log_age, AKs, distance, metallicity=metallicity,
@@ -542,8 +544,8 @@ def test_ifmr_multiplicity():
     filt_list = ['nirc2,Kp', 'nirc2,H', 'nirc2,J']
 
     startTime = time.time()
-
-    evo = evolution.MISTv1()
+    
+    evo = evolution.MergedPhillipsBaraffePisaEkstromParsec()
     atm_func = atmospheres.get_merged_atmosphere
     ifmr_obj = ifmr.IFMR_Raithel18()
 
@@ -558,14 +560,15 @@ def test_ifmr_multiplicity():
         red_law=red_law,
         filters=filt_list,
         mass_sampling=mass_sampling,
-        iso_dir=iso_dir
+        iso_dir=iso_dir,
+        recomp=True
     )
 
     print('Constructed isochrone: %d seconds' % (time.time() - startTime))
 
     # Now to create the cluster.
-    imf_mass_limits = np.array([0.07, 0.5, 1, np.inf])
-    imf_powers = np.array([-1.3, -2.3, -2.3])
+    imf_mass_limits = np.array([0.01, 0.07, 0.5, 1, np.inf])
+    imf_powers = np.array([-0.3, -1.3, -2.3, -2.3])
 
     ##########
     # Start without multiplicity and IFMR
@@ -583,8 +586,7 @@ def test_ifmr_multiplicity():
     # Test with multiplicity and IFMR
     ##########
     multi = multiplicity.MultiplicityUnresolved()
-    my_imf2 = imf.IMF_broken_powerlaw(imf_mass_limits, imf_powers,
-                                      multiplicity=multi)
+    my_imf2 = imf.Salpeter_Kirkpatrick_2024(multiplicity=multi)
     print('Constructed IMF with multiples: %d seconds' % (time.time() - startTime))
 
     cluster2 = syn.ResolvedCluster(iso, my_imf2, cluster_mass, ifmr=ifmr_obj)
@@ -603,17 +605,74 @@ def test_ifmr_multiplicity():
     assert len(np.where(clust2['phase'] == 102)) > 0
     assert len(np.where(clust1['phase'] == 103)) > 0   # BH
     assert len(np.where(clust2['phase'] == 103)) > 0
+    assert len(np.where(clust1['phase'] == 90)) > 0   # BD
+    assert len(np.where(clust2['phase'] == 90)) > 0
 
-    # Now check that we have companions that are WDs, NSs, and BHs
+    # Now check that we have companions that are WDs, NSs, BHs, and BDs
     assert len(np.where(comps2['phase'] == 101)) > 0
     assert len(np.where(comps2['phase'] == 102)) > 0
     assert len(np.where(comps2['phase'] == 103)) > 0
+    assert len(np.where(comps2['phase'] == 90)) > 0
 
     # Make sure no funky phase designations (due to interpolation effects)
     # slipped through
-    idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 101) & (clust1['phase'] != 9) )
-    idx2 = np.where( (comps2['phase'] > 5) & (comps2['phase'] < 101) & (comps2['phase'] != 9) )
+
+    bd_masses = np.where((clust1['mass'] >= 0.01) & (clust1['mass'] <= 0.08))
+    bd_mask = (clust1['mass'] >= 0.01) & (clust1['mass'] <= 0.08)
+    print(clust1[['mass', 'phase']][bd_masses])
+    idx = np.where( (clust1['phase'] > 5) & (clust1['phase'] < 90) & (clust1['phase'] != 9) )
     assert len(idx[0]) == 0
+
+    """
+    07/2024: Added more testing criteria for brown dwarf stars to ensure they are labeled appropriately for masses from 0.01 - 0.08 M_sun.
+    """
+    # For cluster objects
+    MIN_MASS = 0.1
+    BD_MIN_MASS = 0.01
+    BD_MAX_MASS = 0.08
+
+    wd_idx = np.where(clust1['phase'] == 101)
+    ns_idx = np.where(clust1['phase'] == 102)
+    bh_idx = np.where(clust1['phase'] == 103)
+    bd_idx = np.where(clust1['phase'] == 90)
+
+    print(clust1[bd_idx])
+    assert np.all(clust1['mass'][wd_idx] > MIN_MASS)
+    assert np.all(clust1['mass'][ns_idx] > MIN_MASS)
+    assert np.all(clust1['mass'][bh_idx] > MIN_MASS)
+    assert np.all(clust1['mass'][bd_idx] < MIN_MASS)
+
+    # For companion objects
+    comp_wd_idx = np.where(comps2['phase'] == 101)
+    comp_ns_idx = np.where(comps2['phase'] == 102)
+    comp_bh_idx = np.where(comps2['phase'] == 103)
+    comp_bd_idx = np.where(comps2['phase'] == 90)
+    assert np.all(comps2['mass'][comp_wd_idx] > MIN_MASS)
+    assert np.all(comps2['mass'][comp_ns_idx] > MIN_MASS)
+    assert np.all(comps2['mass'][comp_bh_idx] > MIN_MASS)
+    assert np.all(comps2['mass'][comp_bd_idx] < MIN_MASS)
+
+    # Ensure brown dwarfs are within 0.01 and 0.08 solar masses
+    assert np.all((clust1['mass'][bd_idx] >= BD_MIN_MASS) &
+                  (clust1['mass'][bd_idx] <= BD_MAX_MASS))
+    assert np.all((comps2['mass'][comp_bd_idx] >= BD_MIN_MASS) &
+                  (comps2['mass'][comp_bd_idx] <= BD_MAX_MASS))
+
+    # Ensure no other objects are in the brown dwarf mass range
+    non_bd_idx = np.where((clust1['phase'] != 90) &
+                          (clust1['mass'] >= BD_MIN_MASS) &
+                          (clust1['mass'] <= BD_MAX_MASS))
+    assert len(non_bd_idx[0]) == 0  # asserting no non-brown dwarf objects in BD mass range
+
+    comp_non_bd_idx = np.where((comps2['phase'] != 90) &
+                               (comps2['mass'] >= BD_MIN_MASS) &
+                               (comps2['mass'] <= BD_MAX_MASS))
+    print(comps2[comp_non_bd_idx]['phase', 'mass'])
+    assert len(comp_non_bd_idx[0]) == 0  # asserting no non-brown dwarf companions in BD mass range
+
+    # Ensure BD temperature assignment is working correctly
+    assert np.all(clust1['Teff'][bd_idx] != np.nan)
+    assert np.all(comps2['Teff'][comp_bd_idx] != np.nan)
 
     return
 
@@ -806,7 +865,8 @@ def test_keep_low_mass_stars():
         red_law=red_law,
         filters=filt_list,
         mass_sampling=mass_sampling,
-        iso_dir=iso_dir
+        iso_dir=iso_dir,
+        recomp=True
     )
 
     # Get the minimum mass in the isochrones. This should be the lowest
@@ -890,6 +950,160 @@ def test_compact_object_companions():
     nan_lum_companions = clust_Mult.companions[np.isnan(clust_Mult.companions['L'])]
 
     assert (len(nan_lum_companions) == 0) | (all(np.isnan(nan_lum_companions['phase'])) == False)
+
+def _require_cosmic():
+    """
+    Skip the calling test if the optional `cosmic` package is not installed,
+    emitting a warning so the skip is visible (rather than silent).
+    """
+    if importlib.util.find_spec('cosmic') is None:
+        msg = ('COSMIC integration test skipped: the optional `cosmic` package '
+               'is not installed. Run in an environment with COSMIC (e.g. '
+               '`astro_cosmic`) to exercise these tests.')
+        warnings.warn(msg)
+        pytest.skip(msg)
+
+    return
+
+def test_COSMIC_evolve():
+    """
+    Test the COSMIC external evolution model's evolve() method directly on a
+    small, hand-built set of star systems and companions. Uses a young, low-mass
+    population so no compact remnants/disruptions occur, keeping the run fast
+    and avoiding the merger/disruption branches.
+
+    Skipped (with a warning) if the optional `cosmic` package is not installed.
+    """
+    _require_cosmic()
+
+    from astropy.table import Table
+
+    # Build a minimal star_systems table: 2 binaries + 1 single
+    star_systems = Table()
+    star_systems['mass'] = np.array([1.0, 0.9, 0.5])
+    star_systems['isMultiple'] = np.array([True, True, False])
+    star_systems['N_companions'] = np.array([1, 1, 0])
+    star_systems['systemMass'] = np.array([1.5, 1.3, 0.5])
+
+    # Companions for the first two systems
+    companions = Table()
+    companions['system_idx'] = np.array([0, 1])
+    companions['mass'] = np.array([0.5, 0.4])
+    companions['log_a'] = np.array([1.0, 1.5])   # log10(AU)
+    companions['e'] = np.array([0.1, 0.2])
+    companions['i'] = np.array([30.0, 60.0])      # degrees
+    companions['Omega'] = np.array([0.0, 0.0])
+    companions['omega'] = np.array([0.0, 0.0])
+
+    evo = evolution.COSMIC(keep_disrupted_companions=False, keep_COSMIC_tables=True)
+    ss, comp = evo.evolve(star_systems, companions, logAge=8.0, metallicity=0.0)
+
+    # Check that evolve() populated the expected output columns
+    expected_cols = ['mass_current', 'Teff', 'L', 'logg', 'phase',
+                     'kick', 'kick_x', 'kick_y', 'kick_z']
+    for col in expected_cols:
+        assert col in ss.colnames, 'star_systems missing column {0}'.format(col)
+        assert col in comp.colnames, 'companions missing column {0}'.format(col)
+
+    # Core bookkeeping invariant: companion count must match companion table length
+    assert np.sum(ss['N_companions']) == len(comp)
+
+    # Scalar kick must be the magnitude of the kick vector components
+    np.testing.assert_allclose(
+        ss['kick'], np.sqrt(ss['kick_x']**2 + ss['kick_y']**2 + ss['kick_z']**2))
+    np.testing.assert_allclose(
+        comp['kick'], np.sqrt(comp['kick_x']**2 + comp['kick_y']**2 + comp['kick_z']**2))
+
+    # Young, low-mass stars should remain stellar (no compact remnants here).
+    # Compact-object phase codes are 101 (WD), 102 (NS), 103 (BH).
+    assert np.all(ss['phase'] < 100)
+    assert np.all(comp['phase'] < 100)
+
+    # keep_COSMIC_tables=True should store the raw COSMIC output tables
+    for attr in ['bpp', 'bcm', 'initC', 'kick_info']:
+        assert hasattr(evo, attr), 'COSMIC model missing table {0}'.format(attr)
+
+    return
+
+def test_COSMIC_ResolvedCluster():
+    """
+    Test the full COSMIC cluster pipeline, mirroring the Cluster_w_COSMIC
+    tutorial: build an IsochronePhotExternalEvolution, then a ResolvedCluster
+    with binary multiplicity (CSF_max=1, companion_max=True), and check the
+    output tables.
+
+    Skipped (with a warning) if the optional `cosmic` package is not installed.
+    """
+    _require_cosmic()
+
+    # Cluster/isochrone parameters (kept small/cheap)
+    logAge = 9.0
+    AKs = 0.0
+    distance = 4000
+    metallicity = 0.0
+    cluster_mass = 10**3.
+    mass_sampling = 10
+    atm_grid_dir = f'{spisea_path}/tests/atm_cosmic'
+
+    filt_list = ['ubv,V']
+
+    # External evolution model (keep tables so we can verify them)
+    evo = evolution.COSMIC(keep_COSMIC_tables=True)
+    atm_func = atmospheres.get_merged_atmosphere_w_bb_supplement
+    red_law = reddening.RedLawCardelli(3.1)
+
+    iso = syn.IsochronePhotExternalEvolution(
+        logAge,
+        AKs,
+        distance,
+        metallicity=metallicity,
+        evo_model=evo,
+        atm_func=atm_func,
+        red_law=red_law,
+        filters=filt_list,
+        atm_grid_dir=atm_grid_dir,
+        mass_sampling=mass_sampling,
+        recomp=False
+    )
+
+    # COSMIC only supports binaries: resolved multiplicity, no higher-order systems
+    clust_multiplicity = multiplicity.MultiplicityResolvedDK(CSF_max=1, companion_max=True)
+    my_imf = imf.Kroupa_2001(multiplicity=clust_multiplicity)
+
+    cluster = syn.ResolvedCluster(iso, my_imf, cluster_mass)
+    star_systems = cluster.star_systems
+    companions = cluster.companions
+
+    # Basic sanity: stars and companions were produced
+    assert len(star_systems) > 0
+    assert len(companions) > 0
+
+    # Core bookkeeping invariant
+    assert np.sum(star_systems['N_companions']) == len(companions)
+
+    # Kick columns present and self-consistent on both tables
+    for tab in (star_systems, companions):
+        for col in ['kick', 'kick_x', 'kick_y', 'kick_z']:
+            assert col in tab.colnames
+        np.testing.assert_allclose(
+            tab['kick'], np.sqrt(tab['kick_x']**2 + tab['kick_y']**2 + tab['kick_z']**2))
+
+    # Synthetic photometry column should exist
+    assert 'm_ubv_V' in star_systems.colnames
+
+    # All phase codes should be in the allowed set:
+    # 0-9 stellar phases, 101 (WD), 102 (NS), 103 (BH)
+    allowed_phases = set(range(0, 10)) | {101, 102, 103}
+    ss_phases = set(np.unique(star_systems['phase']).astype(int).tolist())
+    comp_phases = set(np.unique(companions['phase']).astype(int).tolist())
+    assert ss_phases.issubset(allowed_phases), 'Unexpected star phases: {0}'.format(ss_phases - allowed_phases)
+    assert comp_phases.issubset(allowed_phases), 'Unexpected companion phases: {0}'.format(comp_phases - allowed_phases)
+
+    # keep_COSMIC_tables=True should expose the raw COSMIC tables on the evo model
+    for attr in ['bpp', 'bcm', 'initC', 'kick_info']:
+        assert hasattr(iso.evo_model, attr), 'COSMIC model missing table {0}'.format(attr)
+
+    return
 
 #=================================#
 # Additional timing functions
@@ -1247,7 +1461,7 @@ def test_ResolvedCluster_random_state():
         filters=filt_list,
         mass_sampling=10,
         iso_dir=iso_dir,
-        recomp=False,
+        recomp=True,
         verbose=False
     )
 
@@ -1281,6 +1495,40 @@ def test_ResolvedCluster_random_state():
         np.testing.assert_allclose(cluster1.companions[key], old_companion[key], rtol=5e-2, atol=5e-2)
 
     return
+
+
+def test_ResolvedCluster_no_companions():
+    """
+    Test case where no companions get generated to
+    make sure we don't get any errors. This relies on using
+    a specific seed that results in no companions being generated.
+    """
+    
+    # Define cluster parameters
+    logAge = 6.7
+    AKs = 2.4
+    distance = 4000
+    cluster_mass = 10**2
+    iso_dir = f'{spisea_path}/tests/isochrones'
+
+    # Test filters
+    filt_list = ['nirc2,J', 'nirc2,Kp']
+    evo = evolution.MergedBaraffePisaEkstromParsec()
+    atm_func = atmospheres.get_merged_atmosphere
+    red_law = reddening.RedLawNishiyama09()
+
+    iso = syn.IsochronePhot(logAge, AKs, distance, metallicity=0,
+                            evo_model=evo, atm_func=atm_func,
+                            red_law=red_law, filters=filt_list,
+                                iso_dir=iso_dir)
+                                
+    imf_multi = multiplicity.MultiplicityResolvedDK()
+    my_imf = imf.Kroupa_2001(multiplicity=imf_multi)
+    
+    cluster = syn.ResolvedCluster(iso, my_imf, cluster_mass,
+                    keep_low_mass_stars=True, seed=1074)
+                    
+    assert(~np.any(cluster.star_systems['isMultiple']))
 
 
 @pytest.mark.parametrize(
