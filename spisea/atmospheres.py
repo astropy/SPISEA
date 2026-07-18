@@ -499,7 +499,6 @@ def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4
     radius = np.sqrt( lum / (4.0 * np.pi * teff**4. * sigma) ) # in cm
     radius /= 3.08*10**18 # in pc
 
-
     # Make the synphot spectrum
     w = spec['Wavelength']
     f = spec['Flux'] * (1000 / radius)**2.

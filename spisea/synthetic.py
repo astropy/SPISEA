@@ -1367,6 +1367,7 @@ class IsochronePhot(Isochrone):
             col_name = 'm_' + get_filter_col_name(ii)
             if col_name not in self.points.keys():
                 comp_filters.append(ii)
+
         # Compute additional filters if needed
         if len(comp_filters)>0:
             self.verbose = True
@@ -1375,6 +1376,7 @@ class IsochronePhot(Isochrone):
             print('Loading stellar spectra')
             # Initialize output for stellar spectra
             self.spec_list = []
+
             # For each isochrone point, extract the synthetic photometry.
             for ii in range(len(self.points['Teff'])):
                 # Loop is currently taking about 0.11 s per iteration
@@ -1383,6 +1385,7 @@ class IsochronePhot(Isochrone):
                 T = float( self.points['Teff'][ii] )               # in Kelvin
                 R = float( (self.points['R'][ii]*units.m).to('pc') / units.pc)              # in pc
                 phase = int(self.points['phase'][ii])
+
                 # Get the atmosphere model now. Wavelength is in Angstroms
                 # This is the time-intensive call... everything else is negligable.
                 # If source is a star, pull from star atmospheres. If it is a WD,
@@ -1740,14 +1743,13 @@ class IsochronePhotExternalEvolution(IsochronePhot):
                                     rebin=rebin)
     
                 # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
-                star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
+                star = trim_spectrum(star, wave_range[0], wave_range[1])
     
                 # Convert into flux observed at Earth (unreddened)
-                star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
+                star *= (R / self.points.meta["DISTANCE"])**2  # in erg s^-1 cm^-2 A^-1
     
                 # Redden the spectrum. This doesn't take much time at all.
-                red = red_law.reddening(AKs).resample(star.wave) 
-                star *= red
+                star *= red_law.extinction_curve(AKs, star.waveset)
                 
                 # Save the final spectrum to our spec_list for later use.            
                 self.spec_list.append(star)
@@ -1803,6 +1805,7 @@ class IsochronePhotExternalEvolution(IsochronePhot):
             print('Loading stellar spectra')
             # Initialize output for stellar spectra
             self.spec_list = []
+
             # For each isochrone point, extract the synthetic photometry.
             for ii in range(len(teff_arr)):
                 gravity = logg_arr[ii]
@@ -1814,13 +1817,16 @@ class IsochronePhotExternalEvolution(IsochronePhot):
                 # This is the time-intensive call... everything else is negligable.
                 star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
                                         rebin=rebin)
+
                 # Trim wavelength range down to appropriate range
-                star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
+                star = trim_spectrum(star, wave_range[0], wave_range[1])
+
                 # Convert into flux observed at Earth (unreddened)
                 star *= (R / self.points.meta["DISTANCE"])**2  # in erg s^-1 cm^-2 A^-1
+
                 # Redden the spectrum. This doesn't take much time at all.
-                red = red_law.reddening(AKs).resample(star.wave) 
-                star *= red
+                star *= red_law.extinction_curve(AKs, star.waveset) 
+
                 # Save the final spectrum to our spec_list for later use.            
                 self.spec_list.append(star)
 

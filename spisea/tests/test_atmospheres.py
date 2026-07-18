@@ -117,20 +117,20 @@ def test_pysynphot_vs_stsynphot_timing():
         assert w.size > 0
 
     elif has_pysyn:
-        import pysynphot
+        import synphot
 
         t0 = time.perf_counter()
         try:
-            sp = pysynphot.Icat("k93models", temperature, metallicity, gravity)
-            wave = sp.GetWaveSet()
-            _ = sp.sample(wave)
+            sp = synphot.grid_to_spec("k93models", temperature, metallicity, gravity)
+            w = sp.waveset
+            _ = sp(w)
         except Exception as exc:
             pytest.skip(f"pysynphot Icat failed: {exc}")
         elapsed = time.perf_counter() - t0
 
         assert elapsed >= 0
         assert np.isfinite(elapsed)
-        assert np.asarray(wave).size > 0
+        assert np.asarray(w).size > 0
 
     else:
         pytest.skip("Neither stsynphot nor pysynphot is installed")
