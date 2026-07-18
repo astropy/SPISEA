@@ -10,9 +10,10 @@ total extinction, and metallicity, along with the :ref:`atmo_models`,
 
 If the IsochronePhot sub-class is used then synthetic photometry
 will be produced. The :ref:`filters` are defined as additional
-inputs. The output photometry is in terms of vega mags, but the user
-can also calculate the required conversion to AB mags or ST mags using
-the functions in :ref:`Photometry Conversion Functions <phot_conversions>`. 
+inputs. The output photometry is in Vega mags by default (and is always
+saved to the iso file in Vega mag), but the user
+can opt to return the IsochronePhot object in AB or ST mags. Either way,
+the magnitude system is indicated in the MAGSYS isochrone table metadata.
 
 An example of making an IsochronePhot object::
 
@@ -89,10 +90,17 @@ Tips and Tricks: The IsochronePhot Object
     reddening law have changed, the original file will be overwritten
     by the new isochrone.
 
-    *To avoid files from being unintentially overwritten, we recommend
+    *To avoid files from being unintentionally overwritten, we recommend
     that users specify different iso_dir paths when making isochrones
     with different evolution models, atmosphere models, or reddening
     laws.*
+
+* For external evolution models (i.e. COSMIC), you should use 
+  IsochronePhotExternalEvolution
+  instead of IsochronePhot. This is because those evolution models do not have isochrones but
+  instead evolve the stars externally. The first time you run a new AKs, metallicity, or distance,
+  this will take ~10-20 mins because it is creating a new atmosphere grid. This table is saved in the 
+  specified iso_dir, under the filename atm_<aks>_<dist>_<z>.fits.
 
 Base Isochrone Class
 ----------------------------
@@ -105,6 +113,10 @@ Isochrone Sub-classes
 -----------------------
 
 .. autoclass:: synthetic.IsochronePhot
+	       :show-inheritance:
+		:members: make_photometry, plot_CMD, plot_mass_magnitude
+
+.. autoclass:: synthetic.IsochronePhotExternalEvolution
 	       :show-inheritance:
 		:members: make_photometry, plot_CMD, plot_mass_magnitude
 

@@ -43,3 +43,6 @@ Broken Power-Law IMFs
 		  
 .. autoclass:: imf.imf.Weidner_Kroupa_2004
 	       :show-inheritance:
+
+.. autoclass:: imf.imf.Salpeter_Kirkpatrick_2024
+	       :show-inheritance:

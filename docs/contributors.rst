@@ -19,7 +19,7 @@ Dongwon Kim -- code testing/debugging
 Siyao Jia -- helped with early code and documentation development
 
 Natasha Abrams -- developed resolved multiplicity capabilities
-(ResolvedMultiplicityDK class)
+(ResolvedMultiplicityDK class) and added COSMIC support.
 
 Michael Medford -- developed resolved multiplicity capabilities
 (ResolvedMultiplicityDK class)
@@ -42,9 +42,9 @@ IsochronePhot, implemented faster cluster generation and test
 functions for primary and companion star mass generation (v2.3),
 updated random state generators (v2.4)
 
-Macy Huston -- New metallicity bound + isochrone filter checks,
-imf_mass_lim bugfix, roman filter bugfix, added Euclid filters, Synthpop compatibility
-updates (v2.2), improvements for reading in/updated existing isochrone
-files, Vega mag to ST mag conversion function (v2.4)
+Macy Huston -- bug fixes, SynthPop compatibility updates, magnitude system flexibility,
+new filter sets, data set maintenance 
 
 Anna Pusack -- Added IRTF L-band filter support
+
+Caitlin Begbie -- added brown dwarf physics and capabilities
