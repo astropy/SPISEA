@@ -32,7 +32,7 @@ If you use SPISEA in your research, please cite [Hosek et al. (2020)](https://ui
 SPISEA is actively supported and is growing in functionality, and
 subsequently has had several updates since its
 initial release. See the
-[main documentation page](https://spisea.readthedocs.io/en/latest/)
+[main documentation page](https://github.com/MovingUniverseLab/spisea/blob/main/docs/index.rst)
 for the change log describing the updates in each release.
 
 ## Contributions
@@ -42,7 +42,7 @@ own fork of the repository, make their changes, and then submit a pull
 request to the "dev" branch.
 
 All contributions will be acknowledged on the
-[contributors page](https://spisea.readthedocs.io/en/dev/contributors.html#contributors) (with permission).
+[contributors page](https://github.com/MovingUniverseLab/spisea/blob/main/docs/contributors.rst) (with permission).
 Contributors with features used in code releases will be co-authors in future SPISEA software papers.
 
 ## License

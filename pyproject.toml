@@ -48,7 +48,7 @@ classifiers = [
 
 [project.urls]
 Homepage = "https://github.com/MovingUniverseLab/spisea"
-Documentation = "https://spisea.readthedocs.io/en/stable/index.html"
+Documentation = "https://github.com/MovingUniverseLab/spisea/tree/main/docs"
 Repository = "https://github.com/MovingUniverseLab/spisea"
 Issues = "https://github.com/MovingUniverseLab/spisea/issues"
 
