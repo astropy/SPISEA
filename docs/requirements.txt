@@ -1,5 +1,5 @@
 matplotlib
-numpy
+numpy <= 1.24.4
 numpydoc
 astropy
 pysynphot
