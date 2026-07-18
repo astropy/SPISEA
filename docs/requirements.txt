@@ -4,4 +4,5 @@ numpydoc
 astropy
 pysynphot
 scipy
+pandas
 docutils<0.18
