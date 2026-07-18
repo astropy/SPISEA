@@ -5,4 +5,5 @@ astropy
 pysynphot
 scipy
 pandas
+setuptools
 docutils<0.18
