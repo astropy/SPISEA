@@ -11,7 +11,7 @@ RUN ln -s /usr/bin/python3 /usr/bin/python
 
 RUN export PYTHONPATH=$PYTHONPATH:/SPISEA
 
-RUN cd / && git clone https://github.com/astropy/SPISEA.git
+RUN git clone https://github.com/MovingUniverseLab/spisea.git /SPISEA
 
 ENV PYTHONPATH "${PYTHONPATH}:/SPISEA/"
 	

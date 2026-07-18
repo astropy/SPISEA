@@ -47,8 +47,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/astropy/SPISEA"
-Issues = "https://github.com/astropy/SPISEA/issues"
+Homepage = "https://github.com/MovingUniverseLab/spisea"
+Documentation = "https://spisea.readthedocs.io/en/stable/index.html"
+Repository = "https://github.com/MovingUniverseLab/spisea"
+Issues = "https://github.com/MovingUniverseLab/spisea/issues"
 
 [build-system]
 requires = [

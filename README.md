@@ -20,10 +20,10 @@ Here is a brief list of things that SPISEA can do:
 * make a star cluster at any age with an unusual IMF and unresolved multiplicity
 * make a spectrum of a star cluster in integrated light
 
-See [documentation](https://spisea.readthedocs.io/en/latest/) for
+See [documentation](https://github.com/MovingUniverseLab/spisea/tree/main/docs) for
 details on installing and running SPISEA. We also provide jupyter notebooks with a 
-[quick-start tutorial](https://github.com/astropy/SPISEA/blob/main/docs/Quick_Start_Make_Cluster.ipynb)
-and [additional examples](https://github.com/astropy/SPISEA/tree/main/docs/paper_examples)
+[quick-start tutorial](https://github.com/MovingUniverseLab/spisea/blob/main/docs/Quick_Start_Make_Cluster.ipynb)
+and [additional examples](https://github.com/MovingUniverseLab/spisea/tree/main/docs/paper_examples)
 demonstrating how to use SPISEA.
 
 If you use SPISEA in your research, please cite [Hosek et al. (2020)](https://ui.adsabs.harvard.edu/abs/2020arXiv200606691H/abstract).

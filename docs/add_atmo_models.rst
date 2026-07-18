@@ -37,5 +37,5 @@ a template for how to make a new one. Some general notes:
   <https://synphot.readthedocs.io/en/latest/synphot/units.html>`_)
 
 More detailed documentation on this is coming soon. In the meantime, let us know on the  Github `issue tracker
-<https://github.com/astropy/SPISEA/issues>`_ if you'd like to
+<https://github.com/MovingUniverseLab/spisea/issues>`_ if you'd like to
 implement a new atmospheric model grid.

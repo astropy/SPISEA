@@ -29,7 +29,7 @@ Here is a brief list of things that SPISEA can do:
   
 * make a spectrum of a star cluster in integrated light
 
-SPISEA can be downloaded from `Github <https://github.com/astropy/SPISEA>`_. Please cite `Hosek et al. (2020) <https://ui.adsabs.harvard.edu/abs/2020arXiv200606691H/abstract>`_  if you use SPISEA in
+SPISEA can be downloaded from `Github <https://github.com/MovingUniverseLab/spisea>`_. Please cite `Hosek et al. (2020) <https://ui.adsabs.harvard.edu/abs/2020arXiv200606691H/abstract>`_  if you use SPISEA in
 your research. 
 
 Getting Started
