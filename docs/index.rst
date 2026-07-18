@@ -85,7 +85,7 @@ Change Log
 2.5 (2026-07-17)
 
 * *Major Changes*
-	* Addition of brown dwarf models (`see Begbie et al. (2026) <https://arxiv.org/abs/2607.14292>`_)
+	* Addition of brown dwarf models (see `Begbie et al. (2026) <https://arxiv.org/abs/2607.14292>`_)
 		* New evolution grids: `Phillips2020`, Marley2021, and mergedPhillipsMergedPhillipsBaraffePisaEkstromParsec
 		* New atmosphere grids: Phillips2020, Meisner2023
 		* get_merged_atmosphere now uses Meisner2023 for T < 1000 K and interpolated BTSettl/Meisner2023 for 1000 < T <= 1200
