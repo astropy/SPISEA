@@ -1,5 +1,7 @@
 .. _getting_started:
 
+Installation
+############
 
 ==========================
 Install From Git
