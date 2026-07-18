@@ -83,35 +83,33 @@ releases will be co-authors in future SPISEA software papers.
 Change Log
 ----------
 2.5 (2026-07-17)
-  * Modified default for MISTv1.2 isochrones: synthpop_extension will be True by default
-    to keep a consistent lower mass limit of 0.1Msun across all ages and metallicities.
-  * Addition of brown dwarf models
-    * New evolution grids: Phillips2020, Marley2021, and mergedPhillipsMergedPhillipsBaraffePisaEkstromParsec
-    * New atmosphere grids: Phillips2020, Meisner2023
-    * get_merged_atmosphere now uses Meisner2023 for T < 1000 K
-      and interpolated BTSettl/Meisner2023 for 1000 < T <= 1200
-  * Updated evolution and atmosphere grid data sets w/
-    grid_version=3.0
-    * These include the new brown dwarf models 
-    * The MISTv1.2-synthpop model extension was also modified to
-      include denser sampling in the gap between the base MISTv1.2
-      grids and 0.1Msun.
-      
-  * Added SODC extinction law
-  * Filter handling improvements
-    * Fix bug where DECam "Y" filter was mislabeled "y", and updated
-      DECam filters to latest version 
-    * Add new filters for Hipparcos, Kepler, OGLE, TESS, Tycho, Washington, 
-      Subaru HSC
-    * Enable use of all Gaia filters with warning recommending latest (EDR3)
-    * All pysynphot filters can now be used
-  * Minor bugs and case handling
-    * Debug edge case for no companion stars
-    * Restore functionality where final mass = initial for companion
-      stars with lower mass than the isochrone's range
-    * MIST evolution allows input metallicities within 0.1 dex 
-      of the allowed range, since the nearest grid value is adopted,
-      and this eliminates floating value precision issues.
+
+* *Major Changes*
+	* Addition of brown dwarf models (`see Begbie et al. (2026) <https://arxiv.org/abs/2607.14292>`_)
+		* New evolution grids: `Phillips2020`, Marley2021, and mergedPhillipsMergedPhillipsBaraffePisaEkstromParsec
+		* New atmosphere grids: Phillips2020, Meisner2023
+		* get_merged_atmosphere now uses Meisner2023 for T < 1000 K and interpolated BTSettl/Meisner2023 for 1000 < T <= 1200
+  		* Updated evolution and atmosphere grid data sets w/ grid_version=3.0
+	* Added option to evolve binary systems using `COSMIC <https://cosmic-popsynth.github.io/COSMIC/>`_ via new COSMIC evolution model. 
+		* When COSMIC is used when creating synthetic clusters, SPISEA creates binary systems normally (using the Multiplicity obj) which are then evolved using COSMIC. 
+		* New COSMIC evolution class, which is used with new IsochronePhotExternalEvolution obj ('external evolution' referring to fact that stellar evolution is done outside of standard SPISEA isochrone-grid framework)
+		* New merged atmosphere model class get_merged_atmosphere_w_bb_supplement, which reverts to blackbody atmospheres for stars with parameters outside of existing grid support.
+		* New tutorial for creating SPISEA clusters using COSMIC: docs/Cluster_w_COSMIC.ipynb
+
+* *Minor Changes*
+	* The MISTv1.2-synthpop model extension was modified to include denser sampling in the gap between the base MISTv1.2 grids and 0.1Msun.
+  	* Modified default for MISTv1.2 isochrones: synthpop_extension will be True by default to keep a consistent lower mass limit of 0.1Msun across all ages and metallicities.
+	* Added option to return synthetic photometry in terms of AB or ST mag units in IsochronePhot. Vega mag units remains the default. New meta keyword `MAGSYS` added to output tables to specify magnitude unit system.
+  	* Added SODC extinction law
+  	* Filter handling improvements
+		* Fix bug where DECam "Y" filter was mislabeled "y", and updated DECam filters to latest version 
+		* Add new filters for Hipparcos, Kepler, OGLE, TESS, Tycho, Washington, Subaru HSC
+		* Enable use of all Gaia filters with warning recommending latest (EDR3)
+		* All pysynphot filters can now be used
+	* Minor bugs and case handling
+		* Debug edge case for no companion stars
+		* Restore functionality where final mass = initial for companion stars with lower mass than the isochrone's range
+		* MIST evolution allows input metallicities within 0.1 dex of the allowed range, since the nearest grid value is adopted, and this eliminates floating value precision issues.
 
 2.4 (2026-03-20)
   * Added backward compatibility for isochrone file names created
@@ -135,19 +133,11 @@ Change Log
     
 
 2.2 (2026-01-16)
-  * Compatibility updates for SPISEA to work with `SynthPop
-    <https://synthpop.readthedocs.io/en/latest/>`_. Updates include:
-   * Low mass objects below the isochrone grid can optionally be kept
-     in clusters (off by default) and will have
-     ``current_mass=initial_mass`` and ``phase=98``, with no other
-     evolutionary information or photometry.
-   * Evolution model versions are now logged in IsochronePhot files
-     and checked if present.
-   * The option ``synthpop_extension`` is now available for MISTv1
-     version=1.2 evolution. This fills in the missing parameter space
-     down to initial mass 0.1Msun in isochrones where needed. Use of
-     this option will require downloading updated isochrone files.
-   * Added support for Euclid filters. 
+	* Compatibility updates for SPISEA to work with `SynthPop <https://synthpop.readthedocs.io/en/latest/>`_. Updates include:
+		* Low mass objects below the isochrone grid can optionally be kept in clusters (off by default) and will have ``current_mass=initial_mass`` and ``phase=98``, with no other evolutionary information or photometry.
+	* Evolution model versions are now logged in IsochronePhot files and checked if present.
+	* The option ``synthpop_extension`` is now available for MISTv1 version=1.2 evolution. This fills in the missing parameter space down to initial mass 0.1Msun in isochrones where needed. Use of this option will require downloading updated isochrone files.
+	* Added support for Euclid filters. 
     
 2.1.15 (2025-10-25)
   * Updated Roman filter name from outdated w146 to current f146. From
