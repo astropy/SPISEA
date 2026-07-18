@@ -1,8 +1,9 @@
 matplotlib
-numpy
+numpy <= 1.24.4
 numpydoc
 astropy
 pysynphot
 scipy
 pandas
+setuptools<=81.0
 docutils<0.18
