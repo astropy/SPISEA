@@ -282,9 +282,6 @@ def get_nextgen_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=Fal
     temperature = Kelvin (def = 5000)
     gravity = log gravity (def = 4.0)
     """
-    if get_grid_only:
-        teff_arr, z_arr, logg_arr = get_atmosphere_grid('nextgen')
-        return teff_arr, z_arr, logg_arr
     try:
         sp = stsyn.grid_to_spec('nextgen', temperature, metallicity, gravity)
     except:
@@ -503,12 +500,14 @@ def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4
     radius /= 3.08*10**18 # in pc
 
 
-    # Make the pysynphot spectrum
+    # Make the synphot spectrum
     w = spec['Wavelength']
     f = spec['Flux'] * (1000 / radius)**2.
-    sp = _source_from_arrays(w, f)
-
-    #sp = pysynphot.FileSpectrum('{0}/{1}.fits'.format(root_dir, infile[0]))
+    sp = SourceSpectrum(
+        Empirical1D,
+        points=np.asarray(w, dtype=float) * u.AA,
+        lookup_table=np.asarray(f, dtype=float) * su.FLAM,
+    )
 
     # Print out parameters of match, if desired
     if verbose:
