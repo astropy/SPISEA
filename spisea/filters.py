@@ -599,9 +599,9 @@ def get_ogle_filt(name):
     except:
         raise ValueError('Could not find ogle filter {0} in {1}/ogle'.format(name, filters_dir))
 
-    # Wavelength in nm->angstroms and and transmission in percent->fraction
-    wave = np.flip(t['col1'])*10
-    trans = np.flip(t['col2'])/100
+    # Wavelength in angstroms and and transmission in fraction
+    wave = t['col1']
+    trans = t['col2']
 
     spectrum = pysynphot.ArrayBandpass(wave, trans, waveunits='angstrom', name='ogle,{0}'.format(name))
 
