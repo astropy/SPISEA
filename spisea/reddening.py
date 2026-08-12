@@ -219,15 +219,11 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -399,15 +395,11 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -536,15 +528,11 @@ class RedLawSODC(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -624,15 +612,11 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -769,15 +753,11 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -917,15 +897,11 @@ class RedLawDamineli16(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -1055,15 +1031,11 @@ class RedLawDeMarchi16(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
-        # Now multiply by AK (since law assumes AK = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AK
+        # Now multiply by AKs (since law assumes AKs = 1)
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -1177,15 +1149,11 @@ class RedLawFitzpatrick09(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -1326,15 +1294,11 @@ class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -1408,15 +1372,11 @@ class RedLawIndebetouw05(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -1558,15 +1518,11 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -1709,15 +1665,11 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -1888,15 +1840,11 @@ class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_Ascale_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_Ascale_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by A_scale_lambda (since law assumes A_scale_lambda = 1)
-        A_at_wave = np.array(A_Ascale_at_wave) * A_scale_lambda
+        A_at_wave = law[wave_idxs] * A_scale_lambda
 
         return A_at_wave
 
@@ -2087,15 +2035,11 @@ class RedLawHosek18b(pysynphot.reddening.CustomRedLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -2160,15 +2104,11 @@ class RedLawSchoedel10(RedLawBrokenPowerLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -2227,15 +2167,11 @@ class RedLawNoguerasLara18(RedLawPowerLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
@@ -2302,15 +2238,11 @@ class RedLawNoguerasLara20(RedLawBrokenPowerLaw):
         wave = self.wave * (10**-4)
         law = self.obscuration
 
-        # Find the value of the law at the closest points
-        # to wavelength
-        A_AKs_at_wave = []
-        for ii in wavelength:
-            idx = np.argmin(abs(wave - ii))
-            A_AKs_at_wave.append(law[idx])
+        # Find the value of the law at the closest points to wavelength
+        wave_idxs = np.argmin(abs(wave-wavelength[:,np.newaxis]),axis=1)
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_at_wave = np.array(A_AKs_at_wave) * AKs
+        A_at_wave = law[wave_idxs] * AKs
 
         return A_at_wave
 
