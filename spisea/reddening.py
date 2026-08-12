@@ -92,11 +92,11 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
     <https://ui.adsabs.harvard.edu/abs/2009ApJ...696.1407N/abstract>`_,
     combined with the Av / AKs value from `Nishiyama et al. 2008
     <https://ui.adsabs.harvard.edu/abs/2008ApJ...680.1174N/abstract>`_.
-    This law is defined between 0.5 - 8.0 microns.
+    This law is defined between 0.551 - 8.0 microns.
 
     This law is constructed in 3 segments:
 
-    * 0.5 -- 1.24 microns: a linear interpolation in log(1/lambda) vs log(A/AKs) space
+    * 0.551 -- 1.24 microns: a linear interpolation in log(1/lambda) vs log(A/AKs) space
       between the Av/AKs and AJ/AKs values
     * 1.25 -- 2.14 microns: a power law with index of 2.0
     * 2.14 -- 8.0 microns: a spline interpolation between the observed extinction values
@@ -107,7 +107,7 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self):
         # Fetch the extinction curve, pre-interpolate across 3-8 microns
-        wave = np.arange(0.5, 8.0, 0.001)
+        wave = np.linspace(0.5, 8.0, 7501)
 
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
@@ -159,7 +159,7 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         #A_Ks_jhk = A_jhk / A_jhk[idx_scale]
 
         #----Now do a linear interpolation (in log(1/lambda) vs log(A/AKs) space) between 1.25 microns and 0.551 microns---#
-        jv_idx = np.where( (wavelength < 1.25) & (wavelength > 0.551) )
+        jv_idx = np.where( (wavelength < 1.25) & (wavelength >= 0.551) )
         Av = 16.13
         func = interpolate.interp1d(np.log10(np.array([1.0/1.25, 1.0/0.551])), np.log10(np.array([A_Ks_jhk[0], Av])),
                                         kind='linear')
@@ -278,7 +278,7 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self, Rv):
         # Fetch the extinction curve, pre-interpolate across 0.3-3 microns
-        wave = np.arange(0.3, 3.0, 0.001)
+        wave = np.linspace(0.3, 3.0, 2701)
 
         # This will eventually be scaled by AKs when you
         # call reddening(). Produces A_lambda for AKs = 1, which will be
@@ -431,7 +431,7 @@ class RedLawSODC(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self, Rv):
         # Fetch the extinction curve, pre-interpolate across 0.3-3 microns
-        wave = np.arange(0.25, 3.5, 0.001)
+        wave = np.linspace(0.25, 3.5, 3251)
 
         # This will eventually be scaled by AKs when you
         # call reddening(). Produces A_lambda for AKs = 1, which will be
@@ -561,7 +561,7 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self):
         # Fetch the extinction curve, pre-interpolate across 1-8 microns
-        wave = np.arange(1.0, 8.0, 0.01)
+        wave = np.linspace(1.0, 8.0, 7001)
 
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
@@ -675,7 +675,7 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self):
         # Define the wavelength range of the extinction law
-        wave = np.arange(1.0, 5.0, 0.001)
+        wave = np.linspace(1.0, 5.0, 4001)
 
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
@@ -845,7 +845,7 @@ class RedLawDamineli16(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self):
         # Fetch the extinction curve, pre-interpolate across 0.4-4.8 microns
-        wave = np.arange(0.4, 4.8, 0.001)
+        wave = np.linspace(0.4, 4.8, 4401)
 
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
@@ -968,7 +968,7 @@ class RedLawDeMarchi16(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self):
         # Fetch the extinction curve, pre-interpolate across 1-8 microns
-        wave = np.arange(0.3, 8.0, 0.001)
+        wave = np.linspace(0.3, 8.0, 7701)
 
         # This will eventually be scaled by AK when you
         # call reddening(). Right now, calc for AKs=1
@@ -1090,7 +1090,7 @@ class RedLawFitzpatrick09(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self, alpha, RV):
         # Fetch the extinction curve, pre-interpolate across 1-8 microns
-        wave = np.arange(0.5, 3.0, 0.001)
+        wave = np.linspace(0.5, 3.0, 2501)
 
         # This will eventually be scaled by AK when you
         # call reddening(). Right now, calc for AKs=1
@@ -1206,7 +1206,7 @@ class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self, AH_AKs, x):
         # Fetch the extinction curve, pre-interpolate across 0.5-4.8 microns
-        wave = np.arange(0.5, 4.8, 0.001)
+        wave = np.linspace(0.5, 4.8, 4301)
 
         # This will eventually be scaled by AK when you
         # call reddening(). Right now, calc for AKs=1
@@ -1349,7 +1349,7 @@ class RedLawIndebetouw05(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self):
         # Get A_lambda / A_K values from Indebetouw+05
-        wave = np.arange(1.25, 8.0, 0.001) # microns
+        wave = np.linspace(1.25, 8.0, 6751) # microns
         Alambda_scaled = RedLawIndebetouw05._derive_Indebetouw05(wave)
 
         # Convert wavelength to angstrom
@@ -1486,7 +1486,7 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self, alpha, K_wave, wave_min=0.5, wave_max=5.0):
         # Fetch the extinction curve, pre-interpolate across wave_min to wave_max
-        wave = np.arange(wave_min, wave_max, 0.001)
+        wave = np.linspace(wave_min, wave_max, int(round((wave_max-wave_min)*1000+1)))
 
         # This will eventually be scaled by AK when you
         # call reddening(). Right now, calc for AKs=1
@@ -1599,7 +1599,8 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self, lambda_limits, alpha_vals, K_wave):
         # Fetch the extinction curve, pre-interpolate across defined wavelength range
-        wave = np.arange(np.min(lambda_limits), np.max(lambda_limits), 0.01)
+        wave_min,wave_max = np.min(lambda_limits), np.max(lambda_limits)
+        wave = np.linspace(wave_min, wave_max, int(round((wave_max-wave_min)*1000+1)))
 
         # Deal with pesky floating point issues that can artificially push the upper
         # value of wave above the max(lambda_limit)
@@ -2013,7 +2014,7 @@ class RedLawHosek18b(pysynphot.reddening.CustomRedLaw):
     """
     def __init__(self):
         # Fetch the extinction curve, pre-interpolate across 3-8 microns
-        wave = np.arange(0.7, 3.545, 0.001)
+        wave = np.linspace(0.7, 3.545, 2846)
 
         # This will eventually be scaled by AKs when you
         # call reddening(). Right now, calc for AKs=1
