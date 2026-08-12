@@ -152,7 +152,7 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
 
         alpha = 2.0
         wave_jhk = wavelength[jhk_idx]
-        idx_scale = np.where(abs(wave_jhk - 2.14) == min(abs(wave_jhk - 2.14)) )
+        idx_scale = np.argmin(abs(wave_jhk - 2.14))
 
         A_jhk = wave_jhk**(-1.0*alpha)
         A_Ks_jhk = A_jhk / A_jhk[-1]
@@ -223,8 +223,8 @@ class RedLawNishiyama09(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -364,7 +364,7 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         extinction = a + b/Rv
 
         # Now, want to produce A_lambda / AKs, to match other laws
-        k_ind = np.where(abs(x-0.46) == min(abs(x-0.46)))
+        k_ind = np.argmin(abs(x-0.46))
         Aks_Av = a[k_ind] + b[k_ind]/Rv # Aks / Av
         Av_Aks = 1.0 / Aks_Av # Av / Aks
 
@@ -403,8 +403,8 @@ class RedLawCardelli(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -540,8 +540,8 @@ class RedLawSODC(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -628,8 +628,8 @@ class RedLawRomanZuniga07(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -773,8 +773,8 @@ class RedLawRiekeLebofsky(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -921,8 +921,8 @@ class RedLawDamineli16(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -1059,8 +1059,8 @@ class RedLawDeMarchi16(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AK (since law assumes AK = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AK
@@ -1144,7 +1144,7 @@ class RedLawFitzpatrick09(pysynphot.reddening.CustomRedLaw):
         # Finally, to get A_lambda/Aks we need to divide Alam_Av by AKs_Av.
         # We'll assume a wavelength of 2.18 for Ks, since it is the wavelength
         # they report for K-band
-        idx = np.where(abs(wavelength - 2.18) == min(abs(wavelength - 2.18)))
+        idx = np.argmin(abs(wavelength - 2.18))
 
         A_AKs_at_wave = Alam_Av / Alam_Av[idx]
 
@@ -1181,8 +1181,8 @@ class RedLawFitzpatrick09(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -1242,7 +1242,7 @@ class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
         law = law_func(wavelength*10**4)
 
         # Now normalize to A_lambda/AKs, rather than A_lambda/A(5420)
-        idx = np.where( abs(wavelength - 2.151) == min(abs(wavelength - 2.151)) )
+        idx = np.argmin(abs(wavelength - 2.151))
         law_out = law / law[idx]
 
         return law_out
@@ -1330,8 +1330,8 @@ class RedLawSchlafly16(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -1412,8 +1412,8 @@ class RedLawIndebetouw05(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -1526,7 +1526,7 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
         law = wavelength**(-1.0 * alpha)
 
         # We'll identify K-band as 2.14 microns
-        idx = np.where(abs(wavelength - K_wave) == min(abs(wavelength - K_wave)))
+        idx = np.argmin(abs(wavelength - K_wave))
         A_AKs_at_wave = law / law[idx]
 
         return A_AKs_at_wave
@@ -1562,8 +1562,8 @@ class RedLawPowerLaw(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -1677,7 +1677,7 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
         assert np.sum(np.isnan(law)) == 0
 
         # We'll identify K-band as 2.14 microns
-        idx = np.where(abs(wave - K_wave) == min(abs(wave - K_wave)))
+        idx = np.argmin(abs(wave - K_wave))
         A_AKs_at_wave = law / law[idx]
 
         return A_AKs_at_wave
@@ -1713,8 +1713,8 @@ class RedLawBrokenPowerLaw(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -1747,8 +1747,7 @@ class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
         wave *= 10**4
 
         # Rescale extinction law such that A_lambda / A_2.166 microns = 1
-        idx = np.where( abs(wave - (scale_lambda*10**4)) ==
-                            min(abs(wave - (scale_lambda*10**4))) )
+        idx = np.argmin(abs(wave - (scale_lambda*10**4)))
         ext_scale = ext / ext[idx]
 
         # Make custom reddening law
@@ -1893,8 +1892,8 @@ class RedLawFritz11(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_Ascale_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_Ascale_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_Ascale_at_wave.append(law[idx])
 
         # Now multiply by A_scale_lambda (since law assumes A_scale_lambda = 1)
         A_at_wave = np.array(A_Ascale_at_wave) * A_scale_lambda
@@ -2081,7 +2080,7 @@ class RedLawHosek18b(pysynphot.reddening.CustomRedLaw):
 
         # Return error if any wavelength is beyond interpolation range of
         # extinction law
-        if ((min(wavelength) < (self.low_lim*10**-4)) | (max(wavelength) > (self.high_lim*10**-4))):
+        if ((min(wavelength)*1e4 < self.low_lim) | (max(wavelength)*1e4 > self.high_lim)):
             return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
 
         # Extract wave and A/AKs from law, turning wave into micron units
@@ -2092,8 +2091,8 @@ class RedLawHosek18b(pysynphot.reddening.CustomRedLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -2165,8 +2164,8 @@ class RedLawSchoedel10(RedLawBrokenPowerLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -2232,8 +2231,8 @@ class RedLawNoguerasLara18(RedLawPowerLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
@@ -2307,8 +2306,8 @@ class RedLawNoguerasLara20(RedLawBrokenPowerLaw):
         # to wavelength
         A_AKs_at_wave = []
         for ii in wavelength:
-            idx = np.where( abs(wave - ii) == min(abs(wave - ii)) )
-            A_AKs_at_wave.append(law[idx][0])
+            idx = np.argmin(abs(wave - ii))
+            A_AKs_at_wave.append(law[idx])
 
         # Now multiply by AKs (since law assumes AKs = 1)
         A_at_wave = np.array(A_AKs_at_wave) * AKs
