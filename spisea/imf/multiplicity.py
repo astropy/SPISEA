@@ -1,6 +1,5 @@
 import numpy as np
 import astropy.modeling
-from random import choice
 from scipy.stats import truncnorm
 
 defaultMF_amp = 0.44
@@ -10,10 +9,9 @@ defaultCSF_power = 0.45
 defaultCSF_max = 3
 defaultq_power = -0.4
 defaultq_min = 0.01
-default_aMean = 100.0 # log (AU)
-default_aSigma = 0.1  # log (AU)
+default_aMean = 100.0  # log (AU)
+default_aSigma = 0.1   # log (AU)
 
-# Eventually we should add in separation properties. (a_mean, a_sigma)
 
 class MultiplicityUnresolved(object):
     """
@@ -26,21 +24,21 @@ class MultiplicityUnresolved(object):
     Notes
     -----
     The number of stellar companions, their masses, and separations
-    are be described by the following functions:
+    are described by the following functions:
 
     **Multiplicity Fraction** -- the number of stellar systems that host 
     multiple stars. In other words, the number of primary stars with
     companions. The multiplicity fraction (MF) is typically described
     as::
-                            B + T + Q + ...
-                MF =     ---------------------
+                         B + T + Q + ...
+                 MF =     ---------------------
                           S + B + T + Q + ...
 
     where S = single, B = binary, T = triple, Q = quadruple, etc.
     The MF also changes with mass and this dependency can be 
     described as a power-law::
             
-                MF(mass) = MF_amp * (mass ** MF_power)
+                 MF(mass) = MF_amp * (mass ** MF_power)
 
     However, in the brown dwarf mass regime, it is currently recognized
     that only binaries are possible, and the MF decreases dissimilarly
@@ -52,7 +50,7 @@ class MultiplicityUnresolved(object):
     changes with mass and this dependency can be described as
     a power-law::
                 
-                CSF(mass) = CSF_amp * (mass ** CSF_power)
+                 CSF(mass) = CSF_amp * (mass ** CSF_power)
 
     The companion star fraction is clipped to some maximum
     value, CSF_max. The actual number of companions is drawn 
@@ -65,7 +63,7 @@ class MultiplicityUnresolved(object):
     mass and primary star mass, Q = (m_comp / m_prim ) has
     a probability density function described by a powerlaw::
 
-                P(Q) = Q ** q_power  for q_min <= Q <= 1
+                 P(Q) = Q ** q_power  for q_min <= Q <= 1
 
     Current observations show no significant mass dependence.
         
@@ -102,14 +100,13 @@ class MultiplicityUnresolved(object):
         density function of the mass ratio.
     
     companion_max : bool, optional
-        Sets CSF_max is the max as the max number of companions.
+        Sets CSF_max as the max number of companions.
         Default False.
-    
     """
     def __init__(self, 
                  MF_amp=0.44, MF_power=0.51,
                  CSF_amp=0.50, CSF_power=0.45, CSF_max=3,
-                 q_power=-0.4, q_min=0.01, companion_max = False):
+                 q_power=-0.4, q_min=0.01, companion_max=False):
          
         self.MF_amp = MF_amp
         self.MF_pow = MF_power
@@ -139,23 +136,20 @@ class MultiplicityUnresolved(object):
             Multiplicity Fraction, the fraction of stars at this mass
             that will have one or more companions.
         """
-        # Multiplicity Fraction
-        mf = self.MF_amp * mass ** self.MF_pow
+        mass_arr = np.atleast_1d(mass)
+        mf = self.MF_amp * (mass_arr ** self.MF_pow)
+        mf = np.clip(mf, None, 1.0)
 
-        if np.isscalar(mf):
-            if mf > 1:
-                mf = 1
-            # physically override mf for brown dwarfs
-            if (mass <= 0.08) & (mass > 0.06):
-                mf = 0.16
-            if (mass <= 0.06) & (mass > 0.02):
-                mf = 0.08
-            if (mass < 0.02):
-                mf = 0
-        else:
-            mf[mf > 1] = 1
+        # Brown dwarf overrides (Aberasturi+14, Fontanive+18/23)
+        bd1 = (mass_arr <= 0.08) & (mass_arr > 0.06)
+        bd2 = (mass_arr <= 0.06) & (mass_arr > 0.02)
+        bd3 = (mass_arr <= 0.02)
 
-        return mf
+        mf[bd1] = 0.16
+        mf[bd2] = 0.08
+        mf[bd3] = 0.0
+
+        return float(mf[0]) if np.isscalar(mass) else mf
 
     def companion_star_fraction(self, mass):
         """
@@ -174,27 +168,23 @@ class MultiplicityUnresolved(object):
             Companion Star Fraction, the expected number of companions
             for a star at this mass.
         """
-        # Companion Star Fraction
-        csf = self.CSF_amp * mass ** self.CSF_pow
-        
-        if np.isscalar(csf):
-            if csf > self.CSF_max:
-                csf = self.CSF_max
-            if (mass <= 0.08):
-                csf = self.multiplicity_fraction(mass)
-        else:
-            csf[csf > self.CSF_max] = self.CSF_max
-            bd = mass <= 0.08
-            csf[bd] = self.multiplicity_fraction(mass[bd])
+        mass_arr = np.atleast_1d(mass)
+        csf = self.CSF_amp * (mass_arr ** self.CSF_pow)
+        csf = np.clip(csf, None, self.CSF_max)
 
-        return csf
+        # Enforce single-companion limit in brown dwarf regime
+        bd = mass_arr <= 0.08
+        if np.any(bd):
+            csf[bd] = self.multiplicity_fraction(mass_arr[bd])
+
+        return float(csf[0]) if np.isscalar(mass) else csf
 
     def random_q(self, x):
         """
         Generative function for companion mass ratio, equivalent
         to the inverse of the CDF.
 
-            `q = m_compnaion / m_primary`
+            `q = m_companion / m_primary`
             `P(q) = q ** beta`    for q_min <= q <= 1
 
         Parameters
@@ -208,9 +198,7 @@ class MultiplicityUnresolved(object):
             companion mass ratio(s)
         """
         b = 1.0 + self.q_pow
-        q = (x * (1.0 - self.q_min ** b) + self.q_min ** b) ** (1.0 / b)
-
-        return  q
+        return (x * (1.0 - self.q_min ** b) + self.q_min ** b) ** (1.0 / b)
 
     def random_is_multiple(self, x, MF):
         """
@@ -222,18 +210,17 @@ class MultiplicityUnresolved(object):
         """
         Helper function: calculate number of companions.
         """
-        # bd stipulation since mf=0
         if MF <= 0:
             return 0
 
         n_comp = 1 + np.random.poisson((CSF / MF) - 1)
         
-        if self.companion_max == True:
-            if n_comp > self.CSF_max:
-                n_comp = self.CSF_max
+        if self.companion_max and n_comp > self.CSF_max:
+            n_comp = self.CSF_max
             
         return n_comp
-    
+
+
 class MultiplicityResolvedDK(MultiplicityUnresolved):
     """
     Sub-class of MultiplicityUnresolved that adds semimajor axis and eccentricity information 
@@ -244,7 +231,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
     Parameters
     --------------
     a_amp: float, optional
-        Ampltiude of the broken power law describing the log_semimajoraxis
+        Amplitude of the broken power law describing the log_semimajoraxis
         
     a_break: float, optional
         Break location on the x-axis of the broken power law describing the log_semimajoraxis
@@ -261,8 +248,8 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
     a_std_intercept: float, optional
         Intercept of the line that fit sigma_log_semimajoraxis vs log_mass        
     """
-    def __init__(self, a_amp = 379.79953034, a_break = 4.90441533, a_slope1 = -1.80171539, 
-                 a_slope2 = 4.23325571, a_std_slope = 1.19713084, a_std_intercept = 1.28974264, **kwargs):
+    def __init__(self, a_amp=379.79953034, a_break=4.90441533, a_slope1=-1.80171539, 
+                 a_slope2=4.23325571, a_std_slope=1.19713084, a_std_intercept=1.28974264, **kwargs):
         super(MultiplicityResolvedDK, self).__init__(**kwargs)
         self.a_amp = a_amp
         self.a_break = a_break
@@ -270,7 +257,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         self.a_slope2 = a_slope2
         self.a_std_slope = a_std_slope
         self.a_std_intercept = a_std_intercept
-    
+
     def log_semimajoraxis(self, mass):
         """
         Generate the semimajor axis for a given mass. The mean and standard deviation of a given mass are determined 
@@ -290,16 +277,18 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         log_semimajoraxis : array-like
             Log of the semimajor axis/separation between the stars in units of AU
         """
-        mass = np.atleast_1d(mass)
-        logm = np.log10(mass)
+        mass_arr = np.atleast_1d(mass)
+        logm = np.log10(mass_arr)
 
-        # Stellar mean and std (Duchene & Kraus 2013)
-        a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(amplitude=self.a_amp, x_break=self.a_break,
-                                                                  alpha_1=self.a_slope1, alpha_2=self.a_slope2)
-        log_a_mean_star = np.log10(a_mean_func(mass))  # mean log(a)
+        # Stellar mean and std (Duchêne & Kraus 2013)
+        a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(
+            amplitude=self.a_amp, x_break=self.a_break,
+            alpha_1=self.a_slope1, alpha_2=self.a_slope2
+        )
+        log_a_mean_star = np.log10(a_mean_func(mass_arr))
         log_a_std_func = astropy.modeling.models.Linear1D(slope=self.a_std_slope, intercept=self.a_std_intercept)
-        log_a_std_star = log_a_std_func(logm)  # sigma_log(a)
-        log_a_std_star[mass >= 2.9] = log_a_std_func(np.log10(2.9))  # sigma_log(a)
+        log_a_std_star = log_a_std_func(logm)
+        log_a_std_star[mass_arr >= 2.9] = log_a_std_func(np.log10(2.9))
         log_a_std_star = np.clip(log_a_std_star, 0.1, None)
 
         # BD mean and std (Fontanive+18): interpolated over substellar range
@@ -319,14 +308,14 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         log_a_mean = (1 - w) * log_a_mean_bd + w * log_a_mean_star
         log_a_std = (1 - w) * log_a_std_bd + w * log_a_std_star
 
-        # Trunc normal distribution between log10(0.01) AU and log10(2000) AU
+        # Truncated normal distribution between log10(0.01) AU and log10(2000) AU
         log_a_lower = np.log10(0.01)
         log_a_upper = np.log10(2000)
         a_lower_std = (log_a_lower - log_a_mean) / log_a_std
         a_upper_std = (log_a_upper - log_a_mean) / log_a_std
 
         log_semimajoraxis = truncnorm.rvs(a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std)
-        return log_semimajoraxis
+        return float(log_semimajoraxis[0]) if np.isscalar(mass) else log_semimajoraxis
 
     def random_e(self, x):
         """
@@ -342,13 +331,11 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         e : float or array_like
             companion mass ratio(s)
         """
-        e = np.sqrt(x)
-        
-        return e
-    
+        return np.sqrt(x)
+
     def random_keplarian_parameters(self, x, y, z):
         """
-        Generate random incliniation and angles of binary system
+        Generate random inclination and angles of binary system
         
         Parameters
         ----------
@@ -372,11 +359,16 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         omega : float or array_like
             Final angle of the system
         """
-        sign = np.array([choice([-1,1]) for i in range(len(x))])
-        x = sign*x
-        inclination = np.arccos(x)*180/np.pi #inclination angle in degrees
-        
-        Omega = 360*y
-        omega = 360*z
-        
+        x_arr = np.atleast_1d(x)
+        y_arr = np.atleast_1d(y)
+        z_arr = np.atleast_1d(z)
+
+        sign = np.random.choice([-1, 1], size=len(x_arr))
+        inclination = np.arccos(sign * x_arr) * 180.0 / np.pi
+        Omega = 360.0 * y_arr
+        omega = 360.0 * z_arr
+
+        if np.isscalar(x):
+            return float(inclination[0]), float(Omega[0]), float(omega[0])
         return inclination, Omega, omega
+        
