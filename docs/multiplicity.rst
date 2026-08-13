@@ -104,7 +104,40 @@ compared to the Offner logistic in log-mass and Table 1 points):
    limit (0.08 solar masses). Reproduce with
    ``python docs/figures/plot_mf_offner_vs_lu2013.py``.
 
-The figure generator lives at ``docs/figures/plot_mf_offner_vs_lu2013.py``.
+Mass-ratio index vs primary mass (Offner interpolates Table 1
+:math:`\gamma_\mathrm{trunc}`; Lu+2013 is a step: 6.1 below 0.08 solar
+masses, :math:`-0.4` above):
+
+.. figure:: figures/q_offner_vs_lu2013.png
+   :alt: Mass-ratio index vs primary mass: Lu+2013 step vs Offner Table 1 interpolation
+   :align: center
+
+   Left: brown-dwarf zoom. Right: BD through O. Offner BD companions are
+   more equal-mass than Lu’s stellar :math:`q` power. Reproduce with
+   ``python docs/figures/plot_q_sep_offner_vs_lu2013.py``.
+
+Characteristic separation vs primary mass (Offner interpolates Table 1
+:math:`\tilde{a}_\mathrm{all}` and Table 2 :math:`\mu`; Lu+2013 is the
+Duchêne–Kraus broken power law with a brown-dwarf blend):
+
+.. figure:: figures/sep_offner_vs_lu2013.png
+   :alt: Characteristic separation vs primary mass: Lu+2013 DK vs Offner Table 1/2
+   :align: center
+
+   Open circles are Table 1 :math:`\tilde{a}_\mathrm{all}`; filled squares
+   are Table 2 :math:`\mu` knots (4, 25, 40 au). Offner BD binaries peak
+   at a few AU. Same script.
+
+Mean mass ratio on :math:`0.01 \leq q \leq 1` from :math:`P(q)\propto q^{\gamma}`:
+
+.. figure:: figures/meanq_offner_vs_lu2013.png
+   :alt: Mean mass ratio vs primary mass implied by the gamma curves
+   :align: center
+
+   Companion to the :math:`\gamma` panel. Same script.
+
+Figure generators live at ``docs/figures/plot_mf_offner_vs_lu2013.py``
+and ``docs/figures/plot_q_sep_offner_vs_lu2013.py``.
 
 
 Resolved Multiplicity Classes
