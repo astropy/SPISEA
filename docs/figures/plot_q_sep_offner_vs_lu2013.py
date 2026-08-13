@@ -4,6 +4,7 @@ Generate q / separation comparison figures vs Lu et al. (2013):
 
     docs/figures/q_offner_vs_lu2013.png
     docs/figures/sep_offner_vs_lu2013.png
+    docs/figures/sig_loga_offner_vs_lu2013.png
     docs/figures/meanq_offner_vs_lu2013.png
 
 Two-panel layout matching ``plot_mf_offner_vs_lu2013.py``: brown-dwarf
@@ -130,6 +131,41 @@ def _lu2013_dk_mean_a_au(dk, mass):
     w = 1.0 / (1.0 + np.exp(-(logm - np.log10(0.08)) / 0.15))
     log_a_mean = (1.0 - w) * log_a_mean_bd + w * log_a_mean_star
     return 10.0 ** log_a_mean
+
+
+def _offner_sig_loga(resolved, mass):
+    """
+    σ(log10 a): same interpolation as
+    ``MultiplicityResolvedOffner2023.log_semimajoraxis``, without drawing.
+    """
+    mass = np.atleast_1d(np.asarray(mass, dtype=float))
+    mass_clip = np.clip(mass, resolved.sep_mass[0], resolved.sep_mass[-1])
+    log_a_std = np.interp(
+        np.log10(mass_clip),
+        np.log10(resolved.sep_sig_mass),
+        resolved.sep_sig,
+    )
+    return np.clip(log_a_std, 0.1, None)
+
+
+def _lu2013_dk_sig_loga(dk, mass):
+    """
+    Duchêne & Kraus σ(log10 a) from ``MultiplicityResolvedDK`` coefficients,
+    plus the BD interpolation and sigmoid blend in ``log_semimajoraxis``.
+    """
+    mass = np.atleast_1d(np.asarray(mass, dtype=float))
+    logm = np.log10(mass)
+    sig_star = dk.a_std_slope * logm + dk.a_std_intercept
+    sig_star = np.array(sig_star, dtype=float, copy=True)
+    sig_star[mass >= 2.9] = dk.a_std_slope * np.log10(2.9) + dk.a_std_intercept
+    sig_star = np.clip(sig_star, 0.1, None)
+    sig_bd = np.interp(
+        logm,
+        [np.log10(0.01), np.log10(0.08)],
+        [0.25, 0.5],
+    )
+    w = 1.0 / (1.0 + np.exp(-(logm - np.log10(0.08)) / 0.15))
+    return (1.0 - w) * sig_bd + w * sig_star
 
 
 def _mean_q_from_gamma(gamma, q_min=0.01):
@@ -272,6 +308,41 @@ def plot_sep(resolved, dk):
     _save(fig, 'sep_offner_vs_lu2013.png')
 
 
+def plot_sig_loga(resolved, dk):
+    m_wide = np.logspace(np.log10(0.012), np.log10(40.0), 800)
+    sig_off = _offner_sig_loga(resolved, m_wide)
+    sig_lu = _lu2013_dk_sig_loga(dk, m_wide)
+    m_t2 = np.array(resolved.sep_sig_mass, dtype=float)
+    sig_t2 = np.array(resolved.sep_sig, dtype=float)
+
+    fig, axes = _two_axes(r'Separation scatter $\sigma(\log_{10} a)$ vs primary mass')
+    ylabel = r'$\sigma(\log_{10} a)$'
+    for ax, xlim, title in (
+        (axes[0], _BD_XLIM, 'Brown-dwarf regime'),
+        (axes[1], _FULL_XLIM, 'BD through O'),
+    ):
+        _bd_shade(ax, xlim)
+        ax.plot(m_wide, sig_lu, color='0.25', ls='--', lw=1.6, zorder=3)
+        ax.plot(m_wide, sig_off, color=_OFFNER_COLOR, ls='-', lw=2.4, zorder=4)
+        ax.plot(m_t2, sig_t2, 's', color=_OFFNER_COLOR, mfc=_OFFNER_COLOR,
+                ms=7, zorder=6, mew=0.6)
+        _finish_panel(ax, xlim, (0.0, 2.05), title, ylabel)
+
+    legend_handles = [
+        Line2D([0], [0], color='0.25', ls='--', lw=1.6,
+               label=r'Lu+2013 DK $\sigma(\log_{10} a)$'),
+        Line2D([0], [0], color=_OFFNER_COLOR, ls='-', lw=2.4,
+               label=r'Offner Table 2 $\sigma$ interp'),
+        Line2D([0], [0], marker='s', color=_OFFNER_COLOR, ls='none',
+               mfc=_OFFNER_COLOR, ms=7, label=r'Table 2 $\sigma$ knots'),
+        Patch(facecolor=_BD_SHADE, edgecolor='none', alpha=0.8,
+              label=r'BD ($M\leq 0.08$)'),
+    ]
+    axes[1].legend(handles=legend_handles, loc='upper left', fontsize=8,
+                   frameon=True, fancybox=False, edgecolor='0.7')
+    _save(fig, 'sig_loga_offner_vs_lu2013.png')
+
+
 def plot_meanq(offner, lu):
     m_wide = np.logspace(np.log10(0.012), np.log10(40.0), 800)
     q_off = _mean_q_from_gamma(offner.q_power_at_mass(m_wide),
@@ -310,6 +381,7 @@ def main():
     dk = multiplicity.MultiplicityResolvedDK()
     plot_gamma(offner, lu)
     plot_sep(resolved, dk)
+    plot_sig_loga(resolved, dk)
     plot_meanq(offner, lu)
 
 

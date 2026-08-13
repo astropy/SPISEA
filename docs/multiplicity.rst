@@ -128,6 +128,19 @@ Duchêne–Kraus broken power law with a brown-dwarf blend):
    are Table 2 :math:`\mu` knots (4, 25, 40 au). Offner BD binaries peak
    at a few AU. Same script.
 
+Separation scatter vs primary mass (Offner uses Table 2
+:math:`\sigma` of 0.7 / 1.3 / 1.5, held at 0.7 for brown dwarfs;
+Lu+2013 DK is a linear fit in log mass that saturates above 2.9 solar
+masses):
+
+.. figure:: figures/sig_loga_offner_vs_lu2013.png
+   :alt: Sigma of log10 a vs primary mass: Lu+2013 DK vs Offner Table 2
+   :align: center
+
+   Left: brown-dwarf zoom. Right: BD through O. Filled squares are the
+   Table 2 knots. The Lu dip near 0.08 solar masses is the BD/stellar
+   blend. Same script.
+
 Mean mass ratio on :math:`0.01 \leq q \leq 1` from :math:`P(q)\propto q^{\gamma}`:
 
 .. figure:: figures/meanq_offner_vs_lu2013.png
