@@ -4,6 +4,7 @@ import astropy.modeling
 from astropy.table import Table
 from scipy.stats import truncnorm
 import os
+import pdb
 
 defaultMF_amp = 0.44
 defaultMF_power = 0.51
@@ -145,7 +146,7 @@ class MultiplicityUnresolved(object):
         mf = self.MF_amp * (mass ** self.MF_pow)
         mf = np.minimum(mf, 1.0)
 
-        # # Brown dwarf overrides (Aberasturi+14, Fontanive+18/23)
+        # Brown dwarf overrides (Aberasturi+14, Fontanive+18/23)
         bd1 = (mass <= 0.08) & (mass > 0.06)
         bd2 = (mass <= 0.06) & (mass > 0.02)
         bd3 = (mass < 0.02)
@@ -385,7 +386,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         -------
         compMasses : np.ma.MaskedArray
             2D masked array of companion masses (shape: N x max_comp).
-        compPorb : np.ma.MaskedArray
+        compLoga : np.ma.MaskedArray
             2D masked array of semimajor axes in AU (shape: N x max_comp).
         compEcc : np.ma.MaskedArray
             2D masked array of orbital eccentricities (shape: N x max_comp).
@@ -411,7 +412,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
 
         max_comp = np.max(comp_nums)
         compMasses = np.zeros((n_primaries, max_comp))
-        compPorb = np.zeros((n_primaries, max_comp))
+        compLoga = np.zeros((n_primaries, max_comp))
         compEcc = np.zeros((n_primaries, max_comp))
 
         for c_num in np.unique(comp_nums):
@@ -427,19 +428,19 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
             # Sample semimajor axes for each companion
             prim_repeated = np.repeat(group_primaries, c_num)
             log_a_flat = self.log_semimajoraxis(prim_repeated)
-            a_vals = (10.0 ** log_a_flat).reshape(n_group, c_num)
+            log_a_vals = log_a_flat.reshape(n_group, c_num)
             
             # Sample eccentricities
             ecc_vals = self.random_e(np.random.rand(n_group, c_num))
 
             compMasses[group_p_idx, :c_num] = q_vals * group_primaries[:, None]
-            compPorb[group_p_idx, :c_num] = a_vals
+            compLoga[group_p_idx, :c_num] = log_a_vals
             compEcc[group_p_idx, :c_num] = ecc_vals
 
         mask = compMasses == 0
         return (
             np.ma.MaskedArray(compMasses, mask=mask),
-            np.ma.MaskedArray(compPorb, mask=mask),
+            np.ma.MaskedArray(compLoga, mask=mask),
             np.ma.MaskedArray(compEcc, mask=mask)
         )
     
@@ -489,23 +490,17 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
     Multiplicity model based on Max Moe's IDL function and the Python
     implementation from COSMIC, adapted for SPISEA.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, regenerate_grid=False, **kwargs):
         super(Multiplicity_MoeDiStefano, self).__init__(**kwargs)
         self.is_resolved = True
 
-        self.M1min = 0.08
-        self.M2min = 0.08
-        self.M1max = 150.0
-        self.M2max = 150.0
-        self.porb_lo = 0.15
-        self.porb_hi = 8.0
-
+        self.M2min = 0.01
 
         script_dir = os.path.dirname(os.path.abspath(__file__))
         grid_path = os.path.join(script_dir, 'moe_destefano_grid.fits')
 
         # Build FITS lookup table automatically if it doesn't exist yet
-        if not os.path.exists(grid_path):
+        if (not os.path.exists(grid_path)) or regenerate_grid:
             generate_moe_destefano_grid(grid_path)
 
         # Load grid directly from the script's directory
@@ -523,17 +518,28 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         is_scalar = np.isscalar(mass)
         mass = np.atleast_1d(mass)
         mfs = np.zeros(len(mass))
+        # TODO: I changed the min value here from 0 to the BD value for smoothness,,,,
+        mf_min_norm = 0.16/np.max(self.cumPbindist[:,0])
 
         for k, m in enumerate(mass):
             indM1 = np.argmin(np.abs(m - self.M1v))
             mycumPbindist_flat = self.cumPbindist[:, indM1].flatten()
 
-            if m <= 0.8:
+            if (m <= 0.8) & (m>=0.08):
                 mycumPbindist_flat = mycumPbindist_flat * np.interp(
-                    np.log10(m), np.log10([0.08, 0.8]), [0.0, 1.0]
+                    np.log10(m), np.log10([0.08, 0.8]), [mf_min_norm, 1.0]
                 )
 
             mfs[k] = np.max(mycumPbindist_flat)
+
+        # Brown dwarf overrides (Aberasturi+14, Fontanive+18/23)
+        bd1 = (mass <= 0.08) & (mass > 0.06)
+        bd2 = (mass <= 0.06) & (mass > 0.02)
+        bd3 = (mass < 0.02)
+
+        mfs[bd1] = 0.16
+        mfs[bd2] = 0.08
+        mfs[bd3] = 0.0
 
         return float(mfs[0]) if is_scalar else mfs
 
@@ -555,7 +561,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         -------
         compMasses : np.ma.MaskedArray
             2D masked array of companion masses (shape: N x 1).
-        compPorb : np.ma.MaskedArray
+        compLoga : np.ma.MaskedArray
             2D masked array of orbital periods in days (shape: N x 1).
         compEcc : np.ma.MaskedArray
             2D masked array of orbital eccentricities (shape: N x 1).
@@ -569,51 +575,90 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         n_binaries = len(system_idx)
 
         compMasses = np.zeros((n_primaries, 1))
-        compPorb = np.zeros((n_primaries, 1))
+        compLoga = np.zeros((n_primaries, 1))
         compEcc = np.zeros((n_primaries, 1))
 
         if n_binaries > 0:
             for k in range(n_binaries):
                 idx = system_idx[k]
                 myM1 = mass1[idx]
-                indM1 = np.argmin(np.abs(myM1 - self.M1v))
+                if myM1 >= 0.08:
+                    indM1 = np.argmin(np.abs(myM1 - self.M1v))
 
-                mycumPbindist_flat = self.cumPbindist[:, indM1].flatten()
-                if myM1 <= 0.8:
-                    mycumPbindist_flat = mycumPbindist_flat * np.interp(
-                        np.log10(myM1), np.log10([0.08, 0.8]), [0.0, 1.0]
-                    )
+                    mycumPbindist_flat = self.cumPbindist[:, indM1].flatten()
+                    if myM1 <= 0.8:
+                        mycumPbindist_flat = mycumPbindist_flat * np.interp(
+                                np.log10(myM1), np.log10([0.08, 0.8]), [0.0, 1.0])
 
-                mybinfrac = np.max(mycumPbindist_flat)
-                myrand = np.random.rand() * mybinfrac
+                    mybinfrac = np.max(mycumPbindist_flat)
+                    myrand = np.random.rand() * mybinfrac
 
-                mylogP = np.interp(myrand, mycumPbindist_flat, self.logPv)
-                indlogP = np.argmin(np.abs(mylogP - self.logPv))
+                    mylogP = np.interp(myrand, mycumPbindist_flat, self.logPv)
+                    indlogP = np.argmin(np.abs(mylogP - self.logPv))
 
-                mye = np.interp(np.random.rand(), self.cumedist[:, indlogP, indM1].flatten(), self.ev)
+                    mye = np.interp(np.random.rand(), self.cumedist[:, indlogP, indM1].flatten(), self.ev)
 
-                mycumqdist = self.cumqdist[:, indlogP, indM1].flatten()
-                if myM1 < 0.8:
-                    q_min = 0.08 / myM1
-                    cum_qmin = np.interp(q_min, self.qv, mycumqdist)
-                    mycumqdist = mycumqdist - cum_qmin
-                    max_q = np.max(mycumqdist)
-                    if max_q > 0:
-                        mycumqdist = mycumqdist / max_q
-                    indq = np.where(self.qv <= q_min)
-                    mycumqdist[indq] = 0.0
+                    mycumqdist = self.cumqdist[:, indlogP, indM1].flatten()
+                    if myM1 < self.M2min*10:
+                        q_min = self.M2min / myM1 # TODO: I CHANGED THIS, ARE WE OK WITH IT
+                        cum_qmin = np.interp(q_min, self.qv, mycumqdist)
+                        mycumqdist = mycumqdist - cum_qmin
+                        max_q = np.max(mycumqdist)
+                        if max_q > 0:
+                            mycumqdist = mycumqdist / max_q
+                        indq = np.where(self.qv <= q_min)
+                        mycumqdist[indq] = 0.0
 
-                myq = np.interp(np.random.rand(), mycumqdist, self.qv)
-                p_days = 10.0 ** mylogP
+                    myq = np.interp(np.random.rand(), mycumqdist, self.qv)
+                    p_days = 10.0 ** mylogP
+                    # Convert periods to log_a (period in days, a in AU)
+                    log_a = np.log10((p_days**2 * myM1*(1+myq) * 7.496e-6)**(1.0/3)) # 
 
-                compMasses[idx, 0] = myq * myM1
-                compPorb[idx, 0] = p_days
-                compEcc[idx, 0] = mye
+                    compMasses[idx, 0] = myq * myM1
+                    compLoga[idx, 0] = log_a
+                    compEcc[idx, 0] = mye
+
+        # Handle BDs (Fontanive+18)
+        # Find binary BDs
+        bd_comp_idxs = np.where((mass1<0.08) & is_bin)[0]
+        logm = np.log10(mass1[bd_comp_idxs])
+        # MASS FIRST
+        b = 1.0 + self.bd_q_pow
+        # Inverse CDF calculation
+        q_bds = (np.random.rand(len(bd_comp_idxs)) * (1.0 - self.q_min ** b) + self.q_min ** b) ** (1.0 / b)
+        # SEMI-MAJOR AXIS NEXT
+        # Calculate mean and standard deviation semi-major axes
+        log_a_mean = np.interp(
+            logm,
+            [np.log10(0.01), np.log10(0.08)],
+            [np.log10(2.5), np.log10(8.0)]
+        )
+        log_a_std = np.interp(
+            logm,
+            [np.log10(0.01), np.log10(0.08)],
+            [0.25, 0.5]
+        )
+        # Truncated normal distribution between log10(0.01) AU and log10(2000) AU
+        log_a_lower = np.log10(0.01)
+        log_a_upper = np.log10(2000)
+        # Convert bounds to standard normal space
+        a_lower_std = (log_a_lower - log_a_mean) / log_a_std
+        a_upper_std = (log_a_upper - log_a_mean) / log_a_std
+        # Draw log_a
+        log_a_bds = truncnorm.rvs(a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std)
+        # LAST: ECCENTRICITY
+        ecc_bds = np.sqrt(np.random.rand(len(bd_comp_idxs)))
+        # SAVE PROPERTIES TO ARRAYS
+        compMasses[bd_comp_idxs,0] = mass1[bd_comp_idxs]*q_bds
+        compLoga[bd_comp_idxs,0] = log_a_bds
+        compEcc[bd_comp_idxs,0] = ecc_bds
+
+        #pdb.set_trace()
 
         mask = compMasses == 0
         return (
             np.ma.MaskedArray(compMasses, mask=mask),
-            np.ma.MaskedArray(compPorb, mask=mask),
+            np.ma.MaskedArray(compLoga, mask=mask),
             np.ma.MaskedArray(compEcc, mask=mask)
         )
 
@@ -818,3 +863,104 @@ def idl_tabulate(x, f, p=5):
     for idx in range(0, x.shape[0], p - 1):
         ret += newton_cotes(x[idx: idx + p], f[idx: idx + p])
     return ret
+
+
+class Multiplicity_MoeDiStefano_Table13(MultiplicityUnresolved):
+    """
+    Multiplicity model based on Moe & Di Stefano (2017) Table 13
+    """
+    def __init__(self, regenerate_grid=False, **kwargs):
+        super(Multiplicity_MoeDiStefano, self).__init__(**kwargs)
+        self.is_resolved = True
+
+        self.mass_bins_low  = [0.8, 2, 5, 9,  16]
+        self.mass_bins_high = [1.2, 5, 9, 16, np.inf]
+        self.f_mult  = [0.50, 0.84, 1.3,  1.6, 2.1]
+        self.f_close = [0.15, 0.37, 0.63, 0.8, 1.0]
+        self.F_n0    = [0.60, 0.41, 0.24, 0.16, 0.06]
+        self.F_n1    = [0.30, 0.37, 0.36, 0.32, 0.21]
+        self.F_n2p   = [0.10, 0.22, 0.40, 0.52, 0.73] # this is for triples and quadruples combined
+        self.logP_bins_low  = [0.5, 2.5, 4.5, 6.5]
+        self.logP_bins_high = [1.5, 3.5, 5.5, 7.5]
+        self.f_logP_bin1 = [0.027, 0.07, 0.14, 0.19, 0.29]
+        self.f_logP_bin3 = [0.057, 0.12, 0.22, 0.26, 0.32]
+        self.f_logP_bin5 = [0.095, 0.13, 0.20, 0.23, 0.30]
+        self.f_logP_bin7 = [0.075, 0.09, 0.11, 0.13, 0.18]
+        self.F_twin_logP1 = [0.30, 0.22, 0.17, 0.14, 0.08]
+        self.F_twin_logP3 = [0.20, 0.10, 0.03, 0.0,  0.0]
+        self.F_twin_logP5 = [0.10, 0.03, 0.0,  0.0,  0.0]
+        self.F_twin_logP7 = [0.03, 0.0,  0.0,  0.0,  0.0]
+        self.gamma_large_q_logP1 = [-0.5, -0.5, -0.5, -0.5, -0.5]
+        self.gamma_large_q_logP3 = [-0.5, -0.9, -1.7, -1.7, -1.7]
+        self.gamma_large_q_logP5 = [-0.5, -1.4, -2.0, -2.0, -2.0]
+        self.gamma_large_q_logP7 = [-1.1, -2.0, -2.0, -2.0, -2.0]
+        self.gamma_small_q_logP1 = [0.3,  0.2,  0.1,  0.1,  0.1]
+        self.gamma_small_q_logP3 = [0.3,  0.1, -0.2, -0.2, -0.2]
+        self.gamma_small_q_logP5 = [0.3, -0.5, -1.2, -1.2, -1.2]
+        self.gamma_small_q_logP7 = [0.3, -1.0, -1.5, -1.5, -1.5]
+        self.eta_logP2 = [0.1, 0.3, 0.6, 0.7, 0.7]
+        self.eta_logP4 = [0.4, 0.5, 0.7, 0.8, 0.8]
+
+
+    def multiplicity_fraction(self, mass):
+        """Return the multiplicity fraction for input primary mass(es)."""
+        is_scalar = np.isscalar(mass)
+        mass = np.atleast_1d(mass)
+        mfs = np.zeros(len(mass))
+        
+        # TODO the thing here
+
+        # Brown dwarf overrides (Aberasturi+14, Fontanive+18/23)
+        bd1 = (mass <= 0.08) & (mass > 0.06)
+        bd2 = (mass <= 0.06) & (mass > 0.02)
+        bd3 = (mass < 0.02)
+
+        mfs[bd1] = 0.16
+        mfs[bd2] = 0.08
+        mfs[bd3] = 0.0
+
+        return float(mfs[0]) if is_scalar else mfs
+
+    def companion_star_fraction(self, mass):
+        """Companion star fraction equals multiplicity fraction in this model."""
+        pass
+
+    def get_resolved_companions(self, mass1):
+        """
+        Generate companion masses, orbital periods (days), and eccentricities
+        as parallel 2D MaskedArrays using table lookup from Moe & Di Stefano (2017).
+
+        Parameters
+        ----------
+        mass1 : array-like or float
+            Primary masses in solar masses.
+
+        Returns
+        -------
+        compMasses : np.ma.MaskedArray
+            2D masked array of companion masses (shape: N x 1).
+        compLoga : np.ma.MaskedArray
+            2D masked array of orbital periods in days (shape: N x 1).
+        compEcc : np.ma.MaskedArray
+            2D masked array of orbital eccentricities (shape: N x 1).
+        """
+        mass1 = np.atleast_1d(mass1)
+        n_primaries = len(mass1)
+
+        # mf = self.multiplicity_fraction(mass1)
+        # is_bin = self.random_is_multiple(np.random.rand(n_primaries), mf)
+        # system_idx = np.where(is_bin)[0]
+        # n_binaries = len(system_idx)
+
+        # compMasses = np.zeros((n_primaries, 1))
+        # compLoga = np.zeros((n_primaries, 1))
+        # compEcc = np.zeros((n_primaries, 1))
+
+        # TODO: STUFF HERE
+
+        mask = compMasses == 0
+        return (
+            np.ma.MaskedArray(compMasses, mask=mask),
+            np.ma.MaskedArray(compLoga, mask=mask),
+            np.ma.MaskedArray(compEcc, mask=mask)
+        )
