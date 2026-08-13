@@ -376,49 +376,68 @@ class MultiplicityUnresolved(object):
         """
         return x < MF
 
-    def random_companion_count(self, x, CSF, MF):
+    def random_companion_count(self, x, CSF, MF, mass=None, rng=None):
         """
-        Helper function: calculate number of companions.
-        """
-        # bd stipulation since mf=0
-        if MF <= 0:
-            return 0
+        Number of companions for primaries already identified as multiple.
 
-        n_comp = 1 + np.random.poisson((CSF / MF) - 1)
-        
-        if self.companion_max == True:
-            if n_comp > self.CSF_max:
+        The count is drawn from a Poisson with expectation CSF/MF - 1,
+        then 1 is added so every multiple has at least one companion.
+        ``x`` is unused and kept for API compatibility.
+
+        Parameters
+        ----------
+        x : float or array_like
+            Unused (historical signature).
+        CSF, MF : float or array_like
+            Companion star fraction and multiplicity fraction.
+        mass : float or array_like, optional
+            Primary mass. If given, primaries at or below
+            ``binary_only_mass_max`` are limited to one companion.
+            Cluster generation always passes mass so subclasses can
+            override the BD companion-count policy here.
+        rng : numpy.random.Generator, optional
+            Random generator. If omitted, uses ``numpy.random`` (the
+            historical scalar helper).
+
+        Returns
+        -------
+        n_comp : int or ndarray of int
+        """
+        return_scalar = np.isscalar(CSF) and np.isscalar(MF)
+        if return_scalar and rng is None:
+            if MF <= 0:
+                return 0
+            n_comp = 1 + np.random.poisson((CSF / MF) - 1)
+            if self.companion_max and n_comp > self.CSF_max:
                 n_comp = self.CSF_max
-            
+            if mass is not None and np.asarray(mass, dtype=float).reshape(-1)[0] <= self.binary_only_mass_max:
+                n_comp = min(int(n_comp), 1)
+            return int(n_comp)
+
+        CSF = np.atleast_1d(np.asarray(CSF, dtype=float))
+        MF = np.atleast_1d(np.asarray(MF, dtype=float))
+        if rng is None:
+            n_comp = 1 + np.random.poisson((CSF / MF) - 1)
+        else:
+            n_comp = 1 + rng.poisson((CSF / MF) - 1)
+        if self.companion_max:
+            n_comp = np.minimum(n_comp, self.CSF_max)
+        if mass is not None:
+            mass = np.atleast_1d(np.asarray(mass, dtype=float))
+            bd = mass <= self.binary_only_mass_max
+            n_comp[bd & (n_comp > 1)] = 1
+        if return_scalar:
+            return int(n_comp[0])
         return n_comp
 
     def draw_n_companions(self, mass, CSF, MF, rng):
         """
         Vectorized companion counts for primaries that are already
-        identified as multiple.
-
-        Parameters
-        ----------
-        mass, CSF, MF : array_like
-            Primary masses and corresponding CSF and MF values.
-        rng : numpy.random.Generator
-            Random generator used for the Poisson draw.
-
-        Returns
-        -------
-        n_comp : ndarray of int
-            Number of companions for each multiple primary. Brown-dwarf
-            primaries are limited to one companion.
+        identified as multiple. Delegates to :meth:`random_companion_count`
+        with ``mass`` so BD companion-count policy lives on this object.
         """
-        mass = np.atleast_1d(np.asarray(mass, dtype=float))
-        CSF = np.atleast_1d(np.asarray(CSF, dtype=float))
-        MF = np.atleast_1d(np.asarray(MF, dtype=float))
-        n_comp = 1 + rng.poisson((CSF / MF) - 1)
-        if self.companion_max:
-            n_comp = np.minimum(n_comp, self.CSF_max)
-        bd = mass <= self.binary_only_mass_max
-        n_comp[bd & (n_comp > 1)] = 1
-        return n_comp
+        return np.atleast_1d(
+            self.random_companion_count(None, CSF, MF, mass=mass, rng=rng))
 
     def _q_values_for_primaries(self, prim_subset, n_comp, rng):
         """

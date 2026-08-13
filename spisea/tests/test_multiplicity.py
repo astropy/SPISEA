@@ -1,5 +1,6 @@
 import numpy as np
 import time
+import os
 import spisea
 from spisea.imf import imf, multiplicity
 
@@ -428,4 +429,57 @@ def test_offner_generate_cluster_companions():
     assert np.all(n_comp[bd] <= 1)
     assert np.any(is_multi)
     assert np.abs(500.0 - sys_mass.sum()) < 500.0 * 0.05
+
+
+def test_calc_multi_uses_multiplicity_q_and_counts():
+    """
+    IMF.calc_multi must not hardcode Fontanive gamma=6.1 or the BD
+    companion cap; those policies live on the multiplicity object so
+    Offner γ_trunc (~2–5 for BDs) actually applies.
+    """
+    import inspect
+    from spisea.imf import imf as imf_mod
+    calc_src = inspect.getsource(imf_mod.IMF.calc_multi)
+    assert '6.1' not in calc_src
+    assert 'draw_companion_masses' in calc_src
+
+    syn_path = os.path.join(os.path.dirname(spisea.__file__), 'synthetic.py')
+    with open(syn_path, 'r') as fh:
+        syn_src = fh.read()
+    assert 'isinstance(self.imf._multi_props, multiplicity.MultiplicityResolvedDK)' not in syn_src
+    assert "hasattr(multi_props, 'log_semimajoraxis')" in syn_src
+    assert "hasattr(multi_props, 'random_e')" in syn_src
+    assert "hasattr(multi_props, 'random_keplarian_parameters')" in syn_src
+
+    offner = multiplicity.MultiplicityUnresolvedOffner2023()
+    lu = multiplicity.MultiplicityUnresolved()
+    q_off = offner.q_power_at_mass(0.04)
+    q_lu = lu.q_power_at_mass(0.04)
+    assert 2.0 <= q_off <= 5.5
+    assert np.isclose(q_lu, 6.1)
+    assert q_off != q_lu
+
+    rng = np.random.default_rng(1)
+    masses = np.full(3000, 0.04)
+    is_mult = np.ones(len(masses), dtype=bool)
+    mf = offner.multiplicity_fraction(masses)
+    csf = offner.companion_star_fraction(masses)
+    comp, _, _ = offner.draw_companion_masses(
+        masses, is_mult, csf, mf, rng, mass_min=0.01)
+    q = comp.compressed() / 0.04
+    q_lu_draw = lu.random_q(np.random.default_rng(1).random(len(q)), mass=0.04)
+    # Offner BD gamma is shallower than Fontanive 6.1, so mean q is lower.
+    assert np.mean(q) < np.mean(q_lu_draw)
+
+
+def test_piecewise_mf_is_vectorized():
+    """Offner MF is vectorized; Lu+2013 scalar BD bins are not used here."""
+    multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    masses = np.array([0.03, 0.06, 0.10, 1.0])
+    mf = multi.multiplicity_fraction(masses)
+    for i, m in enumerate(masses):
+        np.testing.assert_allclose(mf[i], multi.multiplicity_fraction(float(m)))
+    # Array path is not the Lu stellar power law 0.44 * M**0.51
+    lu_pl = 0.44 * masses ** 0.51
+    assert not np.allclose(mf, np.clip(lu_pl, 0, 1), atol=0.02)
 

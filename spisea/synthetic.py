@@ -532,10 +532,15 @@ class ResolvedCluster(Cluster):
         companions = Table([system_index], names=['system_idx'])
         companions.add_column(np.zeros(N_comp_tot, dtype=float), name='mass')
 
-        if hasattr(self.imf._multi_props, 'log_semimajoraxis'):
-            companions.add_column(Column(self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx']]), name='log_a'))
-            companions.add_column(Column(self.imf._multi_props.random_e(self.rng.random(N_comp_tot)), name='e'))
-            companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(
+        # Duck-type resolved multiplicity: any object with orbital methods
+        # gets log_a / e / angles, not only MultiplicityResolvedDK.
+        multi_props = self.imf._multi_props
+        if (hasattr(multi_props, 'log_semimajoraxis') and
+                hasattr(multi_props, 'random_e') and
+                hasattr(multi_props, 'random_keplarian_parameters')):
+            companions.add_column(Column(multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx']]), name='log_a'))
+            companions.add_column(Column(multi_props.random_e(self.rng.random(N_comp_tot)), name='e'))
+            companions['i'], companions['Omega'], companions['omega'] = multi_props.random_keplarian_parameters(
                 self.rng.random(N_comp_tot),
                 self.rng.random(N_comp_tot),
                 self.rng.random(N_comp_tot)

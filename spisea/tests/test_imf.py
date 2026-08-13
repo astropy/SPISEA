@@ -30,6 +30,42 @@ def test_generate_cluster():
 
     return
 
+
+def test_generate_cluster_offner2023():
+    """
+    generate_cluster with Offner et al. 2023 multiplicity: vectorized MF,
+    BD primaries have at most one companion, and Offner q (not Fontanive
+    gamma=6.1) is used for BD companion masses.
+    """
+    imf_multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    massLimits = np.array([0.01, 0.05, 0.22, 0.55, 8, 120])
+    powers = np.array([-0.6, -0.25, -1.3, -2.3, -2.35])
+    my_imf = imf.IMF_broken_powerlaw(massLimits, powers, imf_multi)
+    my_imf.rng = np.random.default_rng(7)
+
+    M_cl = 2e3
+    mass, isMulti, compMass, sysMass = my_imf.generate_cluster(M_cl)
+
+    assert np.abs(M_cl - sysMass.sum()) < M_cl * 0.05
+    n_comp = np.sum(~compMass.mask, axis=1)
+    bd = mass <= 0.08
+    assert np.all(n_comp[bd] <= 1)
+    assert np.any(isMulti)
+
+    # BD companions should be more equal-mass than Lu+2013 stellar q_power=-0.4
+    bd_mult = bd & isMulti
+    if np.any(bd_mult):
+        q_bd = []
+        for i in np.where(bd_mult)[0]:
+            comps = compMass[i].compressed()
+            if len(comps):
+                q_bd.extend(list(comps / mass[i]))
+        if len(q_bd) >= 5:
+            assert np.mean(q_bd) > 0.5
+
+    return
+
+
 def test_prim_power():
     #mass_limits = np.array([0.1, 1.0, 100.0])
     #powers = np.array([-2.0, -1.8])

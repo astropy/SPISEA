@@ -7,10 +7,36 @@ The properties of multiple systems in the stellar population is
 defined by the stellar multiplicity object. The multiplicity classes
 are defined in ``spisea/imf/multiplicity.py``.
 
-To call a multiplicity class::
+To call a multiplicity class and wire it into a cluster::
 
-  from spisea.imf import multiplicity
-  multi_obj = multiplicity.<class_name>
+  from spisea.imf import imf, multiplicity
+  from spisea import synthetic
+
+  multi = multiplicity.<class_name>(...)
+  imf_obj = imf.Kroupa_2001(multiplicity=multi)
+  cluster = synthetic.ResolvedCluster(iso, imf_obj, Mcl)
+
+Companion masses and whether a primary is multiple are drawn in
+``IMF.generate_cluster`` / ``IMF.calc_multi``, which call the multiplicity
+object. ``synthetic.py`` does not draw companions: it labels brown-dwarf
+evolutionary phase=90 so they photometrize, combines system photometry,
+and (for resolved classes) fills orbital columns.
+
+Duck-typed multiplicity contract used by the IMF:
+
+* ``multiplicity_fraction(mass)``
+* ``companion_star_fraction(mass)``
+* ``random_q(x, mass=None)`` — pass ``mass`` for mass-dependent q
+  (brown-dwarf vs stellar). ``random_q(x)`` with no mass keeps the
+  historical stellar-only power law.
+* ``random_companion_count(x, CSF, MF, mass=None, rng=None)`` —
+  companion-count policy, including the binaries-only BD cap when
+  ``mass`` is given.
+* attributes ``companion_max``, ``CSF_max``, ``q_min``
+
+Resolved classes are duck-typed in ``synthetic.py`` on
+``log_semimajoraxis``, ``random_e``, and ``random_keplarian_parameters``.
+They do not need to subclass :class:`~imf.multiplicity.MultiplicityResolvedDK`.
 
 The multiplicity object is an input for the :ref:`imf_objects`, as it
 impacts how the stellar masses are drawn.
