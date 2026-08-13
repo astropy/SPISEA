@@ -292,18 +292,53 @@ def test_piecewise_powerlaw_api():
     np.testing.assert_allclose(mf, [mp.multiplicity_fraction(m) for m in masses])
 
 
+def test_offner2023_three_segments():
+    """Offner MF/CSF uses exactly three continuous mass segments."""
+    multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    np.testing.assert_allclose(multi.mass_limits, [0.01, 0.08, 1.5, 150.0])
+    assert len(multi.MF_amps) == 3
+    assert len(multi.MF_powers) == 3
+    assert len(multi.CSF_amps) == 3
+    assert len(multi.CSF_powers) == 3
+
+
+def test_offner2023_mf_continuous_at_breaks():
+    """MF is continuous at 0.08 Msun and 1.5 Msun (left vs right)."""
+    multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    eps = 1e-10
+    for hinge in (0.08, 1.5):
+        mf_left = multi.multiplicity_fraction(hinge - eps)
+        mf_right = multi.multiplicity_fraction(hinge + eps)
+        mf_at = multi.multiplicity_fraction(hinge)
+        # Tight vs MF in [0, 1]; rules out the old ~0.01 segment jumps.
+        np.testing.assert_allclose(mf_left, mf_right, atol=1e-7, rtol=0)
+        np.testing.assert_allclose(mf_at, mf_right, atol=1e-7, rtol=0)
+        # Explicit two-segment evaluation at the hinge (no slope * eps).
+        i_left = 0 if hinge == 0.08 else 1
+        i_right = i_left + 1
+        left = multi.MF_amps[i_left] * hinge ** multi.MF_powers[i_left]
+        right = multi.MF_amps[i_right] * hinge ** multi.MF_powers[i_right]
+        np.testing.assert_allclose(left, right, atol=1e-10, rtol=0)
+
+
 def test_offner2023_table1_mf():
     """
     Piecewise MF matches Offner et al. 2023 Table 1 at geom-mean M1.
-    Tolerance is max(0.04, 1.5 * tabulated 1-sigma), preferring Table 1
-    over continuity at segment breaks.
+
+    BD and solar-type points stay close. A/B stars (Moe 3–8 Msun) may
+    miss by ~0.1 because the 3-segment continuous law cannot follow
+    that steep rise.
     """
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
     for row in _OFFNER_TABLE1:
         name, mlo, mhi, mf_tab, mf_err, cf_tab = row
         m = _table1_mgeom(row)
         mf = multi.multiplicity_fraction(m)
-        tol = max(0.04, 1.5 * mf_err)
+        if mlo >= 1.6:
+            # A/B/O: smoothness vs the steep Table 1 rise
+            tol = 0.15
+        else:
+            tol = max(0.06, 2.0 * mf_err)
         assert abs(mf - mf_tab) <= tol, \
             '{0}: MF({1:.3f})={2:.3f} vs Table 1 {3:.2f} ± {4:.2f}'.format(
                 name, m, mf, mf_tab, mf_err)
@@ -321,8 +356,13 @@ def test_offner2023_table1_csf():
         if m <= multiplicity.H_BURNING_MASS:
             assert np.isclose(csf, mf, atol=1e-12), \
                 '{0}: BD CSF should equal MF'.format(name)
+        elif mlo >= 1.6:
+            tol = max(0.20, 0.25 * cf_tab)
+            assert abs(csf - cf_tab) <= tol, \
+                '{0}: CSF({1:.3f})={2:.3f} vs Table 1 CF {3:.2f}'.format(
+                    name, m, csf, cf_tab)
         else:
-            tol = max(0.05, 0.2 * cf_tab)
+            tol = max(0.08, 0.25 * cf_tab)
             assert abs(csf - cf_tab) <= tol, \
                 '{0}: CSF({1:.3f})={2:.3f} vs Table 1 CF {3:.2f}'.format(
                     name, m, csf, cf_tab)

@@ -78,10 +78,27 @@ Unresolved Multiplicity Classes
 The Lu et al. (2013) :class:`~imf.multiplicity.MultiplicityUnresolved`
 object remains the default. Offner et al. 2023 is **opt-in**::
 
-  from spisea.imf import multiplicity
+  from spisea.imf import imf, multiplicity
+  from spisea import synthetic
+
   multi = multiplicity.MultiplicityUnresolvedOffner2023()
   # or the alias:
-  multi = multiplicity.MultiplicityOffner2023()
+  # multi = multiplicity.MultiplicityOffner2023()
+  imf_obj = imf.Kroupa_2001(multiplicity=multi)
+  cluster = synthetic.ResolvedCluster(iso, imf_obj, Mcl)
+
+MF vs primary mass (Lu et al. 2013 array power law and scalar BD staircase
+compared to the Offner 3-segment continuous fit and Table 1 points):
+
+.. figure:: figures/mf_offner_vs_lu2013.png
+   :alt: Multiplicity fraction vs primary mass: Lu+2013 vs Offner 2023 3-segment fit
+   :align: center
+
+   Left: brown-dwarf zoom. Right: BD through early B. The Offner model is a
+   3-segment broken power law, continuous at 0.08 and 1.5 solar masses.
+   Reproduce with ``python docs/figures/plot_mf_offner_vs_lu2013.py``.
+
+The figure generator lives at ``docs/figures/plot_mf_offner_vs_lu2013.py``.
 
 
 Resolved Multiplicity Classes

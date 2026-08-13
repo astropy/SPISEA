@@ -622,86 +622,43 @@ def _offner2023_table1_geom_mass(m_lo, m_hi):
     return float(np.sqrt(m_lo * m_hi))
 
 
+# Continuous 3-segment log-log hinge fit to Offner et al. 2023 Table 1
+# geom-mean (M, MF) and (M, CF) points. Breaks are the hydrogen-burning
+# limit (0.08 Msun) and the A-star / Moe & Kratter hinge (1.5 Msun).
+# Coefficients are continuous at the breaks by construction; they are
+# not eight independent two-point fits.
+OFFNER2023_MASS_LIMITS = [0.01, 0.08, 1.5, 150.0]
+OFFNER2023_MF_AMPS = [0.940619495052258, 0.4939448419460535, 0.5464564161230251]
+OFFNER2023_MF_POWERS = [0.7014961249619823, 0.4464747306561399, 0.19730236903196635]
+OFFNER2023_CSF_AMPS = [1.3416791790176827, 0.6412345384212704, 0.6783208088050923]
+OFFNER2023_CSF_POWERS = [0.8082633998914766, 0.5159588626601461, 0.3772908005624459]
+
+
 def offner2023_default_segments():
     """
-    Piecewise MF/CF power-law segments fitted to Offner et al. 2023 Table 1.
+    Three-segment broken power law for Offner et al. 2023 Table 1 MF/CF.
 
-    Each segment is the two-point power law through the geometric-mean
-    primary masses of the listed surveys. MF is clipped to [0, 1] at
-    evaluation time. Below the hydrogen-burning limit, CSF is forced
-    equal to MF (binaries only) regardless of the CF segment.
+    Continuous at the hydrogen-burning limit (0.08 Msun) and the A-star /
+    Moe & Kratter break (1.5 Msun) by construction: a weighted log-log
+    hinge fit to Table 1 geometric-mean (M, MF) and (M, CF) points,
+    converted to per-segment y = A * M**alpha. This is not eight
+    independent two-point fits.
+
+    MF is clipped to [0, 1] at evaluation time. Below 0.08 Msun, CSF is
+    forced equal to MF (binaries only) regardless of the CF segment.
 
     Returns
     -------
     mass_limits : ndarray
-        Segment edges (Msun), length N+1.
+        Segment edges (Msun), length 4.
     MF_amps, MF_powers, CSF_amps, CSF_powers : ndarray
-        Length-N piecewise coefficients for MF(M) = A * M**alpha
-        and CSF(M) = A * M**alpha.
+        Length-3 piecewise coefficients.
     """
-    # Geometric-mean M1 of Table 1 mass bins (Offner et al. 2023, Table 1).
-    M_font = _offner2023_table1_geom_mass(0.019, 0.058)   # Fontanive+2018
-    M_burg = _offner2023_table1_geom_mass(0.05, 0.08)     # Burgasser 2007
-    M_close = _offner2023_table1_geom_mass(0.080, 0.095)  # Close+2003
-    M_wlate = _offner2023_table1_geom_mass(0.075, 0.15)   # Winters+2019 late-M
-    M_wmid = _offner2023_table1_geom_mass(0.15, 0.30)     # Winters+2019 mid-M
-    M_wearly = _offner2023_table1_geom_mass(0.3, 0.6)     # Winters+2019 early-M
-    M_ragh = _offner2023_table1_geom_mass(0.75, 1.25)     # Raghavan+2010 FGK
-    M_moe = _offner2023_table1_geom_mass(1.6, 2.4)        # Moe & Kratter 2021
-    M_mds35 = _offner2023_table1_geom_mass(3.0, 5.0)      # Moe & Di Stefano 2017
-    M_mds58 = _offner2023_table1_geom_mass(5.0, 8.0)
-    M_mds817 = _offner2023_table1_geom_mass(8.0, 17.0)
-    M_sana = _offner2023_table1_geom_mass(17.0, 50.0)     # Sana et al.
-
-    # Published Table 1 MF (fraction) and CF. MF values that were given
-    # as percents in the table are converted here.
-    mf_font, cf_font = 0.08, 0.08
-    mf_burg, cf_burg = 0.15, 0.16
-    mf_close, cf_close = 0.19, 0.19
-    mf_wlate, cf_wlate = 0.19, 0.21
-    mf_wmid, cf_wmid = 0.23, 0.27
-    mf_wearly, cf_wearly = 0.30, 0.38
-    mf_ragh, cf_ragh = 0.46, 0.60
-    mf_moe, cf_moe = 0.68, 0.99
-    mf_mds35, cf_mds35 = 0.81, 1.28
-    mf_mds58, cf_mds58 = 0.89, 1.55
-    mf_mds817, cf_mds817 = 0.93, 1.80
-    mf_sana, cf_sana = 0.96, 2.10
-
-    # Mass edges follow BD / late-M / mid-M / FGK / A / B / O regimes
-    # in Offner et al. 2023 §2.2. Matching Table 1 is preferred over
-    # continuity at the breaks.
-    mass_limits = np.array([0.01, 0.05, 0.08, 0.15, 0.30, 1.5, 5.0, 17.0, 150.0])
-
-    mf_pairs = [
-        (M_font, mf_font, M_burg, mf_burg),       # late-T/Y BDs
-        (M_burg, mf_burg, M_close, mf_close),     # L/early-T / upper BD
-        (M_wlate, mf_wlate, M_wmid, mf_wmid),     # late-M
-        (M_wmid, mf_wmid, M_wearly, mf_wearly),   # mid-M
-        (M_wearly, mf_wearly, M_ragh, mf_ragh),   # early-M + FGK
-        (M_moe, mf_moe, M_mds35, mf_mds35),       # A / late-B
-        (M_mds58, mf_mds58, M_mds817, mf_mds817), # B
-        (M_mds817, mf_mds817, M_sana, mf_sana),   # O
-    ]
-    cf_pairs = [
-        (M_font, cf_font, M_burg, cf_burg),
-        (M_burg, cf_burg, M_close, cf_close),
-        (M_wlate, cf_wlate, M_wmid, cf_wmid),
-        (M_wmid, cf_wmid, M_wearly, cf_wearly),
-        (M_wearly, cf_wearly, M_ragh, cf_ragh),
-        (M_moe, cf_moe, M_mds35, cf_mds35),
-        (M_mds58, cf_mds58, M_mds817, cf_mds817),
-        (M_mds817, cf_mds817, M_sana, cf_sana),
-    ]
-
-    MF_amps = np.empty(len(mf_pairs))
-    MF_powers = np.empty(len(mf_pairs))
-    CSF_amps = np.empty(len(cf_pairs))
-    CSF_powers = np.empty(len(cf_pairs))
-    for i, pair in enumerate(mf_pairs):
-        MF_amps[i], MF_powers[i] = _two_point_powerlaw(*pair)
-    for i, pair in enumerate(cf_pairs):
-        CSF_amps[i], CSF_powers[i] = _two_point_powerlaw(*pair)
+    mass_limits = np.array(OFFNER2023_MASS_LIMITS, dtype=float)
+    MF_amps = np.array(OFFNER2023_MF_AMPS, dtype=float)
+    MF_powers = np.array(OFFNER2023_MF_POWERS, dtype=float)
+    CSF_amps = np.array(OFFNER2023_CSF_AMPS, dtype=float)
+    CSF_powers = np.array(OFFNER2023_CSF_POWERS, dtype=float)
     return mass_limits, MF_amps, MF_powers, CSF_amps, CSF_powers
 
 
@@ -852,13 +809,16 @@ class MultiplicityUnresolvedOffner2023(MultiplicityPiecewisePowerLaw):
     Table 1 data: Zenodo `10.5281/zenodo.6628915
     <https://doi.org/10.5281/zenodo.6628915>`_.
 
-    The multiplicity fraction and companion frequency are piecewise
-    power laws fitted to the bias-corrected Table 1 MF and CF at the
-    geometric-mean primary mass of each survey bin. Table 1 itself
+    The multiplicity fraction and companion frequency are a **3-segment
+    broken power law**, continuous at 0.08 Msun (hydrogen-burning limit)
+    and 1.5 Msun (A-star / Moe & Kratter break). Coefficients are a
+    weighted log-log hinge fit to the bias-corrected Table 1 MF and CF
+    at the geometric-mean primary mass of each survey bin. Table 1 itself
     does **not** publish MF(M) ∝ M^α; the only tabulated power law is
-    γ_trunc for f_q ∝ q^γ on 0.4 < q < 1. Matching Table 1 is preferred
-    over continuity at segment boundaries. MF is clipped to [0, 1].
-    Below 0.08 Msun, CSF = MF (binaries only; THF is tiny).
+    γ_trunc for f_q ∝ q^γ on 0.4 < q < 1. Continuity at the two physical
+    breaks is required; A/B-star Table 1 points may be missed by ~0.1
+    because a 3-segment law cannot follow that steep rise. MF is clipped
+    to [0, 1]. Below 0.08 Msun, CSF = MF (binaries only; THF is tiny).
 
     Companion assignment vs Table 1
     -------------------------------
