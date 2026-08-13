@@ -532,7 +532,7 @@ class ResolvedCluster(Cluster):
         companions = Table([system_index], names=['system_idx'])
         companions.add_column(np.zeros(N_comp_tot, dtype=float), name='mass')
 
-        if isinstance(self.imf._multi_props, multiplicity.MultiplicityResolvedDK):
+        if hasattr(self.imf._multi_props, 'log_semimajoraxis'):
             companions.add_column(Column(self.imf._multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx']]), name='log_a'))
             companions.add_column(Column(self.imf._multi_props.random_e(self.rng.random(N_comp_tot)), name='e'))
             companions['i'], companions['Omega'], companions['omega'] = self.imf._multi_props.random_keplarian_parameters(

@@ -243,3 +243,189 @@ def test_resolvedmult():
             f"BD sigma log(a) off: {std_log_a:.2f}"
 
     return
+
+
+# ---------------------------------------------------------------------------
+# Offner et al. 2023 (Table 1) multiplicity
+# ---------------------------------------------------------------------------
+
+# Published Table 1 MF (%) converted to fraction, CF, and 1-sigma MF error.
+# Masses are geometric means of the tabulated M1 intervals.
+_OFFNER_TABLE1 = [
+    # name, M_lo, M_hi, MF, MF_err, CF
+    ('Fontanive+2018', 0.019, 0.058, 0.08, 0.06, 0.08),
+    ('Burgasser 2007', 0.05, 0.08, 0.15, 0.04, 0.16),
+    ('Close+2003', 0.080, 0.095, 0.19, 0.07, 0.19),
+    ('Allen+2007', 0.06, 0.15, 0.20, 0.04, 0.20),
+    ('Winters+2019 late-M', 0.075, 0.15, 0.19, 0.03, 0.21),
+    ('Winters+2019 mid-M', 0.15, 0.30, 0.23, 0.02, 0.27),
+    ('Winters+2019 early-M', 0.3, 0.6, 0.30, 0.02, 0.38),
+    ('Raghavan+2010', 0.75, 1.25, 0.46, 0.03, 0.60),
+    ('Tokovinin 2014b', 0.85, 1.5, 0.47, 0.03, 0.62),
+    ('Moe & Kratter 2021', 1.6, 2.4, 0.68, 0.07, 0.99),
+    ('Moe & Di Stefano 2017 3-5', 3.0, 5.0, 0.81, 0.06, 1.28),
+    ('Moe & Di Stefano 2017 5-8', 5.0, 8.0, 0.89, 0.05, 1.55),
+    ('Moe & Di Stefano 2017 8-17', 8.0, 17.0, 0.93, 0.04, 1.80),
+    ('Sana et al. 17-50', 17.0, 50.0, 0.96, 0.04, 2.10),
+]
+
+
+def _table1_mgeom(row):
+    return np.sqrt(row[1] * row[2])
+
+
+def test_piecewise_powerlaw_api():
+    """Custom piecewise MF/CSF is vectorized and clips MF to [0, 1]."""
+    mass_limits = np.array([0.1, 1.0, 10.0])
+    # First segment: MF = 0.4 * M^0 → 0.4; second: 0.4 * M^1 so MF(10)=4 → clip 1
+    mp = multiplicity.MultiplicityPiecewisePowerLaw(
+        mass_limits,
+        MF_amps=[0.4, 0.4], MF_powers=[0.0, 1.0],
+        CSF_amps=[0.4, 0.5], CSF_powers=[0.0, 0.5],
+        binary_only_mass_max=0.05)
+    assert mp.multiplicity_fraction(0.2) == 0.4
+    assert mp.multiplicity_fraction(1.0) == 0.4
+    np.testing.assert_almost_equal(mp.multiplicity_fraction(10.0), 1.0)
+    masses = np.array([0.2, 1.0, 10.0])
+    mf = mp.multiplicity_fraction(masses)
+    np.testing.assert_allclose(mf, [mp.multiplicity_fraction(m) for m in masses])
+
+
+def test_offner2023_table1_mf():
+    """
+    Piecewise MF matches Offner et al. 2023 Table 1 at geom-mean M1.
+    Tolerance is max(0.04, 1.5 * tabulated 1-sigma), preferring Table 1
+    over continuity at segment breaks.
+    """
+    multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    for row in _OFFNER_TABLE1:
+        name, mlo, mhi, mf_tab, mf_err, cf_tab = row
+        m = _table1_mgeom(row)
+        mf = multi.multiplicity_fraction(m)
+        tol = max(0.04, 1.5 * mf_err)
+        assert abs(mf - mf_tab) <= tol, \
+            '{0}: MF({1:.3f})={2:.3f} vs Table 1 {3:.2f} ± {4:.2f}'.format(
+                name, m, mf, mf_tab, mf_err)
+        assert 0.0 <= mf <= 1.0
+
+
+def test_offner2023_table1_csf():
+    """CSF matches Table 1 CF for stellar primaries; CSF = MF for BDs."""
+    multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    for row in _OFFNER_TABLE1:
+        name, mlo, mhi, mf_tab, mf_err, cf_tab = row
+        m = _table1_mgeom(row)
+        csf = multi.companion_star_fraction(m)
+        mf = multi.multiplicity_fraction(m)
+        if m <= multiplicity.H_BURNING_MASS:
+            assert np.isclose(csf, mf, atol=1e-12), \
+                '{0}: BD CSF should equal MF'.format(name)
+        else:
+            tol = max(0.05, 0.2 * cf_tab)
+            assert abs(csf - cf_tab) <= tol, \
+                '{0}: CSF({1:.3f})={2:.3f} vs Table 1 CF {3:.2f}'.format(
+                    name, m, csf, cf_tab)
+        assert csf >= mf - 1e-12
+        assert csf <= multi.CSF_max + 1e-12
+
+
+def test_offner2023_array_vs_scalar():
+    """Array and scalar MF/CSF evaluations agree."""
+    multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    masses = np.array([_table1_mgeom(row) for row in _OFFNER_TABLE1])
+    mf_arr = multi.multiplicity_fraction(masses)
+    csf_arr = multi.companion_star_fraction(masses)
+    for i, m in enumerate(masses):
+        np.testing.assert_allclose(mf_arr[i], multi.multiplicity_fraction(float(m)))
+        np.testing.assert_allclose(csf_arr[i], multi.companion_star_fraction(float(m)))
+
+
+def test_offner2023_bd_binaries_only():
+    """BD primaries have CSF = MF and companion counts of 0 or 1."""
+    multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    rng = np.random.default_rng(123)
+    masses = np.array([0.02, 0.04, 0.07, 0.08])
+    mf = multi.multiplicity_fraction(masses)
+    csf = multi.companion_star_fraction(masses)
+    np.testing.assert_allclose(csf, mf)
+    # Force multiples so we test the count draw, not the MF coin flip.
+    n_comp = multi.draw_n_companions(masses, csf, mf, rng)
+    assert np.all(n_comp <= 1)
+    assert np.all(n_comp >= 1)
+
+    # Full companion-mass assignment: never more than one companion column
+    is_mult = np.ones(len(masses), dtype=bool)
+    comp, sys_mass, is_mult_out = multi.draw_companion_masses(
+        masses, is_mult, csf, mf, rng, mass_min=0.01)
+    assert comp.shape[1] == 1
+    assert np.all(np.sum(~comp.mask, axis=1) <= 1)
+
+
+def test_offner2023_q_more_equal_mass_for_bds():
+    """BD mass ratios are more equal-mass (higher mean q) than solar-type."""
+    multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    rng = np.random.default_rng(7)
+    n = 20000
+    q_bd = multi.random_q(rng.random(n), mass=0.04)
+    q_sun = multi.random_q(rng.random(n), mass=1.0)
+    assert np.mean(q_bd) > np.mean(q_sun) + 0.1
+    # Fontanive gamma_trunc = 4.8 is steeply equal-mass
+    assert multi.q_power_at_mass(0.033) > 3.0
+    assert multi.q_power_at_mass(1.0) < 1.0
+
+
+def test_offner2023_bd_separations_peak_few_au():
+    """BD lognormal separations peak at a few AU (Table 1 ã_all ~ 3 au)."""
+    multi = multiplicity.MultiplicityResolvedOffner2023()
+    np.random.seed(0)
+    log_a = multi.log_semimajoraxis(np.full(5000, 0.04))
+    med_a = 10 ** np.median(log_a)
+    # Fontanive ã_all = 2.9 au; allow a factor of ~2
+    assert 1.5 < med_a < 8.0, 'BD median a = {0:.2f} AU'.format(med_a)
+    # Solar-type should be much wider (Table 2 μ = 40 au)
+    log_a_s = multi.log_semimajoraxis(np.full(5000, 1.0))
+    med_a_s = 10 ** np.median(log_a_s)
+    assert med_a_s > 10.0
+    assert med_a_s > med_a
+
+
+def test_offner2023_alias_and_resolved_methods():
+    """Public names and resolved orbital methods exist."""
+    assert multiplicity.MultiplicityOffner2023 is \
+        multiplicity.MultiplicityUnresolvedOffner2023
+    resolved = multiplicity.MultiplicityResolvedOffner2023()
+    assert hasattr(resolved, 'log_semimajoraxis')
+    e = resolved.random_e(np.array([0.0, 0.25, 1.0]))
+    np.testing.assert_allclose(e, [0.0, 0.5, 1.0])
+
+
+def test_lu2013_defaults_unchanged():
+    """Lu et al. 2013 MultiplicityUnresolved defaults and stellar MF unchanged."""
+    mu = multiplicity.MultiplicityUnresolved()
+    assert mu.MF_amp == 0.44
+    assert mu.MF_pow == 0.51
+    assert mu.CSF_amp == 0.50
+    assert mu.CSF_pow == 0.45
+    np.testing.assert_almost_equal(mu.multiplicity_fraction(1.0), 0.44, decimal=2)
+    np.testing.assert_almost_equal(mu.multiplicity_fraction(10.0), 1.0, decimal=2)
+    np.testing.assert_almost_equal(mu.multiplicity_fraction(0.1), 0.136, decimal=2)
+    # Scalar BD overrides (historical Lu+2013 / Fontanive path)
+    assert np.isclose(mu.multiplicity_fraction(0.07), 0.16, atol=0.01)
+    assert np.isclose(mu.multiplicity_fraction(0.04), 0.08, atol=0.01)
+    assert np.isclose(mu.multiplicity_fraction(0.01), 0.0, atol=1e-6)
+
+
+def test_offner_generate_cluster_companions():
+    """IMF cluster generation with Offner multiplicity produces BD binaries only."""
+    imf_multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    mass_limits = np.array([0.01, 0.08, 0.5, 120.0])
+    powers = np.array([-0.3, -1.3, -2.3])
+    my_imf = imf.IMF_broken_powerlaw(mass_limits, powers, imf_multi)
+    my_imf.rng = np.random.default_rng(42)
+    mass, is_multi, comp_mass, sys_mass = my_imf.generate_cluster(500.0)
+    bd = mass <= 0.08
+    n_comp = np.sum(~comp_mass.mask, axis=1)
+    assert np.all(n_comp[bd] <= 1)
+    assert np.any(is_multi)
+    assert np.abs(500.0 - sys_mass.sum()) < 500.0 * 0.05
+

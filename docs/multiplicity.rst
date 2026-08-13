@@ -40,8 +40,30 @@ Unresolved Multiplicity Classes
 	       :members: companion_star_fraction,
 			 multiplicity_fraction, random_q
 
+.. autoclass:: imf.multiplicity.MultiplicityPiecewisePowerLaw
+	       :show-inheritance:
+	       :members: multiplicity_fraction, companion_star_fraction
+
+.. autoclass:: imf.multiplicity.MultiplicityUnresolvedOffner2023
+	       :show-inheritance:
+	       :members: multiplicity_fraction, companion_star_fraction,
+			 q_power_at_mass, random_q
+
+The Lu et al. (2013) :class:`~imf.multiplicity.MultiplicityUnresolved`
+object remains the default. Offner et al. 2023 is **opt-in**::
+
+  from spisea.imf import multiplicity
+  multi = multiplicity.MultiplicityUnresolvedOffner2023()
+  # or the alias:
+  multi = multiplicity.MultiplicityOffner2023()
+
 
 Resolved Multiplicity Classes
 ------------------------------------------
 .. autoclass:: imf.multiplicity.MultiplicityResolvedDK
 	       :show-inheritance:
+
+.. autoclass:: imf.multiplicity.MultiplicityResolvedOffner2023
+	       :show-inheritance:
+	       :members: log_semimajoraxis
+
