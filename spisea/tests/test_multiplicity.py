@@ -292,53 +292,78 @@ def test_piecewise_powerlaw_api():
     np.testing.assert_allclose(mf, [mp.multiplicity_fraction(m) for m in masses])
 
 
-def test_offner2023_three_segments():
-    """Offner MF/CSF uses exactly three continuous mass segments."""
-    multi = multiplicity.MultiplicityUnresolvedOffner2023()
-    np.testing.assert_allclose(multi.mass_limits, [0.01, 0.08, 1.5, 150.0])
-    assert len(multi.MF_amps) == 3
-    assert len(multi.MF_powers) == 3
-    assert len(multi.CSF_amps) == 3
-    assert len(multi.CSF_powers) == 3
+def test_logistic_api():
+    """Custom logistic MF/CSF clips, vectorizes, and sets BD CSF = MF."""
+    ml = multiplicity.MultiplicityLogistic(
+        MF_A=0.1, MF_B=1.5, MF_M0=1.0, MF_k=2.0,
+        CSF_A=0.05, CSF_B=4.0, CSF_M0=2.0, CSF_k=1.0,
+        CSF_max=2.0, binary_only_mass_max=0.08)
+    # Low-mass asymptote A; M<=0 maps to A
+    np.testing.assert_almost_equal(ml.multiplicity_fraction(1e-8), 0.1, decimal=4)
+    assert ml.multiplicity_fraction(0.0) == 0.1
+    assert ml.multiplicity_fraction(-1.0) == 0.1
+    # High-mass MF saturates at B then clips to 1
+    np.testing.assert_almost_equal(ml.multiplicity_fraction(1e6), 1.0)
+    # High-mass CSF clips to CSF_max
+    np.testing.assert_almost_equal(ml.companion_star_fraction(1e6), 2.0)
+    # BD CSF = MF
+    assert ml.companion_star_fraction(0.05) == ml.multiplicity_fraction(0.05)
+    masses = np.array([0.05, 1.0, 100.0])
+    mf = ml.multiplicity_fraction(masses)
+    np.testing.assert_allclose(mf, [ml.multiplicity_fraction(m) for m in masses])
+    csf = ml.companion_star_fraction(masses)
+    np.testing.assert_allclose(
+        csf, [ml.companion_star_fraction(m) for m in masses])
+    assert np.all(csf >= mf - 1e-12)
 
 
-def test_offner2023_mf_continuous_at_breaks():
-    """MF is continuous at 0.08 Msun and 1.5 Msun (left vs right)."""
+def test_offner2023_logistic_coefficients():
+    """Offner stores the equal-weight logistic-in-log-mass coefficients."""
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
-    eps = 1e-10
-    for hinge in (0.08, 1.5):
-        mf_left = multi.multiplicity_fraction(hinge - eps)
-        mf_right = multi.multiplicity_fraction(hinge + eps)
-        mf_at = multi.multiplicity_fraction(hinge)
-        # Tight vs MF in [0, 1]; rules out the old ~0.01 segment jumps.
-        np.testing.assert_allclose(mf_left, mf_right, atol=1e-7, rtol=0)
-        np.testing.assert_allclose(mf_at, mf_right, atol=1e-7, rtol=0)
-        # Explicit two-segment evaluation at the hinge (no slope * eps).
-        i_left = 0 if hinge == 0.08 else 1
-        i_right = i_left + 1
-        left = multi.MF_amps[i_left] * hinge ** multi.MF_powers[i_left]
-        right = multi.MF_amps[i_right] * hinge ** multi.MF_powers[i_right]
-        np.testing.assert_allclose(left, right, atol=1e-10, rtol=0)
+    assert isinstance(multi, multiplicity.MultiplicityLogistic)
+    assert not isinstance(multi, multiplicity.MultiplicityPiecewisePowerLaw)
+    np.testing.assert_allclose(multi.MF_A, 0.14)
+    np.testing.assert_allclose(multi.MF_B, 0.99)
+    np.testing.assert_allclose(multi.MF_M0, 1.41)
+    np.testing.assert_allclose(multi.MF_k, 1.25)
+    np.testing.assert_allclose(multi.CSF_A, 0.12)
+    np.testing.assert_allclose(multi.CSF_B, 2.35)
+    np.testing.assert_allclose(multi.CSF_M0, 3.57)
+    np.testing.assert_allclose(multi.CSF_k, 0.96)
+
+
+def test_offner2023_mf_smooth():
+    """MF is continuous and nearly C1 around 0.08 and 1.5 Msun."""
+    multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    eps = 1e-8
+    for m in (0.08, 1.5):
+        mf_left = multi.multiplicity_fraction(m - eps)
+        mf_right = multi.multiplicity_fraction(m + eps)
+        mf_at = multi.multiplicity_fraction(m)
+        np.testing.assert_allclose(mf_left, mf_right, atol=1e-6, rtol=0)
+        np.testing.assert_allclose(mf_at, mf_right, atol=1e-6, rtol=0)
+        d_left = (mf_at - mf_left) / eps
+        d_right = (mf_right - mf_at) / eps
+        np.testing.assert_allclose(d_left, d_right, atol=1e-3, rtol=0)
+    for m in (0.04, 0.3, 1.0, 10.0):
+        expected = multiplicity._logistic_in_logm(
+            m, 0.14, 0.99, 1.41, 1.25, clip_min=0.0, clip_max=1.0)
+        np.testing.assert_allclose(multi.multiplicity_fraction(m), expected)
 
 
 def test_offner2023_table1_mf():
     """
-    Piecewise MF matches Offner et al. 2023 Table 1 at geom-mean M1.
+    Logistic MF matches Offner et al. 2023 Table 1 at geom-mean M1.
 
-    BD and solar-type points stay close. A/B stars (Moe 3–8 Msun) may
-    miss by ~0.1 because the 3-segment continuous law cannot follow
-    that steep rise.
+    Fontanive (8±6%) sits ~0.07 below the curve (~15%); other rows,
+    including A/B stars, stay close.
     """
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
     for row in _OFFNER_TABLE1:
         name, mlo, mhi, mf_tab, mf_err, cf_tab = row
         m = _table1_mgeom(row)
         mf = multi.multiplicity_fraction(m)
-        if mlo >= 1.6:
-            # A/B/O: smoothness vs the steep Table 1 rise
-            tol = 0.15
-        else:
-            tol = max(0.06, 2.0 * mf_err)
+        tol = max(0.08, 2.0 * mf_err)
         assert abs(mf - mf_tab) <= tol, \
             '{0}: MF({1:.3f})={2:.3f} vs Table 1 {3:.2f} ± {4:.2f}'.format(
                 name, m, mf, mf_tab, mf_err)
@@ -357,7 +382,8 @@ def test_offner2023_table1_csf():
             assert np.isclose(csf, mf, atol=1e-12), \
                 '{0}: BD CSF should equal MF'.format(name)
         elif mlo >= 1.6:
-            tol = max(0.20, 0.25 * cf_tab)
+            # Logistic CF tracks A/B; Moe & Kratter residual ~0.1 is ok
+            tol = max(0.12, 0.12 * cf_tab)
             assert abs(csf - cf_tab) <= tol, \
                 '{0}: CSF({1:.3f})={2:.3f} vs Table 1 CF {3:.2f}'.format(
                     name, m, csf, cf_tab)
@@ -512,7 +538,7 @@ def test_calc_multi_uses_multiplicity_q_and_counts():
     assert np.mean(q) < np.mean(q_lu_draw)
 
 
-def test_piecewise_mf_is_vectorized():
+def test_offner2023_mf_is_vectorized():
     """Offner MF is vectorized; Lu+2013 scalar BD bins are not used here."""
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
     masses = np.array([0.03, 0.06, 0.10, 1.0])

@@ -70,6 +70,10 @@ Unresolved Multiplicity Classes
 	       :show-inheritance:
 	       :members: multiplicity_fraction, companion_star_fraction
 
+.. autoclass:: imf.multiplicity.MultiplicityLogistic
+	       :show-inheritance:
+	       :members: multiplicity_fraction, companion_star_fraction
+
 .. autoclass:: imf.multiplicity.MultiplicityUnresolvedOffner2023
 	       :show-inheritance:
 	       :members: multiplicity_fraction, companion_star_fraction,
@@ -88,15 +92,17 @@ object remains the default. Offner et al. 2023 is **opt-in**::
   cluster = synthetic.ResolvedCluster(iso, imf_obj, Mcl)
 
 MF vs primary mass (Lu et al. 2013 array power law and scalar BD staircase
-compared to the Offner 3-segment continuous fit and Table 1 points):
+compared to the Offner logistic in log-mass and Table 1 points):
 
 .. figure:: figures/mf_offner_vs_lu2013.png
-   :alt: Multiplicity fraction vs primary mass: Lu+2013 vs Offner 2023 3-segment fit
+   :alt: Multiplicity fraction vs primary mass: Lu+2013 vs Offner 2023 logistic in log M
    :align: center
 
    Left: brown-dwarf zoom. Right: BD through early B. The Offner model is a
-   3-segment broken power law, continuous at 0.08 and 1.5 solar masses.
-   Reproduce with ``python docs/figures/plot_mf_offner_vs_lu2013.py``.
+   4-parameter logistic in log-mass fitted to Table 1, C-infinity smooth
+   and saturating at B ~ 1. The shaded region is below the hydrogen-burning
+   limit (0.08 solar masses). Reproduce with
+   ``python docs/figures/plot_mf_offner_vs_lu2013.py``.
 
 The figure generator lives at ``docs/figures/plot_mf_offner_vs_lu2013.py``.
 

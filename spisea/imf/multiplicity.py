@@ -67,6 +67,30 @@ def _piecewise_powerlaw(mass, mass_limits, amps, powers, clip_min=None,
     return out
 
 
+def _logistic_in_logm(mass, A, B, M0, k, clip_min=None, clip_max=None):
+    """
+    Evaluate y = A + (B - A) / (1 + (M / M0)**(-k)).
+
+    This is a logistic in log-mass: as M -> 0, y -> A; as M -> inf,
+    y -> B. Masses <= 0 are mapped to the low-mass asymptote A.
+    Returns a Python float for scalar mass and an ndarray otherwise.
+    """
+    return_scalar = np.isscalar(mass)
+    mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
+    out = np.full(mass_arr.shape, float(A), dtype=float)
+    positive = mass_arr > 0
+    if np.any(positive):
+        m = mass_arr[positive]
+        out[positive] = A + (B - A) / (1.0 + np.power(m / M0, -k))
+    if clip_min is not None:
+        out = np.maximum(out, clip_min)
+    if clip_max is not None:
+        out = np.minimum(out, clip_max)
+    if return_scalar:
+        return float(out[0])
+    return out
+
+
 def _q_from_powerlaw(x, q_pow, q_min):
     """
     Inverse CDF of P(q) ∝ q**q_pow for q_min <= q <= 1.
@@ -622,44 +646,17 @@ def _offner2023_table1_geom_mass(m_lo, m_hi):
     return float(np.sqrt(m_lo * m_hi))
 
 
-# Continuous 3-segment log-log hinge fit to Offner et al. 2023 Table 1
-# geom-mean (M, MF) and (M, CF) points. Breaks are the hydrogen-burning
-# limit (0.08 Msun) and the A-star / Moe & Kratter hinge (1.5 Msun).
-# Coefficients are continuous at the breaks by construction; they are
-# not eight independent two-point fits.
-OFFNER2023_MASS_LIMITS = [0.01, 0.08, 1.5, 150.0]
-OFFNER2023_MF_AMPS = [0.940619495052258, 0.4939448419460535, 0.5464564161230251]
-OFFNER2023_MF_POWERS = [0.7014961249619823, 0.4464747306561399, 0.19730236903196635]
-OFFNER2023_CSF_AMPS = [1.3416791790176827, 0.6412345384212704, 0.6783208088050923]
-OFFNER2023_CSF_POWERS = [0.8082633998914766, 0.5159588626601461, 0.3772908005624459]
-
-
-def offner2023_default_segments():
-    """
-    Three-segment broken power law for Offner et al. 2023 Table 1 MF/CF.
-
-    Continuous at the hydrogen-burning limit (0.08 Msun) and the A-star /
-    Moe & Kratter break (1.5 Msun) by construction: a weighted log-log
-    hinge fit to Table 1 geometric-mean (M, MF) and (M, CF) points,
-    converted to per-segment y = A * M**alpha. This is not eight
-    independent two-point fits.
-
-    MF is clipped to [0, 1] at evaluation time. Below 0.08 Msun, CSF is
-    forced equal to MF (binaries only) regardless of the CF segment.
-
-    Returns
-    -------
-    mass_limits : ndarray
-        Segment edges (Msun), length 4.
-    MF_amps, MF_powers, CSF_amps, CSF_powers : ndarray
-        Length-3 piecewise coefficients.
-    """
-    mass_limits = np.array(OFFNER2023_MASS_LIMITS, dtype=float)
-    MF_amps = np.array(OFFNER2023_MF_AMPS, dtype=float)
-    MF_powers = np.array(OFFNER2023_MF_POWERS, dtype=float)
-    CSF_amps = np.array(OFFNER2023_CSF_AMPS, dtype=float)
-    CSF_powers = np.array(OFFNER2023_CSF_POWERS, dtype=float)
-    return mass_limits, MF_amps, MF_powers, CSF_amps, CSF_powers
+# Equal-weight logistic-in-log-mass fit to Offner et al. 2023 Table 1
+# geom-mean (M, MF) and (M, CF) points:
+#   y(M) = A + (B - A) / (1 + (M / M0)**(-k))
+OFFNER2023_MF_A = 0.14
+OFFNER2023_MF_B = 0.99
+OFFNER2023_MF_M0 = 1.41
+OFFNER2023_MF_K = 1.25
+OFFNER2023_CSF_A = 0.12
+OFFNER2023_CSF_B = 2.35
+OFFNER2023_CSF_M0 = 3.57
+OFFNER2023_CSF_K = 0.96
 
 
 # Table 1 gamma_trunc (1-100 au when available) plus the paper's
@@ -795,7 +792,81 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
         return csf
 
 
-class MultiplicityUnresolvedOffner2023(MultiplicityPiecewisePowerLaw):
+class MultiplicityLogistic(MultiplicityUnresolved):
+    """
+    Multiplicity described by a logistic in log primary mass.
+
+        f(M) = A + (B - A) / (1 + (M / M0)**(-k))
+
+    As M → 0, f → A; as M → ∞, f → B. The same functional form is
+    used for MF and CSF with independent coefficients.
+    ``MultiplicityUnresolvedOffner2023`` uses this class with
+    coefficients fitted to Offner et al. (2023) Table 1.
+
+    MF is clipped to [0, 1]. CSF is clipped to [0, CSF_max], raised
+    to at least MF, and forced equal to MF for primaries at or below
+    ``binary_only_mass_max`` (binaries only).
+
+    Parameters
+    ----------
+    MF_A, MF_B, MF_M0, MF_k : float
+        Logistic coefficients for the multiplicity fraction.
+    CSF_A, CSF_B, CSF_M0, CSF_k : float
+        Logistic coefficients for the companion star fraction.
+    CSF_max, q_power, q_min, companion_max, binary_only_mass_max
+        Passed to :class:`MultiplicityUnresolved`.
+    """
+    def __init__(self, MF_A, MF_B, MF_M0, MF_k,
+                 CSF_A, CSF_B, CSF_M0, CSF_k,
+                 CSF_max=3, q_power=-0.4, q_min=0.01, companion_max=False,
+                 binary_only_mass_max=H_BURNING_MASS):
+        super(MultiplicityLogistic, self).__init__(
+            MF_amp=1.0, MF_power=0.0, CSF_amp=1.0, CSF_power=0.0,
+            CSF_max=CSF_max, q_power=q_power, q_min=q_min,
+            companion_max=companion_max,
+            binary_only_mass_max=binary_only_mass_max)
+        self.MF_A = float(MF_A)
+        self.MF_B = float(MF_B)
+        self.MF_M0 = float(MF_M0)
+        self.MF_k = float(MF_k)
+        self.CSF_A = float(CSF_A)
+        self.CSF_B = float(CSF_B)
+        self.CSF_M0 = float(CSF_M0)
+        self.CSF_k = float(CSF_k)
+
+    def multiplicity_fraction(self, mass):
+        """
+        Multiplicity fraction as a logistic in log primary mass.
+        Clipped to [0, 1].
+        """
+        return _logistic_in_logm(
+            mass, self.MF_A, self.MF_B, self.MF_M0, self.MF_k,
+            clip_min=0.0, clip_max=1.0)
+
+    def companion_star_fraction(self, mass):
+        """
+        Companion star fraction as a logistic in log primary mass.
+
+        Clipped to [0, CSF_max], raised to at least MF, and set equal
+        to MF for primaries at or below ``binary_only_mass_max``.
+        """
+        return_scalar = np.isscalar(mass)
+        mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
+        csf = _logistic_in_logm(
+            mass_arr, self.CSF_A, self.CSF_B, self.CSF_M0, self.CSF_k,
+            clip_min=0.0, clip_max=self.CSF_max)
+        mf = _logistic_in_logm(
+            mass_arr, self.MF_A, self.MF_B, self.MF_M0, self.MF_k,
+            clip_min=0.0, clip_max=1.0)
+        csf = np.maximum(csf, mf)
+        bd = mass_arr <= self.binary_only_mass_max
+        csf[bd] = mf[bd]
+        if return_scalar:
+            return float(csf[0])
+        return csf
+
+
+class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     """
     Unresolved multiplicity from Offner et al. 2023 Table 1, including
     brown dwarfs.
@@ -809,16 +880,21 @@ class MultiplicityUnresolvedOffner2023(MultiplicityPiecewisePowerLaw):
     Table 1 data: Zenodo `10.5281/zenodo.6628915
     <https://doi.org/10.5281/zenodo.6628915>`_.
 
-    The multiplicity fraction and companion frequency are a **3-segment
-    broken power law**, continuous at 0.08 Msun (hydrogen-burning limit)
-    and 1.5 Msun (A-star / Moe & Kratter break). Coefficients are a
-    weighted log-log hinge fit to the bias-corrected Table 1 MF and CF
-    at the geometric-mean primary mass of each survey bin. Table 1 itself
-    does **not** publish MF(M) ∝ M^α; the only tabulated power law is
-    γ_trunc for f_q ∝ q^γ on 0.4 < q < 1. Continuity at the two physical
-    breaks is required; A/B-star Table 1 points may be missed by ~0.1
-    because a 3-segment law cannot follow that steep rise. MF is clipped
-    to [0, 1]. Below 0.08 Msun, CSF = MF (binaries only; THF is tiny).
+    The multiplicity fraction and companion frequency are a
+    **4-parameter logistic in log-mass** fitted with equal weight to
+    the geom-mean MF/CF columns of Table 1::
+
+        f(M) = A + (B - A) / (1 + (M / M0)**(-k))
+
+    with (A, B, M0, k) = (0.14, 0.99, 1.41, 1.25) for MF and
+    (0.12, 2.35, 3.57, 0.96) for CSF/CF. The curve is C-infinity
+    smooth (not a broken power law), saturates at B ~ 1 for MF so
+    A/B stars stay near the Raghavan/MDS/Sana points, and has a
+    low-mass floor A ~ 0.14. Fontanive et al. (2018) 8 ± 6% sits
+    ~0.07 below the curve (~15%), which is consistent with the
+    Burgasser/Close BD points and within ~1–2σ of Fontanive. MF is
+    clipped to [0, 1]. Below 0.08 Msun, CSF = MF (binaries only;
+    THF is tiny).
 
     Companion assignment vs Table 1
     -------------------------------
@@ -849,10 +925,15 @@ class MultiplicityUnresolvedOffner2023(MultiplicityPiecewisePowerLaw):
     """
     def __init__(self, CSF_max=3, q_power=0.2, q_min=0.01,
                  companion_max=False, binary_only_mass_max=H_BURNING_MASS):
-        mass_limits, MF_amps, MF_powers, CSF_amps, CSF_powers = \
-            offner2023_default_segments()
         super(MultiplicityUnresolvedOffner2023, self).__init__(
-            mass_limits, MF_amps, MF_powers, CSF_amps, CSF_powers,
+            MF_A=OFFNER2023_MF_A,
+            MF_B=OFFNER2023_MF_B,
+            MF_M0=OFFNER2023_MF_M0,
+            MF_k=OFFNER2023_MF_K,
+            CSF_A=OFFNER2023_CSF_A,
+            CSF_B=OFFNER2023_CSF_B,
+            CSF_M0=OFFNER2023_CSF_M0,
+            CSF_k=OFFNER2023_CSF_K,
             CSF_max=CSF_max, q_power=q_power, q_min=q_min,
             companion_max=companion_max,
             binary_only_mass_max=binary_only_mass_max)

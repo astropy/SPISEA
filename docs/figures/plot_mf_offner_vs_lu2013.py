@@ -4,8 +4,8 @@ Generate docs/figures/mf_offner_vs_lu2013.png
 
 Two-panel comparison of multiplicity fraction vs primary mass:
 Lu et al. (2013) array power law, Lu+2013 scalar BD staircase,
-Offner et al. 2023 3-segment continuous broken power law, and
-Offner Table 1 points with error bars.
+Offner et al. 2023 logistic in log-mass, and Offner Table 1
+points with error bars.
 
 Run from the repository root::
 
@@ -70,17 +70,15 @@ def _table1_xy():
 
 
 def _style_panel(ax, m_off, mf_off, m_lu, mf_lu, m_step, mf_step,
-                 m_tab, mf_tab, err_tab, xlim, ylim, title, show_a_break=False):
+                 m_tab, mf_tab, err_tab, xlim, ylim, title):
     ax.axvspan(xlim[0], 0.08, color='#e8d5b5', alpha=0.55, zorder=0)
     ax.axvline(0.08, color='#c4a574', ls='--', lw=1.2, zorder=1)
-    if show_a_break:
-        ax.axvline(1.5, color='0.5', ls=':', lw=1.1, zorder=1)
     ax.plot(m_lu, mf_lu, color='0.25', ls='--', lw=1.6, zorder=3,
             label=r'Lu+2013 power law  $0.44\,M^{0.51}$')
     ax.plot(m_step, mf_step, color='0.45', ls=':', lw=1.8, zorder=3,
             label=r'Lu+2013 scalar BD bins  (0 / 8% / 16%)')
     ax.plot(m_off, mf_off, color='#8b3a2a', ls='-', lw=2.4, zorder=4,
-            label='Offner 3-seg continuous')
+            label='Offner logistic in log M')
     ax.errorbar(m_tab, mf_tab, yerr=err_tab, fmt='o', color='#2f6db3',
                 ms=5.5, mfc='white', mew=1.3, elinewidth=1.1, capsize=2.5,
                 zorder=5, label='Offner Table 1')
@@ -117,12 +115,12 @@ def main():
         axes[0], m_wide, mf_off, m_wide, mf_lu, m_step, mf_step,
         m_tab, mf_tab, err_tab,
         xlim=(0.012, 0.20), ylim=(0.0, 0.45),
-        title='Brown-dwarf regime', show_a_break=False)
+        title='Brown-dwarf regime')
     _style_panel(
         axes[1], m_wide, mf_off, m_wide, mf_lu, m_step, mf_step,
         m_tab, mf_tab, err_tab,
         xlim=(0.015, 20.0), ylim=(0.0, 1.0),
-        title='BD through early B', show_a_break=True)
+        title='BD through early B')
 
     legend_handles = [
         Line2D([0], [0], color='0.25', ls='--', lw=1.6,
@@ -130,7 +128,7 @@ def main():
         Line2D([0], [0], color='0.45', ls=':', lw=1.8,
                label=r'Lu+2013 scalar BD bins  (0 / 8% / 16%)'),
         Line2D([0], [0], color='#8b3a2a', ls='-', lw=2.4,
-               label='Offner 3-seg continuous'),
+               label='Offner logistic in log M'),
         Line2D([0], [0], marker='o', color='#2f6db3', ls='none',
                mfc='white', mew=1.3, ms=6, label='Offner Table 1'),
         Patch(facecolor='#e8d5b5', edgecolor='none', alpha=0.8,
