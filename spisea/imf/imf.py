@@ -126,8 +126,8 @@ class IMF(object):
         companionMasses : numpy masked array
             Masked array of companion masses. Each row corresponds to a primary star, and each column corresponds to a companion. The mask is True for entries that are not valid companions (e.g. for single stars or for companions that are below the minimum mass limit).
 
-        companionPorb : numpy masked array
-            Masked array of companion periods or orbital semimajor axes.
+        companionLoga : numpy masked array
+            Masked array of companion log semimajor axes.
 
         companionEcc : numpy masked array
             Masked array of companion eccentricities.
@@ -332,13 +332,13 @@ class IMF(object):
             mask = compMasses < self._mass_limits[0]
             compMasses_ma = np.ma.MaskedArray(compMasses, mask=mask)
 
-            empty_porb_ma = np.ma.masked_all((n_primaries, max_comp))
+            empty_loga_ma = np.ma.masked_all((n_primaries, max_comp))
             empty_ecc_ma = np.ma.masked_all((n_primaries, max_comp))
 
             newSystemMasses += compMasses_ma.sum(axis=1).filled(0)
             newIsMultiple = ~compMasses_ma.mask.all(axis=1)
 
-            return compMasses_ma, empty_porb_ma, empty_ecc_ma, newSystemMasses, newIsMultiple
+            return compMasses_ma, empty_loga_ma, empty_ecc_ma, newSystemMasses, newIsMultiple
 
 
 class IMF_broken_powerlaw(IMF):

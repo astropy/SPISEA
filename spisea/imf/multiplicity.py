@@ -96,7 +96,11 @@ class MultiplicityUnresolved(object):
 
     q_power : float, optional
         The power of the power-law describing the probability
-        density function for the mass ratio.
+        density function for the mass ratio for stellar primaries.
+        
+    q_power_bd : float, optional
+        The power of the power-law describing the probability
+        density function for the mass ratio for brown dwarf primaries.
 
     q_min : float, optional
         The minimum allowed Q value for the probability
@@ -109,7 +113,7 @@ class MultiplicityUnresolved(object):
     def __init__(self, 
                  MF_amp=0.44, MF_power=0.51,
                  CSF_amp=0.50, CSF_power=0.45, CSF_max=3,
-                 q_power=-0.4, q_min=0.01, bd_q_power=6.1,
+                 q_power=-0.4, q_min=0.01, q_pow_bder=6.1,
                  companion_max=False):
          
         self.is_resolved = False
@@ -120,7 +124,7 @@ class MultiplicityUnresolved(object):
         self.CSF_max = CSF_max
         self.q_pow = q_power
         self.q_min = q_min
-        self.bd_q_pow = bd_q_power
+        self.q_pow_bd = q_power_bd
         self.companion_max = companion_max
 
     def multiplicity_fraction(self, mass):
@@ -213,7 +217,7 @@ class MultiplicityUnresolved(object):
 
         # Exponent b = 1 + beta
         b_stellar = 1.0 + self.q_pow
-        b_bd = 1.0 + self.bd_q_pow
+        b_bd = 1.0 + self.q_pow_bd
 
         # Assign exponent based on primary mass threshold (0.08 M_sun)
         b = np.where(m1_arr <= 0.08, b_bd, b_stellar)
@@ -623,7 +627,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         bd_comp_idxs = np.where((mass1<0.08) & is_bin)[0]
         logm = np.log10(mass1[bd_comp_idxs])
         # MASS FIRST
-        b = 1.0 + self.bd_q_pow
+        b = 1.0 + self.q_pow_bd
         # Inverse CDF calculation
         q_bds = (np.random.rand(len(bd_comp_idxs)) * (1.0 - self.q_min ** b) + self.q_min ** b) ** (1.0 / b)
         # SEMI-MAJOR AXIS NEXT
