@@ -1476,6 +1476,7 @@ def test_ResolvedCluster_random_state():
     old_star_systems = Table.read(f'{spisea_path}/tests/test_data/star_systems.fits')
     old_companion = Table.read(f'{spisea_path}/tests/test_data/companions.fits')
 
+    #pdb.set_trace()
     for key in old_star_systems.colnames:
         #np.testing.assert_array_equal(cluster1.star_systems[key], old_star_systems[key])
         np.testing.assert_allclose(cluster1.star_systems[key], old_star_systems[key], rtol=1e-5, atol=1e-8)

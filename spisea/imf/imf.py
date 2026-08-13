@@ -126,6 +126,12 @@ class IMF(object):
         companionMasses : numpy masked array
             Masked array of companion masses. Each row corresponds to a primary star, and each column corresponds to a companion. The mask is True for entries that are not valid companions (e.g. for single stars or for companions that are below the minimum mass limit).
 
+        companionPorb : numpy masked array
+            Masked array of companion periods or orbital semimajor axes.
+
+        companionEcc : numpy masked array
+            Masked array of companion eccentricities.
+
         systemMasses : numpy float array
             Array of total system masses (primary + companions) for each primary star.
 
@@ -147,8 +153,9 @@ class IMF(object):
         # Generate output arrays.
         masses = np.array([], dtype=float)
         isMultiple = np.array([], dtype=bool)
-        # compMasses = {} # Hashmap for index -> compMasses for faster lookup
-        compMasses = []
+        compMasses_list = []
+        compPorb_list = []
+        compEcc_list = []
         systemMasses = np.array([], dtype=float)
 
         # Loop through and add stars to the cluster until we get to
@@ -156,7 +163,6 @@ class IMF(object):
         totalMassTally = 0
         loopCnt = 0
 
-        # start_while = time.time()
         while totalMassTally < totalMass:
             # Generate a random number array.
             uniX = self.rng.random(newStarCount.astype(int))
@@ -170,28 +176,25 @@ class IMF(object):
 
             # Dealing with multiplicity
             if self._multi_props:
-                # newCompMasses = np.empty((len(newMasses),), dtype=object)
-                # newCompMasses.fill([])
-                # Determine the multiplicity of every star
                 MF = self._multi_props.multiplicity_fraction(newMasses)
                 CSF = self._multi_props.companion_star_fraction(newMasses)
 
                 newIsMultiple = self.rng.random(newStarCount.astype(int)) < MF
 
-                # Function to calculate multiple systems more efficiently
-                # start_calc = time.time()
-                newCompMasses, newSystemMasses, newIsMultiple = self.calc_multi(newMasses, newIsMultiple, CSF, MF)
-                # end_calc = time.time()
-                # print('Time taken for calc_multi: ', end_calc - start_calc)
+                # Unpack 5-element tuple from calc_multi
+                (newCompMasses, newCompPorb, newCompEcc, 
+                 newSystemMasses, newIsMultiple) = self.calc_multi(newMasses, newIsMultiple, CSF, MF)
+
                 newTotalMassTally = newSystemMasses.sum()
                 isMultiple = np.append(isMultiple, newIsMultiple)
                 systemMasses = np.append(systemMasses, newSystemMasses)
-                compMasses.append(newCompMasses)
+                compMasses_list.append(newCompMasses)
+                compPorb_list.append(newCompPorb)
+                compEcc_list.append(newCompEcc)
 
             else:
                 newTotalMassTally = newMasses.sum()
-            # end_while = time.time()
-            # print('Time taken for while loop: ', end_while - start_while)
+
             # Append to our primary masses array
             masses = np.append(masses, newMasses)
 
@@ -202,34 +205,20 @@ class IMF(object):
             totalMassTally += newTotalMassTally
             newStarCount = mean_number * 0.1  # increase by 20% each pass
             loopCnt += 1
+            print(totalMass, totalMassTally)
 
-        # Make a running sum of the system masses
+        # Combine iteration outputs using column-padding helper
         if self._multi_props:
-            # Concatenate the companion masses
-            if len(compMasses) > 1:
-                max_cols = max(compMass.shape[1] for compMass in compMasses)
-
-                # Pad each array to have the same number of columns
-                padded_arrays = [
-                    np.ma.masked_all((compMass.shape[0], max_cols)) for compMass in compMasses
-                ]
-
-                for i, compMass in enumerate(compMasses):
-                    padded_arrays[i][:, :compMass.shape[1]] = compMass
-
-                # Vertically stack the padded arrays
-                compMasses = np.ma.vstack(padded_arrays)
-
-            else:
-                compMasses = compMasses[0]
+            compMasses = self._stack_masked_arrays(compMasses_list)
+            compPorb = self._stack_masked_arrays(compPorb_list)
+            compEcc = self._stack_masked_arrays(compEcc_list)
 
             # Make a running sum of the system masses
             massCumSum = systemMasses.cumsum()
         else:
             massCumSum = masses.cumsum()
 
-        # Find the index where we are closest to the desired
-        # total mass.
+        # Find the index where we are closest to the desired total mass.
         idx = np.abs(massCumSum - totalMass).argmin()
 
         masses = masses[:idx+1]
@@ -238,73 +227,119 @@ class IMF(object):
             systemMasses = systemMasses[:idx+1]
             isMultiple = isMultiple[:idx+1]
             compMasses = compMasses[:idx+1]
+            compPorb = compPorb[:idx+1]
+            compEcc = compEcc[:idx+1]
         else:
             isMultiple = np.zeros(len(masses), dtype=bool)
             systemMasses = masses
+            compMasses = np.ma.masked_all((len(masses), 1))
+            compPorb = np.ma.masked_all((len(masses), 1))
+            compEcc = np.ma.masked_all((len(masses), 1))
 
         self._mass_limits[-1] = initial_mass_limit
 
-        return (masses, isMultiple, compMasses, systemMasses)
+        return (masses, isMultiple, compMasses, compPorb, compEcc, systemMasses)
+
+    def _stack_masked_arrays(self, array_list):
+        """
+        Helper method to pad column counts across iteration steps 
+        and vertically stack 2D masked arrays.
+        """
+        if len(array_list) == 1:
+            return array_list[0]
+
+        max_cols = max(arr.shape[1] for arr in array_list)
+        padded = []
+        for arr in array_list:
+            p = np.ma.masked_all((arr.shape[0], max_cols))
+            p[:, :arr.shape[1]] = arr
+            padded.append(p)
+
+        return np.ma.vstack(padded)
 
     def calc_multi(self, newMasses, newIsMultiple, CSF, MF):
         """
-        Helper function to calculate multiples more efficiently.
-        We will use array operations as much as possible.
-        Uses Fontanive+18 parameters for brown dwarf masses
-        (M <= 0.08 M_sun) while keeping default parameters for
-        all other stellar primaries.
+        Helper function to calculate multiples efficiently.
+        Includes options for unresolved multiple systems or resolved systems,
+        delegating sampling physics directly to self._multi_props.
+
+        Parameters
+        ----------
+        newMasses : array-like
+            Primary star masses.
+        newIsMultiple : array-like of bool
+            Boolean mask indicating whether each system is a multiple.
+        CSF : array-like
+            Companion Star Fraction for each primary.
+        MF : array-like
+            Multiplicity Fraction for each primary.
+
+        Returns
+        -------
+        compMasses_ma : np.ma.MaskedArray
+            Masked array of companion masses.
+        compPorb_ma : np.ma.MaskedArray
+            Masked array of orbital periods or semimajor axes.
+        compEcc_ma : np.ma.MaskedArray
+            Masked array of eccentricities.
+        newSystemMasses : np.ndarray
+            Updated total system masses including companions.
+        newIsMultiple : np.ndarray of bool
+            Updated multiple flag reflecting valid companions.
         """
-        # Copy over the primary masses. Eventually add the companions.
+        n_primaries = len(newMasses)
         newSystemMasses = newMasses.copy()
 
-        # Identify multiple systems, calculate number of companions for each
-        multiple_idx = np.where(newIsMultiple)[0]
-        comp_nums = 1 + self.rng.poisson((CSF[multiple_idx] / MF[multiple_idx]) - 1)
-        if self._multi_props.companion_max:
-            too_many = np.where(comp_nums > self._multi_props.CSF_max)[0]
-            comp_nums[too_many] = self._multi_props.CSF_max
-        primary = newMasses[multiple_idx]
+        # Resolved multiplicity case
+        if self._multi_props.is_resolved:
+            compMasses_ma, compPorb_ma, compEcc_ma = self._multi_props.get_resolved_companions(newMasses)
 
-        # limit BD primaries to 1 companion (Fontanive+18)
-        bd_mask = primary <= 0.08
-        comp_nums[bd_mask & (comp_nums > 1)] = 1
+            # Apply minimum mass threshold mask
+            below_min_mass = compMasses_ma < self._mass_limits[0]
+            compMasses_ma.mask = compMasses_ma.mask | below_min_mass
+            compPorb_ma.mask = compPorb_ma.mask | below_min_mass
+            compEcc_ma.mask = compEcc_ma.mask | below_min_mass
 
-        # We will deal with each number of multiple system independently. This is
-        # so we can put in uniform arrays in _multi_props.random_q.
-        comp_unique = np.unique(comp_nums)
-        comp_indices = [np.where(comp_nums == i)[0] for i in comp_unique]
-        if np.any(newIsMultiple):
-            compMasses = np.zeros((len(newMasses), max(comp_unique)))
+            newSystemMasses += compMasses_ma.sum(axis=1).filled(0)
+            newIsMultiple = ~compMasses_ma.mask.all(axis=1)
+
+            return compMasses_ma, compPorb_ma, compEcc_ma, newSystemMasses, newIsMultiple
+
+        # Unresolved multiplicity case
         else:
-            compMasses = np.zeros((len(newMasses), 1))
+            multiple_idx = np.where(newIsMultiple)[0]
+            if len(multiple_idx) == 0:
+                empty_ma = np.ma.masked_all((n_primaries, 1))
+                return empty_ma, empty_ma, empty_ma, newSystemMasses, newIsMultiple
 
-        for comp_num, comp_index in zip(comp_unique, comp_indices):
-            prim_subset = primary[comp_index]
-            bd_sub_mask = prim_subset <= 0.08
-            star_sub_mask = ~bd_sub_mask
+            primary = newMasses[multiple_idx]
+            comp_nums = 1 + self.rng.poisson((CSF[multiple_idx] / MF[multiple_idx]) - 1)
+            
+            if self._multi_props.companion_max:
+                comp_nums = np.minimum(comp_nums, self._multi_props.CSF_max)
 
-            q_values = np.empty((len(comp_index), comp_num))
+            max_comp = np.max(comp_nums)
+            compMasses = np.zeros((n_primaries, max_comp))
 
-            # Stellar primaries: use default Duchene & Kraus distribution
-            if np.any(star_sub_mask):
-                q_values[star_sub_mask] = self._multi_props.random_q(self.rng.random((star_sub_mask.sum(), comp_num)))
+            for c_num in np.unique(comp_nums):
+                group_mask = comp_nums == c_num
+                group_p_idx = multiple_idx[group_mask]
+                group_primaries = primary[group_mask]
 
-            # BD primaries: use Fontanive+18 power-law distribution
-            if np.any(bd_sub_mask):
-                b = 1.0 + 6.1  # gamma from Fontanive+18
-                rand_vals = self.rng.random((bd_sub_mask.sum(), comp_num))
-                q_values[bd_sub_mask] = (rand_vals * (1.0 - self._multi_props.q_min ** b) +
-                                         self._multi_props.q_min ** b) ** (1.0 / b)
+                rand_u = self.rng.random((len(group_p_idx), c_num))
+                q_vals = self._multi_props.random_q(rand_u, group_primaries)
+                compMasses[group_p_idx, :c_num] = q_vals * group_primaries[:, None]
 
-            m_comp = np.multiply(q_values, np.transpose([prim_subset]))
-            compMasses[multiple_idx[comp_index], :comp_num] = m_comp
+            mask = compMasses < self._mass_limits[0]
+            compMasses_ma = np.ma.MaskedArray(compMasses, mask=mask)
 
-        # Mask out companions below the minimum mass
-        compMasses = np.ma.MaskedArray(compMasses, mask=compMasses < self._mass_limits[0])
-        newSystemMasses[multiple_idx] += compMasses[multiple_idx].sum(axis=1)
-        newIsMultiple = np.any(~compMasses.mask, axis=1)
+            empty_porb_ma = np.ma.masked_all((n_primaries, max_comp))
+            empty_ecc_ma = np.ma.masked_all((n_primaries, max_comp))
 
-        return compMasses, newSystemMasses, newIsMultiple
+            newSystemMasses += compMasses_ma.sum(axis=1).filled(0)
+            newIsMultiple = ~compMasses_ma.mask.all(axis=1)
+
+            return compMasses_ma, empty_porb_ma, empty_ecc_ma, newSystemMasses, newIsMultiple
 
 
 class IMF_broken_powerlaw(IMF):

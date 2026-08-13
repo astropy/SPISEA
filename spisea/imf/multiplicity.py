@@ -1,6 +1,9 @@
 import numpy as np
+import scipy.integrate
 import astropy.modeling
+from astropy.table import Table
 from scipy.stats import truncnorm
+import os
 
 defaultMF_amp = 0.44
 defaultMF_power = 0.51
@@ -9,9 +12,8 @@ defaultCSF_power = 0.45
 defaultCSF_max = 3
 defaultq_power = -0.4
 defaultq_min = 0.01
-default_aMean = 100.0  # log (AU)
-default_aSigma = 0.1   # log (AU)
-
+default_aMean = 100.0 # log (AU)
+default_aSigma = 0.1  # log (AU)
 
 class MultiplicityUnresolved(object):
     """
@@ -30,15 +32,15 @@ class MultiplicityUnresolved(object):
     multiple stars. In other words, the number of primary stars with
     companions. The multiplicity fraction (MF) is typically described
     as::
-                         B + T + Q + ...
-                 MF =     ---------------------
+                            B + T + Q + ...
+                MF =     ---------------------
                           S + B + T + Q + ...
 
     where S = single, B = binary, T = triple, Q = quadruple, etc.
     The MF also changes with mass and this dependency can be 
     described as a power-law::
             
-                 MF(mass) = MF_amp * (mass ** MF_power)
+                MF(mass) = MF_amp * (mass ** MF_power)
 
     However, in the brown dwarf mass regime, it is currently recognized
     that only binaries are possible, and the MF decreases dissimilarly
@@ -50,7 +52,7 @@ class MultiplicityUnresolved(object):
     changes with mass and this dependency can be described as
     a power-law::
                 
-                 CSF(mass) = CSF_amp * (mass ** CSF_power)
+                CSF(mass) = CSF_amp * (mass ** CSF_power)
 
     The companion star fraction is clipped to some maximum
     value, CSF_max. The actual number of companions is drawn 
@@ -59,11 +61,11 @@ class MultiplicityUnresolved(object):
     In the brown dwarf regime we impose an assumption that only
     binary systems are possible due to current literature trends.
 
-    **Mass Ratio (Q)** -- The ratio between the companion star
+    **Mass Ratio (Q)** -- The ratio between the companion star 
     mass and primary star mass, Q = (m_comp / m_prim ) has
     a probability density function described by a powerlaw::
 
-                 P(Q) = Q ** q_power  for q_min <= Q <= 1
+                P(Q) = Q ** q_power  for q_min <= Q <= 1
 
     Current observations show no significant mass dependence.
         
@@ -106,8 +108,10 @@ class MultiplicityUnresolved(object):
     def __init__(self, 
                  MF_amp=0.44, MF_power=0.51,
                  CSF_amp=0.50, CSF_power=0.45, CSF_max=3,
-                 q_power=-0.4, q_min=0.01, companion_max=False):
+                 q_power=-0.4, q_min=0.01, bd_q_power=6.1,
+                 companion_max=False):
          
+        self.is_resolved = False
         self.MF_amp = MF_amp
         self.MF_pow = MF_power
         self.CSF_amp = CSF_amp
@@ -115,6 +119,7 @@ class MultiplicityUnresolved(object):
         self.CSF_max = CSF_max
         self.q_pow = q_power
         self.q_min = q_min
+        self.bd_q_pow = bd_q_power
         self.companion_max = companion_max
 
     def multiplicity_fraction(self, mass):
@@ -123,7 +128,7 @@ class MultiplicityUnresolved(object):
         multiple system (multiplicity fraction = MF).
 
         Modified to allow binary fraction to decrease in brown dwarf regime.
-        Supported by Aberasturi et al. (2014) and Fontanive et al. (2018).
+        Supported by Aberasturi et al. (2014) and Fontanive et al. (2018/2023).
 
         Parameters
         ----------
@@ -136,14 +141,14 @@ class MultiplicityUnresolved(object):
             Multiplicity Fraction, the fraction of stars at this mass
             that will have one or more companions.
         """
-        mass_arr = np.atleast_1d(mass)
-        mf = self.MF_amp * (mass_arr ** self.MF_pow)
-        mf = np.clip(mf, None, 1.0)
+        mass = np.atleast_1d(mass)
+        mf = self.MF_amp * (mass ** self.MF_pow)
+        mf = np.minimum(mf, 1.0)
 
-        # Brown dwarf overrides (Aberasturi+14, Fontanive+18/23)
-        bd1 = (mass_arr <= 0.08) & (mass_arr > 0.06)
-        bd2 = (mass_arr <= 0.06) & (mass_arr > 0.02)
-        bd3 = (mass_arr <= 0.02)
+        # # Brown dwarf overrides (Aberasturi+14, Fontanive+18/23)
+        bd1 = (mass <= 0.08) & (mass > 0.06)
+        bd2 = (mass <= 0.06) & (mass > 0.02)
+        bd3 = (mass < 0.02)
 
         mf[bd1] = 0.16
         mf[bd2] = 0.08
@@ -160,7 +165,7 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         mass : float or numpy array
-            Mass of primary star
+            Mass of primary star.
 
         Returns
         -------
@@ -168,37 +173,65 @@ class MultiplicityUnresolved(object):
             Companion Star Fraction, the expected number of companions
             for a star at this mass.
         """
-        mass_arr = np.atleast_1d(mass)
-        csf = self.CSF_amp * (mass_arr ** self.CSF_pow)
-        csf = np.clip(csf, None, self.CSF_max)
+        mass = np.atleast_1d(mass)
+        csf = self.CSF_amp * (mass ** self.CSF_pow)
+        csf = np.minimum(csf, self.CSF_max)
 
         # Enforce single-companion limit in brown dwarf regime
-        bd = mass_arr <= 0.08
+        bd = mass <= 0.08
         if np.any(bd):
-            csf[bd] = self.multiplicity_fraction(mass_arr[bd])
+            csf[bd] = self.multiplicity_fraction(mass[bd])
 
         return float(csf[0]) if np.isscalar(mass) else csf
 
-    def random_q(self, x):
+    def random_q(self, x, primary_mass):
         """
-        Generative function for companion mass ratio, equivalent
-        to the inverse of the CDF.
+        Generative function for companion mass ratio (inverse CDF).
 
             `q = m_companion / m_primary`
-            `P(q) = q ** beta`    for q_min <= q <= 1
+            `P(q) = q ** beta` for q_min <= q <= 1
 
         Parameters
         ----------
         x : float or array_like
-            Random number between 0 and 1.
+            Random number(s) uniform on [0, 1].
+        primary_mass : float or array_like
+            Primary mass(es) in solar masses.
 
         Returns
         -------
-        q : float or array_like
-            companion mass ratio(s)
+        q : float or numpy.ndarray
+            Companion mass ratio(s).
         """
-        b = 1.0 + self.q_pow
-        return (x * (1.0 - self.q_min ** b) + self.q_min ** b) ** (1.0 / b)
+        x_arr = np.asarray(x)
+        m1_arr = np.asarray(primary_mass)
+
+        # Align primary_mass dimensions with x for multi-companion matrices (e.g. N_stars x N_comps)
+        if x_arr.ndim > m1_arr.ndim:
+            m1_arr = np.expand_dims(m1_arr, axis=-1)
+
+        # Exponent b = 1 + beta
+        b_stellar = 1.0 + self.q_pow
+        b_bd = 1.0 + self.bd_q_pow
+
+        # Assign exponent based on primary mass threshold (0.08 M_sun)
+        b = np.where(m1_arr <= 0.08, b_bd, b_stellar)
+
+        # Inverse CDF calculation
+        q = (x_arr * (1.0 - self.q_min ** b) + self.q_min ** b) ** (1.0 / b)
+
+        return float(q) if (np.isscalar(x) and np.isscalar(primary_mass)) else q
+
+    def get_resolved_companions(self, mass1):
+        """
+        Function that generates companion masses and orbital
+        parameters.
+
+        Not defined for the unresolved class, will be defined in
+        resolved subclasses.
+        """
+        raise NotImplementedError("Function get_resolved_companions is not"
+            " defined for MultiplicityUnresolved, only its resolved subclasses.")
 
     def random_is_multiple(self, x, MF):
         """
@@ -215,8 +248,9 @@ class MultiplicityUnresolved(object):
 
         n_comp = 1 + np.random.poisson((CSF / MF) - 1)
         
-        if self.companion_max and n_comp > self.CSF_max:
-            n_comp = self.CSF_max
+        if self.companion_max:
+            if n_comp > self.CSF_max:
+                n_comp = self.CSF_max
             
         return n_comp
 
@@ -224,40 +258,41 @@ class MultiplicityUnresolved(object):
 class MultiplicityResolvedDK(MultiplicityUnresolved):
     """
     Sub-class of MultiplicityUnresolved that adds semimajor axis and eccentricity information 
-    for multiple objects from distributions described in Duchene and Kraus 2013
+    for multiple objects from distributions described in Duchene and Kraus 2013.
 
     For brown dwarf regime, mean separation and std are given by Fontanive et al. (2018).
-
+    
     Parameters
     --------------
     a_amp: float, optional
         Amplitude of the broken power law describing the log_semimajoraxis
-        
+
     a_break: float, optional
         Break location on the x-axis of the broken power law describing the log_semimajoraxis
-    
+
     a_slope1: float, optional
         Slope of the left side of the broken power law describing the log_semimajoraxis
-        
+
     a_slope2: float, optional
         Slope of the right side of the broken power law describing the log_semimajoraxis
-        
+
     a_std_slope: float, optional
         Slope of the line that fit sigma_log_semimajoraxis vs log_mass
-    
+
     a_std_intercept: float, optional
-        Intercept of the line that fit sigma_log_semimajoraxis vs log_mass        
+        Intercept of the line that fit sigma_log_semimajoraxis vs log_mass
     """
     def __init__(self, a_amp=379.79953034, a_break=4.90441533, a_slope1=-1.80171539, 
                  a_slope2=4.23325571, a_std_slope=1.19713084, a_std_intercept=1.28974264, **kwargs):
         super(MultiplicityResolvedDK, self).__init__(**kwargs)
+        self.is_resolved = True
         self.a_amp = a_amp
         self.a_break = a_break
         self.a_slope1 = a_slope1
         self.a_slope2 = a_slope2
         self.a_std_slope = a_std_slope
         self.a_std_intercept = a_std_intercept
-
+    
     def log_semimajoraxis(self, mass):
         """
         Generate the semimajor axis for a given mass. The mean and standard deviation of a given mass are determined 
@@ -266,7 +301,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
 
         The brown dwarf range is covered by mass-dependent scaling of both the characteristic separation and dispersion
         matching trends described in Fontanive et al. (2018).
-
+        
         Parameters
         ----------
         mass : array-like
@@ -277,19 +312,19 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         log_semimajoraxis : array-like
             Log of the semimajor axis/separation between the stars in units of AU
         """
-        mass_arr = np.atleast_1d(mass)
-        logm = np.log10(mass_arr)
+        is_scalar = np.isscalar(mass) 
+        mass = np.atleast_1d(mass)
+        logm = np.log10(mass)
 
         # Stellar mean and std (Duchêne & Kraus 2013)
         a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(
-            amplitude=self.a_amp, x_break=self.a_break,
-            alpha_1=self.a_slope1, alpha_2=self.a_slope2
+            amplitude=self.a_amp, x_break=self.a_break, alpha_1=self.a_slope1, alpha_2=self.a_slope2
         )
-        log_a_mean_star = np.log10(a_mean_func(mass_arr))
+        log_a_mean_star = np.log10(a_mean_func(mass))
         log_a_std_func = astropy.modeling.models.Linear1D(slope=self.a_std_slope, intercept=self.a_std_intercept)
         log_a_std_star = log_a_std_func(logm)
-        log_a_std_star[mass_arr >= 2.9] = log_a_std_func(np.log10(2.9))
-        log_a_std_star = np.clip(log_a_std_star, 0.1, None)
+        log_a_std_star[mass >= 2.9] = log_a_std_func(np.log10(2.9))
+        log_a_std_star = np.maximum(log_a_std_star, 0.1)
 
         # BD mean and std (Fontanive+18): interpolated over substellar range
         log_a_mean_bd = np.interp(
@@ -311,11 +346,13 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         # Truncated normal distribution between log10(0.01) AU and log10(2000) AU
         log_a_lower = np.log10(0.01)
         log_a_upper = np.log10(2000)
+
+        # Convert bounds to standard normal space
         a_lower_std = (log_a_lower - log_a_mean) / log_a_std
         a_upper_std = (log_a_upper - log_a_mean) / log_a_std
 
-        log_semimajoraxis = truncnorm.rvs(a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std)
-        return float(log_semimajoraxis[0]) if np.isscalar(mass) else log_semimajoraxis
+        log_semimajoraxis = truncnorm.rvs(a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std)            
+        return float(log_semimajoraxis[0]) if is_scalar else log_semimajoraxis
 
     def random_e(self, x):
         """
@@ -333,42 +370,451 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         """
         return np.sqrt(x)
 
-    def random_keplarian_parameters(self, x, y, z):
+    def get_resolved_companions(self, mass1):
         """
-        Generate random inclination and angles of binary system
-        
+        Generate companion masses, semimajor axes (AU), and eccentricities
+        as parallel 2D MaskedArrays. Supports higher-order multiple systems 
+        (triples, quadruples, etc.) based on CSF and MF.
+
         Parameters
         ----------
-        x : float or array_like
-            Random number between 0 and 1.
-            
-        y : float or array_like
-            Random number between 0 and 1.
-            
-        z : float or array_like
-            Random number between 0 and 1.
+        mass1 : array-like or float
+            Primary masses in solar masses.
 
         Returns
         -------
-        inclination : float or array_like
-            Angle of inclination
-                    
-        Omega : float or array_like
-            Big Omega: one other angle of the system
-        
-        omega : float or array_like
-            Final angle of the system
+        compMasses : np.ma.MaskedArray
+            2D masked array of companion masses (shape: N x max_comp).
+        compPorb : np.ma.MaskedArray
+            2D masked array of semimajor axes in AU (shape: N x max_comp).
+        compEcc : np.ma.MaskedArray
+            2D masked array of orbital eccentricities (shape: N x max_comp).
         """
-        x_arr = np.atleast_1d(x)
-        y_arr = np.atleast_1d(y)
-        z_arr = np.atleast_1d(z)
+        mass1 = np.atleast_1d(mass1)
+        n_primaries = len(mass1)
 
-        sign = np.random.choice([-1, 1], size=len(x_arr))
-        inclination = np.arccos(sign * x_arr) * 180.0 / np.pi
-        Omega = 360.0 * y_arr
-        omega = 360.0 * z_arr
-
-        if np.isscalar(x):
-            return float(inclination[0]), float(Omega[0]), float(omega[0])
-        return inclination, Omega, omega
+        mf = self.multiplicity_fraction(mass1)
+        csf = self.companion_star_fraction(mass1)
+        is_multi = self.random_is_multiple(np.random.rand(n_primaries), mf)
         
+        system_idx = np.where(is_multi)[0]
+        if len(system_idx) == 0:
+            empty_ma = np.ma.masked_all((n_primaries, 1))
+            return empty_ma, empty_ma, empty_ma
+
+        primary = mass1[system_idx]
+        
+        # Calculate number of companions per multiple system using Poisson draw
+        comp_nums = 1 + np.random.poisson((csf[system_idx] / mf[system_idx]) - 1)
+        if self.companion_max:
+            comp_nums = np.minimum(comp_nums, self.CSF_max)
+
+        max_comp = np.max(comp_nums)
+        compMasses = np.zeros((n_primaries, max_comp))
+        compPorb = np.zeros((n_primaries, max_comp))
+        compEcc = np.zeros((n_primaries, max_comp))
+
+        for c_num in np.unique(comp_nums):
+            group_mask = comp_nums == c_num
+            group_p_idx = system_idx[group_mask]
+            group_primaries = primary[group_mask]
+            n_group = len(group_p_idx)
+
+            # Sample mass ratios
+            rand_q = np.random.rand(n_group, c_num)
+            q_vals = self.random_q(rand_q, group_primaries)
+            
+            # Sample semimajor axes for each companion
+            prim_repeated = np.repeat(group_primaries, c_num)
+            log_a_flat = self.log_semimajoraxis(prim_repeated)
+            a_vals = (10.0 ** log_a_flat).reshape(n_group, c_num)
+            
+            # Sample eccentricities
+            ecc_vals = self.random_e(np.random.rand(n_group, c_num))
+
+            compMasses[group_p_idx, :c_num] = q_vals * group_primaries[:, None]
+            compPorb[group_p_idx, :c_num] = a_vals
+            compEcc[group_p_idx, :c_num] = ecc_vals
+
+        mask = compMasses == 0
+        return (
+            np.ma.MaskedArray(compMasses, mask=mask),
+            np.ma.MaskedArray(compPorb, mask=mask),
+            np.ma.MaskedArray(compEcc, mask=mask)
+        )
+    
+def random_keplarian_parameters(x, y, z):
+    """
+    Generate random inclination and angles of binary system.
+    
+    Parameters
+    ----------
+    x : float or array_like
+        Random number between 0 and 1 for inclination.
+        
+    y : float or array_like
+        Random number between 0 and 1 for longitude of ascending node (Omega).
+        
+    z : float or array_like
+        Random number between 0 and 1 for argument of periastron (omega).
+
+    Returns
+    -------
+    inclination : float or array_like
+        Angle of inclination in degrees.
+                
+    Omega : float or array_like
+        Longitude of ascending node in degrees.
+    
+    omega : float or array_like
+        Argument of periastron in degrees.
+    """
+    is_scalar = np.isscalar(x) 
+    x = np.atleast_1d(x)
+    y = np.atleast_1d(y)
+    z = np.atleast_1d(z)
+
+    sign = np.random.choice([-1, 1], size=len(x))
+    inclination = np.arccos(sign * x) * 180.0 / np.pi
+    Omega = 360.0 * y
+    omega = 360.0 * z
+
+    if is_scalar:
+        return float(inclination[0]), float(Omega[0]), float(omega[0])
+    return inclination, Omega, omega
+
+
+class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
+    """
+    Multiplicity model based on Max Moe's IDL function and the Python
+    implementation from COSMIC, adapted for SPISEA.
+    """
+    def __init__(self, **kwargs):
+        super(Multiplicity_MoeDiStefano, self).__init__(**kwargs)
+        self.is_resolved = True
+
+        self.M1min = 0.08
+        self.M2min = 0.08
+        self.M1max = 150.0
+        self.M2max = 150.0
+        self.porb_lo = 0.15
+        self.porb_hi = 8.0
+
+
+        script_dir = os.path.dirname(os.path.abspath(__file__))
+        grid_path = os.path.join(script_dir, 'moe_destefano_grid.fits')
+
+        # Build FITS lookup table automatically if it doesn't exist yet
+        if not os.path.exists(grid_path):
+            generate_moe_destefano_grid(grid_path)
+
+        # Load grid directly from the script's directory
+        grid = Table.read(grid_path)
+        self.M1v = grid['M1v'][0]
+        self.logPv = grid['logPv'][0]
+        self.qv = grid['qv'][0]
+        self.ev = grid['ev'][0]
+        self.cumqdist = grid['cumqdist'][0]
+        self.cumedist = grid['cumedist'][0]
+        self.cumPbindist = grid['cumPbindist'][0]
+
+    def multiplicity_fraction(self, mass):
+        """Return the multiplicity fraction for input primary mass(es)."""
+        is_scalar = np.isscalar(mass)
+        mass = np.atleast_1d(mass)
+        mfs = np.zeros(len(mass))
+
+        for k, m in enumerate(mass):
+            indM1 = np.argmin(np.abs(m - self.M1v))
+            mycumPbindist_flat = self.cumPbindist[:, indM1].flatten()
+
+            if m <= 0.8:
+                mycumPbindist_flat = mycumPbindist_flat * np.interp(
+                    np.log10(m), np.log10([0.08, 0.8]), [0.0, 1.0]
+                )
+
+            mfs[k] = np.max(mycumPbindist_flat)
+
+        return float(mfs[0]) if is_scalar else mfs
+
+    def companion_star_fraction(self, mass):
+        """Companion star fraction equals multiplicity fraction in this model."""
+        return np.minimum(1.0, self.multiplicity_fraction(mass))
+
+    def get_resolved_companions(self, mass1):
+        """
+        Generate companion masses, orbital periods (days), and eccentricities
+        as parallel 2D MaskedArrays using table lookup from Moe & Di Stefano (2017).
+
+        Parameters
+        ----------
+        mass1 : array-like or float
+            Primary masses in solar masses.
+
+        Returns
+        -------
+        compMasses : np.ma.MaskedArray
+            2D masked array of companion masses (shape: N x 1).
+        compPorb : np.ma.MaskedArray
+            2D masked array of orbital periods in days (shape: N x 1).
+        compEcc : np.ma.MaskedArray
+            2D masked array of orbital eccentricities (shape: N x 1).
+        """
+        mass1 = np.atleast_1d(mass1)
+        n_primaries = len(mass1)
+
+        mf = self.multiplicity_fraction(mass1)
+        is_bin = self.random_is_multiple(np.random.rand(n_primaries), mf)
+        system_idx = np.where(is_bin)[0]
+        n_binaries = len(system_idx)
+
+        compMasses = np.zeros((n_primaries, 1))
+        compPorb = np.zeros((n_primaries, 1))
+        compEcc = np.zeros((n_primaries, 1))
+
+        if n_binaries > 0:
+            for k in range(n_binaries):
+                idx = system_idx[k]
+                myM1 = mass1[idx]
+                indM1 = np.argmin(np.abs(myM1 - self.M1v))
+
+                mycumPbindist_flat = self.cumPbindist[:, indM1].flatten()
+                if myM1 <= 0.8:
+                    mycumPbindist_flat = mycumPbindist_flat * np.interp(
+                        np.log10(myM1), np.log10([0.08, 0.8]), [0.0, 1.0]
+                    )
+
+                mybinfrac = np.max(mycumPbindist_flat)
+                myrand = np.random.rand() * mybinfrac
+
+                mylogP = np.interp(myrand, mycumPbindist_flat, self.logPv)
+                indlogP = np.argmin(np.abs(mylogP - self.logPv))
+
+                mye = np.interp(np.random.rand(), self.cumedist[:, indlogP, indM1].flatten(), self.ev)
+
+                mycumqdist = self.cumqdist[:, indlogP, indM1].flatten()
+                if myM1 < 0.8:
+                    q_min = 0.08 / myM1
+                    cum_qmin = np.interp(q_min, self.qv, mycumqdist)
+                    mycumqdist = mycumqdist - cum_qmin
+                    max_q = np.max(mycumqdist)
+                    if max_q > 0:
+                        mycumqdist = mycumqdist / max_q
+                    indq = np.where(self.qv <= q_min)
+                    mycumqdist[indq] = 0.0
+
+                myq = np.interp(np.random.rand(), mycumqdist, self.qv)
+                p_days = 10.0 ** mylogP
+
+                compMasses[idx, 0] = myq * myM1
+                compPorb[idx, 0] = p_days
+                compEcc[idx, 0] = mye
+
+        mask = compMasses == 0
+        return (
+            np.ma.MaskedArray(compMasses, mask=mask),
+            np.ma.MaskedArray(compPorb, mask=mask),
+            np.ma.MaskedArray(compEcc, mask=mask)
+        )
+
+def generate_moe_destefano_grid(grid_path):
+    """Pre-computes lookup table grids and saves them to moe_destefano_grid.fits in this file's folder."""
+    numM1 = 101
+    bwlogP = 0.05
+    numq = 91
+    nume = 100
+
+    porb_lo, porb_hi = 0.15, 8.0
+    M1v = np.logspace(np.log10(0.8), np.log10(40.0), numM1)
+    logPv = np.arange(porb_lo, porb_hi + bwlogP, bwlogP)
+    qv = np.linspace(0.1, 1.0, numq)
+    ev = np.linspace(0.0, 0.99, nume) + 0.0001
+
+    numlogP = len(logPv)
+    cumqdist = np.zeros([numq, numlogP, numM1])
+    cumedist = np.zeros([nume, numlogP, numM1])
+    cumPbindist = np.zeros([numlogP, numM1])
+
+    flogP_sq = np.zeros([numlogP, numM1])
+    probbin = np.zeros([numlogP, numM1])
+
+    alpha = 0.018
+    DlogP = 0.7
+
+    H = np.zeros(numq)
+    H[qv >= 0.95] = 1.0
+    H = H / idl_tabulate(qv, H)
+
+    indlq = np.where(qv >= 0.3)
+    indsq = np.where(qv < 0.3)
+    indq0p3 = np.min(indlq)
+
+    for i in range(numM1):
+        myM1 = M1v[i]
+
+        FtwinlogPle1 = 0.3 - 0.15 * np.log10(myM1)
+        logPtwin = 1.5 if myM1 >= 6.5 else 8.0 - myM1
+
+        flogPle1 = 0.020 + 0.04 * np.log10(myM1) + 0.07 * (np.log10(myM1)) ** 2.0
+        flogPeq2p7 = 0.039 + 0.07 * np.log10(myM1) + 0.01 * (np.log10(myM1)) ** 2.0
+        flogPeq5p5 = 0.078 - 0.05 * np.log10(myM1) + 0.04 * (np.log10(myM1)) ** 2.0
+
+        for j in range(numlogP):
+            mylogP = logPv[j]
+
+            if mylogP <= 1.0:
+                Ftwin = FtwinlogPle1
+            elif mylogP >= logPtwin:
+                Ftwin = 0.0
+            else:
+                Ftwin = FtwinlogPle1 * (1.0 - (mylogP - 1.0) / (logPtwin - 1.0))
+
+            gl_1p2 = -0.5 if mylogP <= 5.0 else -0.5 - 0.3 * (mylogP - 5.0)
+
+            if mylogP <= 1.0:
+                gl_3p5 = -0.5
+            elif mylogP <= 4.5:
+                gl_3p5 = -0.5 - 0.2 * (mylogP - 1.0)
+            elif mylogP <= 6.5:
+                gl_3p5 = -1.2 - 0.4 * (mylogP - 4.5)
+            else:
+                gl_3p5 = -2.0
+
+            if mylogP <= 1.0:
+                gl_6 = -0.5
+            elif mylogP <= 2.0:
+                gl_6 = -0.5 - 0.9 * (mylogP - 1.0)
+            elif mylogP <= 4.0:
+                gl_6 = -1.4 - 0.3 * (mylogP - 2.0)
+            else:
+                gl_6 = -2.0
+
+            if myM1 <= 1.2:
+                gl = gl_1p2
+            elif myM1 <= 3.5:
+                gl = np.interp(np.log10(myM1), np.log10([1.2, 3.5]), [gl_1p2, gl_3p5])
+            elif myM1 <= 6.0:
+                gl = np.interp(np.log10(myM1), np.log10([3.5, 6.0]), [gl_3p5, gl_6])
+            else:
+                gl = gl_6
+
+            gs_1p2 = 0.3
+            if mylogP <= 2.5:
+                gs_3p5 = 0.2
+            elif mylogP <= 5.5:
+                gs_3p5 = 0.2 - 0.3 * (mylogP - 2.5)
+            else:
+                gs_3p5 = -0.7 - 0.2 * (mylogP - 5.5)
+
+            if mylogP <= 1.0:
+                gs_6 = 0.1
+            elif mylogP <= 3.0:
+                gs_6 = 0.1 - 0.15 * (mylogP - 1.0)
+            elif mylogP <= 5.6:
+                gs_6 = -0.2 - 0.50 * (mylogP - 3.0)
+            else:
+                gs_6 = -1.5
+
+            if myM1 <= 1.2:
+                gs = gs_1p2
+            elif myM1 <= 3.5:
+                gs = np.interp(np.log10(myM1), np.log10([1.2, 3.5]), [gs_1p2, gs_3p5])
+            elif myM1 <= 6.0:
+                gs = np.interp(np.log10(myM1), np.log10([3.5, 6.0]), [gs_3p5, gs_6])
+            else:
+                gs = gs_6
+
+            fq = qv ** gl
+            fq = fq / idl_tabulate(qv[indlq], fq[indlq])
+            fq = fq * (1.0 - Ftwin) + H * Ftwin
+            fq[indsq] = fq[indq0p3] * (qv[indsq] / 0.3) ** gs
+            cumfq = np.cumsum(fq) - fq[0]
+            cumqdist[:, j, i] = cumfq / np.max(cumfq)
+
+            q_factor = idl_tabulate(qv, fq)
+
+            if mylogP >= 0.7:
+                eta_3 = 0.6 - 0.7 / (mylogP - 0.5)
+                eta_7 = 0.9 - 0.2 / (mylogP - 0.5)
+            else:
+                eta_3, eta_7 = -2.9, -0.1
+
+            if myM1 <= 3.0:
+                eta = eta_3
+            elif myM1 <= 7.0:
+                eta = np.interp(np.log10(myM1), np.log10([3.0, 7.0]), [eta_3, eta_7])
+            else:
+                eta = eta_7
+
+            if 10 ** mylogP <= 2.0:
+                fe = ev ** (-3.2)
+            else:
+                fe = ev ** eta
+                e_max = 1.0 - (10 ** mylogP / 2.0) ** (-2.0 / 3.0)
+                fe[ev >= e_max] = 0.0
+                ind_trans = np.where((ev >= 0.8 * e_max) & (ev <= 1.0 * e_max))
+                if len(ind_trans[0]) > 0:
+                    ind_cont = np.min(ind_trans) - 1
+                    fe[ind_trans] = np.interp(
+                        ev[ind_trans], [0.8 * e_max, 1.0 * e_max], [fe[ind_cont], 0.0]
+                    )
+
+            cumfe = np.cumsum(fe) - fe[0]
+            cumedist[:, j, i] = cumfe / np.max(cumfe)
+
+            if mylogP <= 1.0:
+                flogP = flogPle1
+            elif mylogP <= 2.7 - DlogP:
+                flogP = flogPle1 + (mylogP - 1.0) / (1.7 - DlogP) * (
+                    flogPeq2p7 - flogPle1 - alpha * DlogP
+                )
+            elif mylogP <= 2.7 + DlogP:
+                flogP = flogPeq2p7 + alpha * (mylogP - 2.7)
+            elif mylogP <= 5.5:
+                flogP = flogPeq2p7 + alpha * DlogP + (mylogP - 2.7 - DlogP) / (2.8 - DlogP) * (
+                    flogPeq5p5 - flogPeq2p7 - alpha * DlogP
+                )
+            else:
+                flogP = flogPeq5p5 * np.exp(-0.3 * (mylogP - 5.5))
+
+            flogP_sq[j, i] = flogP * q_factor
+
+            probbin[j, i] = (
+                max(0.0, 1.0 - 0.11 * (mylogP - 1.5) ** 1.43 * (myM1 / 10.0) ** 0.56)
+                if mylogP > 1.5
+                else 1.0
+            )
+
+        mycumPbindist = np.cumsum(flogP_sq[:, i] * probbin[:, i]) - flogP_sq[0, i] * probbin[0, i]
+        cumPbindist[:, i] = (
+            mycumPbindist
+            / np.max(mycumPbindist)
+            * idl_tabulate(logPv, flogP_sq[:, i] * probbin[:, i])
+        )
+
+    grid_table = Table({
+        'M1v': [M1v],
+        'logPv': [logPv],
+        'qv': [qv],
+        'ev': [ev],
+        'cumqdist': [cumqdist],
+        'cumedist': [cumedist],
+        'cumPbindist': [cumPbindist]
+    })
+
+    grid_table.write(grid_path, format='fits', overwrite=True)
+
+
+def idl_tabulate(x, f, p=5):
+    """Replicates IDL int_tabulated function via a p-point Newton-Cotes integration."""
+    def newton_cotes(x, f):
+        if x.shape[0] < 2:
+            return 0
+        rn = (x.shape[0] - 1) * (x - x[0]) / (x[-1] - x[0])
+        weights = scipy.integrate.newton_cotes(rn)[0]
+        return (x[-1] - x[0]) / (x.shape[0] - 1) * np.dot(weights, f)
+
+    ret = 0
+    for idx in range(0, x.shape[0], p - 1):
+        ret += newton_cotes(x[idx: idx + p], f[idx: idx + p])
+    return ret
