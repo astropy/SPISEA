@@ -291,7 +291,8 @@ class IMF(object):
 
         # Resolved multiplicity case
         if self._multi_props.is_resolved:
-            compMasses_ma, compLoga_ma, compEcc_ma = self._multi_props.get_resolved_companions(newMasses)
+            compMasses_ma, compLoga_ma, compEcc_ma = self._multi_props.get_resolved_companions(newMasses,
+                rng=self.rng)
 
             # Apply minimum mass threshold mask
             below_min_mass = compMasses_ma < self._mass_limits[0]

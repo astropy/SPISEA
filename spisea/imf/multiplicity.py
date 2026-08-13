@@ -113,7 +113,7 @@ class MultiplicityUnresolved(object):
     def __init__(self, 
                  MF_amp=0.44, MF_power=0.51,
                  CSF_amp=0.50, CSF_power=0.45, CSF_max=3,
-                 q_power=-0.4, q_min=0.01, q_pow_bder=6.1,
+                 q_power=-0.4, q_min=0.01, q_power_bd=6.1,
                  companion_max=False):
          
         self.is_resolved = False
@@ -227,7 +227,7 @@ class MultiplicityUnresolved(object):
 
         return float(q) if (np.isscalar(x) and np.isscalar(primary_mass)) else q
 
-    def get_resolved_companions(self, mass1):
+    def get_resolved_companions(self, mass1, rng=np.random.default_rng()):
         """
         Function that generates companion masses and orbital
         parameters.
@@ -375,7 +375,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         """
         return np.sqrt(x)
 
-    def get_resolved_companions(self, mass1):
+    def get_resolved_companions(self, mass1, rng=np.random.default_rng()):
         """
         Generate companion masses, semimajor axes (AU), and eccentricities
         as parallel 2D MaskedArrays. Supports higher-order multiple systems 
@@ -551,7 +551,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         """Companion star fraction equals multiplicity fraction in this model."""
         return np.minimum(1.0, self.multiplicity_fraction(mass))
 
-    def get_resolved_companions(self, mass1):
+    def get_resolved_companions(self, mass1, rng=np.random.default_rng()):
         """
         Generate companion masses, orbital periods (days), and eccentricities
         as parallel 2D MaskedArrays using table lookup from Moe & Di Stefano (2017).
@@ -574,7 +574,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         n_primaries = len(mass1)
 
         mf = self.multiplicity_fraction(mass1)
-        is_bin = self.random_is_multiple(np.random.rand(n_primaries), mf)
+        is_bin = self.random_is_multiple(rng.rand(n_primaries), mf)
         system_idx = np.where(is_bin)[0]
         n_binaries = len(system_idx)
 
@@ -595,12 +595,12 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
                                 np.log10(myM1), np.log10([0.08, 0.8]), [0.0, 1.0])
 
                     mybinfrac = np.max(mycumPbindist_flat)
-                    myrand = np.random.rand() * mybinfrac
+                    myrand = rng.rand() * mybinfrac
 
                     mylogP = np.interp(myrand, mycumPbindist_flat, self.logPv)
                     indlogP = np.argmin(np.abs(mylogP - self.logPv))
 
-                    mye = np.interp(np.random.rand(), self.cumedist[:, indlogP, indM1].flatten(), self.ev)
+                    mye = np.interp(rng.rand(), self.cumedist[:, indlogP, indM1].flatten(), self.ev)
 
                     mycumqdist = self.cumqdist[:, indlogP, indM1].flatten()
                     if myM1 < self.M2min*10:
@@ -613,7 +613,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
                         indq = np.where(self.qv <= q_min)
                         mycumqdist[indq] = 0.0
 
-                    myq = np.interp(np.random.rand(), mycumqdist, self.qv)
+                    myq = np.interp(rng.rand(), mycumqdist, self.qv)
                     p_days = 10.0 ** mylogP
                     # Convert periods to log_a (period in days, a in AU)
                     log_a = np.log10((p_days**2 * myM1*(1+myq) * 7.496e-6)**(1.0/3)) # 
@@ -629,7 +629,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         # MASS FIRST
         b = 1.0 + self.q_pow_bd
         # Inverse CDF calculation
-        q_bds = (np.random.rand(len(bd_comp_idxs)) * (1.0 - self.q_min ** b) + self.q_min ** b) ** (1.0 / b)
+        q_bds = (rng.rand(len(bd_comp_idxs)) * (1.0 - self.q_min ** b) + self.q_min ** b) ** (1.0 / b)
         # SEMI-MAJOR AXIS NEXT
         # Calculate mean and standard deviation semi-major axes
         log_a_mean = np.interp(
@@ -651,7 +651,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         # Draw log_a
         log_a_bds = truncnorm.rvs(a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std)
         # LAST: ECCENTRICITY
-        ecc_bds = np.sqrt(np.random.rand(len(bd_comp_idxs)))
+        ecc_bds = np.sqrt(rng.rand(len(bd_comp_idxs)))
         # SAVE PROPERTIES TO ARRAYS
         compMasses[bd_comp_idxs,0] = mass1[bd_comp_idxs]*q_bds
         compLoga[bd_comp_idxs,0] = log_a_bds
