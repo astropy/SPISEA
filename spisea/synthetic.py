@@ -194,7 +194,7 @@ class ResolvedCluster(Cluster):
         #####
         # Sample the IMF to build up our cluster mass.
         #####
-        mass, isMulti, compMass, compPorb, compEcc, sysMass = imf.generate_cluster(cluster_mass)
+        mass, isMulti, compMass, compLoga, compEcc, sysMass = imf.generate_cluster(cluster_mass)
 
         # Figure out the filters we will make.
         try:
@@ -233,8 +233,8 @@ class ResolvedCluster(Cluster):
             # Trim out bad systems; specifically, stars with masses outside those provided
             # by the model isochrone (except for compact objects).
             # Assumes external evolution software (i.e. COSMIC) will handle systems that fall outside of range
-            star_systems, compMass, compPorb, compEcc = self._remove_bad_systems(
-                star_systems, compMass, compPorb, compEcc, keep_low_mass_stars
+            star_systems, compMass, compLoga, compEcc = self._remove_bad_systems(
+                star_systems, compMass, compLoga, compEcc, keep_low_mass_stars
             )
         else:
             # Makes initial table to be evolved externally
@@ -246,12 +246,12 @@ class ResolvedCluster(Cluster):
         if self.imf.make_multiples:
             if self.external_evol == False:
                 star_systems, companions = self._make_companions_table(
-                    star_systems, compMass, compPorb, compEcc
+                    star_systems, compMass, compLoga, compEcc
                 )
             else:
                 # Makes initial table to be evolved externally
                 star_systems, companions = self._make_companions_table_initial(
-                    star_systems, compMass, compPorb, compEcc
+                    star_systems, compMass, compLoga, compEcc
                 )
 
         #####
@@ -390,7 +390,7 @@ class ResolvedCluster(Cluster):
 
         return star_systems
 
-    def _make_companions_table(self, star_systems, compMass, compPorb, compEcc):
+    def _make_companions_table(self, star_systems, compMass, compLoga, compEcc):
         """Make companions table for resolved clusters with multiplicity.
 
         Parameters
@@ -399,7 +399,7 @@ class ResolvedCluster(Cluster):
             Table containing the properties of the primary stars.
         compMass : numpy.ma.MaskedArray
             Masked array containing the masses of the companions.
-        compPorb : numpy.ma.MaskedArray
+        compLoga : numpy.ma.MaskedArray
             Masked array containing the orbital periods/semimajor axes of companions.
         compEcc : numpy.ma.MaskedArray
             Masked array containing the eccentricities of companions.
@@ -410,7 +410,7 @@ class ResolvedCluster(Cluster):
         companions : astropy.table.Table
         """
         star_systems, companions = self._make_companions_table_initial(
-            star_systems, compMass, compPorb, compEcc
+            star_systems, compMass, compLoga, compEcc
         )
         N_systems = len(star_systems)
         N_companions = np.sum(~compMass.mask, axis=1)
@@ -489,7 +489,7 @@ class ResolvedCluster(Cluster):
 
         return star_systems, companions
 
-    def _make_companions_table_initial(self, star_systems, compMass, compPorb, compEcc):
+    def _make_companions_table_initial(self, star_systems, compMass, compLoga, compEcc):
         """Make initial companions table for resolved clusters with multiplicity.
 
         Parameters
@@ -498,7 +498,7 @@ class ResolvedCluster(Cluster):
             Table containing the properties of the primary stars.
         compMass : numpy.ma.MaskedArray
             Masked array containing the masses of the companions.
-        compPorb : numpy.ma.MaskedArray
+        compLoga : numpy.ma.MaskedArray
             Masked array containing the orbital periods/semimajor axes of companions.
         compEcc : numpy.ma.MaskedArray
             Masked array containing the eccentricities of companions.
@@ -520,7 +520,7 @@ class ResolvedCluster(Cluster):
 
         # Add orbital properties directly from generated masked arrays
         if self.imf._multi_props.is_resolved:
-            companions.add_column(Column(np.log10(compPorb.compressed()), name='log_a'))
+            companions.add_column(Column(compLoga.compressed(), name='log_a'))
             companions.add_column(Column(compEcc.compressed(), name='e'))
             companions['i'], companions['Omega'], companions['omega'] = random_keplarian_parameters(
                 self.rng.random(N_comp_tot),
@@ -650,7 +650,7 @@ class ResolvedCluster(Cluster):
 
         return star_systems
 
-    def _remove_bad_systems(self, star_systems, compMass, compPorb, compEcc, keep_low_mass_stars):
+    def _remove_bad_systems(self, star_systems, compMass, compLoga, compEcc, keep_low_mass_stars):
         """
         Helper function to remove stars with masses outside the isochrone
         mass range from the cluster. These stars are identified by having
@@ -712,10 +712,10 @@ class ResolvedCluster(Cluster):
 
         if self.imf.make_multiples:
             compMass = compMass[idx]
-            compPorb = compPorb[idx]
+            compLoga = compLoga[idx]
             compEcc  = compEcc[idx]
 
-        return star_systems, compMass, compPorb, compEcc
+        return star_systems, compMass, compLoga, compEcc
 
 
 class ResolvedClusterDiffRedden(ResolvedCluster):

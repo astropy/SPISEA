@@ -154,7 +154,7 @@ class IMF(object):
         masses = np.array([], dtype=float)
         isMultiple = np.array([], dtype=bool)
         compMasses_list = []
-        compPorb_list = []
+        compLoga_list = []
         compEcc_list = []
         systemMasses = np.array([], dtype=float)
 
@@ -182,14 +182,14 @@ class IMF(object):
                 newIsMultiple = self.rng.random(newStarCount.astype(int)) < MF
 
                 # Unpack 5-element tuple from calc_multi
-                (newCompMasses, newCompPorb, newCompEcc, 
+                (newCompMasses, newCompLoga, newCompEcc, 
                  newSystemMasses, newIsMultiple) = self.calc_multi(newMasses, newIsMultiple, CSF, MF)
 
                 newTotalMassTally = newSystemMasses.sum()
                 isMultiple = np.append(isMultiple, newIsMultiple)
                 systemMasses = np.append(systemMasses, newSystemMasses)
                 compMasses_list.append(newCompMasses)
-                compPorb_list.append(newCompPorb)
+                compLoga_list.append(newCompLoga)
                 compEcc_list.append(newCompEcc)
 
             else:
@@ -203,14 +203,13 @@ class IMF(object):
                          (loopCnt, newTotalMassTally, totalMassTally))
 
             totalMassTally += newTotalMassTally
-            newStarCount = mean_number * 0.1  # increase by 20% each pass
+            newStarCount = mean_number * 0.1  # increase by 20% each pass #FIXME it's not 20% or increasing...
             loopCnt += 1
-            print(totalMass, totalMassTally)
 
         # Combine iteration outputs using column-padding helper
         if self._multi_props:
             compMasses = self._stack_masked_arrays(compMasses_list)
-            compPorb = self._stack_masked_arrays(compPorb_list)
+            compLoga = self._stack_masked_arrays(compLoga_list)
             compEcc = self._stack_masked_arrays(compEcc_list)
 
             # Make a running sum of the system masses
@@ -227,18 +226,18 @@ class IMF(object):
             systemMasses = systemMasses[:idx+1]
             isMultiple = isMultiple[:idx+1]
             compMasses = compMasses[:idx+1]
-            compPorb = compPorb[:idx+1]
+            compLoga = compLoga[:idx+1]
             compEcc = compEcc[:idx+1]
         else:
             isMultiple = np.zeros(len(masses), dtype=bool)
             systemMasses = masses
             compMasses = np.ma.masked_all((len(masses), 1))
-            compPorb = np.ma.masked_all((len(masses), 1))
+            compLoga = np.ma.masked_all((len(masses), 1))
             compEcc = np.ma.masked_all((len(masses), 1))
 
         self._mass_limits[-1] = initial_mass_limit
 
-        return (masses, isMultiple, compMasses, compPorb, compEcc, systemMasses)
+        return (masses, isMultiple, compMasses, compLoga, compEcc, systemMasses)
 
     def _stack_masked_arrays(self, array_list):
         """
@@ -278,7 +277,7 @@ class IMF(object):
         -------
         compMasses_ma : np.ma.MaskedArray
             Masked array of companion masses.
-        compPorb_ma : np.ma.MaskedArray
+        compLoga_ma : np.ma.MaskedArray
             Masked array of orbital periods or semimajor axes.
         compEcc_ma : np.ma.MaskedArray
             Masked array of eccentricities.
@@ -292,18 +291,18 @@ class IMF(object):
 
         # Resolved multiplicity case
         if self._multi_props.is_resolved:
-            compMasses_ma, compPorb_ma, compEcc_ma = self._multi_props.get_resolved_companions(newMasses)
+            compMasses_ma, compLoga_ma, compEcc_ma = self._multi_props.get_resolved_companions(newMasses)
 
             # Apply minimum mass threshold mask
             below_min_mass = compMasses_ma < self._mass_limits[0]
             compMasses_ma.mask = compMasses_ma.mask | below_min_mass
-            compPorb_ma.mask = compPorb_ma.mask | below_min_mass
+            compLoga_ma.mask = compLoga_ma.mask | below_min_mass
             compEcc_ma.mask = compEcc_ma.mask | below_min_mass
 
             newSystemMasses += compMasses_ma.sum(axis=1).filled(0)
             newIsMultiple = ~compMasses_ma.mask.all(axis=1)
 
-            return compMasses_ma, compPorb_ma, compEcc_ma, newSystemMasses, newIsMultiple
+            return compMasses_ma, compLoga_ma, compEcc_ma, newSystemMasses, newIsMultiple
 
         # Unresolved multiplicity case
         else:
