@@ -16,13 +16,7 @@ To call a multiplicity class and wire it into a cluster::
   imf_obj = imf.Kroupa_2001(multiplicity=multi)
   cluster = synthetic.ResolvedCluster(iso, imf_obj, Mcl)
 
-Companion masses and whether a primary is multiple are drawn in
-``IMF.generate_cluster`` / ``IMF.calc_multi``, which call the multiplicity
-object. ``synthetic.py`` does not draw companions: it labels brown-dwarf
-evolutionary phase=90 so they photometrize, combines system photometry,
-and (for resolved classes) fills orbital columns.
-
-Duck-typed multiplicity contract used by the IMF:
+The multiplicity object provides the following functions used by the IMF:
 
 * ``multiplicity_fraction(mass)``
 * ``companion_star_fraction(mass)``
@@ -33,13 +27,6 @@ Duck-typed multiplicity contract used by the IMF:
   companion-count policy, including the binaries-only BD cap when
   ``mass`` is given.
 * attributes ``companion_max``, ``CSF_max``, ``q_min``
-
-Resolved classes are duck-typed in ``synthetic.py`` on
-``log_semimajoraxis``, ``random_e``, and ``random_keplarian_parameters``.
-They do not need to subclass :class:`~imf.multiplicity.MultiplicityResolvedDK`.
-
-The multiplicity object is an input for the :ref:`imf_objects`, as it
-impacts how the stellar masses are drawn.
 
 The user can choose either
 an unresolved or a resolved multiplicity object. If a resolved
@@ -53,8 +40,8 @@ returned in the ``star_systems`` table off the cluster object is the
 same for both unresolved and resolved multiplicity classes: it
 represents the combined photometry of all stars within a given system.
 
-For most selected evolution models, the multiples are evolved as single stars.
-To evolve binaries (does not support higher order multiples), you should use one of the ``MultiplicityResolved`` classes
+For most selected evolution models, the companions are evolved as single stars.
+To evolve binaries with mass exchange (does not support higher order multiples), you should use one of the ``MultiplicityResolved`` classes
 and the ``COSMIC`` evolution model. 
 See the example jupyter notebook `Cluster_w_COSMIC.ipynb <https://github.com/MovingUniverseLab/spisea/blob/main/docs/Cluster_w_COSMIC.ipynb>`_ for an example.
 Note that currently COSMIC due to being external evolution is significantly slower than the other evolution options.
@@ -83,18 +70,20 @@ Unresolved Multiplicity Classes
 
 Offner et al. 2023 multiplicity
 ------------------------------------------
-Opt-in field multiplicity from Offner et al. (2023), Protostars and
-Planets VII, ASP Conf. Ser. 534, 275 (`arXiv:2203.10066
+The recommended multiplicity class to use is that derived from 
+data summarized in Offner et al. (2023) (`arXiv:2203.10066
 <https://arxiv.org/abs/2203.10066>`_; ADS
 `2023ASPC..534..275O
 <https://ui.adsabs.harvard.edu/abs/2023ASPC..534..275O>`_). Table 1
 data: Zenodo `10.5281/zenodo.6628915
 <https://doi.org/10.5281/zenodo.6628915>`_.
+This class is not the default (for backwards compatability) but 
+is strongly preferred.
+
 
 The SPISEA v2.5 :class:`~imf.multiplicity.MultiplicityUnresolved` /
 :class:`~imf.multiplicity.MultiplicityResolvedDK` objects remain the
-default. Pass an Offner instance as ``IMF.multiplicity`` to use this
-model.
+default; but has known limitations in the brown dwarf regime.
 
 Unresolved (companions, no orbits)::
 
