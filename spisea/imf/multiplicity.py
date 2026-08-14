@@ -238,7 +238,7 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass in solar masses (Msun).
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
@@ -275,7 +275,7 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass in solar masses (Msun).
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
@@ -312,7 +312,7 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass in solar masses (Msun).
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
@@ -342,7 +342,7 @@ class MultiplicityUnresolved(object):
             sample for q.
 
         mass : float or array_like, optional
-            Primary mass in solar masses (Msun). If given, the
+            Primary mass must be positive, in solar masses (Msun). If given, the
             power-law index is ``q_power_at_mass(mass)`` (brown-dwarf
             vs stellar for the SPISEA v2.5 default; mass-dependent for
             Offner et al. 2023). If omitted, ``self.q_pow`` is used
@@ -384,7 +384,7 @@ class MultiplicityUnresolved(object):
         MF : float or array_like
             Multiplicity fraction, dimensionless, in [0, 1].
         mass : float or array_like, optional
-            Primary mass in solar masses (Msun). If given, primaries
+            Primary mass must be positive, in solar masses (Msun). If given, primaries
             at or below ``binary_only_mass_max`` are limited to one
             companion. Cluster generation always passes mass so
             subclasses can override the BD companion-count policy here.
@@ -438,8 +438,8 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         mass : array_like
-            Primary masses in solar masses (Msun) of systems already
-            identified as multiple.
+            Primary masses of systems already identified as multiple.
+            Must be positive, in solar masses (Msun).
         CSF : array_like
             Companion star fraction at each primary, dimensionless
             mean companion count (not bounded by 1).
@@ -470,8 +470,8 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         prim_subset : array_like
-            Primary masses in solar masses (Msun) for this companion-count
-            group.
+            Primary masses for this companion-count group. Must be
+            positive, in solar masses (Msun).
         n_comp : int
             Number of companions per primary, integer count.
         rng : numpy.random.Generator
@@ -508,7 +508,7 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         primary_masses : array_like
-            Primary masses in solar masses (Msun).
+            Primary masses must be positive, in solar masses (Msun).
         is_multiple : array_like of bool
             True for primaries drawn as multiple systems.
         CSF : array_like
@@ -751,7 +751,7 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass in solar masses (Msun).
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
@@ -773,7 +773,7 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass in solar masses (Msun).
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
@@ -868,7 +868,7 @@ class MultiplicityLogistic(MultiplicityUnresolved):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass in solar masses (Msun).
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
@@ -890,7 +890,7 @@ class MultiplicityLogistic(MultiplicityUnresolved):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass in solar masses (Msun).
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
@@ -1029,7 +1029,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass in solar masses (Msun).
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
@@ -1051,7 +1051,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass in solar masses (Msun).
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
@@ -1071,7 +1071,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass in solar masses (Msun).
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
@@ -1093,7 +1093,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass in solar masses (Msun).
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
@@ -1112,8 +1112,8 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         Parameters
         ----------
         prim_subset : array_like
-            Primary masses in solar masses (Msun) for this companion-count
-            group.
+            Primary masses for this companion-count group. Must be
+            positive, in solar masses (Msun).
         n_comp : int
             Number of companions per primary, integer count.
         rng : numpy.random.Generator
@@ -1179,7 +1179,7 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
         Parameters
         ----------
         mass : float or array_like
-            Primary mass in solar masses (Msun).
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
@@ -1210,8 +1210,8 @@ def _two_point_powerlaw(mass_1, y_1, mass_2, y_2):
     Parameters
     ----------
     mass_1, mass_2 : float
-        Primary masses in solar masses (Msun) of the two anchor points.
-        Must be positive and distinct.
+        Primary masses of the two anchor points, in solar masses
+        (Msun). Must be positive and distinct.
     y_1, y_2 : float
         Ordinate values at ``mass_1`` and ``mass_2``. Units match the
         fitted quantity (dimensionless for MF/γ, mean companion count
@@ -1241,7 +1241,7 @@ def _piecewise_powerlaw(mass, mass_limits, amps, powers, clip_min=None,
     Parameters
     ----------
     mass : float or array_like
-        Primary mass in solar masses (Msun).
+        Primary mass must be positive, in solar masses (Msun).
     mass_limits : array_like
         Segment edges in solar masses (Msun), length N+1, strictly
         increasing.
@@ -1287,13 +1287,13 @@ def _logistic_in_logm(mass, A, B, M0, k, clip_min=None, clip_max=None):
     """
     Evaluate y = A + (B - A) / (1 + (M / M0)**(-k)).
 
-    This is a logistic in log-mass: as M -> 0, y -> A; as M -> inf,
-    y -> B. Masses <= 0 are mapped to the low-mass asymptote A.
+    This is a logistic in log-mass: as M -> 0+, y -> A; as M -> inf,
+    y -> B.
 
     Parameters
     ----------
     mass : float or array_like
-        Primary mass in solar masses (Msun).
+        Primary mass must be positive, in solar masses (Msun).
     A, B : float
         Low-mass and high-mass asymptotes, in the same units as y.
         Dimensionless for MF and γ; mean companion count for CSF;
@@ -1314,11 +1314,7 @@ def _logistic_in_logm(mass, A, B, M0, k, clip_min=None, clip_max=None):
     """
     return_scalar = np.isscalar(mass)
     mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
-    out = np.full(mass_arr.shape, float(A), dtype=float)
-    positive = mass_arr > 0
-    if np.any(positive):
-        m = mass_arr[positive]
-        out[positive] = A + (B - A) / (1.0 + np.power(m / M0, -k))
+    out = A + (B - A) / (1.0 + np.power(mass_arr / M0, -k))
     if clip_min is not None:
         out = np.maximum(out, clip_min)
     if clip_max is not None:
@@ -1358,14 +1354,13 @@ def _smooth_broken_loglog(mass, mup, Mp, alpha_L, alpha_R, s, a_min=0.1):
         yp = log10(mup)
         log10(a) = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
 
-    ``s`` is the smoothing scale in dex (C-infinity; logcosh). Masses
-    <= 0 are mapped to 1e-8 Msun. The linear-space value is clipped
-    to ``a_min``.
+    ``s`` is the smoothing scale in dex (C-infinity; logcosh). The
+    linear-space value is clipped to ``a_min``.
 
     Parameters
     ----------
     mass : float or array_like
-        Primary mass in solar masses (Msun).
+        Primary mass must be positive, in solar masses (Msun).
     mup : float
         Characteristic separation at the break mass, in AU.
     Mp : float
@@ -1385,8 +1380,7 @@ def _smooth_broken_loglog(mass, mup, Mp, alpha_L, alpha_R, s, a_min=0.1):
     """
     return_scalar = np.isscalar(mass)
     mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
-    m = np.where(mass_arr > 0, mass_arr, 1e-8)
-    v = np.log10(m / float(Mp))
+    v = np.log10(mass_arr / float(Mp))
     yp = np.log10(float(mup))
     log_a = (yp
              + 0.5 * (alpha_L + alpha_R) * v

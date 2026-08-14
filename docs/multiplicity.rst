@@ -119,8 +119,7 @@ with :math:`(A, B, M_0, k) = (0.14, 0.99, 1.41, 1.25)` for MF and
 smooth and saturates at :math:`B \approx 1` for MF. MF is clipped to
 :math:`[0, 1]`. CSF is clipped to :math:`[0, \mathrm{CSF_{max}}]`,
 raised to at least MF, and forced equal to MF for
-:math:`M \le 0.08\,M_\odot` (binaries only). Masses :math:`M \le 0`
-map to the low-mass asymptote :math:`A`.
+:math:`M \le 0.08\,M_\odot` (binaries only).
 
 SPISEA v2.5 uses :math:`\mathrm{MF} = 0.44\,M^{0.51}` (clipped
 to 1) for arrays, plus a scalar-only brown-dwarf staircase

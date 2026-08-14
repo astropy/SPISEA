@@ -298,10 +298,8 @@ def test_logistic_api():
         MF_A=0.1, MF_B=1.5, MF_M0=1.0, MF_k=2.0,
         CSF_A=0.05, CSF_B=4.0, CSF_M0=2.0, CSF_k=1.0,
         CSF_max=2.0, binary_only_mass_max=0.08)
-    # Low-mass asymptote A; M<=0 maps to A
+    # Low-mass asymptote A for a very low-mass primary (not a missing mass)
     np.testing.assert_almost_equal(ml.multiplicity_fraction(1e-8), 0.1, decimal=4)
-    assert ml.multiplicity_fraction(0.0) == 0.1
-    assert ml.multiplicity_fraction(-1.0) == 0.1
     # High-mass MF saturates at B then clips to 1
     np.testing.assert_almost_equal(ml.multiplicity_fraction(1e6), 1.0)
     # High-mass CSF clips to CSF_max
