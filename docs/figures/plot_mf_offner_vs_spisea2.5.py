@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Generate docs/figures/mf_offner_vs_lu2013.png
+Generate docs/figures/mf_offner_vs_spisea2.5.png
 
 Two-panel comparison of multiplicity fraction vs primary mass:
 SPISEA v2.5 array power law, v2.5 scalar BD staircase,
@@ -9,7 +9,7 @@ points with error bars.
 
 Run from the repository root::
 
-    python docs/figures/plot_mf_offner_vs_lu2013.py
+    python docs/figures/plot_mf_offner_vs_spisea2.5.py
 """
 import os
 import sys
@@ -46,16 +46,16 @@ _TABLE1 = [
 ]
 
 
-def _lu2013_array_mf(mass):
+def _spisea25_array_mf(mass):
     """SPISEA v2.5 array path: stellar power law, no BD staircase."""
     mf = 0.44 * np.asarray(mass, dtype=float) ** 0.51
     return np.clip(mf, 0.0, 1.0)
 
 
-def _lu2013_scalar_bd_staircase(mass):
+def _spisea25_scalar_bd_staircase(mass):
     """SPISEA v2.5 scalar-only BD bins in MultiplicityUnresolved.multiplicity_fraction."""
     mass = np.asarray(mass, dtype=float)
-    mf = _lu2013_array_mf(mass)
+    mf = _spisea25_array_mf(mass)
     mf = np.where(mass < 0.02, 0.0, mf)
     mf = np.where((mass > 0.02) & (mass <= 0.06), 0.08, mf)
     mf = np.where((mass > 0.06) & (mass <= 0.08), 0.16, mf)
@@ -96,14 +96,14 @@ def main():
 
     m_wide = np.logspace(np.log10(0.012), np.log10(40.0), 800)
     mf_off = offner.multiplicity_fraction(m_wide)
-    mf_lu = _lu2013_array_mf(m_wide)
+    mf_lu = _spisea25_array_mf(m_wide)
 
     # Staircase sampled densely so the steps render as vertical jumps.
     m_step = np.concatenate([
         np.array([0.012, 0.01999, 0.02001, 0.05999, 0.06001, 0.07999, 0.08001]),
         np.logspace(np.log10(0.081), np.log10(40.0), 200),
     ])
-    mf_step = _lu2013_scalar_bd_staircase(m_step)
+    mf_step = _spisea25_scalar_bd_staircase(m_step)
 
     m_tab, mf_tab, err_tab = _table1_xy()
 
@@ -138,7 +138,7 @@ def main():
     axes[0].legend(handles=legend_handles, loc='upper left', fontsize=8,
                    frameon=True, fancybox=False, edgecolor='0.7')
 
-    out = os.path.join(os.path.dirname(__file__), 'mf_offner_vs_lu2013.png')
+    out = os.path.join(os.path.dirname(__file__), 'mf_offner_vs_spisea2.5.png')
     fig.savefig(out, dpi=160, bbox_inches='tight', facecolor='white')
     plt.close(fig)
     print('Wrote', out)

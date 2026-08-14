@@ -2,19 +2,19 @@
 """
 Generate q / separation comparison figures vs SPISEA v2.5 defaults:
 
-    docs/figures/q_offner_vs_lu2013.png
-    docs/figures/sep_offner_vs_lu2013.png
-    docs/figures/sig_loga_offner_vs_lu2013.png
-    docs/figures/meanq_offner_vs_lu2013.png
+    docs/figures/q_offner_vs_spisea2.5.png
+    docs/figures/sep_offner_vs_spisea2.5.png
+    docs/figures/sig_loga_offner_vs_spisea2.5.png
+    docs/figures/meanq_offner_vs_spisea2.5.png
 
-Two-panel layout matching ``plot_mf_offner_vs_lu2013.py``: brown-dwarf
+Two-panel layout matching ``plot_mf_offner_vs_spisea2.5.py``: brown-dwarf
 zoom and BD through O. Offner curves are evaluated from the
 multiplicity objects (γ logistic, smooth-broken μ(a), σ logistic)
 so they cannot drift from the code.
 
 Run from the repository root::
 
-    python docs/figures/plot_q_sep_offner_vs_lu2013.py
+    python docs/figures/plot_q_sep_offner_vs_spisea2.5.py
 """
 import os
 import sys
@@ -94,7 +94,7 @@ def _table_xy(rows, y_idx=3, e_idx=4):
     return m, y, err
 
 
-def _lu2013_dk_mean_a_au(dk, mass):
+def _spisea25_dk_mean_a_au(dk, mass):
     """
     SPISEA v2.5 ``MultiplicityResolvedDK`` mean a in AU (Duchêne & Kraus
     coefficients, plus the BD log-a interpolation and sigmoid blend in
@@ -120,7 +120,7 @@ def _lu2013_dk_mean_a_au(dk, mass):
     return 10.0 ** log_a_mean
 
 
-def _lu2013_dk_sig_loga(dk, mass):
+def _spisea25_dk_sig_loga(dk, mass):
     """
     SPISEA v2.5 ``MultiplicityResolvedDK`` σ(log10 a) (Duchêne & Kraus
     coefficients, plus the BD interpolation and sigmoid blend in
@@ -194,7 +194,7 @@ def _save(fig, filename):
     print('Wrote', out)
 
 
-def _lu_gamma_step_masses():
+def _spisea25_gamma_step_masses():
     """Dense sampling so the 0.08 Msun γ step renders as a vertical jump."""
     return np.concatenate([
         np.logspace(np.log10(0.012), np.log10(0.07999), 300),
@@ -206,7 +206,7 @@ def _lu_gamma_step_masses():
 def plot_gamma(offner, lu):
     m_wide = np.logspace(np.log10(0.012), np.log10(40.0), 800)
     g_off = offner.q_power_at_mass(m_wide)
-    m_step = _lu_gamma_step_masses()
+    m_step = _spisea25_gamma_step_masses()
     g_lu = lu.q_power_at_mass(m_step)
     m_tab, g_tab, err_tab = _table_xy(_TABLE1_GAMMA)
 
@@ -237,13 +237,13 @@ def plot_gamma(offner, lu):
     ]
     axes[1].legend(handles=legend_handles, loc='upper right', fontsize=8,
                    frameon=True, fancybox=False, edgecolor='0.7')
-    _save(fig, 'q_offner_vs_lu2013.png')
+    _save(fig, 'q_offner_vs_spisea2.5.png')
 
 
 def plot_sep(resolved, dk):
     m_wide = np.logspace(np.log10(0.012), np.log10(40.0), 800)
     a_off = resolved.a_mean(m_wide)
-    a_lu = _lu2013_dk_mean_a_au(dk, m_wide)
+    a_lu = _spisea25_dk_mean_a_au(dk, m_wide)
     m_tab, a_tab, err_tab = _table_xy(_TABLE1_A_ALL)
     m_t2 = np.array([_geom(r[1], r[2]) for r in _TABLE2_MU])
     a_t2 = np.array([r[3] for r in _TABLE2_MU], dtype=float)
@@ -278,13 +278,13 @@ def plot_sep(resolved, dk):
     ]
     axes[0].legend(handles=legend_handles, loc='upper left', fontsize=8,
                    frameon=True, fancybox=False, edgecolor='0.7')
-    _save(fig, 'sep_offner_vs_lu2013.png')
+    _save(fig, 'sep_offner_vs_spisea2.5.png')
 
 
 def plot_sig_loga(resolved, dk):
     m_wide = np.logspace(np.log10(0.012), np.log10(40.0), 800)
     sig_off = resolved.sigma_log_a(m_wide)
-    sig_lu = _lu2013_dk_sig_loga(dk, m_wide)
+    sig_lu = _spisea25_dk_sig_loga(dk, m_wide)
     m_t2 = np.array(resolved.sep_sig_mass, dtype=float)
     sig_t2 = np.array(resolved.sep_sig, dtype=float)
 
@@ -313,14 +313,14 @@ def plot_sig_loga(resolved, dk):
     ]
     axes[1].legend(handles=legend_handles, loc='upper left', fontsize=8,
                    frameon=True, fancybox=False, edgecolor='0.7')
-    _save(fig, 'sig_loga_offner_vs_lu2013.png')
+    _save(fig, 'sig_loga_offner_vs_spisea2.5.png')
 
 
 def plot_meanq(offner, lu):
     m_wide = np.logspace(np.log10(0.012), np.log10(40.0), 800)
     q_off = _mean_q_from_gamma(offner.q_power_at_mass(m_wide),
                               q_min=offner.q_min)
-    m_step = _lu_gamma_step_masses()
+    m_step = _spisea25_gamma_step_masses()
     q_lu = _mean_q_from_gamma(lu.q_power_at_mass(m_step), q_min=lu.q_min)
 
     fig, axes = _two_axes(r'Offner 2023 vs SPISEA v2.5: mean mass ratio $\langle q\rangle$')
@@ -344,7 +344,7 @@ def plot_meanq(offner, lu):
     ]
     axes[1].legend(handles=legend_handles, loc='upper right', fontsize=8,
                    frameon=True, fancybox=False, edgecolor='0.7')
-    _save(fig, 'meanq_offner_vs_lu2013.png')
+    _save(fig, 'meanq_offner_vs_spisea2.5.png')
 
 
 def main():

@@ -138,7 +138,7 @@ to 1) for arrays, plus a scalar-only brown-dwarf staircase
 (0 / 8% / 16%). Cluster generation on that class still uses the
 stellar power law for brown-dwarf primaries.
 
-.. figure:: figures/mf_offner_vs_lu2013.png
+.. figure:: figures/mf_offner_vs_spisea2.5.png
    :alt: Offner 2023 vs SPISEA v2.5: multiplicity fraction vs primary mass
    :align: center
 
@@ -169,7 +169,7 @@ The err-weighted fit undershoots Fontanive et al. (2018)
 fit, not a bug. SPISEA v2.5 is a step: :math:`\gamma = 6.1` for
 :math:`M \le 0.08\,M_\odot` (Fontanive) and :math:`-0.4` above.
 
-.. figure:: figures/q_offner_vs_lu2013.png
+.. figure:: figures/q_offner_vs_spisea2.5.png
    :alt: Offner 2023 vs SPISEA v2.5: mass-ratio index vs primary mass
    :align: center
 
@@ -178,7 +178,7 @@ fit, not a bug. SPISEA v2.5 is a step: :math:`\gamma = 6.1` for
    SPISEA v2.5 step (6.1 below :math:`0.08\,M_\odot`, :math:`-0.4`
    above). Blue points: Table 1 :math:`\gamma_{\mathrm{trunc}}`.
 
-.. figure:: figures/meanq_offner_vs_lu2013.png
+.. figure:: figures/meanq_offner_vs_spisea2.5.png
    :alt: Offner 2023 vs SPISEA v2.5: mean mass ratio vs primary mass
    :align: center
 
@@ -217,7 +217,7 @@ The SPISEA v2.5 :class:`~imf.multiplicity.MultiplicityResolvedDK`
 uses a Duchêne & Kraus (2013) broken power law in :math:`a` with a
 brown-dwarf blend. That law is not meant for the BD regime.
 
-.. figure:: figures/sep_offner_vs_lu2013.png
+.. figure:: figures/sep_offner_vs_spisea2.5.png
    :alt: Offner 2023 vs SPISEA v2.5: characteristic separation vs primary mass
    :align: center
 
@@ -243,7 +243,7 @@ linear fit in :math:`\log M` that saturates above
 :math:`2.9\,M_\odot`; the dip near :math:`0.08\,M_\odot` is the
 BD/stellar blend.
 
-.. figure:: figures/sig_loga_offner_vs_lu2013.png
+.. figure:: figures/sig_loga_offner_vs_spisea2.5.png
    :alt: Offner 2023 vs SPISEA v2.5: sigma of log10 a vs primary mass
    :align: center
 
@@ -280,8 +280,8 @@ methods (``multiplicity_fraction``, ``q_power_at_mass``,
 ``a_mean``, ``sigma_log_a``) so they cannot drift from the code.
 From the repository root::
 
-  python docs/figures/plot_mf_offner_vs_lu2013.py
-  python docs/figures/plot_q_sep_offner_vs_lu2013.py
+  python docs/figures/plot_mf_offner_vs_spisea2.5.py
+  python docs/figures/plot_q_sep_offner_vs_spisea2.5.py
 
 
 Resolved Multiplicity Classes
