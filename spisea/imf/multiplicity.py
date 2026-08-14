@@ -19,7 +19,7 @@ default_aSigma = 0.1  # log (AU)
 H_BURNING_MASS = 0.08
 
 # Fontanive et al. (2018) mass-ratio power-law index used for BD primaries
-# in the Lu et al. (2013) MultiplicityUnresolved implementation.
+# in the SPISEA v2.5 MultiplicityUnresolved implementation.
 FONTANIVE2018_BD_Q_POWER = 6.1
 
 # Eventually we should add in separation properties. (a_mean, a_sigma)
@@ -405,7 +405,7 @@ class MultiplicityUnresolved(object):
             n_comp = 1 + np.random.poisson((CSF / MF) - 1)
             if self.companion_max and n_comp > self.CSF_max:
                 n_comp = self.CSF_max
-            if mass is not None and np.asarray(mass, dtype=float).reshape(-1)[0] <= self.binary_only_mass_max:
+            if (mass is not None) and (np.asarray(mass, dtype=float).reshape(-1)[0] <= self.binary_only_mass_max):
                 n_comp = min(int(n_comp), 1)
             return int(n_comp)
 
@@ -415,14 +415,18 @@ class MultiplicityUnresolved(object):
             n_comp = 1 + np.random.poisson((CSF / MF) - 1)
         else:
             n_comp = 1 + rng.poisson((CSF / MF) - 1)
+
         if self.companion_max:
             n_comp = np.minimum(n_comp, self.CSF_max)
+
         if mass is not None:
             mass = np.atleast_1d(np.asarray(mass, dtype=float))
             bd = mass <= self.binary_only_mass_max
             n_comp[bd & (n_comp > 1)] = 1
+
         if return_scalar:
             return int(n_comp[0])
+
         return n_comp
 
     def draw_n_companions(self, mass, CSF, MF, rng):
@@ -451,15 +455,16 @@ class MultiplicityUnresolved(object):
             Number of companions per primary, integer count, shape
             matching ``mass``.
         """
-        return np.atleast_1d(
-            self.random_companion_count(None, CSF, MF, mass=mass, rng=rng))
+        n_comp = self.random_companion_count(None, CSF, MF, mass=mass, rng=rng)
+
+        return np.atleast_1d(n_comp)
 
     def _q_values_for_primaries(self, prim_subset, n_comp, rng):
         """
         Draw mass ratios for ``n_comp`` companions of each primary.
 
         The stellar / brown-dwarf split (two separate RNG draws) preserves
-        the historical Lu et al. (2013) random sequence used by
+        the historical SPISEA v2.5 random sequence used by
         ``imf.calc_multi``.
 
         Parameters
@@ -481,13 +486,13 @@ class MultiplicityUnresolved(object):
         q_values = np.empty((len(prim_subset), n_comp))
         bd_mask = prim_subset <= self.binary_only_mass_max
         star_mask = ~bd_mask
+
         if np.any(star_mask):
-            q_values[star_mask] = self.random_q(
-                rng.random((star_mask.sum(), n_comp)))
+            q_values[star_mask] = self.random_q(rng.random((star_mask.sum(), n_comp)), mass=prim_subset[star_mask])
+
         if np.any(bd_mask):
-            q_values[bd_mask] = self.random_q(
-                rng.random((bd_mask.sum(), n_comp)),
-                mass=prim_subset[bd_mask])
+            q_values[bd_mask] = self.random_q(rng.random((bd_mask.sum(), n_comp)), mass=prim_subset[bd_mask])
+
         return q_values
 
     def draw_companion_masses(self, primary_masses, is_multiple, CSF, MF,
@@ -534,15 +539,16 @@ class MultiplicityUnresolved(object):
         is_multiple = np.asarray(is_multiple, dtype=bool)
         CSF = np.asarray(CSF, dtype=float)
         MF = np.asarray(MF, dtype=float)
+
         system_masses = primary_masses.copy()
         multiple_idx = np.where(is_multiple)[0]
         primary = primary_masses[multiple_idx]
-        n_comp = self.draw_n_companions(
-            primary, CSF[multiple_idx], MF[multiple_idx], rng)
+        n_comp = self.draw_n_companions(primary, CSF[multiple_idx], MF[multiple_idx], rng)
 
         if len(multiple_idx) == 0:
-            comp_masses = np.zeros((len(primary_masses), 1))
+            comp_masses = np.zeros((len(primary_masses), 1), dtype=float)
             comp_masses = np.ma.MaskedArray(comp_masses, mask=comp_masses < mass_min)
+
             return comp_masses, system_masses, is_multiple
 
         n_unique = np.unique(n_comp)
@@ -558,8 +564,10 @@ class MultiplicityUnresolved(object):
         comp_masses = np.ma.MaskedArray(comp_masses, mask=comp_masses < mass_min)
         system_masses[multiple_idx] += comp_masses[multiple_idx].sum(axis=1)
         is_multiple = np.any(~comp_masses.mask, axis=1)
+
         return comp_masses, system_masses, is_multiple
     
+
 class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
     """
     Sub-class of MultiplicityUnresolved that adds semimajor axis and eccentricity information 
@@ -596,6 +604,8 @@ class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
         self.a_slope2 = a_slope2
         self.a_std_slope = a_std_slope
         self.a_std_intercept = a_std_intercept
+
+        return
     
     def log_semimajoraxis(self, mass):
         """
@@ -706,11 +716,15 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
         MF_powers = np.asarray(MF_powers, dtype=float)
         CSF_amps = np.asarray(CSF_amps, dtype=float)
         CSF_powers = np.asarray(CSF_powers, dtype=float)
+
         nseg = len(MF_amps)
+
         if len(mass_limits) != nseg + 1:
             raise ValueError('len(mass_limits) must be len(MF_amps) + 1')
+
         if not (len(MF_powers) == len(CSF_amps) == len(CSF_powers) == nseg):
             raise ValueError('MF/CSF amplitude and power arrays must have equal length')
+
         if np.any(np.diff(mass_limits) <= 0):
             raise ValueError('mass_limits must be strictly increasing')
 
@@ -720,11 +734,14 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
             CSF_max=CSF_max, q_power=q_power, q_min=q_min,
             companion_max=companion_max,
             binary_only_mass_max=binary_only_mass_max)
+
         self.mass_limits = mass_limits
         self.MF_amps = MF_amps
         self.MF_powers = MF_powers
         self.CSF_amps = CSF_amps
         self.CSF_powers = CSF_powers
+
+        return
 
     def multiplicity_fraction(self, mass):
         """
@@ -742,9 +759,9 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
             Multiplicity fraction, dimensionless, in [0, 1].
             Python float if ``mass`` is scalar, ndarray otherwise.
         """
-        return _piecewise_powerlaw(
-            mass, self.mass_limits, self.MF_amps, self.MF_powers,
-            clip_min=0.0, clip_max=1.0)
+        mf = _piecewise_powerlaw(mass, self.mass_limits, self.MF_amps, self.MF_powers, clip_min=0.0, clip_max=1.0)
+
+        return mf
 
     def companion_star_fraction(self, mass):
         """
@@ -982,6 +999,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     """
     def __init__(self, CSF_max=3, q_power=0.2, q_min=0.01,
                  companion_max=False, binary_only_mass_max=H_BURNING_MASS):
+
         super(MultiplicityUnresolvedOffner2023, self).__init__(
             MF_A=OFFNER2023_MF_A,
             MF_B=OFFNER2023_MF_B,
@@ -994,9 +1012,12 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
             CSF_max=CSF_max, q_power=q_power, q_min=q_min,
             companion_max=companion_max,
             binary_only_mass_max=binary_only_mass_max)
+
         # Table 1/2 data that was fit; evaluation uses the smooth functions.
         self.q_mass = np.array(OFFNER2023_Q_MASS, dtype=float)
         self.q_gamma = np.array(OFFNER2023_Q_GAMMA, dtype=float)
+
+        return
 
     def q_power_at_mass(self, mass):
         """
@@ -1016,9 +1037,9 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
             Mass-ratio power-law index γ, dimensionless.
             Python float if ``mass`` is scalar, ndarray otherwise.
         """
-        return _logistic_in_logm(
-            mass, OFFNER2023_Q_A, OFFNER2023_Q_B,
-            OFFNER2023_Q_M0, OFFNER2023_Q_K)
+        gamma = _logistic_in_logm(mass, OFFNER2023_Q_A, OFFNER2023_Q_B, OFFNER2023_Q_M0, OFFNER2023_Q_K)
+        
+        return gamma
 
     def log_a_mean(self, mass):
         """
