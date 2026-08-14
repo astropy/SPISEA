@@ -28,6 +28,23 @@ FONTANIVE2018_BD_Q_POWER = 6.1
 def _two_point_powerlaw(mass_1, y_1, mass_2, y_2):
     """
     Amplitude and power for y = A * M**alpha through two (M, y) points.
+
+    Parameters
+    ----------
+    mass_1, mass_2 : float
+        Primary masses in solar masses (Msun) of the two anchor points.
+        Must be positive and distinct.
+    y_1, y_2 : float
+        Ordinate values at ``mass_1`` and ``mass_2``. Units match the
+        fitted quantity (dimensionless for MF/γ, mean companion count
+        for CSF, AU for characteristic a, dex for σ).
+
+    Returns
+    -------
+    amp : float
+        Power-law amplitude A, in units of y / Msun**alpha.
+    power : float
+        Power-law index alpha, dimensionless.
     """
     power = np.log(y_2 / y_1) / np.log(mass_2 / mass_1)
     amp = y_1 / (mass_1 ** power)
@@ -41,8 +58,29 @@ def _piecewise_powerlaw(mass, mass_limits, amps, powers, clip_min=None,
 
     Segment i applies for mass_limits[i] <= M < mass_limits[i+1].
     The first segment also covers M below the lowest limit; the last
-    segment is closed on the right. Returns a Python float for scalar
-    mass and an ndarray otherwise.
+    segment is closed on the right.
+
+    Parameters
+    ----------
+    mass : float or array_like
+        Primary mass in solar masses (Msun).
+    mass_limits : array_like
+        Segment edges in solar masses (Msun), length N+1, strictly
+        increasing.
+    amps : array_like
+        Length-N amplitudes A_i, in units of y / Msun**alpha_i.
+    powers : array_like
+        Length-N power-law indices alpha_i, dimensionless.
+    clip_min, clip_max : float or None, optional
+        Optional lower/upper clips on y, in the same units as y.
+        ``None`` means no clip on that side.
+
+    Returns
+    -------
+    y : float or ndarray
+        Piecewise power-law value, in the same units as
+        ``amps * mass**powers``. Python float if ``mass`` is scalar,
+        ndarray otherwise.
     """
     return_scalar = np.isscalar(mass)
     mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
@@ -73,7 +111,28 @@ def _logistic_in_logm(mass, A, B, M0, k, clip_min=None, clip_max=None):
 
     This is a logistic in log-mass: as M -> 0, y -> A; as M -> inf,
     y -> B. Masses <= 0 are mapped to the low-mass asymptote A.
-    Returns a Python float for scalar mass and an ndarray otherwise.
+
+    Parameters
+    ----------
+    mass : float or array_like
+        Primary mass in solar masses (Msun).
+    A, B : float
+        Low-mass and high-mass asymptotes, in the same units as y.
+        Dimensionless for MF and γ; mean companion count for CSF;
+        dex for σ(log10 a).
+    M0 : float
+        Characteristic mass in solar masses (Msun).
+    k : float
+        Logistic slope, dimensionless.
+    clip_min, clip_max : float or None, optional
+        Optional lower/upper clips on y, in the same units as y.
+        ``None`` means no clip on that side.
+
+    Returns
+    -------
+    y : float or ndarray
+        Logistic value in the same units as ``A`` and ``B``.
+        Python float if ``mass`` is scalar, ndarray otherwise.
     """
     return_scalar = np.isscalar(mass)
     mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
@@ -97,6 +156,17 @@ def _logcosh(x):
 
     Uses |x| + log1p(exp(-2|x|)) - log(2) rather than np.log(np.cosh(x)),
     which overflows for |x| ≳ 700.
+
+    Parameters
+    ----------
+    x : float or array_like
+        Argument of cosh, dimensionless (for the smooth broken power
+        law this is v/s, with v and s in dex).
+
+    Returns
+    -------
+    logcosh_x : float or ndarray
+        log(cosh(x)), dimensionless. Same shape as ``x``.
     """
     ax = np.abs(np.asarray(x, dtype=float))
     return ax + np.log1p(np.exp(-2.0 * ax)) - np.log(2.0)
@@ -104,7 +174,7 @@ def _logcosh(x):
 
 def _smooth_broken_loglog(mass, mup, Mp, alpha_L, alpha_R, s, a_min=0.1):
     """
-    Smooth broken power law in log10(y) vs log10(M).
+    Smooth broken power law in log10(a) vs log10(M).
 
         v  = log10(M / Mp)
         yp = log10(mup)
@@ -112,8 +182,28 @@ def _smooth_broken_loglog(mass, mup, Mp, alpha_L, alpha_R, s, a_min=0.1):
 
     ``s`` is the smoothing scale in dex (C-infinity; logcosh). Masses
     <= 0 are mapped to 1e-8 Msun. The linear-space value is clipped
-    to ``a_min``. Returns log10(a): a Python float for scalar mass and
-    an ndarray otherwise.
+    to ``a_min``.
+
+    Parameters
+    ----------
+    mass : float or array_like
+        Primary mass in solar masses (Msun).
+    mup : float
+        Characteristic separation at the break mass, in AU.
+    Mp : float
+        Break mass in solar masses (Msun).
+    alpha_L, alpha_R : float
+        Power-law indices below and above ``Mp``, dimensionless.
+    s : float
+        Smoothing scale in dex of log10(M / 1 Msun).
+    a_min : float, optional
+        Minimum linear-space separation in AU. Default 0.1 AU.
+
+    Returns
+    -------
+    log_a : float or ndarray
+        log10(a / 1 AU) in dex (not ln, not AU). Python float if
+        ``mass`` is scalar, ndarray otherwise.
     """
     return_scalar = np.isscalar(mass)
     mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
@@ -136,6 +226,22 @@ def _q_from_powerlaw(x, q_pow, q_min):
 
     ``q_pow`` may be a scalar or an array broadcastable to ``x``.
     The q_pow = -1 (b = 0) limit is q = q_min**(1 - x).
+
+    Parameters
+    ----------
+    x : float or array_like
+        Uniform random draw, dimensionless, in [0, 1].
+    q_pow : float or array_like
+        Mass-ratio power-law index γ, dimensionless. Broadcastable
+        to ``x``.
+    q_min : float
+        Minimum mass ratio m_comp/m_prim, dimensionless, in (0, 1].
+
+    Returns
+    -------
+    q : ndarray
+        Companion mass ratio m_comp/m_prim, dimensionless, in
+        [q_min, 1]. Same shape as the broadcast of ``x`` and ``q_pow``.
     """
     x = np.asarray(x, dtype=float)
     q_pow = np.asarray(q_pow, dtype=float)
@@ -300,8 +406,9 @@ class MultiplicityUnresolved(object):
         Default False.
 
     binary_only_mass_max : float, optional
-        Primary mass (Msun) at and below which systems are restricted
-        to at most one companion (CSF = MF). Default is 0.08.
+        Primary mass in solar masses (Msun) at and below which systems
+        are restricted to at most one companion (CSF = MF). Default is
+        0.08 Msun.
     
     """
     def __init__(self, 
@@ -330,14 +437,16 @@ class MultiplicityUnresolved(object):
 
         Parameters
         ----------
-        mass : float or numpy array
-            Mass of primary star.
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
-        mf : float or numpy array
-            Multiplicity Fraction, the fraction of stars at this mass
-            that will have one or more companions.
+        mf : float or ndarray
+            Multiplicity fraction, dimensionless, in [0, 1].
+            The fraction of stars at this mass that will have one or
+            more companions. Python float if ``mass`` is scalar,
+            ndarray otherwise.
         """
         # Multiplicity Fraction
         mf = self.MF_amp * mass ** self.MF_pow
@@ -365,14 +474,16 @@ class MultiplicityUnresolved(object):
 
         Parameters
         ----------
-        mass : float or numpy array
-            Mass of primary star
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
-        csf : float or numpy array
-            Companion Star Fraction, the expected number of companions
-            for a star at this mass.
+        csf : float or ndarray
+            Companion star fraction, the expected number of companions
+            for a star at this mass. Dimensionless mean companion count
+            (not bounded by 1). Python float if ``mass`` is scalar,
+            ndarray otherwise.
         """
         # Companion Star Fraction
         csf = self.CSF_amp * mass ** self.CSF_pow
@@ -397,6 +508,17 @@ class MultiplicityUnresolved(object):
         Brown-dwarf primaries (M <= binary_only_mass_max) use
         gamma = 6.1 from Fontanive et al. (2018), matching the
         companion-mass draw previously special-cased in ``imf.calc_multi``.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        q_power : float or ndarray
+            Mass-ratio power-law index γ, dimensionless.
+            Python float if ``mass`` is scalar, ndarray otherwise.
         """
         mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
         q_pow = np.full(mass_arr.shape, self.q_pow, dtype=float)
@@ -416,18 +538,22 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         x : float or array_like
-            Random number between 0 and 1.
+            Uniform random draw, dimensionless, in [0, 1]. Inverse CDF
+            sample for q.
 
         mass : float or array_like, optional
-            Primary mass(es). If given, the power-law index is
-            ``q_power_at_mass(mass)`` (brown-dwarf vs stellar for
-            Lu et al. 2013; mass-dependent for Offner et al. 2023).
-            If omitted, ``self.q_pow`` is used for all companions.
+            Primary mass in solar masses (Msun). If given, the
+            power-law index is ``q_power_at_mass(mass)`` (brown-dwarf
+            vs stellar for the SPISEA v2.5 default; mass-dependent for
+            Offner et al. 2023). If omitted, ``self.q_pow`` is used
+            for all companions.
 
         Returns
         -------
-        q : float or array_like
-            companion mass ratio(s)
+        q : float or ndarray
+            Companion mass ratio m_comp/m_prim, dimensionless, in
+            [q_min, 1]. Python float if ``x`` is scalar, ndarray
+            otherwise.
         """
         if mass is None:
             return _q_from_powerlaw(x, self.q_pow, self.q_min)
@@ -450,14 +576,18 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         x : float or array_like
-            Unused (historical signature).
-        CSF, MF : float or array_like
-            Companion star fraction and multiplicity fraction.
+            Unused (historical signature). Dimensionless uniform
+            draw in [0, 1] if provided.
+        CSF : float or array_like
+            Companion star fraction, dimensionless mean companion
+            count (not bounded by 1).
+        MF : float or array_like
+            Multiplicity fraction, dimensionless, in [0, 1].
         mass : float or array_like, optional
-            Primary mass. If given, primaries at or below
-            ``binary_only_mass_max`` are limited to one companion.
-            Cluster generation always passes mass so subclasses can
-            override the BD companion-count policy here.
+            Primary mass in solar masses (Msun). If given, primaries
+            at or below ``binary_only_mass_max`` are limited to one
+            companion. Cluster generation always passes mass so
+            subclasses can override the BD companion-count policy here.
         rng : numpy.random.Generator, optional
             Random generator. If omitted, uses ``numpy.random`` (the
             historical scalar helper).
@@ -465,6 +595,8 @@ class MultiplicityUnresolved(object):
         Returns
         -------
         n_comp : int or ndarray of int
+            Number of companions, integer count. Python int if ``CSF``
+            and ``MF`` are scalar, ndarray otherwise.
         """
         return_scalar = np.isscalar(CSF) and np.isscalar(MF)
         if return_scalar and rng is None:
@@ -498,6 +630,26 @@ class MultiplicityUnresolved(object):
         Vectorized companion counts for primaries that are already
         identified as multiple. Delegates to :meth:`random_companion_count`
         with ``mass`` so BD companion-count policy lives on this object.
+
+        Parameters
+        ----------
+        mass : array_like
+            Primary masses in solar masses (Msun) of systems already
+            identified as multiple.
+        CSF : array_like
+            Companion star fraction at each primary, dimensionless
+            mean companion count (not bounded by 1).
+        MF : array_like
+            Multiplicity fraction at each primary, dimensionless,
+            in [0, 1].
+        rng : numpy.random.Generator
+            Random generator used for the Poisson companion-count draw.
+
+        Returns
+        -------
+        n_comp : ndarray of int
+            Number of companions per primary, integer count, shape
+            matching ``mass``.
         """
         return np.atleast_1d(
             self.random_companion_count(None, CSF, MF, mass=mass, rng=rng))
@@ -509,6 +661,22 @@ class MultiplicityUnresolved(object):
         The stellar / brown-dwarf split (two separate RNG draws) preserves
         the historical Lu et al. (2013) random sequence used by
         ``imf.calc_multi``.
+
+        Parameters
+        ----------
+        prim_subset : array_like
+            Primary masses in solar masses (Msun) for this companion-count
+            group.
+        n_comp : int
+            Number of companions per primary, integer count.
+        rng : numpy.random.Generator
+            Random generator used for inverse-CDF q draws.
+
+        Returns
+        -------
+        q_values : ndarray
+            Companion mass ratios m_comp/m_prim, dimensionless, in
+            [q_min, 1]. Shape (len(prim_subset), n_comp).
         """
         q_values = np.empty((len(prim_subset), n_comp))
         bd_mask = prim_subset <= self.binary_only_mass_max
@@ -535,25 +703,32 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         primary_masses : array_like
-            Primary masses (Msun).
+            Primary masses in solar masses (Msun).
         is_multiple : array_like of bool
             True for primaries drawn as multiple systems.
-        CSF, MF : array_like
-            Companion star fraction and multiplicity fraction at each
-            primary mass.
+        CSF : array_like
+            Companion star fraction at each primary, dimensionless
+            mean companion count (not bounded by 1).
+        MF : array_like
+            Multiplicity fraction at each primary, dimensionless,
+            in [0, 1].
         rng : numpy.random.Generator
             Random generator.
         mass_min : float
-            Minimum companion mass; lighter companions are masked.
+            Minimum companion mass in solar masses (Msun); lighter
+            companions are masked.
 
         Returns
         -------
         comp_masses : numpy.ma.MaskedArray
-            Companion masses, shape (n_primaries, max_n_comp).
+            Companion masses in solar masses (Msun), shape
+            (n_primaries, max_n_comp).
         system_masses : ndarray
-            Primary plus unmasked companion mass.
+            Primary plus unmasked companion mass, in solar masses
+            (Msun).
         is_multiple : ndarray of bool
-            Updated multiplicity flags after masking sub-minimum companions.
+            Updated multiplicity flags after masking sub-minimum
+            companions.
         """
         primary_masses = np.asarray(primary_masses, dtype=float)
         is_multiple = np.asarray(is_multiple, dtype=bool)
@@ -681,7 +856,20 @@ class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
 
 
 def _offner2023_table1_geom_mass(m_lo, m_hi):
-    """Geometric-mean primary mass of a Table 1 M1 interval."""
+    """
+    Geometric-mean primary mass of a Table 1 M1 interval.
+
+    Parameters
+    ----------
+    m_lo, m_hi : float
+        Low and high edges of the Table 1 primary-mass interval, in
+        solar masses (Msun). Must be positive.
+
+    Returns
+    -------
+    mass : float
+        Geometric mean sqrt(m_lo * m_hi) in solar masses (Msun).
+    """
     return float(np.sqrt(m_lo * m_hi))
 
 
@@ -785,13 +973,32 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
     Parameters
     ----------
     mass_limits : array_like
-        Segment edges in solar masses, length N+1, strictly increasing.
-    MF_amps, MF_powers : array_like
-        Length-N amplitudes and powers for the multiplicity fraction.
-    CSF_amps, CSF_powers : array_like
-        Length-N amplitudes and powers for the companion star fraction.
-    CSF_max, q_power, q_min, companion_max, binary_only_mass_max
-        Passed to :class:`MultiplicityUnresolved`.
+        Segment edges in solar masses (Msun), length N+1, strictly
+        increasing.
+    MF_amps : array_like
+        Length-N amplitudes for the multiplicity fraction,
+        dimensionless (units of MF / Msun**MF_power).
+    MF_powers : array_like
+        Length-N power-law indices for the multiplicity fraction,
+        dimensionless.
+    CSF_amps : array_like
+        Length-N amplitudes for the companion star fraction,
+        dimensionless (mean companion count / Msun**CSF_power).
+    CSF_powers : array_like
+        Length-N power-law indices for the companion star fraction,
+        dimensionless.
+    CSF_max : float, optional
+        Maximum companion star fraction, dimensionless mean companion
+        count (not bounded by 1). Default 3.
+    q_power : float, optional
+        Mass-ratio power-law index, dimensionless. Default -0.4.
+    q_min : float, optional
+        Minimum mass ratio m_comp/m_prim, dimensionless. Default 0.01.
+    companion_max : bool, optional
+        If True, cap companion counts at CSF_max. Default False.
+    binary_only_mass_max : float, optional
+        Primary mass in solar masses (Msun) at and below which systems
+        are binaries only. Default 0.08 Msun.
     """
     def __init__(self, mass_limits, MF_amps, MF_powers, CSF_amps, CSF_powers,
                  CSF_max=3, q_power=-0.4, q_min=0.01, companion_max=False,
@@ -825,6 +1032,17 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
         """
         Multiplicity fraction as a piecewise power law in primary mass.
         Clipped to [0, 1].
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        mf : float or ndarray
+            Multiplicity fraction, dimensionless, in [0, 1].
+            Python float if ``mass`` is scalar, ndarray otherwise.
         """
         return _piecewise_powerlaw(
             mass, self.mass_limits, self.MF_amps, self.MF_powers,
@@ -836,6 +1054,18 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
 
         Clipped to [0, CSF_max], raised to at least MF, and set equal
         to MF for primaries at or below ``binary_only_mass_max``.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        csf : float or ndarray
+            Companion star fraction, dimensionless mean companion
+            count (not bounded by 1). Python float if ``mass`` is
+            scalar, ndarray otherwise.
         """
         return_scalar = np.isscalar(mass)
         mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
@@ -870,12 +1100,32 @@ class MultiplicityLogistic(MultiplicityUnresolved):
 
     Parameters
     ----------
-    MF_A, MF_B, MF_M0, MF_k : float
-        Logistic coefficients for the multiplicity fraction.
-    CSF_A, CSF_B, CSF_M0, CSF_k : float
-        Logistic coefficients for the companion star fraction.
-    CSF_max, q_power, q_min, companion_max, binary_only_mass_max
-        Passed to :class:`MultiplicityUnresolved`.
+    MF_A, MF_B : float
+        Low-mass and high-mass asymptotes of the multiplicity-fraction
+        logistic, dimensionless (MF).
+    MF_M0 : float
+        Characteristic mass of the MF logistic, in solar masses (Msun).
+    MF_k : float
+        MF logistic slope, dimensionless.
+    CSF_A, CSF_B : float
+        Low-mass and high-mass asymptotes of the companion-star-fraction
+        logistic, dimensionless mean companion count (not bounded by 1).
+    CSF_M0 : float
+        Characteristic mass of the CSF logistic, in solar masses (Msun).
+    CSF_k : float
+        CSF logistic slope, dimensionless.
+    CSF_max : float, optional
+        Maximum companion star fraction, dimensionless mean companion
+        count (not bounded by 1). Default 3.
+    q_power : float, optional
+        Mass-ratio power-law index, dimensionless. Default -0.4.
+    q_min : float, optional
+        Minimum mass ratio m_comp/m_prim, dimensionless. Default 0.01.
+    companion_max : bool, optional
+        If True, cap companion counts at CSF_max. Default False.
+    binary_only_mass_max : float, optional
+        Primary mass in solar masses (Msun) at and below which systems
+        are binaries only. Default 0.08 Msun.
     """
     def __init__(self, MF_A, MF_B, MF_M0, MF_k,
                  CSF_A, CSF_B, CSF_M0, CSF_k,
@@ -899,6 +1149,17 @@ class MultiplicityLogistic(MultiplicityUnresolved):
         """
         Multiplicity fraction as a logistic in log primary mass.
         Clipped to [0, 1].
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        mf : float or ndarray
+            Multiplicity fraction, dimensionless, in [0, 1].
+            Python float if ``mass`` is scalar, ndarray otherwise.
         """
         return _logistic_in_logm(
             mass, self.MF_A, self.MF_B, self.MF_M0, self.MF_k,
@@ -910,6 +1171,18 @@ class MultiplicityLogistic(MultiplicityUnresolved):
 
         Clipped to [0, CSF_max], raised to at least MF, and set equal
         to MF for primaries at or below ``binary_only_mass_max``.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        csf : float or ndarray
+            Companion star fraction, dimensionless mean companion
+            count (not bounded by 1). Python float if ``mass`` is
+            scalar, ndarray otherwise.
         """
         return_scalar = np.isscalar(mass)
         mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
@@ -992,10 +1265,22 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
 
     Parameters
     ----------
-    CSF_max, q_min, companion_max, binary_only_mass_max
-        See :class:`MultiplicityUnresolved`. ``q_power`` is ignored for
+    CSF_max : float, optional
+        Maximum companion star fraction, dimensionless mean companion
+        count (not bounded by 1). Default 3.
+    q_power : float, optional
+        Fallback mass-ratio power-law index, dimensionless. Ignored for
         draws when primary mass is provided (the γ logistic is used);
-        it remains the fallback for ``random_q(x)`` with no mass.
+        used by ``random_q(x)`` with no mass. Default 0.2.
+    q_min : float, optional
+        Minimum mass ratio m_comp/m_prim, dimensionless, in [q_min, 1].
+        Default 0.01.
+    companion_max : bool, optional
+        If True, cap companion counts at CSF_max. Default False.
+    binary_only_mass_max : float, optional
+        Primary mass in solar masses (Msun) at and below which systems
+        are binaries only (CSF = MF, at most one companion). Default
+        0.08 Msun.
     """
     def __init__(self, CSF_max=3, q_power=0.2, q_min=0.01,
                  companion_max=False, binary_only_mass_max=H_BURNING_MASS):
@@ -1021,6 +1306,17 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
 
         Error-weighted logistic in log-mass fitted to Table 1
         γ_trunc. Not an interpolation of the Table 1 knots.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        gamma : float or ndarray
+            Mass-ratio power-law index γ, dimensionless.
+            Python float if ``mass`` is scalar, ndarray otherwise.
         """
         return _logistic_in_logm(
             mass, OFFNER2023_Q_A, OFFNER2023_Q_B,
@@ -1032,6 +1328,17 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
 
         FGK-pulled, s = 0.1 dex, C-infinity (stable logcosh).
         Linear-space a is clipped to 0.1 AU.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        log_a_mean : float or ndarray
+            Characteristic log10(a / 1 AU) in dex (not ln, not AU).
+            Python float if ``mass`` is scalar, ndarray otherwise.
         """
         return _smooth_broken_loglog(
             mass, OFFNER2023_A_MUP, OFFNER2023_A_MP,
@@ -1039,7 +1346,20 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
             a_min=OFFNER2023_A_MIN)
 
     def a_mean(self, mass):
-        """Characteristic μ(a) in AU, ``10 ** log_a_mean(mass)``."""
+        """
+        Characteristic μ(a) in AU, ``10 ** log_a_mean(mass)``.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        a_mean : float or ndarray
+            Characteristic separation μ(a) in AU. Python float if
+            ``mass`` is scalar, ndarray otherwise.
+        """
         log_a = self.log_a_mean(mass)
         if np.isscalar(log_a):
             return 10.0 ** log_a
@@ -1050,13 +1370,42 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         σ(log10 a) from a 2-parameter logistic in log-mass.
 
         Floors/ceilings pinned at 0.7 / 1.5; clipped to ≥ 0.1.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        sigma_log_a : float or ndarray
+            Standard deviation of log10(a / 1 AU), in dex.
+            Python float if ``mass`` is scalar, ndarray otherwise.
         """
         return _logistic_in_logm(
             mass, OFFNER2023_SIG_A, OFFNER2023_SIG_B,
             OFFNER2023_SIG_M0, OFFNER2023_SIG_K, clip_min=0.1)
 
     def _q_values_for_primaries(self, prim_subset, n_comp, rng):
-        """Mass-dependent q for every primary (BD and stellar)."""
+        """
+        Draw mass-dependent q for every primary (BD and stellar).
+
+        Parameters
+        ----------
+        prim_subset : array_like
+            Primary masses in solar masses (Msun) for this companion-count
+            group.
+        n_comp : int
+            Number of companions per primary, integer count.
+        rng : numpy.random.Generator
+            Random generator used for inverse-CDF q draws.
+
+        Returns
+        -------
+        q_values : ndarray
+            Companion mass ratios m_comp/m_prim, dimensionless, in
+            [q_min, 1]. Shape (len(prim_subset), n_comp).
+        """
         return self.random_q(
             rng.random((len(prim_subset), n_comp)), mass=prim_subset)
 
@@ -1078,6 +1427,23 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
     same as :class:`MultiplicityResolvedDK`.
 
     Opt-in; does not replace :class:`MultiplicityResolvedDK`.
+
+    Parameters
+    ----------
+    CSF_max : float, optional
+        Maximum companion star fraction, dimensionless mean companion
+        count (not bounded by 1). Default 3.
+    q_power : float, optional
+        Fallback mass-ratio power-law index, dimensionless. Ignored for
+        draws when primary mass is provided (the γ logistic is used).
+        Default 0.2.
+    q_min : float, optional
+        Minimum mass ratio m_comp/m_prim, dimensionless. Default 0.01.
+    companion_max : bool, optional
+        If True, cap companion counts at CSF_max. Default False.
+    binary_only_mass_max : float, optional
+        Primary mass in solar masses (Msun) at and below which systems
+        are binaries only. Default 0.08 Msun.
     """
     def __init__(self, **kwargs):
         super(MultiplicityResolvedOffner2023, self).__init__(**kwargs)
@@ -1093,13 +1459,14 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
 
         Parameters
         ----------
-        mass : array-like
-            Primary mass (Msun).
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
         log_semimajoraxis : ndarray
-            log10 of the semimajor axis in AU, truncated to 0.01–2000 AU.
+            Drawn log10(a / 1 AU) in dex (not ln, not AU), truncated
+            so a is between 0.01 AU and 2000 AU.
         """
         mass = np.atleast_1d(np.asarray(mass, dtype=float))
         log_a_mean = np.atleast_1d(np.asarray(self.log_a_mean(mass), dtype=float))
