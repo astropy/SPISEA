@@ -77,80 +77,207 @@ Unresolved Multiplicity Classes
 .. autoclass:: imf.multiplicity.MultiplicityUnresolvedOffner2023
 	       :show-inheritance:
 	       :members: multiplicity_fraction, companion_star_fraction,
-			 q_power_at_mass, random_q, log_a_mean, sigma_log_a
+			 q_power_at_mass, random_q, log_a_mean, a_mean,
+			 sigma_log_a
+
+
+Offner et al. 2023 multiplicity
+------------------------------------------
+Opt-in field multiplicity from Offner et al. (2023), Protostars and
+Planets VII, ASP Conf. Ser. 534, 275 (`arXiv:2203.10066
+<https://arxiv.org/abs/2203.10066>`_; ADS
+`2023ASPC..534..275O
+<https://ui.adsabs.harvard.edu/abs/2023ASPC..534..275O>`_). Table 1
+data: Zenodo `10.5281/zenodo.6628915
+<https://doi.org/10.5281/zenodo.6628915>`_.
 
 The Lu et al. (2013) :class:`~imf.multiplicity.MultiplicityUnresolved`
-object remains the default. Offner et al. 2023 is **opt-in**::
+object remains the default. Pass an Offner instance as
+``IMF.multiplicity`` to use this model.
+
+Unresolved (companions, no orbits)::
 
   from spisea.imf import imf, multiplicity
   from spisea import synthetic
 
   multi = multiplicity.MultiplicityUnresolvedOffner2023()
-  # or the alias:
+  # alias:
   # multi = multiplicity.MultiplicityOffner2023()
   imf_obj = imf.Kroupa_2001(multiplicity=multi)
   cluster = synthetic.ResolvedCluster(iso, imf_obj, Mcl)
 
-MF vs primary mass (Lu et al. 2013 array power law and scalar BD staircase
-compared to the Offner logistic in log-mass and Table 1 points):
+Resolved (same MF/CSF/q, plus mass-dependent separations)::
+
+  multi = multiplicity.MultiplicityResolvedOffner2023()
+
+The generic helpers :class:`~imf.multiplicity.MultiplicityLogistic` and
+:class:`~imf.multiplicity.MultiplicityPiecewisePowerLaw` are available
+for other surveys. Offner does **not** evaluate MF/CSF, :math:`\gamma`,
+or separations as a piecewise interpolation of Table 1/2 knots.
+
+Multiplicity and companion-star fractions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+MF and CSF are a 4-parameter logistic in log-mass, fitted with equal
+weight to the geom-mean MF/CF columns of Table 1:
+
+.. math::
+
+   f(M) = A + \frac{B - A}{1 + (M / M_0)^{-k}}
+
+with :math:`(A, B, M_0, k) = (0.14, 0.99, 1.41, 1.25)` for MF and
+:math:`(0.12, 2.35, 3.57, 0.96)` for CSF. The curve is C-infinity
+smooth and saturates at :math:`B \approx 1` for MF. MF is clipped to
+:math:`[0, 1]`. CSF is clipped to :math:`[0, \mathrm{CSF_{max}}]`,
+raised to at least MF, and forced equal to MF for
+:math:`M \le 0.08\,M_\odot` (binaries only). Masses :math:`M \le 0`
+map to the low-mass asymptote :math:`A`.
+
+Lu et al. (2013) uses :math:`\mathrm{MF} = 0.44\,M^{0.51}` (clipped
+to 1) for arrays, plus a scalar-only brown-dwarf staircase
+(0 / 8% / 16%). Cluster generation on that class still uses the
+stellar power law for brown-dwarf primaries.
 
 .. figure:: figures/mf_offner_vs_lu2013.png
-   :alt: Multiplicity fraction vs primary mass: Lu+2013 vs Offner 2023 logistic in log M
+   :alt: Multiplicity fraction vs primary mass: Offner logistic vs Lu+2013 power law and scalar BD staircase
    :align: center
 
-   Left: brown-dwarf zoom. Right: BD through early B. The Offner model is a
-   4-parameter logistic in log-mass fitted to Table 1, C-infinity smooth
-   and saturating at B ~ 1. The shaded region is below the hydrogen-burning
-   limit (0.08 solar masses). Reproduce with
-   ``python docs/figures/plot_mf_offner_vs_lu2013.py``.
+   Multiplicity fraction vs primary mass. Left: brown-dwarf zoom.
+   Right: BD through early B. Solid: Offner logistic in log-mass.
+   Dashed: Lu+2013 :math:`0.44\,M^{0.51}`. Dotted: Lu+2013 scalar BD
+   staircase. Blue points: Offner Table 1. Shaded:
+   :math:`M \le 0.08\,M_\odot`.
 
-Mass-ratio index vs primary mass (Offner is an error-weighted logistic
-in log-mass fitted to Table 1 :math:`\gamma_\mathrm{trunc}`; Lu+2013 is
-a step: 6.1 below 0.08 solar masses, :math:`-0.4` above):
+Mass-ratio index
+~~~~~~~~~~~~~~~~
+Companion mass ratios follow :math:`P(q) \propto q^{\gamma}` on
+:math:`q_{\min} \le q \le 1` (default :math:`q_{\min} = 0.01`).
+:math:`\gamma(M)` is an error-weighted logistic in log-mass fitted to
+Table 1 :math:`\gamma_{\mathrm{trunc}}` (1–100 au):
+
+.. math::
+
+   \gamma(M) = A + \frac{B - A}{1 + (M / M_0)^{-k}}
+
+with :math:`(A, B, M_0, k) = (6.6, -1.77, 0.0651, 0.629)`. Call
+``q_power_at_mass(mass)`` or ``random_q(x, mass=...)``. Without
+``mass``, ``random_q(x)`` keeps the historical stellar-only power law.
+
+The err-weighted fit undershoots Fontanive et al. (2018)
+:math:`8\pm 6\%` MF and :math:`\gamma = 4.8\pm 2.2`: at
+:math:`0.033\,M_\odot`, :math:`\gamma \approx 3.3`. That is the
+fit, not a bug. Lu+2013 is a step: :math:`\gamma = 6.1` for
+:math:`M \le 0.08\,M_\odot` (Fontanive) and :math:`-0.4` above.
 
 .. figure:: figures/q_offner_vs_lu2013.png
-   :alt: Mass-ratio index vs primary mass: Lu+2013 step vs Offner error-weighted logistic
+   :alt: Mass-ratio index vs primary mass: Offner error-weighted logistic vs Lu+2013 6.1 / -0.4 step
    :align: center
 
-   Left: brown-dwarf zoom. Right: BD through O. Offner BD companions are
-   more equal-mass than Lu’s stellar :math:`q` power. Reproduce with
-   ``python docs/figures/plot_q_sep_offner_vs_lu2013.py``.
-
-Characteristic separation vs primary mass (Offner is a smooth broken
-power law in :math:`\log_{10} a` vs :math:`\log_{10} M`, :math:`s=0.1`
-dex, FGK-pulled; Lu+2013 is the Duchêne–Kraus broken power law with a
-brown-dwarf blend):
-
-.. figure:: figures/sep_offner_vs_lu2013.png
-   :alt: Characteristic separation vs primary mass: Lu+2013 DK vs Offner smooth broken PL
-   :align: center
-
-   Open circles are Table 1 :math:`\tilde{a}_\mathrm{all}`; filled squares
-   are Table 2 :math:`\mu` knots (4, 25, 40 au). Offner BD binaries peak
-   at a few AU. Same script.
-
-Separation scatter vs primary mass (Offner is a 2-parameter logistic
-pinned at 0.7 / 1.5; Lu+2013 DK is a linear fit in log mass that
-saturates above 2.9 solar masses):
-
-.. figure:: figures/sig_loga_offner_vs_lu2013.png
-   :alt: Sigma of log10 a vs primary mass: Lu+2013 DK vs Offner 2-param logistic
-   :align: center
-
-   Left: brown-dwarf zoom. Right: BD through O. Filled squares are the
-   Table 2 knots. The Lu dip near 0.08 solar masses is the BD/stellar
-   blend. Same script.
-
-Mean mass ratio on :math:`0.01 \leq q \leq 1` from :math:`P(q)\propto q^{\gamma}`:
+   Mass-ratio index :math:`\gamma` vs primary mass. Solid: Offner
+   error-weighted logistic. Dashed: Lu+2013 step (6.1 below
+   :math:`0.08\,M_\odot`, :math:`-0.4` above). Blue points: Table 1
+   :math:`\gamma_{\mathrm{trunc}}`.
 
 .. figure:: figures/meanq_offner_vs_lu2013.png
-   :alt: Mean mass ratio vs primary mass implied by the gamma curves
+   :alt: Mean mass ratio vs primary mass implied by P(q) proportional to q^gamma
    :align: center
 
-   Companion to the :math:`\gamma` panel. Same script.
+   Mean mass ratio :math:`\langle q \rangle` on :math:`[0.01, 1]`
+   implied by :math:`P(q)\propto q^{\gamma}`. Offner brown-dwarf
+   companions are more equal-mass than Lu+2013 stellar :math:`q`.
 
-Figure generators live at ``docs/figures/plot_mf_offner_vs_lu2013.py``
-and ``docs/figures/plot_q_sep_offner_vs_lu2013.py``.
+Characteristic separation
+~~~~~~~~~~~~~~~~~~~~~~~~~
+The characteristic :math:`\mu(a)` is a smooth broken power law in
+:math:`\log_{10} a` vs :math:`\log_{10} M`, FGK-pulled, with smoothing
+scale :math:`s = 0.1` dex. It is C-infinity (stable
+:math:`\log\cosh`; not :math:`\log(\cosh x)` and not a hard
+``where`` break):
+
+.. math::
+
+   v = \log_{10}(M / M_p),\quad
+   y_p = \log_{10}(\mu_p)
+
+.. math::
+
+   \log_{10} a = y_p + \tfrac{1}{2}(\alpha_L+\alpha_R)\,v
+     + \tfrac{1}{2}(\alpha_R-\alpha_L)\,s\,\log\cosh(v/s)
+
+with :math:`\mu_p = 44.46` AU, :math:`M_p = 0.819\,M_\odot`,
+:math:`\alpha_L = 1.005`, :math:`\alpha_R = -0.308`, :math:`s = 0.10`.
+Linear-space :math:`a` is clipped above 0.1 AU. The implementation
+uses the stable form
+:math:`\log\cosh x = |x| + \log(1+e^{-2|x|}) - \log 2`.
+``log_a_mean(mass)`` returns :math:`\log_{10}(a/\mathrm{AU})`;
+``a_mean(mass)`` returns :math:`a` in AU.
+
+Lu+2013 :class:`~imf.multiplicity.MultiplicityResolvedDK` uses a
+Duchêne & Kraus (2013) broken power law in :math:`a` with a
+brown-dwarf blend. That law is not meant for the BD regime.
+
+.. figure:: figures/sep_offner_vs_lu2013.png
+   :alt: Characteristic separation vs primary mass: Offner smooth broken power law vs Lu+2013 Duchene-Kraus
+   :align: center
+
+   Characteristic :math:`\mu(a)` vs primary mass. Solid: Offner
+   smooth broken power law. Dashed: Lu+2013 DK mean :math:`a`.
+   Open circles: Table 1 :math:`\tilde{a}_{\mathrm{all}}`. Filled
+   squares: Table 2 :math:`\mu` knots (4, 25, 40 AU). Offner BD
+   binaries peak at a few AU.
+
+Separation scatter
+~~~~~~~~~~~~~~~~~~
+:math:`\sigma(\log_{10} a)` is a 2-parameter logistic pinned at
+0.7 / 1.5:
+
+.. math::
+
+   \sigma(M) = 0.7 + \frac{0.8}{1 + (M / 0.354)^{-6.05}}
+
+i.e. :math:`(A, B, M_0, k) = (0.7, 1.5, 0.354, 6.05)`, clipped to
+:math:`\ge 0.1`. Call ``sigma_log_a(mass)``. Lu+2013 DK is a linear
+fit in :math:`\log M` that saturates above :math:`2.9\,M_\odot`; the
+dip near :math:`0.08\,M_\odot` is the BD/stellar blend.
+
+.. figure:: figures/sig_loga_offner_vs_lu2013.png
+   :alt: Sigma of log10 a vs primary mass: Offner 2-param logistic vs Lu+2013 DK
+   :align: center
+
+   :math:`\sigma(\log_{10} a)` vs primary mass. Solid: Offner
+   2-parameter logistic. Dashed: Lu+2013 DK. Filled squares: Table 2
+   knots (0.7, 1.3, 1.5).
+
+Resolved draws
+~~~~~~~~~~~~~~
+:class:`~imf.multiplicity.MultiplicityResolvedOffner2023` draws
+:math:`\log_{10}(a/\mathrm{AU})` from a truncated lognormal with
+``loc = log_a_mean(mass)`` and ``scale = sigma_log_a(mass)``,
+truncated to 0.01–2000 AU (same limits as
+:class:`~imf.multiplicity.MultiplicityResolvedDK`). Eccentricity
+and Keplerian angles still follow Duchêne & Kraus (2013)
+(:math:`f(e)=2e`, random inclination and angles).
+
+Brown-dwarf policy and Table 1
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Primaries at or below :math:`0.08\,M_\odot` are binaries only:
+CSF = MF and the companion count is capped at 1.
+
+Table 1 FGKM MF/CF exclude brown-dwarf companions
+(:math:`M_{\mathrm{comp}} > 0.075\,M_\odot` for FGKM;
+OBA use :math:`q > 0.1`). SPISEA still draws companions down to
+``q_min`` (default 0.01), so some stellar primaries get BD
+secondaries (~4% for solar-type). Do not read the simulated
+stellar-primary MF as a stellar-companion-only statistic.
+
+Reproducing the figures
+~~~~~~~~~~~~~~~~~~~~~~~
+The comparison figures are generated from the multiplicity object
+methods (``multiplicity_fraction``, ``q_power_at_mass``,
+``a_mean``, ``sigma_log_a``) so they cannot drift from the code.
+From the repository root::
+
+  python docs/figures/plot_mf_offner_vs_lu2013.py
+  python docs/figures/plot_q_sep_offner_vs_lu2013.py
 
 
 Resolved Multiplicity Classes
@@ -160,5 +287,5 @@ Resolved Multiplicity Classes
 
 .. autoclass:: imf.multiplicity.MultiplicityResolvedOffner2023
 	       :show-inheritance:
-	       :members: log_semimajoraxis, log_a_mean, sigma_log_a
+	       :members: log_semimajoraxis, log_a_mean, a_mean, sigma_log_a
 

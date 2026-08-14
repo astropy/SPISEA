@@ -17,7 +17,8 @@ and exponents of the IMF.
 The IMF object is an input for the :ref:`cluster_objects`, and will
 be used to draw the inital stellar mass distribution for the cluster.
 A :ref:`multi_obj` may be passed to the IMF object to
-form multiple star systems.
+form multiple star systems. The default is Lu et al. (2013);
+Offner et al. 2023 is opt-in (see :ref:`multi_obj`).
 
 Base IMF Class
 --------------
