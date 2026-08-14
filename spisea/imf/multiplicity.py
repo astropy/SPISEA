@@ -664,6 +664,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
         log_semimajoraxis = truncnorm.rvs(a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std)
         return log_semimajoraxis
 
+
 class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
     """
     Multiplicity described by a piecewise power law in primary mass.
@@ -860,6 +861,8 @@ class MultiplicityLogistic(MultiplicityUnresolved):
         self.CSF_M0 = float(CSF_M0)
         self.CSF_k = float(CSF_k)
 
+        return
+
     def multiplicity_fraction(self, mass):
         """
         Multiplicity fraction as a logistic in log primary mass.
@@ -876,9 +879,10 @@ class MultiplicityLogistic(MultiplicityUnresolved):
             Multiplicity fraction, dimensionless, in [0, 1].
             Python float if ``mass`` is scalar, ndarray otherwise.
         """
-        return _logistic_in_logm(
-            mass, self.MF_A, self.MF_B, self.MF_M0, self.MF_k,
-            clip_min=0.0, clip_max=1.0)
+        mf = _logistic_in_logm(mass, self.MF_A, self.MF_B, self.MF_M0, self.MF_k,
+                               clip_min=0.0, clip_max=1.0)
+
+        return mf
 
     def companion_star_fraction(self, mass):
         """
@@ -901,17 +905,25 @@ class MultiplicityLogistic(MultiplicityUnresolved):
         """
         return_scalar = np.isscalar(mass)
         mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
-        csf = _logistic_in_logm(
-            mass_arr, self.CSF_A, self.CSF_B, self.CSF_M0, self.CSF_k,
-            clip_min=0.0, clip_max=self.CSF_max)
-        mf = _logistic_in_logm(
-            mass_arr, self.MF_A, self.MF_B, self.MF_M0, self.MF_k,
-            clip_min=0.0, clip_max=1.0)
+
+        # Calculate the multiplicity fraction
+        mf = _logistic_in_logm(mass_arr, self.MF_A, self.MF_B, self.MF_M0, self.MF_k,
+                               clip_min=0.0, clip_max=1.0)
+
+        # Calculate the companion star fraction
+        csf = _logistic_in_logm(mass_arr, self.CSF_A, self.CSF_B, self.CSF_M0, self.CSF_k,
+                                clip_min=0.0, clip_max=self.CSF_max)
+        
+        # Ensure the companion star fraction is at least the multiplicity fraction
         csf = np.maximum(csf, mf)
+
+        # Fix all brown dwarf binaries so they only have one companion
         bd = mass_arr <= self.binary_only_mass_max
         csf[bd] = mf[bd]
+
         if return_scalar:
             return float(csf[0])
+
         return csf
 
 
@@ -1013,7 +1025,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
             companion_max=companion_max,
             binary_only_mass_max=binary_only_mass_max)
 
-        # Table 1/2 data that was fit; evaluation uses the smooth functions.
+        # Table 1/2 data that was fit; evaluation uses a smooth function.
         self.q_mass = np.array(OFFNER2023_Q_MASS, dtype=float)
         self.q_gamma = np.array(OFFNER2023_Q_GAMMA, dtype=float)
 
@@ -1059,10 +1071,13 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
             Characteristic log10(a / 1 AU) in dex (not ln, not AU).
             Python float if ``mass`` is scalar, ndarray otherwise.
         """
-        return _smooth_broken_loglog(
+        # Calculate the characteristic log10(a / 1 AU) using a smooth broken power law 
+        log_a_mean = _smooth_broken_loglog(
             mass, OFFNER2023_A_MUP, OFFNER2023_A_MP,
             OFFNER2023_A_ALPHAL, OFFNER2023_A_ALPHAR, OFFNER2023_A_S,
             a_min=OFFNER2023_A_MIN)
+
+        return log_a_mean
 
     def a_mean(self, mass):
         """
@@ -1080,9 +1095,14 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
             ``mass`` is scalar, ndarray otherwise.
         """
         log_a = self.log_a_mean(mass)
+
         if np.isscalar(log_a):
-            return 10.0 ** log_a
-        return 10.0 ** np.asarray(log_a, dtype=float)
+            a_mean = 10.0 ** log_a
+            return a_mean
+
+        a_mean = 10.0 ** np.asarray(log_a, dtype=float)
+
+        return a_mean
 
     def sigma_log_a(self, mass):
         """
@@ -1101,9 +1121,13 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
             Standard deviation of log10(a / 1 AU), in dex.
             Python float if ``mass`` is scalar, ndarray otherwise.
         """
-        return _logistic_in_logm(
-            mass, OFFNER2023_SIG_A, OFFNER2023_SIG_B,
-            OFFNER2023_SIG_M0, OFFNER2023_SIG_K, clip_min=0.1)
+
+        # Calculate the standard deviation of log10(a / 1 AU) using a 2-parameter logistic
+        sigma_log_a = _logistic_in_logm(mass, OFFNER2023_SIG_A, OFFNER2023_SIG_B,
+                                        OFFNER2023_SIG_M0, OFFNER2023_SIG_K, 
+                                        clip_min=0.1)
+
+        return sigma_log_a
 
     def _q_values_for_primaries(self, prim_subset, n_comp, rng):
         """
@@ -1125,8 +1149,10 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
             Companion mass ratios m_comp/m_prim, dimensionless, in
             [q_min, 1]. Shape (len(prim_subset), n_comp).
         """
-        return self.random_q(
-            rng.random((len(prim_subset), n_comp)), mass=prim_subset)
+        # Draw the mass-dependent mass ratios using a logistic in log-mass
+        q_values = self.random_q(rng.random((len(prim_subset), n_comp)), mass=prim_subset)
+
+        return q_values
 
 
 class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
@@ -1172,6 +1198,8 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
         self.sep_sig_mass = np.array(OFFNER2023_SEP_SIG_MASS, dtype=float)
         self.sep_sig = np.array(OFFNER2023_SEP_SIG, dtype=float)
 
+        return
+
     def log_semimajoraxis(self, mass):
         """
         Draw log10(a/AU) from a mass-dependent truncated lognormal.
@@ -1195,9 +1223,12 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
         log_a_upper = np.log10(2000)
         a_lower_std = (log_a_lower - log_a_mean) / log_a_std
         a_upper_std = (log_a_upper - log_a_mean) / log_a_std
-        return truncnorm.rvs(a_lower_std, a_upper_std,
+
+        # Draw the log10(a / 1 AU) from a truncated normal
+        log_a = truncnorm.rvs(a_lower_std, a_upper_std,
                              loc=log_a_mean, scale=log_a_std)
 
+        return log_a
 
 # Convenience alias; unresolved Table 1 model is the usual opt-in object.
 MultiplicityOffner2023 = MultiplicityUnresolvedOffner2023
@@ -1226,6 +1257,7 @@ def _two_point_powerlaw(mass_1, y_1, mass_2, y_2):
     """
     power = np.log(y_2 / y_1) / np.log(mass_2 / mass_1)
     amp = y_1 / (mass_1 ** power)
+
     return amp, power
 
 
@@ -1264,9 +1296,13 @@ def _piecewise_powerlaw(mass, mass_limits, amps, powers, clip_min=None,
     mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
     out = np.empty(mass_arr.shape, dtype=float)
     nseg = len(amps)
+
+    # Evaluate the piecewise power-law for each segment
     for i in range(nseg):
         lo = mass_limits[i]
         hi = mass_limits[i + 1]
+
+        # Determine the mask for the current segment
         if i == 0:
             mask = mass_arr < hi
         elif i == nseg - 1:
@@ -1274,12 +1310,18 @@ def _piecewise_powerlaw(mass, mass_limits, amps, powers, clip_min=None,
         else:
             mask = (mass_arr >= lo) & (mass_arr < hi)
         out[mask] = amps[i] * np.power(mass_arr[mask], powers[i])
+
+    # Apply the clips
     if clip_min is not None:
         out = np.maximum(out, clip_min)
+
     if clip_max is not None:
         out = np.minimum(out, clip_max)
+
+    # Return the result
     if return_scalar:
         return float(out[0])
+
     return out
 
 
@@ -1314,13 +1356,20 @@ def _logistic_in_logm(mass, A, B, M0, k, clip_min=None, clip_max=None):
     """
     return_scalar = np.isscalar(mass)
     mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
+
+    # Evaluate the logistic in log-mass
     out = A + (B - A) / (1.0 + np.power(mass_arr / M0, -k))
+
+    # Apply the clips
     if clip_min is not None:
         out = np.maximum(out, clip_min)
     if clip_max is not None:
         out = np.minimum(out, clip_max)
+
+    # Return the result
     if return_scalar:
         return float(out[0])
+
     return out
 
 
@@ -1343,7 +1392,12 @@ def _logcosh(x):
         log(cosh(x)), dimensionless. Same shape as ``x``.
     """
     ax = np.abs(np.asarray(x, dtype=float))
-    return ax + np.log1p(np.exp(-2.0 * ax)) - np.log(2.0)
+
+    # Calculate the log(cosh(x))
+    logcosh_x = ax + np.log1p(np.exp(-2.0 * ax)) - np.log(2.0)
+
+    # Return the result
+    return logcosh_x
 
 
 def _smooth_broken_loglog(mass, mup, Mp, alpha_L, alpha_R, s, a_min=0.1):
@@ -1382,13 +1436,18 @@ def _smooth_broken_loglog(mass, mup, Mp, alpha_L, alpha_R, s, a_min=0.1):
     mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
     v = np.log10(mass_arr / float(Mp))
     yp = np.log10(float(mup))
+
+    # Calculate the log10(a / 1 AU) using the smooth broken power law
     log_a = (yp
              + 0.5 * (alpha_L + alpha_R) * v
              + 0.5 * (alpha_R - alpha_L) * s * _logcosh(v / s))
     a = np.maximum(10.0 ** log_a, float(a_min))
     log_a = np.log10(a)
+
+    # Return the result
     if return_scalar:
         return float(log_a[0])
+
     return log_a
 
 
@@ -1417,17 +1476,30 @@ def _q_from_powerlaw(x, q_pow, q_min):
     """
     x = np.asarray(x, dtype=float)
     q_pow = np.asarray(q_pow, dtype=float)
+
+    # Broadcast the arrays if necessary
     if x.ndim > q_pow.ndim:
         q_pow = q_pow.reshape(q_pow.shape + (1,) * (x.ndim - q_pow.ndim))
+
     b = 1.0 + q_pow
     b, x = np.broadcast_arrays(b, x)
+
+    # Create an empty array to store the result
     out = np.empty(x.shape, dtype=float)
+
+    # Determine the mask for values near zero
     near_zero = np.abs(b) < 1e-12
+
+    # Determine the mask for values far from zero
     ok = ~near_zero
+
+    # Calculate the mass ratio for values near zero
     if np.any(near_zero):
         out[near_zero] = q_min ** (1.0 - x[near_zero])
     if np.any(ok):
         out[ok] = (x[ok] * (1.0 - q_min ** b[ok]) + q_min ** b[ok]) ** (1.0 / b[ok])
+
+    # Return the result
     return out
 
 
@@ -1446,9 +1518,10 @@ def _offner2023_table1_geom_mass(m_lo, m_hi):
     mass : float
         Geometric mean sqrt(m_lo * m_hi) in solar masses (Msun).
     """
+    # Calculate the geometric mean of the two masses
     return float(np.sqrt(m_lo * m_hi))
 
-# Table 1/2 data that was fit; the model is the smooth functions above,
+# Table 1/2 data that was fit; the model is a smooth function,
 # not interpolation of these arrays.
 OFFNER2023_Q_MASS = np.array([
     _offner2023_table1_geom_mass(0.019, 0.058),  # Fontanive+2018: 4.8
