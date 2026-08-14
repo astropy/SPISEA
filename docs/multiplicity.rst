@@ -77,7 +77,7 @@ Unresolved Multiplicity Classes
 .. autoclass:: imf.multiplicity.MultiplicityUnresolvedOffner2023
 	       :show-inheritance:
 	       :members: multiplicity_fraction, companion_star_fraction,
-			 q_power_at_mass, random_q
+			 q_power_at_mass, random_q, log_a_mean, sigma_log_a
 
 The Lu et al. (2013) :class:`~imf.multiplicity.MultiplicityUnresolved`
 object remains the default. Offner et al. 2023 is **opt-in**::
@@ -104,37 +104,37 @@ compared to the Offner logistic in log-mass and Table 1 points):
    limit (0.08 solar masses). Reproduce with
    ``python docs/figures/plot_mf_offner_vs_lu2013.py``.
 
-Mass-ratio index vs primary mass (Offner interpolates Table 1
-:math:`\gamma_\mathrm{trunc}`; Lu+2013 is a step: 6.1 below 0.08 solar
-masses, :math:`-0.4` above):
+Mass-ratio index vs primary mass (Offner is an error-weighted logistic
+in log-mass fitted to Table 1 :math:`\gamma_\mathrm{trunc}`; Lu+2013 is
+a step: 6.1 below 0.08 solar masses, :math:`-0.4` above):
 
 .. figure:: figures/q_offner_vs_lu2013.png
-   :alt: Mass-ratio index vs primary mass: Lu+2013 step vs Offner Table 1 interpolation
+   :alt: Mass-ratio index vs primary mass: Lu+2013 step vs Offner error-weighted logistic
    :align: center
 
    Left: brown-dwarf zoom. Right: BD through O. Offner BD companions are
    more equal-mass than Lu’s stellar :math:`q` power. Reproduce with
    ``python docs/figures/plot_q_sep_offner_vs_lu2013.py``.
 
-Characteristic separation vs primary mass (Offner interpolates Table 1
-:math:`\tilde{a}_\mathrm{all}` and Table 2 :math:`\mu`; Lu+2013 is the
-Duchêne–Kraus broken power law with a brown-dwarf blend):
+Characteristic separation vs primary mass (Offner is a smooth broken
+power law in :math:`\log_{10} a` vs :math:`\log_{10} M`, :math:`s=0.1`
+dex, FGK-pulled; Lu+2013 is the Duchêne–Kraus broken power law with a
+brown-dwarf blend):
 
 .. figure:: figures/sep_offner_vs_lu2013.png
-   :alt: Characteristic separation vs primary mass: Lu+2013 DK vs Offner Table 1/2
+   :alt: Characteristic separation vs primary mass: Lu+2013 DK vs Offner smooth broken PL
    :align: center
 
    Open circles are Table 1 :math:`\tilde{a}_\mathrm{all}`; filled squares
    are Table 2 :math:`\mu` knots (4, 25, 40 au). Offner BD binaries peak
    at a few AU. Same script.
 
-Separation scatter vs primary mass (Offner uses Table 2
-:math:`\sigma` of 0.7 / 1.3 / 1.5, held at 0.7 for brown dwarfs;
-Lu+2013 DK is a linear fit in log mass that saturates above 2.9 solar
-masses):
+Separation scatter vs primary mass (Offner is a 2-parameter logistic
+pinned at 0.7 / 1.5; Lu+2013 DK is a linear fit in log mass that
+saturates above 2.9 solar masses):
 
 .. figure:: figures/sig_loga_offner_vs_lu2013.png
-   :alt: Sigma of log10 a vs primary mass: Lu+2013 DK vs Offner Table 2
+   :alt: Sigma of log10 a vs primary mass: Lu+2013 DK vs Offner 2-param logistic
    :align: center
 
    Left: brown-dwarf zoom. Right: BD through O. Filled squares are the
@@ -160,5 +160,5 @@ Resolved Multiplicity Classes
 
 .. autoclass:: imf.multiplicity.MultiplicityResolvedOffner2023
 	       :show-inheritance:
-	       :members: log_semimajoraxis
+	       :members: log_semimajoraxis, log_a_mean, sigma_log_a
 

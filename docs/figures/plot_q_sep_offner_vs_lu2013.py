@@ -9,7 +9,8 @@ Generate q / separation comparison figures vs Lu et al. (2013):
 
 Two-panel layout matching ``plot_mf_offner_vs_lu2013.py``: brown-dwarf
 zoom and BD through O. Offner curves are evaluated from the
-multiplicity objects so they cannot drift from the code.
+multiplicity objects (γ logistic, smooth-broken μ(a), σ logistic)
+so they cannot drift from the code.
 
 Run from the repository root::
 
@@ -93,21 +94,6 @@ def _table_xy(rows, y_idx=3, e_idx=4):
     return m, y, err
 
 
-def _offner_mean_a_au(resolved, mass):
-    """
-    Characteristic μ(a) in AU: same log-M interpolation as
-    ``MultiplicityResolvedOffner2023.log_semimajoraxis``, without drawing.
-    """
-    mass = np.atleast_1d(np.asarray(mass, dtype=float))
-    mass_clip = np.clip(mass, resolved.sep_mass[0], resolved.sep_mass[-1])
-    log_a_mean = np.interp(
-        np.log10(mass_clip),
-        np.log10(resolved.sep_mass),
-        np.log10(resolved.sep_mu_au),
-    )
-    return 10.0 ** log_a_mean
-
-
 def _lu2013_dk_mean_a_au(dk, mass):
     """
     Duchêne & Kraus mean a in AU from ``MultiplicityResolvedDK`` coefficients,
@@ -131,21 +117,6 @@ def _lu2013_dk_mean_a_au(dk, mass):
     w = 1.0 / (1.0 + np.exp(-(logm - np.log10(0.08)) / 0.15))
     log_a_mean = (1.0 - w) * log_a_mean_bd + w * log_a_mean_star
     return 10.0 ** log_a_mean
-
-
-def _offner_sig_loga(resolved, mass):
-    """
-    σ(log10 a): same interpolation as
-    ``MultiplicityResolvedOffner2023.log_semimajoraxis``, without drawing.
-    """
-    mass = np.atleast_1d(np.asarray(mass, dtype=float))
-    mass_clip = np.clip(mass, resolved.sep_mass[0], resolved.sep_mass[-1])
-    log_a_std = np.interp(
-        np.log10(mass_clip),
-        np.log10(resolved.sep_sig_mass),
-        resolved.sep_sig,
-    )
-    return np.clip(log_a_std, 0.1, None)
 
 
 def _lu2013_dk_sig_loga(dk, mass):
@@ -256,7 +227,7 @@ def plot_gamma(offner, lu):
         Line2D([0], [0], color='0.25', ls='--', lw=1.6,
                label=r'Lu+2013  $\gamma=6.1$ (BD), $-0.4$ (stellar)'),
         Line2D([0], [0], color=_OFFNER_COLOR, ls='-', lw=2.4,
-               label=r'Offner Table 1 $\gamma_\mathrm{trunc}$ interp'),
+               label=r'Offner err-wt logistic in log $M$'),
         Line2D([0], [0], marker='o', color=_TABLE1_COLOR, ls='none',
                mfc='white', mew=1.3, ms=6, label=r'Table 1 $\gamma_\mathrm{trunc}$'),
         Patch(facecolor=_BD_SHADE, edgecolor='none', alpha=0.8,
@@ -269,7 +240,7 @@ def plot_gamma(offner, lu):
 
 def plot_sep(resolved, dk):
     m_wide = np.logspace(np.log10(0.012), np.log10(40.0), 800)
-    a_off = _offner_mean_a_au(resolved, m_wide)
+    a_off = resolved.a_mean(m_wide)
     a_lu = _lu2013_dk_mean_a_au(dk, m_wide)
     m_tab, a_tab, err_tab = _table_xy(_TABLE1_A_ALL)
     m_t2 = np.array([_geom(r[1], r[2]) for r in _TABLE2_MU])
@@ -295,7 +266,7 @@ def plot_sep(resolved, dk):
         Line2D([0], [0], color='0.25', ls='--', lw=1.6,
                label=r'Lu+2013 DK mean $a$'),
         Line2D([0], [0], color=_OFFNER_COLOR, ls='-', lw=2.4,
-               label=r'Offner $\mu(a)$ (Table 1/2 interp)'),
+               label=r'Offner smooth broken PL ($s=0.1$ dex)'),
         Line2D([0], [0], marker='o', color=_TABLE1_COLOR, ls='none',
                mfc='white', mew=1.3, ms=6, label=r'Table 1 $\tilde{a}_\mathrm{all}$'),
         Line2D([0], [0], marker='s', color=_OFFNER_COLOR, ls='none',
@@ -310,7 +281,7 @@ def plot_sep(resolved, dk):
 
 def plot_sig_loga(resolved, dk):
     m_wide = np.logspace(np.log10(0.012), np.log10(40.0), 800)
-    sig_off = _offner_sig_loga(resolved, m_wide)
+    sig_off = resolved.sigma_log_a(m_wide)
     sig_lu = _lu2013_dk_sig_loga(dk, m_wide)
     m_t2 = np.array(resolved.sep_sig_mass, dtype=float)
     sig_t2 = np.array(resolved.sep_sig, dtype=float)
@@ -332,7 +303,7 @@ def plot_sig_loga(resolved, dk):
         Line2D([0], [0], color='0.25', ls='--', lw=1.6,
                label=r'Lu+2013 DK $\sigma(\log_{10} a)$'),
         Line2D([0], [0], color=_OFFNER_COLOR, ls='-', lw=2.4,
-               label=r'Offner Table 2 $\sigma$ interp'),
+               label=r'Offner 2-param logistic $\sigma$'),
         Line2D([0], [0], marker='s', color=_OFFNER_COLOR, ls='none',
                mfc=_OFFNER_COLOR, ms=7, label=r'Table 2 $\sigma$ knots'),
         Patch(facecolor=_BD_SHADE, edgecolor='none', alpha=0.8,
@@ -365,7 +336,7 @@ def plot_meanq(offner, lu):
         Line2D([0], [0], color='0.25', ls='--', lw=1.6,
                label=r'Lu+2013  from $\gamma$ step'),
         Line2D([0], [0], color=_OFFNER_COLOR, ls='-', lw=2.4,
-               label=r'Offner  from $\gamma_\mathrm{trunc}(M)$'),
+               label=r'Offner  from $\gamma(M)$ logistic'),
         Patch(facecolor=_BD_SHADE, edgecolor='none', alpha=0.8,
               label=r'BD ($M\leq 0.08$)'),
     ]

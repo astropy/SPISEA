@@ -91,6 +91,45 @@ def _logistic_in_logm(mass, A, B, M0, k, clip_min=None, clip_max=None):
     return out
 
 
+def _logcosh(x):
+    """
+    Numerically stable log(cosh(x)).
+
+    Uses |x| + log1p(exp(-2|x|)) - log(2) rather than np.log(np.cosh(x)),
+    which overflows for |x| ≳ 700.
+    """
+    ax = np.abs(np.asarray(x, dtype=float))
+    return ax + np.log1p(np.exp(-2.0 * ax)) - np.log(2.0)
+
+
+def _smooth_broken_loglog(mass, mup, Mp, alpha_L, alpha_R, s, a_min=0.1):
+    """
+    Smooth broken power law in log10(y) vs log10(M).
+
+        v  = log10(M / Mp)
+        yp = log10(mup)
+        log10(a) = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
+
+    ``s`` is the smoothing scale in dex (C-infinity; logcosh). Masses
+    <= 0 are mapped to 1e-8 Msun. The linear-space value is clipped
+    to ``a_min``. Returns log10(a): a Python float for scalar mass and
+    an ndarray otherwise.
+    """
+    return_scalar = np.isscalar(mass)
+    mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
+    m = np.where(mass_arr > 0, mass_arr, 1e-8)
+    v = np.log10(m / float(Mp))
+    yp = np.log10(float(mup))
+    log_a = (yp
+             + 0.5 * (alpha_L + alpha_R) * v
+             + 0.5 * (alpha_R - alpha_L) * s * _logcosh(v / s))
+    a = np.maximum(10.0 ** log_a, float(a_min))
+    log_a = np.log10(a)
+    if return_scalar:
+        return float(log_a[0])
+    return log_a
+
+
 def _q_from_powerlaw(x, q_pow, q_min):
     """
     Inverse CDF of P(q) ∝ q**q_pow for q_min <= q <= 1.
@@ -659,9 +698,29 @@ OFFNER2023_CSF_M0 = 3.57
 OFFNER2023_CSF_K = 0.96
 
 
-# Table 1 gamma_trunc (1-100 au when available) plus the paper's
-# L/early-T value gamma = 2-3 (midpoint 2.5). Masses are geometric
-# means of the corresponding Table 1 M1 bins.
+# Error-weighted logistic in log-mass for Table 1 γ_trunc (1–100 au).
+# The model is this logistic, not interpolation of the arrays below.
+OFFNER2023_Q_A = 6.6
+OFFNER2023_Q_B = -1.77
+OFFNER2023_Q_M0 = 0.0651
+OFFNER2023_Q_K = 0.629
+
+# Smooth broken power law in log10(a) vs log10(M), s=0.1 dex, FGK-pulled.
+OFFNER2023_A_MUP = 44.46
+OFFNER2023_A_MP = 0.819
+OFFNER2023_A_ALPHAL = 1.005
+OFFNER2023_A_ALPHAR = -0.308
+OFFNER2023_A_S = 0.10
+OFFNER2023_A_MIN = 0.1
+
+# 2-parameter logistic for σ(log10 a); floors/ceilings pinned at 0.7 / 1.5.
+OFFNER2023_SIG_A = 0.7
+OFFNER2023_SIG_B = 1.5
+OFFNER2023_SIG_M0 = 0.354
+OFFNER2023_SIG_K = 6.05
+
+# Table 1/2 data that was fit; the model is the smooth functions above,
+# not interpolation of these arrays.
 OFFNER2023_Q_MASS = np.array([
     _offner2023_table1_geom_mass(0.019, 0.058),  # Fontanive+2018: 4.8
     0.065,                                       # L/early-T: 2-3 (text)
@@ -681,7 +740,8 @@ OFFNER2023_Q_GAMMA = np.array([
 ])
 
 # Table 1 ã_all (au) and Table 2 lognormal μ (au) vs geom-mean M1.
-# Table 2 μ is used where both exist (late-M, early-M, FGK).
+# Table 2 μ is listed where both exist (late-M, early-M, FGK).
+# Fit data only; evaluation uses the smooth broken power law.
 OFFNER2023_SEP_MASS = np.array([
     _offner2023_table1_geom_mass(0.019, 0.058),  # Fontanive ã_all=2.9
     _offner2023_table1_geom_mass(0.080, 0.095),  # Close ã_all=3.7
@@ -698,7 +758,8 @@ OFFNER2023_SEP_MASS = np.array([
 OFFNER2023_SEP_MU_AU = np.array([
     2.9, 3.7, 4.0, 10.0, 25.0, 40.0, 32.0, 28.0, 25.0, 23.0, 19.0
 ])
-# Table 2 σ_log a at the three published bins; held constant outside.
+# Table 2 σ_log a at the three published bins. Fit data only;
+# evaluation uses the 2-parameter logistic.
 OFFNER2023_SEP_SIG_MASS = np.array([
     _offner2023_table1_geom_mass(0.075, 0.15),
     _offner2023_table1_geom_mass(0.3, 0.6),
@@ -909,9 +970,22 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     the simulated stellar-primary MF as a stellar-companion-only
     statistic.
 
-    Mass-ratio draws use Table 1 γ_trunc (1–100 au when listed),
-    interpolated in log mass, so BD companions are much more
-    equal-mass than solar-type companions.
+    Mass-ratio draws use an **error-weighted logistic in log-mass**
+    fitted to Table 1 γ_trunc (1–100 au)::
+
+        γ(M) = A + (B - A) / (1 + (M / M0)**(-k))
+
+    with (A, B, M0, k) = (6.6, −1.77, 0.0651, 0.629). BD companions
+    are still more equal-mass than solar-type companions. The
+    err-weighted fit undershoots Fontanive 4.8 ± 2.2 (~3.3 at
+    0.033 Msun).
+
+    Characteristic separation μ(a) is a **smooth broken power law**
+    in log10(a) vs log10(M) (s = 0.1 dex, FGK-pulled), C-infinity
+    via a stable logcosh. σ(log10 a) is a 2-parameter logistic
+    pinned at 0.7 / 1.5. See :meth:`log_a_mean` and
+    :meth:`sigma_log_a`. Resolved draws use those as loc / scale
+    of a truncated lognormal.
 
     This class is opt-in; it does not change the Lu et al. (2013)
     :class:`MultiplicityUnresolved` default.
@@ -920,7 +994,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     ----------
     CSF_max, q_min, companion_max, binary_only_mass_max
         See :class:`MultiplicityUnresolved`. ``q_power`` is ignored for
-        draws when primary mass is provided (Table 1 γ_trunc is used);
+        draws when primary mass is provided (the γ logistic is used);
         it remains the fallback for ``random_q(x)`` with no mass.
     """
     def __init__(self, CSF_max=3, q_power=0.2, q_min=0.01,
@@ -937,24 +1011,49 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
             CSF_max=CSF_max, q_power=q_power, q_min=q_min,
             companion_max=companion_max,
             binary_only_mass_max=binary_only_mass_max)
+        # Table 1/2 data that was fit; evaluation uses the smooth functions.
         self.q_mass = np.array(OFFNER2023_Q_MASS, dtype=float)
         self.q_gamma = np.array(OFFNER2023_Q_GAMMA, dtype=float)
 
     def q_power_at_mass(self, mass):
         """
-        Table 1 γ_trunc interpolated in log primary mass.
+        Mass-ratio power-law index γ(M), P(q) ∝ q^γ.
 
-        Late-T/Y BDs have γ ≈ 4.8 (Fontanive+2018); L/early-T have
-        γ ≈ 2–3; solar-type γ_trunc ≈ 0.2 at 1–100 au; massive stars
-        have negative γ (low-q companions).
+        Error-weighted logistic in log-mass fitted to Table 1
+        γ_trunc. Not an interpolation of the Table 1 knots.
         """
-        mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
-        mass_clip = np.clip(mass_arr, self.q_mass[0], self.q_mass[-1])
-        q_pow = np.interp(np.log10(mass_clip),
-                          np.log10(self.q_mass), self.q_gamma)
-        if np.isscalar(mass):
-            return float(q_pow[0])
-        return q_pow
+        return _logistic_in_logm(
+            mass, OFFNER2023_Q_A, OFFNER2023_Q_B,
+            OFFNER2023_Q_M0, OFFNER2023_Q_K)
+
+    def log_a_mean(self, mass):
+        """
+        Characteristic log10(a/AU) from the smooth broken power law.
+
+        FGK-pulled, s = 0.1 dex, C-infinity (stable logcosh).
+        Linear-space a is clipped to 0.1 AU.
+        """
+        return _smooth_broken_loglog(
+            mass, OFFNER2023_A_MUP, OFFNER2023_A_MP,
+            OFFNER2023_A_ALPHAL, OFFNER2023_A_ALPHAR, OFFNER2023_A_S,
+            a_min=OFFNER2023_A_MIN)
+
+    def a_mean(self, mass):
+        """Characteristic μ(a) in AU, ``10 ** log_a_mean(mass)``."""
+        log_a = self.log_a_mean(mass)
+        if np.isscalar(log_a):
+            return 10.0 ** log_a
+        return 10.0 ** np.asarray(log_a, dtype=float)
+
+    def sigma_log_a(self, mass):
+        """
+        σ(log10 a) from a 2-parameter logistic in log-mass.
+
+        Floors/ceilings pinned at 0.7 / 1.5; clipped to ≥ 0.1.
+        """
+        return _logistic_in_logm(
+            mass, OFFNER2023_SIG_A, OFFNER2023_SIG_B,
+            OFFNER2023_SIG_M0, OFFNER2023_SIG_K, clip_min=0.1)
 
     def _q_values_for_primaries(self, prim_subset, n_comp, rng):
         """Mass-dependent q for every primary (BD and stellar)."""
@@ -968,13 +1067,12 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
     Resolved Offner et al. 2023 multiplicity: Table 1 MF/CF plus
     mass-dependent separations.
 
-    Separations are drawn from a truncated lognormal in log10(a/AU).
-    The mean μ(a) interpolates Table 1 ã_all and Table 2 lognormal μ
-    (late-M μ=4 au, σ=0.7; early-M μ=25 au, σ=1.3; FGK μ=40 au,
-    σ=1.5). Brown-dwarf / late-M binaries peak near 3–4 au (vast
-    majority at 1–20 au). σ_log a uses Table 2 and is held at the
-    late-M value (0.7) through the BD regime, as Offner et al. 2023
-    describe the BD separation distribution as similar to late-M.
+    Separations are drawn from a truncated lognormal in log10(a/AU)
+    with loc = :meth:`log_a_mean` (smooth broken power law, s = 0.1
+    dex, FGK-pulled) and scale = :meth:`sigma_log_a` (2-parameter
+    logistic pinned at 0.7 / 1.5). Brown-dwarf binaries peak near a
+    few AU. Truncation is 0.01–2000 AU, same as
+    :class:`MultiplicityResolvedDK`.
 
     Eccentricity and Keplerian angles follow Duchêne & Kraus (2013),
     same as :class:`MultiplicityResolvedDK`.
@@ -983,6 +1081,7 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
     """
     def __init__(self, **kwargs):
         super(MultiplicityResolvedOffner2023, self).__init__(**kwargs)
+        # Table 1/2 data that was fit; draws use log_a_mean / sigma_log_a.
         self.sep_mass = np.array(OFFNER2023_SEP_MASS, dtype=float)
         self.sep_mu_au = np.array(OFFNER2023_SEP_MU_AU, dtype=float)
         self.sep_sig_mass = np.array(OFFNER2023_SEP_SIG_MASS, dtype=float)
@@ -1003,12 +1102,8 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
             log10 of the semimajor axis in AU, truncated to 0.01–2000 AU.
         """
         mass = np.atleast_1d(np.asarray(mass, dtype=float))
-        mass_clip = np.clip(mass, self.sep_mass[0], self.sep_mass[-1])
-        logm = np.log10(mass_clip)
-        log_a_mean = np.interp(logm, np.log10(self.sep_mass),
-                               np.log10(self.sep_mu_au))
-        log_a_std = np.interp(logm, np.log10(self.sep_sig_mass), self.sep_sig)
-        log_a_std = np.clip(log_a_std, 0.1, None)
+        log_a_mean = np.atleast_1d(np.asarray(self.log_a_mean(mass), dtype=float))
+        log_a_std = np.atleast_1d(np.asarray(self.sigma_log_a(mass), dtype=float))
 
         log_a_lower = np.log10(0.01)
         log_a_upper = np.log10(2000)

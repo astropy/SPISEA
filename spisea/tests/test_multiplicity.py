@@ -436,20 +436,51 @@ def test_offner2023_q_more_equal_mass_for_bds():
     q_bd = multi.random_q(rng.random(n), mass=0.04)
     q_sun = multi.random_q(rng.random(n), mass=1.0)
     assert np.mean(q_bd) > np.mean(q_sun) + 0.1
-    # Fontanive gamma_trunc = 4.8 is steeply equal-mass
-    assert multi.q_power_at_mass(0.033) > 3.0
-    assert multi.q_power_at_mass(1.0) < 1.0
+    # Err-wt logistic undershoots Fontanive 4.8 (~3.3 at 0.033 Msun)
+    assert multi.q_power_at_mass(0.033) > 2.5
+    assert multi.q_power_at_mass(1.0) < 0.5
+
+
+def test_offner2023_q_sigma_a_closed_form():
+    """γ, σ(log a), and log_a_mean match the smooth helpers; not interpolation."""
+    multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    masses = np.array([0.033, 0.065, 0.3, 1.0, 10.0])
+    for m in masses:
+        np.testing.assert_allclose(
+            multi.q_power_at_mass(m),
+            multiplicity._logistic_in_logm(
+                m, 6.6, -1.77, 0.0651, 0.629))
+        np.testing.assert_allclose(
+            multi.sigma_log_a(m),
+            multiplicity._logistic_in_logm(
+                m, 0.7, 1.5, 0.354, 6.05, clip_min=0.1))
+        np.testing.assert_allclose(
+            multi.log_a_mean(m),
+            multiplicity._smooth_broken_loglog(
+                m, 44.46, 0.819, 1.005, -0.308, 0.10, a_min=0.1))
+    # Array vs scalar
+    g_arr = multi.q_power_at_mass(masses)
+    sig_arr = multi.sigma_log_a(masses)
+    loga_arr = multi.log_a_mean(masses)
+    for i, m in enumerate(masses):
+        np.testing.assert_allclose(g_arr[i], multi.q_power_at_mass(float(m)))
+        np.testing.assert_allclose(sig_arr[i], multi.sigma_log_a(float(m)))
+        np.testing.assert_allclose(loga_arr[i], multi.log_a_mean(float(m)))
+    # Old L/early-T interpolation knot was 2.5; logistic is not that.
+    g_knot = multi.q_power_at_mass(0.065)
+    np.testing.assert_allclose(
+        g_knot, multiplicity._logistic_in_logm(0.065, 6.6, -1.77, 0.0651, 0.629))
+    assert abs(g_knot - 2.5) > 0.05
 
 
 def test_offner2023_bd_separations_peak_few_au():
-    """BD lognormal separations peak at a few AU (Table 1 ã_all ~ 3 au)."""
+    """BD lognormal separations peak at a few AU (μ(0.033)≈2.1 au)."""
     multi = multiplicity.MultiplicityResolvedOffner2023()
     np.random.seed(0)
     log_a = multi.log_semimajoraxis(np.full(5000, 0.04))
     med_a = 10 ** np.median(log_a)
-    # Fontanive ã_all = 2.9 au; allow a factor of ~2
     assert 1.5 < med_a < 8.0, 'BD median a = {0:.2f} AU'.format(med_a)
-    # Solar-type should be much wider (Table 2 μ = 40 au)
+    # Solar-type should be much wider (smooth-broken μ ~ 44 au)
     log_a_s = multi.log_semimajoraxis(np.full(5000, 1.0))
     med_a_s = 10 ** np.median(log_a_s)
     assert med_a_s > 10.0
@@ -462,6 +493,8 @@ def test_offner2023_alias_and_resolved_methods():
         multiplicity.MultiplicityUnresolvedOffner2023
     resolved = multiplicity.MultiplicityResolvedOffner2023()
     assert hasattr(resolved, 'log_semimajoraxis')
+    assert hasattr(resolved, 'log_a_mean')
+    assert hasattr(resolved, 'sigma_log_a')
     e = resolved.random_e(np.array([0.0, 0.25, 1.0]))
     np.testing.assert_allclose(e, [0.0, 0.5, 1.0])
 
