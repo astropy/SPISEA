@@ -91,9 +91,10 @@ Planets VII, ASP Conf. Ser. 534, 275 (`arXiv:2203.10066
 data: Zenodo `10.5281/zenodo.6628915
 <https://doi.org/10.5281/zenodo.6628915>`_.
 
-The Lu et al. (2013) :class:`~imf.multiplicity.MultiplicityUnresolved`
-object remains the default. Pass an Offner instance as
-``IMF.multiplicity`` to use this model.
+The SPISEA v2.5 :class:`~imf.multiplicity.MultiplicityUnresolved` /
+:class:`~imf.multiplicity.MultiplicityResolvedDK` objects remain the
+default. Pass an Offner instance as ``IMF.multiplicity`` to use this
+model.
 
 Unresolved (companions, no orbits)::
 
@@ -132,20 +133,20 @@ raised to at least MF, and forced equal to MF for
 :math:`M \le 0.08\,M_\odot` (binaries only). Masses :math:`M \le 0`
 map to the low-mass asymptote :math:`A`.
 
-Lu et al. (2013) uses :math:`\mathrm{MF} = 0.44\,M^{0.51}` (clipped
+SPISEA v2.5 uses :math:`\mathrm{MF} = 0.44\,M^{0.51}` (clipped
 to 1) for arrays, plus a scalar-only brown-dwarf staircase
 (0 / 8% / 16%). Cluster generation on that class still uses the
 stellar power law for brown-dwarf primaries.
 
 .. figure:: figures/mf_offner_vs_lu2013.png
-   :alt: Multiplicity fraction vs primary mass: Offner logistic vs Lu+2013 power law and scalar BD staircase
+   :alt: Offner 2023 vs SPISEA v2.5: multiplicity fraction vs primary mass
    :align: center
 
-   Multiplicity fraction vs primary mass. Left: brown-dwarf zoom.
-   Right: BD through early B. Solid: Offner logistic in log-mass.
-   Dashed: Lu+2013 :math:`0.44\,M^{0.51}`. Dotted: Lu+2013 scalar BD
-   staircase. Blue points: Offner Table 1. Shaded:
-   :math:`M \le 0.08\,M_\odot`.
+   Offner 2023 vs SPISEA v2.5: multiplicity fraction vs primary mass.
+   Left: brown-dwarf zoom. Right: BD through early B. Solid: Offner
+   logistic in log-mass. Dashed: SPISEA v2.5 :math:`0.44\,M^{0.51}`.
+   Dotted: SPISEA v2.5 scalar BD staircase. Blue points: Offner
+   Table 1. Shaded: :math:`M \le 0.08\,M_\odot`.
 
 Mass-ratio index
 ~~~~~~~~~~~~~~~~
@@ -165,25 +166,26 @@ with :math:`(A, B, M_0, k) = (6.6, -1.77, 0.0651, 0.629)`. Call
 The err-weighted fit undershoots Fontanive et al. (2018)
 :math:`8\pm 6\%` MF and :math:`\gamma = 4.8\pm 2.2`: at
 :math:`0.033\,M_\odot`, :math:`\gamma \approx 3.3`. That is the
-fit, not a bug. Lu+2013 is a step: :math:`\gamma = 6.1` for
+fit, not a bug. SPISEA v2.5 is a step: :math:`\gamma = 6.1` for
 :math:`M \le 0.08\,M_\odot` (Fontanive) and :math:`-0.4` above.
 
 .. figure:: figures/q_offner_vs_lu2013.png
-   :alt: Mass-ratio index vs primary mass: Offner error-weighted logistic vs Lu+2013 6.1 / -0.4 step
+   :alt: Offner 2023 vs SPISEA v2.5: mass-ratio index vs primary mass
    :align: center
 
-   Mass-ratio index :math:`\gamma` vs primary mass. Solid: Offner
-   error-weighted logistic. Dashed: Lu+2013 step (6.1 below
-   :math:`0.08\,M_\odot`, :math:`-0.4` above). Blue points: Table 1
-   :math:`\gamma_{\mathrm{trunc}}`.
+   Offner 2023 vs SPISEA v2.5: mass-ratio index :math:`\gamma` vs
+   primary mass. Solid: Offner error-weighted logistic. Dashed:
+   SPISEA v2.5 step (6.1 below :math:`0.08\,M_\odot`, :math:`-0.4`
+   above). Blue points: Table 1 :math:`\gamma_{\mathrm{trunc}}`.
 
 .. figure:: figures/meanq_offner_vs_lu2013.png
-   :alt: Mean mass ratio vs primary mass implied by P(q) proportional to q^gamma
+   :alt: Offner 2023 vs SPISEA v2.5: mean mass ratio vs primary mass
    :align: center
 
-   Mean mass ratio :math:`\langle q \rangle` on :math:`[0.01, 1]`
-   implied by :math:`P(q)\propto q^{\gamma}`. Offner brown-dwarf
-   companions are more equal-mass than Lu+2013 stellar :math:`q`.
+   Offner 2023 vs SPISEA v2.5: mean mass ratio
+   :math:`\langle q \rangle` on :math:`[0.01, 1]` implied by
+   :math:`P(q)\propto q^{\gamma}`. Offner brown-dwarf companions
+   are more equal-mass than SPISEA v2.5 stellar :math:`q`.
 
 Characteristic separation
 ~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -211,19 +213,20 @@ uses the stable form
 ``log_a_mean(mass)`` returns :math:`\log_{10}(a/\mathrm{AU})`;
 ``a_mean(mass)`` returns :math:`a` in AU.
 
-Lu+2013 :class:`~imf.multiplicity.MultiplicityResolvedDK` uses a
-Duchêne & Kraus (2013) broken power law in :math:`a` with a
+The SPISEA v2.5 :class:`~imf.multiplicity.MultiplicityResolvedDK`
+uses a Duchêne & Kraus (2013) broken power law in :math:`a` with a
 brown-dwarf blend. That law is not meant for the BD regime.
 
 .. figure:: figures/sep_offner_vs_lu2013.png
-   :alt: Characteristic separation vs primary mass: Offner smooth broken power law vs Lu+2013 Duchene-Kraus
+   :alt: Offner 2023 vs SPISEA v2.5: characteristic separation vs primary mass
    :align: center
 
-   Characteristic :math:`\mu(a)` vs primary mass. Solid: Offner
-   smooth broken power law. Dashed: Lu+2013 DK mean :math:`a`.
-   Open circles: Table 1 :math:`\tilde{a}_{\mathrm{all}}`. Filled
-   squares: Table 2 :math:`\mu` knots (4, 25, 40 AU). Offner BD
-   binaries peak at a few AU.
+   Offner 2023 vs SPISEA v2.5: characteristic :math:`\mu(a)` vs
+   primary mass. Solid: Offner smooth broken power law. Dashed:
+   SPISEA v2.5 mean :math:`a`. Open circles: Table 1
+   :math:`\tilde{a}_{\mathrm{all}}`. Filled squares: Table 2
+   :math:`\mu` knots (4, 25, 40 AU). Offner BD binaries peak at a
+   few AU.
 
 Separation scatter
 ~~~~~~~~~~~~~~~~~~
@@ -235,17 +238,18 @@ Separation scatter
    \sigma(M) = 0.7 + \frac{0.8}{1 + (M / 0.354)^{-6.05}}
 
 i.e. :math:`(A, B, M_0, k) = (0.7, 1.5, 0.354, 6.05)`, clipped to
-:math:`\ge 0.1`. Call ``sigma_log_a(mass)``. Lu+2013 DK is a linear
-fit in :math:`\log M` that saturates above :math:`2.9\,M_\odot`; the
-dip near :math:`0.08\,M_\odot` is the BD/stellar blend.
+:math:`\ge 0.1`. Call ``sigma_log_a(mass)``. SPISEA v2.5 DK is a
+linear fit in :math:`\log M` that saturates above
+:math:`2.9\,M_\odot`; the dip near :math:`0.08\,M_\odot` is the
+BD/stellar blend.
 
 .. figure:: figures/sig_loga_offner_vs_lu2013.png
-   :alt: Sigma of log10 a vs primary mass: Offner 2-param logistic vs Lu+2013 DK
+   :alt: Offner 2023 vs SPISEA v2.5: sigma of log10 a vs primary mass
    :align: center
 
-   :math:`\sigma(\log_{10} a)` vs primary mass. Solid: Offner
-   2-parameter logistic. Dashed: Lu+2013 DK. Filled squares: Table 2
-   knots (0.7, 1.3, 1.5).
+   Offner 2023 vs SPISEA v2.5: :math:`\sigma(\log_{10} a)` vs
+   primary mass. Solid: Offner 2-parameter logistic. Dashed:
+   SPISEA v2.5 DK. Filled squares: Table 2 knots (0.7, 1.3, 1.5).
 
 Resolved draws
 ~~~~~~~~~~~~~~

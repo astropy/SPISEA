@@ -500,7 +500,7 @@ def test_offner2023_alias_and_resolved_methods():
 
 
 def test_lu2013_defaults_unchanged():
-    """Lu et al. 2013 MultiplicityUnresolved defaults and stellar MF unchanged."""
+    """SPISEA v2.5 MultiplicityUnresolved defaults and stellar MF unchanged."""
     mu = multiplicity.MultiplicityUnresolved()
     assert mu.MF_amp == 0.44
     assert mu.MF_pow == 0.51
@@ -509,7 +509,7 @@ def test_lu2013_defaults_unchanged():
     np.testing.assert_almost_equal(mu.multiplicity_fraction(1.0), 0.44, decimal=2)
     np.testing.assert_almost_equal(mu.multiplicity_fraction(10.0), 1.0, decimal=2)
     np.testing.assert_almost_equal(mu.multiplicity_fraction(0.1), 0.136, decimal=2)
-    # Scalar BD overrides (historical Lu+2013 / Fontanive path)
+    # Scalar BD overrides (SPISEA v2.5 / Fontanive path)
     assert np.isclose(mu.multiplicity_fraction(0.07), 0.16, atol=0.01)
     assert np.isclose(mu.multiplicity_fraction(0.04), 0.08, atol=0.01)
     assert np.isclose(mu.multiplicity_fraction(0.01), 0.0, atol=1e-6)
@@ -572,13 +572,13 @@ def test_calc_multi_uses_multiplicity_q_and_counts():
 
 
 def test_offner2023_mf_is_vectorized():
-    """Offner MF is vectorized; Lu+2013 scalar BD bins are not used here."""
+    """Offner MF is vectorized; SPISEA v2.5 scalar BD bins are not used here."""
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
     masses = np.array([0.03, 0.06, 0.10, 1.0])
     mf = multi.multiplicity_fraction(masses)
     for i, m in enumerate(masses):
         np.testing.assert_allclose(mf[i], multi.multiplicity_fraction(float(m)))
-    # Array path is not the Lu stellar power law 0.44 * M**0.51
+    # Array path is not the SPISEA v2.5 stellar power law 0.44 * M**0.51
     lu_pl = 0.44 * masses ** 0.51
     assert not np.allclose(mf, np.clip(lu_pl, 0, 1), atol=0.02)
 

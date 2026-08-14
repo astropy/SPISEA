@@ -3,7 +3,7 @@
 Generate docs/figures/mf_offner_vs_lu2013.png
 
 Two-panel comparison of multiplicity fraction vs primary mass:
-Lu et al. (2013) array power law, Lu+2013 scalar BD staircase,
+SPISEA v2.5 array power law, v2.5 scalar BD staircase,
 Offner et al. 2023 logistic in log-mass, and Offner Table 1
 points with error bars.
 
@@ -47,13 +47,13 @@ _TABLE1 = [
 
 
 def _lu2013_array_mf(mass):
-    """What cluster generation used: stellar power law, no BD staircase."""
+    """SPISEA v2.5 array path: stellar power law, no BD staircase."""
     mf = 0.44 * np.asarray(mass, dtype=float) ** 0.51
     return np.clip(mf, 0.0, 1.0)
 
 
 def _lu2013_scalar_bd_staircase(mass):
-    """Scalar-only BD bins in MultiplicityUnresolved.multiplicity_fraction."""
+    """SPISEA v2.5 scalar-only BD bins in MultiplicityUnresolved.multiplicity_fraction."""
     mass = np.asarray(mass, dtype=float)
     mf = _lu2013_array_mf(mass)
     mf = np.where(mass < 0.02, 0.0, mf)
@@ -74,9 +74,9 @@ def _style_panel(ax, m_off, mf_off, m_lu, mf_lu, m_step, mf_step,
     ax.axvspan(xlim[0], 0.08, color='#e8d5b5', alpha=0.55, zorder=0)
     ax.axvline(0.08, color='#c4a574', ls='--', lw=1.2, zorder=1)
     ax.plot(m_lu, mf_lu, color='0.25', ls='--', lw=1.6, zorder=3,
-            label=r'Lu+2013 power law  $0.44\,M^{0.51}$')
+            label=r'SPISEA v2.5 $0.44\,M^{0.51}$')
     ax.plot(m_step, mf_step, color='0.45', ls=':', lw=1.8, zorder=3,
-            label=r'Lu+2013 scalar BD bins  (0 / 8% / 16%)')
+            label=r'SPISEA v2.5 scalar BD bins (0 / 8% / 16%)')
     ax.plot(m_off, mf_off, color='#8b3a2a', ls='-', lw=2.4, zorder=4,
             label='Offner logistic in log M')
     ax.errorbar(m_tab, mf_tab, yerr=err_tab, fmt='o', color='#2f6db3',
@@ -109,7 +109,8 @@ def main():
 
     fig, axes = plt.subplots(1, 2, figsize=(11.2, 4.6),
                              gridspec_kw={'wspace': 0.28})
-    fig.suptitle('Multiplicity fraction vs primary mass', fontsize=13, y=1.02)
+    fig.suptitle('Offner 2023 vs SPISEA v2.5: multiplicity fraction',
+                 fontsize=13, y=1.02)
 
     _style_panel(
         axes[0], m_wide, mf_off, m_wide, mf_lu, m_step, mf_step,
@@ -124,9 +125,9 @@ def main():
 
     legend_handles = [
         Line2D([0], [0], color='0.25', ls='--', lw=1.6,
-               label=r'Lu+2013 power law  $0.44\,M^{0.51}$'),
+               label=r'SPISEA v2.5 $0.44\,M^{0.51}$'),
         Line2D([0], [0], color='0.45', ls=':', lw=1.8,
-               label=r'Lu+2013 scalar BD bins  (0 / 8% / 16%)'),
+               label=r'SPISEA v2.5 scalar BD bins (0 / 8% / 16%)'),
         Line2D([0], [0], color='#8b3a2a', ls='-', lw=2.4,
                label='Offner logistic in log M'),
         Line2D([0], [0], marker='o', color='#2f6db3', ls='none',

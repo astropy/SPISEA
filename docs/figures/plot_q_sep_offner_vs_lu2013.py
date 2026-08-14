@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Generate q / separation comparison figures vs Lu et al. (2013):
+Generate q / separation comparison figures vs SPISEA v2.5 defaults:
 
     docs/figures/q_offner_vs_lu2013.png
     docs/figures/sep_offner_vs_lu2013.png
@@ -96,8 +96,9 @@ def _table_xy(rows, y_idx=3, e_idx=4):
 
 def _lu2013_dk_mean_a_au(dk, mass):
     """
-    Duchêne & Kraus mean a in AU from ``MultiplicityResolvedDK`` coefficients,
-    plus the BD log-a interpolation and sigmoid blend in ``log_semimajoraxis``.
+    SPISEA v2.5 ``MultiplicityResolvedDK`` mean a in AU (Duchêne & Kraus
+    coefficients, plus the BD log-a interpolation and sigmoid blend in
+    ``log_semimajoraxis``).
     """
     mass = np.atleast_1d(np.asarray(mass, dtype=float))
     logm = np.log10(mass)
@@ -121,8 +122,9 @@ def _lu2013_dk_mean_a_au(dk, mass):
 
 def _lu2013_dk_sig_loga(dk, mass):
     """
-    Duchêne & Kraus σ(log10 a) from ``MultiplicityResolvedDK`` coefficients,
-    plus the BD interpolation and sigmoid blend in ``log_semimajoraxis``.
+    SPISEA v2.5 ``MultiplicityResolvedDK`` σ(log10 a) (Duchêne & Kraus
+    coefficients, plus the BD interpolation and sigmoid blend in
+    ``log_semimajoraxis``).
     """
     mass = np.atleast_1d(np.asarray(mass, dtype=float))
     logm = np.log10(mass)
@@ -208,7 +210,7 @@ def plot_gamma(offner, lu):
     g_lu = lu.q_power_at_mass(m_step)
     m_tab, g_tab, err_tab = _table_xy(_TABLE1_GAMMA)
 
-    fig, axes = _two_axes(r'Mass-ratio index $\gamma$ vs primary mass')
+    fig, axes = _two_axes(r'Offner 2023 vs SPISEA v2.5: mass-ratio index $\gamma$')
     ylabel = r'$\gamma$  ($P(q)\propto q^{\gamma}$)'
     for ax, xlim, title in (
         (axes[0], _BD_XLIM, 'Brown-dwarf regime'),
@@ -225,7 +227,7 @@ def plot_gamma(offner, lu):
 
     legend_handles = [
         Line2D([0], [0], color='0.25', ls='--', lw=1.6,
-               label=r'Lu+2013  $\gamma=6.1$ (BD), $-0.4$ (stellar)'),
+               label=r'SPISEA v2.5 ($\gamma=6.1$ / $-0.4$)'),
         Line2D([0], [0], color=_OFFNER_COLOR, ls='-', lw=2.4,
                label=r'Offner err-wt logistic in log $M$'),
         Line2D([0], [0], marker='o', color=_TABLE1_COLOR, ls='none',
@@ -246,7 +248,7 @@ def plot_sep(resolved, dk):
     m_t2 = np.array([_geom(r[1], r[2]) for r in _TABLE2_MU])
     a_t2 = np.array([r[3] for r in _TABLE2_MU], dtype=float)
 
-    fig, axes = _two_axes(r'Characteristic separation vs primary mass')
+    fig, axes = _two_axes(r'Offner 2023 vs SPISEA v2.5: characteristic separation')
     ylabel = r'$\mu(a)$ (AU)'
     for ax, xlim, title in (
         (axes[0], _BD_XLIM, 'Brown-dwarf regime'),
@@ -264,7 +266,7 @@ def plot_sep(resolved, dk):
 
     legend_handles = [
         Line2D([0], [0], color='0.25', ls='--', lw=1.6,
-               label=r'Lu+2013 DK mean $a$'),
+               label=r'SPISEA v2.5 mean $a$'),
         Line2D([0], [0], color=_OFFNER_COLOR, ls='-', lw=2.4,
                label=r'Offner smooth broken PL ($s=0.1$ dex)'),
         Line2D([0], [0], marker='o', color=_TABLE1_COLOR, ls='none',
@@ -286,7 +288,7 @@ def plot_sig_loga(resolved, dk):
     m_t2 = np.array(resolved.sep_sig_mass, dtype=float)
     sig_t2 = np.array(resolved.sep_sig, dtype=float)
 
-    fig, axes = _two_axes(r'Separation scatter $\sigma(\log_{10} a)$ vs primary mass')
+    fig, axes = _two_axes(r'Offner 2023 vs SPISEA v2.5: $\sigma(\log_{10} a)$')
     ylabel = r'$\sigma(\log_{10} a)$'
     for ax, xlim, title in (
         (axes[0], _BD_XLIM, 'Brown-dwarf regime'),
@@ -301,7 +303,7 @@ def plot_sig_loga(resolved, dk):
 
     legend_handles = [
         Line2D([0], [0], color='0.25', ls='--', lw=1.6,
-               label=r'Lu+2013 DK $\sigma(\log_{10} a)$'),
+               label=r'SPISEA v2.5 DK $\sigma_{\log a}$'),
         Line2D([0], [0], color=_OFFNER_COLOR, ls='-', lw=2.4,
                label=r'Offner 2-param logistic $\sigma$'),
         Line2D([0], [0], marker='s', color=_OFFNER_COLOR, ls='none',
@@ -321,7 +323,7 @@ def plot_meanq(offner, lu):
     m_step = _lu_gamma_step_masses()
     q_lu = _mean_q_from_gamma(lu.q_power_at_mass(m_step), q_min=lu.q_min)
 
-    fig, axes = _two_axes(r'Mean mass ratio $\langle q\rangle$ vs primary mass')
+    fig, axes = _two_axes(r'Offner 2023 vs SPISEA v2.5: mean mass ratio $\langle q\rangle$')
     ylabel = r'$\langle q\rangle$  on $[0.01,\,1]$'
     for ax, xlim, title in (
         (axes[0], _BD_XLIM, 'Brown-dwarf regime'),
@@ -334,7 +336,7 @@ def plot_meanq(offner, lu):
 
     legend_handles = [
         Line2D([0], [0], color='0.25', ls='--', lw=1.6,
-               label=r'Lu+2013  from $\gamma$ step'),
+               label=r'SPISEA v2.5 from $\gamma$ step'),
         Line2D([0], [0], color=_OFFNER_COLOR, ls='-', lw=2.4,
                label=r'Offner  from $\gamma(M)$ logistic'),
         Patch(facecolor=_BD_SHADE, edgecolor='none', alpha=0.8,

@@ -987,7 +987,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     :meth:`sigma_log_a`. Resolved draws use those as loc / scale
     of a truncated lognormal.
 
-    This class is opt-in; it does not change the Lu et al. (2013)
+    This class is opt-in; it does not change the SPISEA v2.5
     :class:`MultiplicityUnresolved` default.
 
     Parameters

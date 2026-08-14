@@ -52,7 +52,7 @@ def test_generate_cluster_offner2023():
     assert np.all(n_comp[bd] <= 1)
     assert np.any(isMulti)
 
-    # BD companions should be more equal-mass than Lu+2013 stellar q_power=-0.4
+    # BD companions should be more equal-mass than SPISEA v2.5 stellar q_power=-0.4
     bd_mult = bd & isMulti
     if np.any(bd_mult):
         q_bd = []
