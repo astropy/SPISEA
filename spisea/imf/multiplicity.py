@@ -24,239 +24,39 @@ FONTANIVE2018_BD_Q_POWER = 6.1
 
 # Eventually we should add in separation properties. (a_mean, a_sigma)
 
-
-def _two_point_powerlaw(mass_1, y_1, mass_2, y_2):
-    """
-    Amplitude and power for y = A * M**alpha through two (M, y) points.
-
-    Parameters
-    ----------
-    mass_1, mass_2 : float
-        Primary masses in solar masses (Msun) of the two anchor points.
-        Must be positive and distinct.
-    y_1, y_2 : float
-        Ordinate values at ``mass_1`` and ``mass_2``. Units match the
-        fitted quantity (dimensionless for MF/γ, mean companion count
-        for CSF, AU for characteristic a, dex for σ).
-
-    Returns
-    -------
-    amp : float
-        Power-law amplitude A, in units of y / Msun**alpha.
-    power : float
-        Power-law index alpha, dimensionless.
-    """
-    power = np.log(y_2 / y_1) / np.log(mass_2 / mass_1)
-    amp = y_1 / (mass_1 ** power)
-    return amp, power
+# Equal-weight logistic-in-log-mass fit to Offner et al. 2023 Table 1
+# geom-mean (M, MF) and (M, CF) points:
+#   y(M) = A + (B - A) / (1 + (M / M0)**(-k))
+OFFNER2023_MF_A = 0.14
+OFFNER2023_MF_B = 0.99
+OFFNER2023_MF_M0 = 1.41
+OFFNER2023_MF_K = 1.25
+OFFNER2023_CSF_A = 0.12
+OFFNER2023_CSF_B = 2.35
+OFFNER2023_CSF_M0 = 3.57
+OFFNER2023_CSF_K = 0.96
 
 
-def _piecewise_powerlaw(mass, mass_limits, amps, powers, clip_min=None,
-                        clip_max=None):
-    """
-    Evaluate y = A_i * M**alpha_i on mass segments.
+# Error-weighted logistic in log-mass for Table 1 γ_trunc (1–100 au).
+# The model is this logistic, not interpolation of the arrays below.
+OFFNER2023_Q_A = 6.6
+OFFNER2023_Q_B = -1.77
+OFFNER2023_Q_M0 = 0.0651
+OFFNER2023_Q_K = 0.629
 
-    Segment i applies for mass_limits[i] <= M < mass_limits[i+1].
-    The first segment also covers M below the lowest limit; the last
-    segment is closed on the right.
+# Smooth broken power law in log10(a) vs log10(M), s=0.1 dex, FGK-pulled.
+OFFNER2023_A_MUP = 44.46
+OFFNER2023_A_MP = 0.819
+OFFNER2023_A_ALPHAL = 1.005
+OFFNER2023_A_ALPHAR = -0.308
+OFFNER2023_A_S = 0.10
+OFFNER2023_A_MIN = 0.1
 
-    Parameters
-    ----------
-    mass : float or array_like
-        Primary mass in solar masses (Msun).
-    mass_limits : array_like
-        Segment edges in solar masses (Msun), length N+1, strictly
-        increasing.
-    amps : array_like
-        Length-N amplitudes A_i, in units of y / Msun**alpha_i.
-    powers : array_like
-        Length-N power-law indices alpha_i, dimensionless.
-    clip_min, clip_max : float or None, optional
-        Optional lower/upper clips on y, in the same units as y.
-        ``None`` means no clip on that side.
-
-    Returns
-    -------
-    y : float or ndarray
-        Piecewise power-law value, in the same units as
-        ``amps * mass**powers``. Python float if ``mass`` is scalar,
-        ndarray otherwise.
-    """
-    return_scalar = np.isscalar(mass)
-    mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
-    out = np.empty(mass_arr.shape, dtype=float)
-    nseg = len(amps)
-    for i in range(nseg):
-        lo = mass_limits[i]
-        hi = mass_limits[i + 1]
-        if i == 0:
-            mask = mass_arr < hi
-        elif i == nseg - 1:
-            mask = mass_arr >= lo
-        else:
-            mask = (mass_arr >= lo) & (mass_arr < hi)
-        out[mask] = amps[i] * np.power(mass_arr[mask], powers[i])
-    if clip_min is not None:
-        out = np.maximum(out, clip_min)
-    if clip_max is not None:
-        out = np.minimum(out, clip_max)
-    if return_scalar:
-        return float(out[0])
-    return out
-
-
-def _logistic_in_logm(mass, A, B, M0, k, clip_min=None, clip_max=None):
-    """
-    Evaluate y = A + (B - A) / (1 + (M / M0)**(-k)).
-
-    This is a logistic in log-mass: as M -> 0, y -> A; as M -> inf,
-    y -> B. Masses <= 0 are mapped to the low-mass asymptote A.
-
-    Parameters
-    ----------
-    mass : float or array_like
-        Primary mass in solar masses (Msun).
-    A, B : float
-        Low-mass and high-mass asymptotes, in the same units as y.
-        Dimensionless for MF and γ; mean companion count for CSF;
-        dex for σ(log10 a).
-    M0 : float
-        Characteristic mass in solar masses (Msun).
-    k : float
-        Logistic slope, dimensionless.
-    clip_min, clip_max : float or None, optional
-        Optional lower/upper clips on y, in the same units as y.
-        ``None`` means no clip on that side.
-
-    Returns
-    -------
-    y : float or ndarray
-        Logistic value in the same units as ``A`` and ``B``.
-        Python float if ``mass`` is scalar, ndarray otherwise.
-    """
-    return_scalar = np.isscalar(mass)
-    mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
-    out = np.full(mass_arr.shape, float(A), dtype=float)
-    positive = mass_arr > 0
-    if np.any(positive):
-        m = mass_arr[positive]
-        out[positive] = A + (B - A) / (1.0 + np.power(m / M0, -k))
-    if clip_min is not None:
-        out = np.maximum(out, clip_min)
-    if clip_max is not None:
-        out = np.minimum(out, clip_max)
-    if return_scalar:
-        return float(out[0])
-    return out
-
-
-def _logcosh(x):
-    """
-    Numerically stable log(cosh(x)).
-
-    Uses |x| + log1p(exp(-2|x|)) - log(2) rather than np.log(np.cosh(x)),
-    which overflows for |x| ≳ 700.
-
-    Parameters
-    ----------
-    x : float or array_like
-        Argument of cosh, dimensionless (for the smooth broken power
-        law this is v/s, with v and s in dex).
-
-    Returns
-    -------
-    logcosh_x : float or ndarray
-        log(cosh(x)), dimensionless. Same shape as ``x``.
-    """
-    ax = np.abs(np.asarray(x, dtype=float))
-    return ax + np.log1p(np.exp(-2.0 * ax)) - np.log(2.0)
-
-
-def _smooth_broken_loglog(mass, mup, Mp, alpha_L, alpha_R, s, a_min=0.1):
-    """
-    Smooth broken power law in log10(a) vs log10(M).
-
-        v  = log10(M / Mp)
-        yp = log10(mup)
-        log10(a) = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
-
-    ``s`` is the smoothing scale in dex (C-infinity; logcosh). Masses
-    <= 0 are mapped to 1e-8 Msun. The linear-space value is clipped
-    to ``a_min``.
-
-    Parameters
-    ----------
-    mass : float or array_like
-        Primary mass in solar masses (Msun).
-    mup : float
-        Characteristic separation at the break mass, in AU.
-    Mp : float
-        Break mass in solar masses (Msun).
-    alpha_L, alpha_R : float
-        Power-law indices below and above ``Mp``, dimensionless.
-    s : float
-        Smoothing scale in dex of log10(M / 1 Msun).
-    a_min : float, optional
-        Minimum linear-space separation in AU. Default 0.1 AU.
-
-    Returns
-    -------
-    log_a : float or ndarray
-        log10(a / 1 AU) in dex (not ln, not AU). Python float if
-        ``mass`` is scalar, ndarray otherwise.
-    """
-    return_scalar = np.isscalar(mass)
-    mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
-    m = np.where(mass_arr > 0, mass_arr, 1e-8)
-    v = np.log10(m / float(Mp))
-    yp = np.log10(float(mup))
-    log_a = (yp
-             + 0.5 * (alpha_L + alpha_R) * v
-             + 0.5 * (alpha_R - alpha_L) * s * _logcosh(v / s))
-    a = np.maximum(10.0 ** log_a, float(a_min))
-    log_a = np.log10(a)
-    if return_scalar:
-        return float(log_a[0])
-    return log_a
-
-
-def _q_from_powerlaw(x, q_pow, q_min):
-    """
-    Inverse CDF of P(q) ∝ q**q_pow for q_min <= q <= 1.
-
-    ``q_pow`` may be a scalar or an array broadcastable to ``x``.
-    The q_pow = -1 (b = 0) limit is q = q_min**(1 - x).
-
-    Parameters
-    ----------
-    x : float or array_like
-        Uniform random draw, dimensionless, in [0, 1].
-    q_pow : float or array_like
-        Mass-ratio power-law index γ, dimensionless. Broadcastable
-        to ``x``.
-    q_min : float
-        Minimum mass ratio m_comp/m_prim, dimensionless, in (0, 1].
-
-    Returns
-    -------
-    q : ndarray
-        Companion mass ratio m_comp/m_prim, dimensionless, in
-        [q_min, 1]. Same shape as the broadcast of ``x`` and ``q_pow``.
-    """
-    x = np.asarray(x, dtype=float)
-    q_pow = np.asarray(q_pow, dtype=float)
-    if x.ndim > q_pow.ndim:
-        q_pow = q_pow.reshape(q_pow.shape + (1,) * (x.ndim - q_pow.ndim))
-    b = 1.0 + q_pow
-    b, x = np.broadcast_arrays(b, x)
-    out = np.empty(x.shape, dtype=float)
-    near_zero = np.abs(b) < 1e-12
-    ok = ~near_zero
-    if np.any(near_zero):
-        out[near_zero] = q_min ** (1.0 - x[near_zero])
-    if np.any(ok):
-        out[ok] = (x[ok] * (1.0 - q_min ** b[ok]) + q_min ** b[ok]) ** (1.0 / b[ok])
-    return out
+# 2-parameter logistic for σ(log10 a); floors/ceilings pinned at 0.7 / 1.5.
+OFFNER2023_SIG_A = 0.7
+OFFNER2023_SIG_B = 1.5
+OFFNER2023_SIG_M0 = 0.354
+OFFNER2023_SIG_K = 6.05
 
 
 class _ResolvedOrbitalMixin(object):
@@ -854,108 +654,6 @@ class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
         log_semimajoraxis = truncnorm.rvs(a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std)
         return log_semimajoraxis
 
-
-def _offner2023_table1_geom_mass(m_lo, m_hi):
-    """
-    Geometric-mean primary mass of a Table 1 M1 interval.
-
-    Parameters
-    ----------
-    m_lo, m_hi : float
-        Low and high edges of the Table 1 primary-mass interval, in
-        solar masses (Msun). Must be positive.
-
-    Returns
-    -------
-    mass : float
-        Geometric mean sqrt(m_lo * m_hi) in solar masses (Msun).
-    """
-    return float(np.sqrt(m_lo * m_hi))
-
-
-# Equal-weight logistic-in-log-mass fit to Offner et al. 2023 Table 1
-# geom-mean (M, MF) and (M, CF) points:
-#   y(M) = A + (B - A) / (1 + (M / M0)**(-k))
-OFFNER2023_MF_A = 0.14
-OFFNER2023_MF_B = 0.99
-OFFNER2023_MF_M0 = 1.41
-OFFNER2023_MF_K = 1.25
-OFFNER2023_CSF_A = 0.12
-OFFNER2023_CSF_B = 2.35
-OFFNER2023_CSF_M0 = 3.57
-OFFNER2023_CSF_K = 0.96
-
-
-# Error-weighted logistic in log-mass for Table 1 γ_trunc (1–100 au).
-# The model is this logistic, not interpolation of the arrays below.
-OFFNER2023_Q_A = 6.6
-OFFNER2023_Q_B = -1.77
-OFFNER2023_Q_M0 = 0.0651
-OFFNER2023_Q_K = 0.629
-
-# Smooth broken power law in log10(a) vs log10(M), s=0.1 dex, FGK-pulled.
-OFFNER2023_A_MUP = 44.46
-OFFNER2023_A_MP = 0.819
-OFFNER2023_A_ALPHAL = 1.005
-OFFNER2023_A_ALPHAR = -0.308
-OFFNER2023_A_S = 0.10
-OFFNER2023_A_MIN = 0.1
-
-# 2-parameter logistic for σ(log10 a); floors/ceilings pinned at 0.7 / 1.5.
-OFFNER2023_SIG_A = 0.7
-OFFNER2023_SIG_B = 1.5
-OFFNER2023_SIG_M0 = 0.354
-OFFNER2023_SIG_K = 6.05
-
-# Table 1/2 data that was fit; the model is the smooth functions above,
-# not interpolation of these arrays.
-OFFNER2023_Q_MASS = np.array([
-    _offner2023_table1_geom_mass(0.019, 0.058),  # Fontanive+2018: 4.8
-    0.065,                                       # L/early-T: 2-3 (text)
-    _offner2023_table1_geom_mass(0.080, 0.095),  # Close+2003: 3.3
-    _offner2023_table1_geom_mass(0.06, 0.15),    # Allen+2007: 1.7
-    _offner2023_table1_geom_mass(0.15, 0.30),    # Winters mid-M: 0.7
-    _offner2023_table1_geom_mass(0.3, 0.6),      # Winters early-M: 0.1
-    _offner2023_table1_geom_mass(0.75, 1.25),    # Raghavan FGK: 0.2
-    _offner2023_table1_geom_mass(1.6, 2.4),      # De Rosa A: -1.3
-    _offner2023_table1_geom_mass(3.0, 5.0),      # MDS 3-5: -1.0
-    _offner2023_table1_geom_mass(5.0, 8.0),      # MDS 5-8: -1.7
-    _offner2023_table1_geom_mass(8.0, 17.0),     # MDS 8-17: -1.6
-    _offner2023_table1_geom_mass(17.0, 50.0),    # Sana O: -1.4
-])
-OFFNER2023_Q_GAMMA = np.array([
-    4.8, 2.5, 3.3, 1.7, 0.7, 0.1, 0.2, -1.3, -1.0, -1.7, -1.6, -1.4
-])
-
-# Table 1 ã_all (au) and Table 2 lognormal μ (au) vs geom-mean M1.
-# Table 2 μ is listed where both exist (late-M, early-M, FGK).
-# Fit data only; evaluation uses the smooth broken power law.
-OFFNER2023_SEP_MASS = np.array([
-    _offner2023_table1_geom_mass(0.019, 0.058),  # Fontanive ã_all=2.9
-    _offner2023_table1_geom_mass(0.080, 0.095),  # Close ã_all=3.7
-    _offner2023_table1_geom_mass(0.075, 0.15),   # Table 2 late-M μ=4
-    _offner2023_table1_geom_mass(0.15, 0.30),    # Winters mid-M ã_all=10
-    _offner2023_table1_geom_mass(0.3, 0.6),      # Table 2 early-M μ=25
-    _offner2023_table1_geom_mass(0.75, 1.25),    # Table 2 FGK μ=40
-    _offner2023_table1_geom_mass(1.6, 2.4),      # Moe & Kratter ã_all=32
-    _offner2023_table1_geom_mass(3.0, 5.0),      # MDS ã_all=28
-    _offner2023_table1_geom_mass(5.0, 8.0),      # MDS ã_all=25
-    _offner2023_table1_geom_mass(8.0, 17.0),     # MDS ã_all=23
-    _offner2023_table1_geom_mass(17.0, 50.0),    # Sana ã_all=19
-])
-OFFNER2023_SEP_MU_AU = np.array([
-    2.9, 3.7, 4.0, 10.0, 25.0, 40.0, 32.0, 28.0, 25.0, 23.0, 19.0
-])
-# Table 2 σ_log a at the three published bins. Fit data only;
-# evaluation uses the 2-parameter logistic.
-OFFNER2023_SEP_SIG_MASS = np.array([
-    _offner2023_table1_geom_mass(0.075, 0.15),
-    _offner2023_table1_geom_mass(0.3, 0.6),
-    _offner2023_table1_geom_mass(0.75, 1.25),
-])
-OFFNER2023_SEP_SIG = np.array([0.7, 1.3, 1.5])
-
-
 class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
     """
     Multiplicity described by a piecewise power law in primary mass.
@@ -1482,3 +1180,303 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
 
 # Convenience alias; unresolved Table 1 model is the usual opt-in object.
 MultiplicityOffner2023 = MultiplicityUnresolvedOffner2023
+
+
+def _two_point_powerlaw(mass_1, y_1, mass_2, y_2):
+    """
+    Amplitude and power for y = A * M**alpha through two (M, y) points.
+
+    Parameters
+    ----------
+    mass_1, mass_2 : float
+        Primary masses in solar masses (Msun) of the two anchor points.
+        Must be positive and distinct.
+    y_1, y_2 : float
+        Ordinate values at ``mass_1`` and ``mass_2``. Units match the
+        fitted quantity (dimensionless for MF/γ, mean companion count
+        for CSF, AU for characteristic a, dex for σ).
+
+    Returns
+    -------
+    amp : float
+        Power-law amplitude A, in units of y / Msun**alpha.
+    power : float
+        Power-law index alpha, dimensionless.
+    """
+    power = np.log(y_2 / y_1) / np.log(mass_2 / mass_1)
+    amp = y_1 / (mass_1 ** power)
+    return amp, power
+
+
+def _piecewise_powerlaw(mass, mass_limits, amps, powers, clip_min=None,
+                        clip_max=None):
+    """
+    Evaluate y = A_i * M**alpha_i on mass segments.
+
+    Segment i applies for mass_limits[i] <= M < mass_limits[i+1].
+    The first segment also covers M below the lowest limit; the last
+    segment is closed on the right.
+
+    Parameters
+    ----------
+    mass : float or array_like
+        Primary mass in solar masses (Msun).
+    mass_limits : array_like
+        Segment edges in solar masses (Msun), length N+1, strictly
+        increasing.
+    amps : array_like
+        Length-N amplitudes A_i, in units of y / Msun**alpha_i.
+    powers : array_like
+        Length-N power-law indices alpha_i, dimensionless.
+    clip_min, clip_max : float or None, optional
+        Optional lower/upper clips on y, in the same units as y.
+        ``None`` means no clip on that side.
+
+    Returns
+    -------
+    y : float or ndarray
+        Piecewise power-law value, in the same units as
+        ``amps * mass**powers``. Python float if ``mass`` is scalar,
+        ndarray otherwise.
+    """
+    return_scalar = np.isscalar(mass)
+    mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
+    out = np.empty(mass_arr.shape, dtype=float)
+    nseg = len(amps)
+    for i in range(nseg):
+        lo = mass_limits[i]
+        hi = mass_limits[i + 1]
+        if i == 0:
+            mask = mass_arr < hi
+        elif i == nseg - 1:
+            mask = mass_arr >= lo
+        else:
+            mask = (mass_arr >= lo) & (mass_arr < hi)
+        out[mask] = amps[i] * np.power(mass_arr[mask], powers[i])
+    if clip_min is not None:
+        out = np.maximum(out, clip_min)
+    if clip_max is not None:
+        out = np.minimum(out, clip_max)
+    if return_scalar:
+        return float(out[0])
+    return out
+
+
+def _logistic_in_logm(mass, A, B, M0, k, clip_min=None, clip_max=None):
+    """
+    Evaluate y = A + (B - A) / (1 + (M / M0)**(-k)).
+
+    This is a logistic in log-mass: as M -> 0, y -> A; as M -> inf,
+    y -> B. Masses <= 0 are mapped to the low-mass asymptote A.
+
+    Parameters
+    ----------
+    mass : float or array_like
+        Primary mass in solar masses (Msun).
+    A, B : float
+        Low-mass and high-mass asymptotes, in the same units as y.
+        Dimensionless for MF and γ; mean companion count for CSF;
+        dex for σ(log10 a).
+    M0 : float
+        Characteristic mass in solar masses (Msun).
+    k : float
+        Logistic slope, dimensionless.
+    clip_min, clip_max : float or None, optional
+        Optional lower/upper clips on y, in the same units as y.
+        ``None`` means no clip on that side.
+
+    Returns
+    -------
+    y : float or ndarray
+        Logistic value in the same units as ``A`` and ``B``.
+        Python float if ``mass`` is scalar, ndarray otherwise.
+    """
+    return_scalar = np.isscalar(mass)
+    mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
+    out = np.full(mass_arr.shape, float(A), dtype=float)
+    positive = mass_arr > 0
+    if np.any(positive):
+        m = mass_arr[positive]
+        out[positive] = A + (B - A) / (1.0 + np.power(m / M0, -k))
+    if clip_min is not None:
+        out = np.maximum(out, clip_min)
+    if clip_max is not None:
+        out = np.minimum(out, clip_max)
+    if return_scalar:
+        return float(out[0])
+    return out
+
+
+def _logcosh(x):
+    """
+    Numerically stable log(cosh(x)).
+
+    Uses |x| + log1p(exp(-2|x|)) - log(2) rather than np.log(np.cosh(x)),
+    which overflows for |x| ≳ 700.
+
+    Parameters
+    ----------
+    x : float or array_like
+        Argument of cosh, dimensionless (for the smooth broken power
+        law this is v/s, with v and s in dex).
+
+    Returns
+    -------
+    logcosh_x : float or ndarray
+        log(cosh(x)), dimensionless. Same shape as ``x``.
+    """
+    ax = np.abs(np.asarray(x, dtype=float))
+    return ax + np.log1p(np.exp(-2.0 * ax)) - np.log(2.0)
+
+
+def _smooth_broken_loglog(mass, mup, Mp, alpha_L, alpha_R, s, a_min=0.1):
+    """
+    Smooth broken power law in log10(a) vs log10(M).
+
+        v  = log10(M / Mp)
+        yp = log10(mup)
+        log10(a) = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
+
+    ``s`` is the smoothing scale in dex (C-infinity; logcosh). Masses
+    <= 0 are mapped to 1e-8 Msun. The linear-space value is clipped
+    to ``a_min``.
+
+    Parameters
+    ----------
+    mass : float or array_like
+        Primary mass in solar masses (Msun).
+    mup : float
+        Characteristic separation at the break mass, in AU.
+    Mp : float
+        Break mass in solar masses (Msun).
+    alpha_L, alpha_R : float
+        Power-law indices below and above ``Mp``, dimensionless.
+    s : float
+        Smoothing scale in dex of log10(M / 1 Msun).
+    a_min : float, optional
+        Minimum linear-space separation in AU. Default 0.1 AU.
+
+    Returns
+    -------
+    log_a : float or ndarray
+        log10(a / 1 AU) in dex (not ln, not AU). Python float if
+        ``mass`` is scalar, ndarray otherwise.
+    """
+    return_scalar = np.isscalar(mass)
+    mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
+    m = np.where(mass_arr > 0, mass_arr, 1e-8)
+    v = np.log10(m / float(Mp))
+    yp = np.log10(float(mup))
+    log_a = (yp
+             + 0.5 * (alpha_L + alpha_R) * v
+             + 0.5 * (alpha_R - alpha_L) * s * _logcosh(v / s))
+    a = np.maximum(10.0 ** log_a, float(a_min))
+    log_a = np.log10(a)
+    if return_scalar:
+        return float(log_a[0])
+    return log_a
+
+
+def _q_from_powerlaw(x, q_pow, q_min):
+    """
+    Inverse CDF of P(q) ∝ q**q_pow for q_min <= q <= 1.
+
+    ``q_pow`` may be a scalar or an array broadcastable to ``x``.
+    The q_pow = -1 (b = 0) limit is q = q_min**(1 - x).
+
+    Parameters
+    ----------
+    x : float or array_like
+        Uniform random draw, dimensionless, in [0, 1].
+    q_pow : float or array_like
+        Mass-ratio power-law index γ, dimensionless. Broadcastable
+        to ``x``.
+    q_min : float
+        Minimum mass ratio m_comp/m_prim, dimensionless, in (0, 1].
+
+    Returns
+    -------
+    q : ndarray
+        Companion mass ratio m_comp/m_prim, dimensionless, in
+        [q_min, 1]. Same shape as the broadcast of ``x`` and ``q_pow``.
+    """
+    x = np.asarray(x, dtype=float)
+    q_pow = np.asarray(q_pow, dtype=float)
+    if x.ndim > q_pow.ndim:
+        q_pow = q_pow.reshape(q_pow.shape + (1,) * (x.ndim - q_pow.ndim))
+    b = 1.0 + q_pow
+    b, x = np.broadcast_arrays(b, x)
+    out = np.empty(x.shape, dtype=float)
+    near_zero = np.abs(b) < 1e-12
+    ok = ~near_zero
+    if np.any(near_zero):
+        out[near_zero] = q_min ** (1.0 - x[near_zero])
+    if np.any(ok):
+        out[ok] = (x[ok] * (1.0 - q_min ** b[ok]) + q_min ** b[ok]) ** (1.0 / b[ok])
+    return out
+
+
+def _offner2023_table1_geom_mass(m_lo, m_hi):
+    """
+    Geometric-mean primary mass of a Table 1 M1 interval.
+
+    Parameters
+    ----------
+    m_lo, m_hi : float
+        Low and high edges of the Table 1 primary-mass interval, in
+        solar masses (Msun). Must be positive.
+
+    Returns
+    -------
+    mass : float
+        Geometric mean sqrt(m_lo * m_hi) in solar masses (Msun).
+    """
+    return float(np.sqrt(m_lo * m_hi))
+
+# Table 1/2 data that was fit; the model is the smooth functions above,
+# not interpolation of these arrays.
+OFFNER2023_Q_MASS = np.array([
+    _offner2023_table1_geom_mass(0.019, 0.058),  # Fontanive+2018: 4.8
+    0.065,                                       # L/early-T: 2-3 (text)
+    _offner2023_table1_geom_mass(0.080, 0.095),  # Close+2003: 3.3
+    _offner2023_table1_geom_mass(0.06, 0.15),    # Allen+2007: 1.7
+    _offner2023_table1_geom_mass(0.15, 0.30),    # Winters mid-M: 0.7
+    _offner2023_table1_geom_mass(0.3, 0.6),      # Winters early-M: 0.1
+    _offner2023_table1_geom_mass(0.75, 1.25),    # Raghavan FGK: 0.2
+    _offner2023_table1_geom_mass(1.6, 2.4),      # De Rosa A: -1.3
+    _offner2023_table1_geom_mass(3.0, 5.0),      # MDS 3-5: -1.0
+    _offner2023_table1_geom_mass(5.0, 8.0),      # MDS 5-8: -1.7
+    _offner2023_table1_geom_mass(8.0, 17.0),     # MDS 8-17: -1.6
+    _offner2023_table1_geom_mass(17.0, 50.0),    # Sana O: -1.4
+])
+OFFNER2023_Q_GAMMA = np.array([
+    4.8, 2.5, 3.3, 1.7, 0.7, 0.1, 0.2, -1.3, -1.0, -1.7, -1.6, -1.4
+])
+
+# Table 1 ã_all (au) and Table 2 lognormal μ (au) vs geom-mean M1.
+# Table 2 μ is listed where both exist (late-M, early-M, FGK).
+# Fit data only; evaluation uses the smooth broken power law.
+OFFNER2023_SEP_MASS = np.array([
+    _offner2023_table1_geom_mass(0.019, 0.058),  # Fontanive ã_all=2.9
+    _offner2023_table1_geom_mass(0.080, 0.095),  # Close ã_all=3.7
+    _offner2023_table1_geom_mass(0.075, 0.15),   # Table 2 late-M μ=4
+    _offner2023_table1_geom_mass(0.15, 0.30),    # Winters mid-M ã_all=10
+    _offner2023_table1_geom_mass(0.3, 0.6),      # Table 2 early-M μ=25
+    _offner2023_table1_geom_mass(0.75, 1.25),    # Table 2 FGK μ=40
+    _offner2023_table1_geom_mass(1.6, 2.4),      # Moe & Kratter ã_all=32
+    _offner2023_table1_geom_mass(3.0, 5.0),      # MDS ã_all=28
+    _offner2023_table1_geom_mass(5.0, 8.0),      # MDS ã_all=25
+    _offner2023_table1_geom_mass(8.0, 17.0),     # MDS ã_all=23
+    _offner2023_table1_geom_mass(17.0, 50.0),    # Sana ã_all=19
+])
+OFFNER2023_SEP_MU_AU = np.array([
+    2.9, 3.7, 4.0, 10.0, 25.0, 40.0, 32.0, 28.0, 25.0, 23.0, 19.0
+])
+# Table 2 σ_log a at the three published bins. Fit data only;
+# evaluation uses the 2-parameter logistic.
+OFFNER2023_SEP_SIG_MASS = np.array([
+    _offner2023_table1_geom_mass(0.075, 0.15),
+    _offner2023_table1_geom_mass(0.3, 0.6),
+    _offner2023_table1_geom_mass(0.75, 1.25),
+])
+OFFNER2023_SEP_SIG = np.array([0.7, 1.3, 1.5])
