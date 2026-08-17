@@ -581,39 +581,20 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         self.cumedist = grid['cumedist'][0]
         self.cumPbindist = grid['cumPbindist'][0]
 
+        self.mf_m_grid = np.concatenate([[0.0, 0.02,0.04, 0.07],self.M1v])
+        self.mf_f_grid = np.concatenate([[0.0, 0.0, 0.08, 0.16],self.cumPbindist[-1,:]])
+        self.mf_interp = scipy.interpolate.interp1d(self.mf_m_grid, self.mf_f_grid, bounds_error=False, fill_value=(0.0, 1.0))
+
     def multiplicity_fraction(self, mass):
         """Return the multiplicity fraction for input primary mass(es)."""
         is_scalar = np.isscalar(mass)
         mass = np.atleast_1d(mass)
-        mfs = np.zeros(len(mass))
-        # TODO: I changed the min value here from 0 to the BD value for smoothness,,,,
-        mf_min_norm = 0.16/np.max(self.cumPbindist[:,0])
-
-        for k, m in enumerate(mass):
-            indM1 = np.argmin(np.abs(m - self.M1v))
-            mycumPbindist_flat = self.cumPbindist[:, indM1].flatten()
-
-            if (m <= 0.8) & (m>=0.08):
-                mycumPbindist_flat = mycumPbindist_flat * np.interp(
-                    np.log10(m), np.log10([0.08, 0.8]), [mf_min_norm, 1.0]
-                )
-
-            mfs[k] = np.max(mycumPbindist_flat)
-
-        # Brown dwarf overrides (Aberasturi+14, Fontanive+18/23)
-        bd1 = (mass <= 0.08) & (mass > 0.06)
-        bd2 = (mass <= 0.06) & (mass > 0.02)
-        bd3 = (mass < 0.02)
-
-        mfs[bd1] = 0.16
-        mfs[bd2] = 0.08
-        mfs[bd3] = 0.0
-
+        mfs = self.mf_interp(mass)  
         return float(mfs[0]) if is_scalar else mfs
 
     def companion_star_fraction(self, mass):
         """Companion star fraction equals multiplicity fraction in this model."""
-        return np.minimum(1.0, self.multiplicity_fraction(mass))
+        return self.multiplicity_fraction(mass)
 
     def get_companions(self, mass1, rng=np.random.default_rng()):
         """
@@ -644,7 +625,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         n_primaries = len(mass1)
 
         mf = self.multiplicity_fraction(mass1)
-        is_bin = self.random_is_multiple(rng.rand(n_primaries), mf)
+        is_bin = self.random_is_multiple(rng.random(n_primaries), mf)
         system_idx = np.where(is_bin)[0]
         n_binaries = len(system_idx)
 
@@ -668,12 +649,12 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
                                 np.log10(myM1), np.log10([0.08, 0.8]), [0.0, 1.0])
 
                     mybinfrac = np.max(mycumPbindist_flat)
-                    myrand = rng.rand() * mybinfrac
+                    myrand = rng.random() * mybinfrac
 
                     mylogP = np.interp(myrand, mycumPbindist_flat, self.logPv)
                     indlogP = np.argmin(np.abs(mylogP - self.logPv))
 
-                    mye = np.interp(rng.rand(), self.cumedist[:, indlogP, indM1].flatten(), self.ev)
+                    mye = np.interp(rng.random(), self.cumedist[:, indlogP, indM1].flatten(), self.ev)
 
                     mycumqdist = self.cumqdist[:, indlogP, indM1].flatten()
                     if myM1 < self.M2min*10:
@@ -686,7 +667,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
                         indq = np.where(self.qv <= q_min)
                         mycumqdist[indq] = 0.0
 
-                    myq = np.interp(rng.rand(), mycumqdist, self.qv)
+                    myq = np.interp(rng.random(), mycumqdist, self.qv)
                     p_days = 10.0 ** mylogP
                     # Convert periods to log_a (period in days, a in AU)
                     log_a = np.log10((p_days**2 * myM1*(1+myq) * 7.496e-6)**(1.0/3)) # 
@@ -702,7 +683,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         # MASS FIRST
         b = 1.0 + self.q_pow_bd
         # Inverse CDF calculation
-        q_bds = (rng.rand(len(bd_comp_idxs)) * (1.0 - self.q_min ** b) + self.q_min ** b) ** (1.0 / b)
+        q_bds = (rng.random(len(bd_comp_idxs)) * (1.0 - self.q_min ** b) + self.q_min ** b) ** (1.0 / b)
         # SEMI-MAJOR AXIS NEXT
         # Calculate mean and standard deviation semi-major axes
         log_a_mean = np.interp(
@@ -724,7 +705,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         # Draw log_a
         log_a_bds = truncnorm.rvs(a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std)
         # LAST: ECCENTRICITY
-        ecc_bds = np.sqrt(rng.rand(len(bd_comp_idxs)))
+        ecc_bds = np.sqrt(rng.random(len(bd_comp_idxs)))
         # SAVE PROPERTIES TO ARRAYS
         compMasses[bd_comp_idxs,0] = mass1[bd_comp_idxs]*q_bds
         compLoga[bd_comp_idxs,0] = log_a_bds
