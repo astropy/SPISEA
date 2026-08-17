@@ -229,8 +229,13 @@ class MultiplicityUnresolved(object):
 
     def get_companions(self, mass1, rng=np.random.default_rng()):
         """
-        Generate companion masses and masked orbital parameters for
-        unresolved multiplicity models.
+        Generate companion masses and orbital parameters for multiplicity models.
+
+        Returns a six-tuple of masked arrays:
+        (compMasses, compLoga, compEcc, compI, compOmega, compomega)
+
+        For unresolved models, the orbital parameter arrays are fully masked,
+        while resolved models populate them according to the subclass physics.
         """
         mass1 = np.atleast_1d(mass1)
         n_primaries = len(mass1)
@@ -242,7 +247,14 @@ class MultiplicityUnresolved(object):
         system_idx = np.where(is_multi)[0]
         if len(system_idx) == 0:
             empty_ma = np.ma.masked_all((n_primaries, 1))
-            return empty_ma, np.ma.masked_all((n_primaries, 1)), np.ma.masked_all((n_primaries, 1))
+            return (
+                empty_ma,
+                np.ma.masked_all((n_primaries, 1)),
+                np.ma.masked_all((n_primaries, 1)),
+                np.ma.masked_all((n_primaries, 1)),
+                np.ma.masked_all((n_primaries, 1)),
+                np.ma.masked_all((n_primaries, 1)),
+            )
 
         primary = mass1[system_idx]
         comp_nums = 1 + rng.poisson((csf[system_idx] / mf[system_idx]) - 1)
@@ -266,8 +278,11 @@ class MultiplicityUnresolved(object):
         compMasses_ma = np.ma.MaskedArray(compMasses, mask=mask)
         compLoga_ma = np.ma.masked_all((n_primaries, max_comp))
         compEcc_ma = np.ma.masked_all((n_primaries, max_comp))
+        compI_ma = np.ma.masked_all((n_primaries, max_comp))
+        compOmega_ma = np.ma.masked_all((n_primaries, max_comp))
+        compomega_ma = np.ma.masked_all((n_primaries, max_comp))
 
-        return compMasses_ma, compLoga_ma, compEcc_ma
+        return compMasses_ma, compLoga_ma, compEcc_ma, compI_ma, compOmega_ma, compomega_ma
 
     def random_is_multiple(self, x, MF):
         """
@@ -425,6 +440,12 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
             2D masked array of semimajor axes in AU (shape: N x max_comp).
         compEcc : np.ma.MaskedArray
             2D masked array of orbital eccentricities (shape: N x max_comp).
+        compI : np.ma.MaskedArray
+            2D masked array of inclinations in degrees (shape: N x max_comp).
+        compOmega : np.ma.MaskedArray
+            2D masked array of longitudes of ascending node in degrees (shape: N x max_comp).
+        compomega : np.ma.MaskedArray
+            2D masked array of arguments of periastron in degrees (shape: N x max_comp).
         """
         mass1 = np.atleast_1d(mass1)
         n_primaries = len(mass1)
@@ -436,7 +457,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         system_idx = np.where(is_multi)[0]
         if len(system_idx) == 0:
             empty_ma = np.ma.masked_all((n_primaries, 1))
-            return empty_ma, empty_ma, empty_ma
+            return empty_ma, empty_ma, empty_ma, empty_ma, empty_ma, empty_ma
 
         primary = mass1[system_idx]
         
@@ -449,6 +470,9 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         compMasses = np.zeros((n_primaries, max_comp))
         compLoga = np.zeros((n_primaries, max_comp))
         compEcc = np.zeros((n_primaries, max_comp))
+        compI = np.zeros((n_primaries, max_comp))
+        compOmega = np.zeros((n_primaries, max_comp))
+        compomega = np.zeros((n_primaries, max_comp))
 
         for c_num in np.unique(comp_nums):
             group_mask = comp_nums == c_num
@@ -467,57 +491,65 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
             
             # Sample eccentricities
             ecc_vals = self.random_e(rng.random((n_group, c_num)))
+            i_vals, Omega_vals, omega_vals = purely_random_keplerian_parameters(rng=rng, n=c_num * n_group)
+            i_vals = np.asarray(i_vals).reshape(n_group, c_num)
+            Omega_vals = np.asarray(Omega_vals).reshape(n_group, c_num)
+            omega_vals = np.asarray(omega_vals).reshape(n_group, c_num)
 
             compMasses[group_p_idx, :c_num] = q_vals * group_primaries[:, None]
             compLoga[group_p_idx, :c_num] = log_a_vals
             compEcc[group_p_idx, :c_num] = ecc_vals
+            compI[group_p_idx, :c_num] = i_vals
+            compOmega[group_p_idx, :c_num] = Omega_vals
+            compomega[group_p_idx, :c_num] = omega_vals
 
         mask = compMasses == 0
         return (
             np.ma.MaskedArray(compMasses, mask=mask),
             np.ma.MaskedArray(compLoga, mask=mask),
-            np.ma.MaskedArray(compEcc, mask=mask)
+            np.ma.MaskedArray(compEcc, mask=mask),
+            np.ma.MaskedArray(compI, mask=mask),
+            np.ma.MaskedArray(compOmega, mask=mask),
+            np.ma.MaskedArray(compomega, mask=mask),
         )
 
     
-def random_keplarian_parameters(x, y, z):
+def purely_random_keplerian_parameters(rng=None, n=1):
     """
-    Generate random inclination and angles of binary system.
-    
+    Generate random inclination and angles for a binary or multiple system.
+
     Parameters
     ----------
-    x : float or array_like
-        Random number between 0 and 1 for inclination.
-        
-    y : float or array_like
-        Random number between 0 and 1 for longitude of ascending node (Omega).
-        
-    z : float or array_like
-        Random number between 0 and 1 for argument of periastron (omega).
+    rng : np.random.Generator, optional
+        Random number generator used for the draws.
+    n : int, optional
+        Number of random orbital parameter sets to generate.
 
     Returns
     -------
-    inclination : float or array_like
+    inclination : float or numpy.ndarray
         Angle of inclination in degrees.
-                
-    Omega : float or array_like
+
+    Omega : float or numpy.ndarray
         Longitude of ascending node in degrees.
-    
-    omega : float or array_like
+
+    omega : float or numpy.ndarray
         Argument of periastron in degrees.
     """
-    is_scalar = np.isscalar(x) 
-    x = np.atleast_1d(x)
-    y = np.atleast_1d(y)
-    z = np.atleast_1d(z)
+    if rng is None:
+        rng = np.random.default_rng()
 
-    sign = np.random.choice([-1, 1], size=len(x))
+    x = rng.random(n)
+    y = rng.random(n)
+    z = rng.random(n)
+
+    sign = rng.choice([-1, 1], size=len(x))
     inclination = np.arccos(sign * x) * 180.0 / np.pi
     Omega = 360.0 * y
     omega = 360.0 * z
 
-    if is_scalar:
-        return float(inclination[0]), float(Omega[0]), float(omega[0])
+    # if n == 1:
+    #     return float(inclination[0]), float(Omega[0]), float(omega[0])
     return inclination, Omega, omega
 
 
@@ -601,6 +633,12 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
             2D masked array of orbital periods in days (shape: N x 1).
         compEcc : np.ma.MaskedArray
             2D masked array of orbital eccentricities (shape: N x 1).
+        compI : np.ma.MaskedArray
+            2D masked array of orbital inclinations in degrees (shape: N x 1).
+        compOmega : np.ma.MaskedArray
+            2D masked array of longitudes of ascending node in degrees (shape: N x 1).
+        compomega : np.ma.MaskedArray
+            2D masked array of arguments of periastron in degrees (shape: N x 1).
         """
         mass1 = np.atleast_1d(mass1)
         n_primaries = len(mass1)
@@ -613,6 +651,9 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         compMasses = np.zeros((n_primaries, 1))
         compLoga = np.zeros((n_primaries, 1))
         compEcc = np.zeros((n_primaries, 1))
+        compI = np.zeros((n_primaries, 1))
+        compOmega = np.zeros((n_primaries, 1))
+        compomega = np.zeros((n_primaries, 1))
 
         if n_binaries > 0:
             for k in range(n_binaries):
@@ -688,6 +729,12 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         compMasses[bd_comp_idxs,0] = mass1[bd_comp_idxs]*q_bds
         compLoga[bd_comp_idxs,0] = log_a_bds
         compEcc[bd_comp_idxs,0] = ecc_bds
+        
+        # Generate all orbital angles at once for all binaries
+        all_orbital_angles = purely_random_keplerian_parameters(rng=rng, n=n_binaries)
+        compI[system_idx, 0] = all_orbital_angles[0]
+        compOmega[system_idx, 0] = all_orbital_angles[1]
+        compomega[system_idx, 0] = all_orbital_angles[2]
 
         #pdb.set_trace()
 
@@ -695,7 +742,10 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         return (
             np.ma.MaskedArray(compMasses, mask=mask),
             np.ma.MaskedArray(compLoga, mask=mask),
-            np.ma.MaskedArray(compEcc, mask=mask)
+            np.ma.MaskedArray(compEcc, mask=mask),
+            np.ma.MaskedArray(compI, mask=mask),
+            np.ma.MaskedArray(compOmega, mask=mask),
+            np.ma.MaskedArray(compomega, mask=mask),
         )
 
 
@@ -900,104 +950,3 @@ def idl_tabulate(x, f, p=5):
     for idx in range(0, x.shape[0], p - 1):
         ret += newton_cotes(x[idx: idx + p], f[idx: idx + p])
     return ret
-
-
-class Multiplicity_MoeDiStefano_Table13(MultiplicityUnresolved):
-    """
-    Multiplicity model based on Moe & Di Stefano (2017) Table 13
-    """
-    def __init__(self, regenerate_grid=False, **kwargs):
-        super(Multiplicity_MoeDiStefano, self).__init__(**kwargs)
-        self.is_resolved = True
-
-        self.mass_bins_low  = [0.8, 2, 5, 9,  16]
-        self.mass_bins_high = [1.2, 5, 9, 16, np.inf]
-        self.f_mult  = [0.50, 0.84, 1.3,  1.6, 2.1]
-        self.f_close = [0.15, 0.37, 0.63, 0.8, 1.0]
-        self.F_n0    = [0.60, 0.41, 0.24, 0.16, 0.06]
-        self.F_n1    = [0.30, 0.37, 0.36, 0.32, 0.21]
-        self.F_n2p   = [0.10, 0.22, 0.40, 0.52, 0.73] # this is for triples and quadruples combined
-        self.logP_bins_low  = [0.5, 2.5, 4.5, 6.5]
-        self.logP_bins_high = [1.5, 3.5, 5.5, 7.5]
-        self.f_logP_bin1 = [0.027, 0.07, 0.14, 0.19, 0.29]
-        self.f_logP_bin3 = [0.057, 0.12, 0.22, 0.26, 0.32]
-        self.f_logP_bin5 = [0.095, 0.13, 0.20, 0.23, 0.30]
-        self.f_logP_bin7 = [0.075, 0.09, 0.11, 0.13, 0.18]
-        self.F_twin_logP1 = [0.30, 0.22, 0.17, 0.14, 0.08]
-        self.F_twin_logP3 = [0.20, 0.10, 0.03, 0.0,  0.0]
-        self.F_twin_logP5 = [0.10, 0.03, 0.0,  0.0,  0.0]
-        self.F_twin_logP7 = [0.03, 0.0,  0.0,  0.0,  0.0]
-        self.gamma_large_q_logP1 = [-0.5, -0.5, -0.5, -0.5, -0.5]
-        self.gamma_large_q_logP3 = [-0.5, -0.9, -1.7, -1.7, -1.7]
-        self.gamma_large_q_logP5 = [-0.5, -1.4, -2.0, -2.0, -2.0]
-        self.gamma_large_q_logP7 = [-1.1, -2.0, -2.0, -2.0, -2.0]
-        self.gamma_small_q_logP1 = [0.3,  0.2,  0.1,  0.1,  0.1]
-        self.gamma_small_q_logP3 = [0.3,  0.1, -0.2, -0.2, -0.2]
-        self.gamma_small_q_logP5 = [0.3, -0.5, -1.2, -1.2, -1.2]
-        self.gamma_small_q_logP7 = [0.3, -1.0, -1.5, -1.5, -1.5]
-        self.eta_logP2 = [0.1, 0.3, 0.6, 0.7, 0.7]
-        self.eta_logP4 = [0.4, 0.5, 0.7, 0.8, 0.8]
-
-
-    def multiplicity_fraction(self, mass):
-        """Return the multiplicity fraction for input primary mass(es)."""
-        is_scalar = np.isscalar(mass)
-        mass = np.atleast_1d(mass)
-        mfs = np.zeros(len(mass))
-        
-        # TODO the thing here
-
-        # Brown dwarf overrides (Aberasturi+14, Fontanive+18/23)
-        bd1 = (mass <= 0.08) & (mass > 0.06)
-        bd2 = (mass <= 0.06) & (mass > 0.02)
-        bd3 = (mass < 0.02)
-
-        mfs[bd1] = 0.16
-        mfs[bd2] = 0.08
-        mfs[bd3] = 0.0
-
-        return float(mfs[0]) if is_scalar else mfs
-
-    def companion_star_fraction(self, mass):
-        """Companion star fraction equals multiplicity fraction in this model."""
-        pass
-
-    def get_companions(self, mass1, rng=np.random.default_rng()):
-        """
-        Generate companion masses, orbital periods (days), and eccentricities
-        as parallel 2D MaskedArrays using table lookup from Moe & Di Stefano (2017).
-
-        Parameters
-        ----------
-        mass1 : array-like or float
-            Primary masses in solar masses.
-
-        Returns
-        -------
-        compMasses : np.ma.MaskedArray
-            2D masked array of companion masses (shape: N x 1).
-        compLoga : np.ma.MaskedArray
-            2D masked array of orbital periods in days (shape: N x 1).
-        compEcc : np.ma.MaskedArray
-            2D masked array of orbital eccentricities (shape: N x 1).
-        """
-        mass1 = np.atleast_1d(mass1)
-        n_primaries = len(mass1)
-
-        # mf = self.multiplicity_fraction(mass1)
-        # is_bin = self.random_is_multiple(np.random.rand(n_primaries), mf)
-        # system_idx = np.where(is_bin)[0]
-        # n_binaries = len(system_idx)
-
-        # compMasses = np.zeros((n_primaries, 1))
-        # compLoga = np.zeros((n_primaries, 1))
-        # compEcc = np.zeros((n_primaries, 1))
-
-        # TODO: STUFF HERE
-
-        mask = compMasses == 0
-        return (
-            np.ma.MaskedArray(compMasses, mask=mask),
-            np.ma.MaskedArray(compLoga, mask=mask),
-            np.ma.MaskedArray(compEcc, mask=mask)
-        )

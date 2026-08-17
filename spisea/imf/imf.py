@@ -132,6 +132,15 @@ class IMF(object):
         companionEcc : numpy masked array
             Masked array of companion eccentricities.
 
+        companionI : numpy masked array
+            Masked array of orbital inclinations in degrees.
+
+        companionOmega : numpy masked array
+            Masked array of longitudes of ascending node in degrees.
+
+        companionomega : numpy masked array
+            Masked array of arguments of periastron in degrees.
+
         systemMasses : numpy float array
             Array of total system masses (primary + companions) for each primary star.
 
@@ -156,6 +165,9 @@ class IMF(object):
         compMasses_list = []
         compLoga_list = []
         compEcc_list = []
+        compI_list = []
+        compOmega_list = []
+        compomega_list = []
         systemMasses = np.array([], dtype=float)
 
         # Loop through and add stars to the cluster until we get to
@@ -181,8 +193,9 @@ class IMF(object):
 
                 newIsMultiple = self.rng.random(newStarCount.astype(int)) < MF
 
-                # Unpack 5-element tuple from calc_multi
+                # Unpack 8-element tuple from calc_multi
                 (newCompMasses, newCompLoga, newCompEcc, 
+                 newCompI, newCompOmega, newCompomega,
                  newSystemMasses, newIsMultiple) = self.calc_multi(newMasses, newIsMultiple, CSF, MF)
 
                 newTotalMassTally = newSystemMasses.sum()
@@ -191,6 +204,9 @@ class IMF(object):
                 compMasses_list.append(newCompMasses)
                 compLoga_list.append(newCompLoga)
                 compEcc_list.append(newCompEcc)
+                compI_list.append(newCompI)
+                compOmega_list.append(newCompOmega)
+                compomega_list.append(newCompomega)
 
             else:
                 newTotalMassTally = newMasses.sum()
@@ -211,6 +227,9 @@ class IMF(object):
             compMasses = self._stack_masked_arrays(compMasses_list)
             compLoga = self._stack_masked_arrays(compLoga_list)
             compEcc = self._stack_masked_arrays(compEcc_list)
+            compI = self._stack_masked_arrays(compI_list)
+            compOmega = self._stack_masked_arrays(compOmega_list)
+            compomega = self._stack_masked_arrays(compomega_list)
 
             # Make a running sum of the system masses
             massCumSum = systemMasses.cumsum()
@@ -228,16 +247,22 @@ class IMF(object):
             compMasses = compMasses[:idx+1]
             compLoga = compLoga[:idx+1]
             compEcc = compEcc[:idx+1]
+            compI = compI[:idx+1]
+            compOmega = compOmega[:idx+1]
+            compomega = compomega[:idx+1]
         else:
             isMultiple = np.zeros(len(masses), dtype=bool)
             systemMasses = masses
             compMasses = np.ma.masked_all((len(masses), 1))
             compLoga = np.ma.masked_all((len(masses), 1))
             compEcc = np.ma.masked_all((len(masses), 1))
+            compI = np.ma.masked_all((len(masses), 1))
+            compOmega = np.ma.masked_all((len(masses), 1))
+            compomega = np.ma.masked_all((len(masses), 1))
 
         self._mass_limits[-1] = initial_mass_limit
 
-        return (masses, isMultiple, compMasses, compLoga, compEcc, systemMasses)
+        return (masses, isMultiple, compMasses, compLoga, compEcc, compI, compOmega, compomega, systemMasses)
 
     def _stack_masked_arrays(self, array_list):
         """
@@ -281,6 +306,12 @@ class IMF(object):
             Masked array of orbital periods or semimajor axes.
         compEcc_ma : np.ma.MaskedArray
             Masked array of eccentricities.
+        compI_ma : np.ma.MaskedArray
+            Masked array of orbital inclinations in degrees.
+        compOmega_ma : np.ma.MaskedArray
+            Masked array of longitudes of ascending node in degrees.
+        compomega_ma : np.ma.MaskedArray
+            Masked array of arguments of periastron in degrees.
         newSystemMasses : np.ndarray
             Updated total system masses including companions.
         newIsMultiple : np.ndarray of bool
@@ -289,7 +320,7 @@ class IMF(object):
         n_primaries = len(newMasses)
         newSystemMasses = newMasses.copy()
 
-        compMasses_ma, compLoga_ma, compEcc_ma = self._multi_props.get_companions(newMasses,
+        compMasses_ma, compLoga_ma, compEcc_ma, compI_ma, compOmega_ma, compomega_ma = self._multi_props.get_companions(newMasses,
             rng=self.rng)
 
         # Apply minimum mass threshold mask
@@ -297,11 +328,14 @@ class IMF(object):
         compMasses_ma.mask = compMasses_ma.mask | below_min_mass
         compLoga_ma.mask = compLoga_ma.mask | below_min_mass
         compEcc_ma.mask = compEcc_ma.mask | below_min_mass
+        compI_ma.mask = compI_ma.mask | below_min_mass
+        compOmega_ma.mask = compOmega_ma.mask | below_min_mass
+        compomega_ma.mask = compomega_ma.mask | below_min_mass
 
         newSystemMasses += compMasses_ma.sum(axis=1).filled(0)
         newIsMultiple = ~compMasses_ma.mask.all(axis=1)
 
-        return compMasses_ma, compLoga_ma, compEcc_ma, newSystemMasses, newIsMultiple
+        return compMasses_ma, compLoga_ma, compEcc_ma, compI_ma, compOmega_ma, compomega_ma, newSystemMasses, newIsMultiple
 
 
 class IMF_broken_powerlaw(IMF):

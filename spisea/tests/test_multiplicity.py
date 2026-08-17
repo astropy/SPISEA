@@ -145,15 +145,24 @@ def test_get_companions_unresolved_api():
     mu = multiplicity.MultiplicityUnresolved()
 
     masses = np.array([1.0, 0.5])
-    comp_masses, comp_loga, comp_ecc = mu.get_companions(masses)
+    comp_masses, comp_loga, comp_ecc, comp_i, comp_omega, comp_omegabar = mu.get_companions(masses)
 
     assert comp_masses.shape == (2, 1)
     assert comp_loga.shape == (2, 1)
     assert comp_ecc.shape == (2, 1)
+    assert comp_i.shape == (2, 1)
+    assert comp_omega.shape == (2, 1)
+    assert comp_omegabar.shape == (2, 1)
     assert np.ma.isMaskedArray(comp_loga)
     assert np.ma.isMaskedArray(comp_ecc)
+    assert np.ma.isMaskedArray(comp_i)
+    assert np.ma.isMaskedArray(comp_omega)
+    assert np.ma.isMaskedArray(comp_omegabar)
     assert np.all(comp_loga.mask)
     assert np.all(comp_ecc.mask)
+    assert np.all(comp_i.mask)
+    assert np.all(comp_omega.mask)
+    assert np.all(comp_omegabar.mask)
 
 
 def test_resolvedmult():
