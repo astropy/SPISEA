@@ -227,16 +227,47 @@ class MultiplicityUnresolved(object):
 
         return float(q) if (np.isscalar(x) and np.isscalar(primary_mass)) else q
 
-    def get_resolved_companions(self, mass1, rng=np.random.default_rng()):
+    def get_companions(self, mass1, rng=np.random.default_rng()):
         """
-        Function that generates companion masses and orbital
-        parameters.
+        Generate companion masses and masked orbital parameters for
+        unresolved multiplicity models.
+        """
+        mass1 = np.atleast_1d(mass1)
+        n_primaries = len(mass1)
 
-        Not defined for the unresolved class, will be defined in
-        resolved subclasses.
-        """
-        raise NotImplementedError("Function get_resolved_companions is not"
-            " defined for MultiplicityUnresolved, only its resolved subclasses.")
+        mf = self.multiplicity_fraction(mass1)
+        csf = self.companion_star_fraction(mass1)
+        is_multi = self.random_is_multiple(rng.random(n_primaries), mf)
+
+        system_idx = np.where(is_multi)[0]
+        if len(system_idx) == 0:
+            empty_ma = np.ma.masked_all((n_primaries, 1))
+            return empty_ma, np.ma.masked_all((n_primaries, 1)), np.ma.masked_all((n_primaries, 1))
+
+        primary = mass1[system_idx]
+        comp_nums = 1 + rng.poisson((csf[system_idx] / mf[system_idx]) - 1)
+
+        if self.companion_max:
+            comp_nums = np.minimum(comp_nums, self.CSF_max)
+
+        max_comp = np.max(comp_nums)
+        compMasses = np.zeros((n_primaries, max_comp))
+
+        for c_num in np.unique(comp_nums):
+            group_mask = comp_nums == c_num
+            group_p_idx = system_idx[group_mask]
+            group_primaries = primary[group_mask]
+
+            rand_u = rng.random((len(group_p_idx), c_num))
+            q_vals = self.random_q(rand_u, group_primaries)
+            compMasses[group_p_idx, :c_num] = q_vals * group_primaries[:, None]
+
+        mask = compMasses == 0
+        compMasses_ma = np.ma.MaskedArray(compMasses, mask=mask)
+        compLoga_ma = np.ma.masked_all((n_primaries, max_comp))
+        compEcc_ma = np.ma.masked_all((n_primaries, max_comp))
+
+        return compMasses_ma, compLoga_ma, compEcc_ma
 
     def random_is_multiple(self, x, MF):
         """
@@ -375,7 +406,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         """
         return np.sqrt(x)
 
-    def get_resolved_companions(self, mass1, rng=np.random.default_rng()):
+    def get_companions(self, mass1, rng=np.random.default_rng()):
         """
         Generate companion masses, semimajor axes (AU), and eccentricities
         as parallel 2D MaskedArrays. Supports higher-order multiple systems 
@@ -400,7 +431,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
 
         mf = self.multiplicity_fraction(mass1)
         csf = self.companion_star_fraction(mass1)
-        is_multi = self.random_is_multiple(np.random.rand(n_primaries), mf)
+        is_multi = self.random_is_multiple(rng.random(n_primaries), mf)
         
         system_idx = np.where(is_multi)[0]
         if len(system_idx) == 0:
@@ -410,7 +441,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
         primary = mass1[system_idx]
         
         # Calculate number of companions per multiple system using Poisson draw
-        comp_nums = 1 + np.random.poisson((csf[system_idx] / mf[system_idx]) - 1)
+        comp_nums = 1 + rng.poisson((csf[system_idx] / mf[system_idx]) - 1)
         if self.companion_max:
             comp_nums = np.minimum(comp_nums, self.CSF_max)
 
@@ -426,7 +457,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
             n_group = len(group_p_idx)
 
             # Sample mass ratios
-            rand_q = np.random.rand(n_group, c_num)
+            rand_q = rng.random((n_group, c_num))
             q_vals = self.random_q(rand_q, group_primaries)
             
             # Sample semimajor axes for each companion
@@ -435,7 +466,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
             log_a_vals = log_a_flat.reshape(n_group, c_num)
             
             # Sample eccentricities
-            ecc_vals = self.random_e(np.random.rand(n_group, c_num))
+            ecc_vals = self.random_e(rng.random((n_group, c_num)))
 
             compMasses[group_p_idx, :c_num] = q_vals * group_primaries[:, None]
             compLoga[group_p_idx, :c_num] = log_a_vals
@@ -447,6 +478,7 @@ class MultiplicityResolvedDK(MultiplicityUnresolved):
             np.ma.MaskedArray(compLoga, mask=mask),
             np.ma.MaskedArray(compEcc, mask=mask)
         )
+
     
 def random_keplarian_parameters(x, y, z):
     """
@@ -551,7 +583,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
         """Companion star fraction equals multiplicity fraction in this model."""
         return np.minimum(1.0, self.multiplicity_fraction(mass))
 
-    def get_resolved_companions(self, mass1, rng=np.random.default_rng()):
+    def get_companions(self, mass1, rng=np.random.default_rng()):
         """
         Generate companion masses, orbital periods (days), and eccentricities
         as parallel 2D MaskedArrays using table lookup from Moe & Di Stefano (2017).
@@ -665,6 +697,7 @@ class Multiplicity_MoeDiStefano(MultiplicityUnresolved):
             np.ma.MaskedArray(compLoga, mask=mask),
             np.ma.MaskedArray(compEcc, mask=mask)
         )
+
 
 def generate_moe_destefano_grid(grid_path):
     """Pre-computes lookup table grids and saves them to moe_destefano_grid.fits in this file's folder."""
@@ -929,7 +962,7 @@ class Multiplicity_MoeDiStefano_Table13(MultiplicityUnresolved):
         """Companion star fraction equals multiplicity fraction in this model."""
         pass
 
-    def get_resolved_companions(self, mass1):
+    def get_companions(self, mass1, rng=np.random.default_rng()):
         """
         Generate companion masses, orbital periods (days), and eccentricities
         as parallel 2D MaskedArrays using table lookup from Moe & Di Stefano (2017).

@@ -140,6 +140,22 @@ def test_companion_star_fraction():
     assert np.isclose(csf_bd3, 0.0, atol=1e-6)
 
 
+def test_get_companions_unresolved_api():
+    """Unresolved multiplicity models should expose get_companions with masked orbitals."""
+    mu = multiplicity.MultiplicityUnresolved()
+
+    masses = np.array([1.0, 0.5])
+    comp_masses, comp_loga, comp_ecc = mu.get_companions(masses)
+
+    assert comp_masses.shape == (2, 1)
+    assert comp_loga.shape == (2, 1)
+    assert comp_ecc.shape == (2, 1)
+    assert np.ma.isMaskedArray(comp_loga)
+    assert np.ma.isMaskedArray(comp_ecc)
+    assert np.all(comp_loga.mask)
+    assert np.all(comp_ecc.mask)
+
+
 def test_resolvedmult():
     """
     Test creating a MultiplicityResolvedDK object

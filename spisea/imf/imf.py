@@ -289,57 +289,19 @@ class IMF(object):
         n_primaries = len(newMasses)
         newSystemMasses = newMasses.copy()
 
-        # Resolved multiplicity case
-        if self._multi_props.is_resolved:
-            compMasses_ma, compLoga_ma, compEcc_ma = self._multi_props.get_resolved_companions(newMasses,
-                rng=self.rng)
+        compMasses_ma, compLoga_ma, compEcc_ma = self._multi_props.get_companions(newMasses,
+            rng=self.rng)
 
-            # Apply minimum mass threshold mask
-            below_min_mass = compMasses_ma < self._mass_limits[0]
-            compMasses_ma.mask = compMasses_ma.mask | below_min_mass
-            compLoga_ma.mask = compLoga_ma.mask | below_min_mass
-            compEcc_ma.mask = compEcc_ma.mask | below_min_mass
+        # Apply minimum mass threshold mask
+        below_min_mass = compMasses_ma < self._mass_limits[0]
+        compMasses_ma.mask = compMasses_ma.mask | below_min_mass
+        compLoga_ma.mask = compLoga_ma.mask | below_min_mass
+        compEcc_ma.mask = compEcc_ma.mask | below_min_mass
 
-            newSystemMasses += compMasses_ma.sum(axis=1).filled(0)
-            newIsMultiple = ~compMasses_ma.mask.all(axis=1)
+        newSystemMasses += compMasses_ma.sum(axis=1).filled(0)
+        newIsMultiple = ~compMasses_ma.mask.all(axis=1)
 
-            return compMasses_ma, compLoga_ma, compEcc_ma, newSystemMasses, newIsMultiple
-
-        # Unresolved multiplicity case
-        else:
-            multiple_idx = np.where(newIsMultiple)[0]
-            if len(multiple_idx) == 0:
-                empty_ma = np.ma.masked_all((n_primaries, 1))
-                return empty_ma, empty_ma, empty_ma, newSystemMasses, newIsMultiple
-
-            primary = newMasses[multiple_idx]
-            comp_nums = 1 + self.rng.poisson((CSF[multiple_idx] / MF[multiple_idx]) - 1)
-            
-            if self._multi_props.companion_max:
-                comp_nums = np.minimum(comp_nums, self._multi_props.CSF_max)
-
-            max_comp = np.max(comp_nums)
-            compMasses = np.zeros((n_primaries, max_comp))
-
-            for c_num in np.unique(comp_nums):
-                group_mask = comp_nums == c_num
-                group_p_idx = multiple_idx[group_mask]
-                group_primaries = primary[group_mask]
-
-                rand_u = self.rng.random((len(group_p_idx), c_num))
-                q_vals = self._multi_props.random_q(rand_u, group_primaries)
-                compMasses[group_p_idx, :c_num] = q_vals * group_primaries[:, None]
-
-            mask = compMasses < self._mass_limits[0]
-            compMasses_ma = np.ma.MaskedArray(compMasses, mask=mask)
-
-            empty_loga_ma = np.ma.masked_all((n_primaries, max_comp))
-            empty_ecc_ma = np.ma.masked_all((n_primaries, max_comp))
-
-            newSystemMasses += compMasses_ma.sum(axis=1).filled(0)
-            newIsMultiple = ~compMasses_ma.mask.all(axis=1)
-
-            return compMasses_ma, empty_loga_ma, empty_ecc_ma, newSystemMasses, newIsMultiple
+        return compMasses_ma, compLoga_ma, compEcc_ma, newSystemMasses, newIsMultiple
 
 
 class IMF_broken_powerlaw(IMF):
