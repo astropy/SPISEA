@@ -45,6 +45,9 @@ default_atm_func = atm.get_merged_atmosphere
 default_wd_atm_func = atm.get_wd_atmosphere
 default_multiplicity = multiplicity.MultiplicityResolvedDK(CSF_max = 1, companion_max = True)
 
+# Dummy telescope area for arbitrary photometry rescaling.
+tel_area_dummy = 1.0 * u.m**2
+
 def Vega():
     # Use Vega as our zeropoint... assume V=0.03 mag and all colors = 0.0
     # These parameters are defined in Girardi+02
@@ -63,7 +66,6 @@ def Vega():
     return vega
 
 vega = Vega()
-tel_area_dummy = 1.0 * u.m**2
 
 class Interpolator(object):
     def __init__(self, xp, yp):
@@ -2127,7 +2129,7 @@ class iso_table(object):
         ----------
         filters : dictionary
             A dictionary containing the filter name (for the output columns)
-            and the filter specification string that can be processed by pysynphot.
+            and the filter specification string that can be processed by synphot.
 
         rebin: boolean
             True to rebin filter function (only used if non-zero transmission points are
@@ -2333,7 +2335,7 @@ def get_filter_col_name(obs_str):
     appropriate SPISEA obs_string
     """
     # How we deal with obs_string is slightly different depending
-    # if it is an hst filter (and thus pysynphot syntax) or our
+    # if it is an hst filter (and thus synphot syntax) or our
     # own defined filters
     tmp = obs_str.split(',')
 

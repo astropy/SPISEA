@@ -1,9 +1,12 @@
 import numpy as np
+import spisea
 from spisea import reddening, synthetic, evolution, atmospheres
 import pylab as py
 import os
 import pdb
 from astropy import units as u
+
+spisea_path = os.path.dirname(spisea.__file__)
 
 
 def test_RedLawBrokenPowerLaw(plots=False):
@@ -192,12 +195,15 @@ def test_RedLawBrokenPowerLaw(plots=False):
 
 def test_red_law_IsochronePhot():
     """
-    Make sure each reddening law can run with IsochronePhot
+    Make sure each reddening law can run with IsochronePhot.
+
+    Isochrone FITS files are written under ``spisea/tests/isochrones``.
     """
     # Define properties of stellar pop to models
     logAge = np.log10(5*10**6.) # Age in log(years)
     dist = 8000 # distance in parsec
     metallicity = 0 # Metallicity in [M/H]
+    iso_dir = f'{spisea_path}/tests/isochrones'
 
     # Define evolution/atmosphere models and extinction law
     evo_model = evolution.MISTv1()
@@ -215,7 +221,6 @@ def test_red_law_IsochronePhot():
     aks_arr = [2.62, 2.46, 1.67, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3, 2.3]
     for ii in range(len(redlaw_arr)):
         redlaw = reddening.get_red_law(redlaw_arr[ii])
-        #redlaw_arr[ii]
         aks = aks_arr[ii]
 
         # Try to run isochrone phot
@@ -230,7 +235,7 @@ def test_red_law_IsochronePhot():
             filters=filt_list,
             min_mass=0.95,
             max_mass=1.05,
-            iso_dir='isochrones/',
+            iso_dir=iso_dir,
             recomp=True
         )
         print('----EL {0} works OK!-----'.format(redlaw_arr[ii]))
@@ -260,5 +265,31 @@ def test_all_EL():
     red_law = reddening.RedLawNoguerasLara18()
     red_law = reddening.RedLawNoguerasLara20()
     red_law = reddening.RedLawSODC(2.5)
+
+    return
+
+
+def test_extinction_curve_invalid_AKs():
+    """
+    ``RedLawBase.extinction_curve`` must accept a real AKs or mag Quantity
+    and raise ``synphot.exceptions.SynphotError`` for other types.
+    """
+    from synphot.exceptions import SynphotError
+
+    red_law = reddening.RedLawNishiyama09()
+
+    # Valid scalar and magnitude Quantity should succeed.
+    ext = red_law.extinction_curve(1.0)
+    assert ext is not None
+    ext = red_law.extinction_curve(1.0 * u.mag)
+    assert ext is not None
+
+    # Non-numeric AKs is invalid.
+    try:
+        red_law.extinction_curve('not-a-number')
+    except SynphotError:
+        pass
+    else:
+        raise AssertionError('Expected SynphotError for invalid AKs')
 
     return

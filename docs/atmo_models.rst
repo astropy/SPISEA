@@ -6,7 +6,7 @@ Atmosphere Model Object
 Stellar atmosphere models are defined as functions in
 ``spisea/atmospheres.py``. These can be called by::
 
- from popstar import atmospheres
+ from spisea import atmospheres
  atmo = atmospheres.<function_name>
 
 To call an atmosphere for a particular star, user must define the
@@ -21,7 +21,7 @@ The atmosphere function is an input for the :ref:`isochrone_objects`,
 and will automatically be used to define the
 spectrum of each star in the isochrone model.
 
-PopStar uses the stsynphot/synphot stack to extract the model atmosphere,
+SPISEA uses the stsynphot/synphot stack to extract the model atmosphere,
 and the output spectrum is a synphot ``SourceSpectrum`` built from the CDBS grid via ``stsynphot.grid_to_spec``.
 
 Below is a table of atmosphere model grids currently supported by

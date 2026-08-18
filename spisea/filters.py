@@ -17,7 +17,7 @@ filters_dir = code_dir[:-7]+'/filt_func/'
 
 def get_nirc2_filt(name):
     """
-    Define nirc2 filter as a pysynphot spectrum object
+    Define nirc2 filter as a synphot spectrum object
     """
     # Read in filter info
     try:
@@ -60,7 +60,7 @@ def get_nirc2_filt(name):
 
 def get_2mass_filt(name):
     """
-    Define the 2mass filters as a pysynphot spectrum object
+    Define the 2mass filters as a synphot spectrum object
     """
     # Read in filter info
     try:
@@ -85,7 +85,7 @@ def get_2mass_filt(name):
 
 def get_vista_filt(name):
     """
-    Define vista filter as pysynphot spectrum object
+    Define vista filter as synphot spectrum object
     """
     # Read in filter info
     try:
@@ -116,7 +116,7 @@ def get_vista_filt(name):
 
 def get_decam_filt(name):
     """
-    Define DECAM filter as pysynphot object
+    Define DECAM filter as synphot object
     """
     # Read in filter info
     try:
@@ -147,7 +147,7 @@ def get_decam_filt(name):
 
 def get_PS1_filt(name):
     """
-    Define PS1 filter as pysynphot object
+    Define PS1 filter as synphot object
     """
     try:
         t = Table.read('{0}/ps1/PS1_filters.txt'.format(filters_dir), format='ascii')
@@ -181,7 +181,7 @@ def get_PS1_filt(name):
 
 def get_jwst_filt(name):
     """
-    Define JWST filter as pysynphot object
+    Define JWST filter as synphot object
     """
     try:
         t = Table.read('{0}/jwst/{1}.txt'.format(filters_dir, name), format='ascii')
@@ -207,7 +207,7 @@ def get_jwst_filt(name):
 
 def get_Johnson_Glass_filt(name):
     """
-    Define Johnson-Glass filters as pysynphot object
+    Define Johnson-Glass filters as synphot object
     """
     try:
         t = Table.read('{0}/Johnson_Glass/{1}.txt'.format(filters_dir, name), format='ascii')
@@ -233,7 +233,7 @@ def get_Johnson_Glass_filt(name):
 
 def get_nirc1_filt(name):
     """
-    Define Keck/NIRC filters as pysynphot object
+    Define Keck/NIRC filters as synphot object
     """
     try:
         t = Table.read('{0}/nirc1/{1}.txt'.format(filters_dir, name), format='ascii')
@@ -273,7 +273,7 @@ def get_nirc1_filt(name):
 
 def get_ctio_osiris_filt(name):
     """
-    Define CTIO/OSIRIS filters as pysynphot object
+    Define CTIO/OSIRIS filters as synphot object
     """
     try:
         t = Table.read('{0}/CTIO_OSIRIS/{1}.txt'.format(filters_dir, name), format='ascii')
@@ -299,7 +299,7 @@ def get_ctio_osiris_filt(name):
 
 def get_naco_filt(name):
     """
-    Define VLT NACO filters as pysynphot object
+    Define VLT NACO filters as synphot object
     """
     try:
         t = Table.read('{0}/naco/{1}.dat'.format(filters_dir, name), format='ascii')
@@ -325,7 +325,7 @@ def get_naco_filt(name):
 
 def get_ubv_filt(name):
     """
-    Define ubv (Johnson-Cousin filters) as pysynphot object
+    Define ubv (Johnson-Cousin filters) as synphot object
     """
     try:
         t = Table.read('{0}/ubv/{1}.dat'.format(filters_dir, name), format='ascii')
@@ -357,7 +357,7 @@ def get_ubv_filt(name):
 
 def get_bessell_filt(name):
     """
-    Define ubv (Johnson-Cousin filters, as defined in Bessell 1990) as pysynphot object
+    Define ubv (Johnson-Cousin filters, as defined in Bessell 1990) as synphot object
     """
     try:
         t = Table.read('{0}/bessell/{1}.dat'.format(filters_dir, name), format='ascii')
@@ -378,7 +378,7 @@ def get_bessell_filt(name):
 
 def get_ukirt_filt(name):
     """
-    Define UKIRT filters as pysynphot object
+    Define UKIRT filters as synphot object
     """
     try:
         t = Table.read('{0}/ukirt/{1}.dat'.format(filters_dir, name), format='ascii')
@@ -404,7 +404,7 @@ def get_ukirt_filt(name):
 
 def get_keck_osiris_filt(name):
     """
-    Define keck osiris filters as pysynphot object
+    Define keck osiris filters as synphot object
     """
     try:
         t = Table.read('{0}/keck_osiris/{1}.txt'.format(filters_dir, name), format='ascii')
@@ -426,7 +426,7 @@ def get_keck_osiris_filt(name):
 
 def get_gaia_filt(version, name):
     """
-    Define Gaia filters as pysynphot object.
+    Define Gaia filters as synphot object.
 
     version: specify dr1, dr2, dr2_rev, or edr3
     name: filter name
@@ -483,7 +483,7 @@ def get_gaia_filt(version, name):
 
 def get_ztf_filt(name):
     """
-    Define ztf filters as pysynphot object
+    Define ztf filters as synphot object
     """
     try:
         t = Table.read('{0}/ztf/{1}.dat'.format(filters_dir, name),
@@ -505,7 +505,7 @@ def get_ztf_filt(name):
 
 def get_hawki_filt(name):
     """
-    Define the HAWK-I filters as a pysynphot spectrum object
+    Define the HAWK-I filters as a synphot spectrum object
     """
     # Read in filter info
     try:
@@ -531,7 +531,7 @@ def get_hawki_filt(name):
 
 def get_rubin_filt(name):
     """
-    Define the Rubin Vera C LSST filters as a pysynphot spectrum object
+    Define the Rubin Vera C LSST filters as a synphot spectrum object
     """
     # Read in filter info
     try:
@@ -557,7 +557,7 @@ def get_rubin_filt(name):
 
 def get_euclid_filt(name):
     """
-    Define the Euclid filters as a pysynphot spectrum object
+    Define the Euclid filters as a synphot spectrum object
     """
     # Read in filter info
     try:
@@ -584,7 +584,7 @@ def get_euclid_filt(name):
 
 def get_nsfcam_filt(name):
     """
-    Define irtf nsfcam filters as pysynphot object
+    Define irtf nsfcam filters as synphot object
     """
     try:
         t = Table.read('{0}/nsfcam/{1}.dat'.format(filters_dir, name), format='ascii')
@@ -606,7 +606,7 @@ def get_nsfcam_filt(name):
 
 def get_tess_filt(name):
     """
-    Define the TESS filter as pysynphot object
+    Define the TESS filter as synphot object
     """
     try:
         t = Table.read('{0}/tess/{1}.dat'.format(filters_dir, name), format='ascii')
@@ -628,7 +628,7 @@ def get_tess_filt(name):
 
 def get_washington_filt(name):
     """
-    Define the Washington filters as pysynphot object
+    Define the Washington filters as synphot object
     """
     try:
         t = Table.read('{0}/washington/{1}.dat'.format(filters_dir, name), format='ascii')
@@ -650,7 +650,7 @@ def get_washington_filt(name):
 
 def get_hipparcos_filt(name):
     """
-    Define the Hipparcos filter as pysynphot object
+    Define the Hipparcos filter as synphot object
     """
     try:
         t = Table.read('{0}/hipparcos/{1}.dat'.format(filters_dir, name), format='ascii')
@@ -672,7 +672,7 @@ def get_hipparcos_filt(name):
 
 def get_tycho_filt(name):
     """
-    Define the Tycho filters as pysynphot object
+    Define the Tycho filters as synphot object
     """
     try:
         t = Table.read('{0}/tycho/{1}.dat'.format(filters_dir, name), format='ascii')
@@ -694,7 +694,7 @@ def get_tycho_filt(name):
 
 def get_kepler_filt(name):
     """
-    Define the Kepler filters as pysynphot object
+    Define the Kepler filters as synphot object
     """
     try:
         t = Table.read('{0}/kepler/{1}.dat'.format(filters_dir, name), format='ascii')
@@ -716,7 +716,7 @@ def get_kepler_filt(name):
 
 def get_ogle_filt(name):
     """
-    Define the OGLE filters as pysynphot object
+    Define the OGLE filters as synphot object
     """
     try:
         t = Table.read('{0}/ogle/{1}.dat'.format(filters_dir, name), format='ascii')
@@ -738,7 +738,7 @@ def get_ogle_filt(name):
 
 def get_subaru_filt(instrument, name):
     """
-    Define the subaru filters as pysynphot object
+    Define the subaru filters as synphot object
     """
     try:
         t = Table.read('{0}/subaru/{1}/{2}.dat'.format(filters_dir, instrument, name), format='ascii')

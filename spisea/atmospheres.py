@@ -212,7 +212,7 @@ def get_kurucz_atmosphere_grid():
 
 def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=False):
     """
-    Return atmospheres from the pysynphot ATLAS9 atlas
+    Return atmospheres from the synphot ATLAS9 atlas
     (`Castelli & Kurucz 2004 <http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html>`_).
 
     Grid Range:
@@ -263,7 +263,7 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=F
 
 def get_castelli_atmosphere_grid():
     """
-    Return atmosphere grid from the pysynphot ATLAS9 atlas 
+    Return atmosphere grid from the synphot ATLAS9 atlas 
     (`Castelli & Kurucz 2004 <http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html>`_).
 
     Grid Range: 
@@ -342,8 +342,8 @@ def get_amesdusty_atmosphere_grid():
 def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
                                rebin=False):
     """
-    Return atmosphere from the pysynphot
-    `PHOENIX atlas <http://www.stsci.edu/hst/observatory/crds/SIfileInfo/pysynphottables/index_phoenix_models_html>`_.
+    Return atmosphere from the synphot
+    `PHOENIX atlas <http://www.stsci.edu/hst/observatory/crds/SIfileInfo/synphottables/index_phoenix_models_html>`_.
 
     Parameters
     ----------
@@ -385,7 +385,7 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
 
 def get_phoenix_atmosphere_grid():
     """
-    Return atmosphere grid from the pysynphot 
+    Return atmosphere grid from the synphot 
     `PHOENIX atlas <http://www.stsci.edu/hst/observatory/crds/SIfileInfo/pysynphottables/index_phoenix_models_html>`_.
 
     """
@@ -481,7 +481,7 @@ def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4
     idx_f = np.where(diff_tot == min(diff_tot))[0][0]
 
     # Extract the filename of the best-match model and read as
-    # pysynphot object
+    # synphot object
     infile = cat[idx_f]['FILENAME'].split('.')
     spec = Table.read('{0}/{1}.fits'.format(root_dir, infile[0]))
 
@@ -1894,7 +1894,7 @@ def cdbs_cmfgen(path_to_dir, path_to_cdbs_dir):
         wave = t['col1']
         flux = t['col2'] # Flux is already in erg/cm^2/s/A
 
-        # Need to eliminate duplicate entries (pysynphot crashes)
+        # Need to eliminate duplicate entries (synphot crashes)
         unique = np.unique(wave, return_index=True)
         wave = wave[unique[1]]
         flux = flux[unique[1]]

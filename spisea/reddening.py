@@ -12,6 +12,7 @@ from astropy.table import Table
 from scipy.linalg import solve_banded
 import numbers
 
+from synphot import exceptions
 from synphot import units as su
 from synphot.reddening import ExtinctionCurve, ReddeningLaw, ExtinctionModel1D
 
@@ -123,7 +124,8 @@ class RedLawBase(ExtinctionCurve):
 
         Raises
         ------
-        ValueError : if the wavelengths are outside the interpolation range of the law.
+        synphot.exceptions.SynphotError
+            If ``AKs`` is not a real number or a magnitude Quantity.
         """
         if isinstance(AKs, u.Quantity) and AKs.unit.decompose() == u.mag:
             AKs = AKs.value
@@ -831,9 +833,9 @@ class RedLawRomanZuniga07(RedLawBase):
             A_AKs_at_wave.append(law[idx][0])
 
         # Now multiply by AKs (since law assumes AKs = 1)
-        A_lambda_over_AKs = np.array(A_AKs_at_wave) * AKs
+        A_lambda = np.array(A_AKs_at_wave) * AKs
 
-        return A_lambda_over_AKs
+        return A_lambda
 
     def plot_RomanZuniga07(self):
         """
@@ -959,7 +961,9 @@ class RedLawRiekeLebofsky(RedLawBase):
         if ((min(wavelength) < self.low_lim) | (max(wavelength) > self.high_lim)):
             return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
 
-        # Extract wave and A/AKs from law, turning wave into micron units
+        # Extract wave and A/AKs from law, turning wave into micron units.
+        # Start with the input law wave (AA) and A/AKs.
+        wave = self.wave * u.AA
         law = self.A_lambda_over_AKs
 
         # Find the value of the law at the closest points
@@ -1110,6 +1114,7 @@ class RedLawDamineli16(RedLawBase):
             return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
 
         # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * u.AA
         law = self.obscuration
 
         # Find the value of the law at the closest points
@@ -1379,6 +1384,7 @@ class RedLawFitzpatrick09(RedLawBase):
             return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
 
         # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * u.AA
         law = self.A_lambda_over_AKs
 
         # Find the value of the law at the closest points
@@ -1447,9 +1453,9 @@ class RedLawSchlafly16(RedLawBase):
         law_func = RedLawSchlafly16._Schlafly_appendix(x, AH_AKs)
 
         # Evaluate function for desired wavelengths (in angstroms)
-        law = law_func(wavelength.value)
+        law = law_func(wavelength.to(u.AA).value)
 
-        # Now normalize to A_lambda/AKs, rather than A_lambda/A(5420)
+        # Now normalize to A_lambda/AKs, rather than A_lambda/A(5420 Angstroms)
         idx = np.argmin(np.abs(wavelength.value - 2.151))
         law_out = law / law[idx]
 
@@ -1458,34 +1464,34 @@ class RedLawSchlafly16(RedLawBase):
     @staticmethod
     def _Schlafly_appendix(x, rhk):
         """
-        Schlafly+16 extinction law as defined in paper appendix. We've modified
-        the wrapper slightly so that the user has control of rhk and x. Here is
-        the comments from that code:
+        Build the Schlafly+16 extinction curve as a callable spline.
 
-        Returns the extinction curve, A(lambda)/A(5420 A), according to
-        Schlafly+2016, for the parameter "x," which controls the overall shape of
-        the extinction curve in an R(V)-like way.  The extinction curve returned
-        is a callable function, which is then invoked with the wavelength, in
-        angstroms, of interest.
+        This is the appendix implementation from Schlafly et al. 2016, modified
+        so that both the shape parameter ``x`` and the gray-component ratio
+        ``rhk`` = A(H)/A(K) are caller-controlled. Anchor wavelengths and
+        extinction vectors are the Schlafly+16 values (PS1 g through WISE W2).
 
-        The extinction curve is based on broad band photometry between the PS1 g
-        band and the WISE W2 band, which have effective wavelengths between 5000
-        and 45000 A.  The extinction curve is blindly extrapolated outside that
-        range.  The gray component of the extinction curve is fixed by enforcing
-        A(H)/A(K) = 1.55 (Indebetouw+2005).  The gray component is relatively
-        uncertain, and its variation with x is largely made up.
+        Parameters
+        ----------
+        x : float
+            Shape parameter of the extinction curve (R(V)-like; Schlafly+16
+            Eqn 6).
+        rhk : float
+            Near-IR gray-component ratio A(H)/A(K) used to pin the H and K
+            anchors. Schlafly+16 used 1.55 (Indebetouw+2005).
 
-        Args:
-            x: some number controlling the shape of the extinction curve
-            ra: extinction vector at anchor wavelengths, default to Schlafly+2016
-            dra: derivative of extinction vector at anchor wavelengths, default to
-             Schlafly+2016
-            lam: anchor wavelengths (angstroms), default to Schlafly+2016
+        Returns
+        -------
+        cs : `CubicSpline`
+            Callable extinction curve. Evaluate as ``cs(wave_aa)``, where
+            ``wave_aa`` is wavelength in Angstrom, to get
+            :math:`A(\\lambda)/A(5420\\,\\mathrm{\\AA})`.
 
-        Returns: the extinction curve E, so the extinction alam = A(lam)/A(5420 A)
-        is given by:
-            A = extcurve(x)
-            alam = A(lam)
+        Notes
+        -----
+        The underlying photometry spans roughly 5000--45000 Angstrom. Values
+        outside that range are extrapolated. The gray component is relatively
+        uncertain, and its variation with ``x`` is largely made up.
         """
         # Schlafly+2016
         ra = np.array([ 0.65373283,  0.39063843,  0.20197893,  0.07871701, -0.00476316,
@@ -1534,6 +1540,7 @@ class RedLawSchlafly16(RedLawBase):
             return ValueError('{0}: wavelength values beyond interpolation range'.format(self))
 
         # Extract wave and A/AKs from law, turning wave into micron units
+        wave = self.wave * u.AA
         law = self.A_lambda_over_AKs
 
         # Find the value of the law at the closest points
@@ -2140,7 +2147,6 @@ class RedLawFritz11(RedLawBase):
             wavelength = wavelength * u.micron
         else:
             wavelength = wavelength.to(u.micron)
-        pdb.set_trace()
 
         if not isinstance(A_scale_lambda, u.Quantity):
             A_scale_lambda = A_scale_lambda * u.mag
