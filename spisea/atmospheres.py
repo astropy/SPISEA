@@ -1,20 +1,51 @@
 import logging
 import numpy as np
-import pysynphot
 import os
 import glob
+from astropy import units as u
 from astropy.io import fits
 from astropy.table import Table, Column
-import pysynphot
 import time
 import pdb
 import warnings
 
+import stsynphot as stsyn
+from stsynphot import exceptions as stsyn_exceptions
+from synphot.models import BlackBody1D, Empirical1D
+from synphot.spectrum import SourceSpectrum
+from synphot.units import convert_flux
+from synphot import units as su
+
+from spisea.utils.synphot_bridge import rebin_spec
+
 log = logging.getLogger('atmospheres')
+
 
 def get_atmosphere_bounds(model_dir, metallicity=0, temperature=20000, gravity=4, verbose=False):
     """
-    Given atmosphere model, get temperature and gravity bounds
+    Given atmosphere model, get temperature and gravity bounds.
+
+    Parameters
+    ----------
+    model_dir : str
+        The name of the atmosphere model grid.
+    metallicity : float
+        The metallicity of the atmosphere, in terms of [Fe/H]. Solar = 0.
+    temperature : float
+        The temperature of the atmosphere, in units of K.
+    gravity : float
+        The gravity of the atmosphere, in units of log(cgs) (e.g. gravity~5 for main-sequence stars).
+    verbose : bool (optional)
+        Whether to print verbose output.
+
+    Returns
+    -------
+    temperature_new : float
+        The closest temperature to the input temperature.
+    gravity_new : float
+        The closest gravity to the input gravity.
+    metallicity_new : float
+        The closest metallicity to the input metallicity. 
     """
     teff_arr, z_arr, logg_arr = get_atmosphere_grid(model_dir)
 
@@ -117,7 +148,6 @@ def get_atmosphere_grid(model_dir):
     logg_arr = np.array(logg_arr)
 
     return teff_arr, z_arr, logg_arr
-    
 
 def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=False):
     """
@@ -133,7 +163,7 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=Fal
     Parameters
     ----------
     metallicity: float
-        The stellar metallicity, in terms of [Z]
+        The stellar metallicity, in terms of [Fe/H]. Solar = 0.
 
     temperature: float
         The stellar temperature, in units of K
@@ -146,7 +176,7 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=Fal
     """
         
     try:
-        sp = pysynphot.Icat('k93models', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('k93models', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
         (temperature, gravity, metallicity) = get_atmosphere_bounds('k93models',
@@ -154,10 +184,10 @@ def get_kurucz_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=Fal
                                                    temperature=temperature,
                                                    gravity=gravity)
 
-        sp = pysynphot.Icat('k93models', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('k93models', temperature, metallicity, gravity)
 
-    # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    # Do some error checking for 0 fluxes.
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find Kurucz 1993 atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -182,7 +212,7 @@ def get_kurucz_atmosphere_grid():
 
 def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=False):
     """
-    Return atmospheres from the pysynphot ATLAS9 atlas
+    Return atmospheres from the synphot ATLAS9 atlas
     (`Castelli & Kurucz 2004 <http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html>`_).
 
     Grid Range:
@@ -211,7 +241,7 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=F
         True for verbose output
     """
     try:
-        sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('ck04models', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
         (temperature, gravity, metallicity) = get_atmosphere_bounds('ck04models',
@@ -219,10 +249,10 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=F
                                                    temperature=temperature,
                                                    gravity=gravity)
 
-        sp = pysynphot.Icat('ck04models', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('ck04models', temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find Castelli and Kurucz 2004 atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -233,7 +263,7 @@ def get_castelli_atmosphere(metallicity=0, temperature=20000, gravity=4, rebin=F
 
 def get_castelli_atmosphere_grid():
     """
-    Return atmosphere grid from the pysynphot ATLAS9 atlas 
+    Return atmosphere grid from the synphot ATLAS9 atlas 
     (`Castelli & Kurucz 2004 <http://www.stsci.edu/hst/observatory/crds/castelli_kurucz_atlas.html>`_).
 
     Grid Range: 
@@ -252,11 +282,8 @@ def get_nextgen_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=Fal
     temperature = Kelvin (def = 5000)
     gravity = log gravity (def = 4.0)
     """
-    if get_grid_only:
-        teff_arr, z_arr, logg_arr = get_atmosphere_grid('nextgen')
-        return teff_arr, z_arr, logg_arr
     try:
-        sp = pysynphot.Icat('nextgen', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('nextgen', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
         (temperature, gravity, metallicity) = get_atmosphere_bounds('nextgen',
@@ -264,10 +291,10 @@ def get_nextgen_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=Fal
                                                    temperature=temperature,
                                                    gravity=gravity)
 
-        sp = pysynphot.Icat('nextgen', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('nextgen', temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find NextGen atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -291,11 +318,10 @@ def get_amesdusty_atmosphere(metallicity=0, temperature=5000, gravity=4, rebin=F
     temperature = Kelvin (def = 5000)
     gravity = log gravity (def = 4.0)
     """
-        
-    sp = pysynphot.Icat('AMESdusty', temperature, metallicity, gravity)
+    sp = stsyn.grid_to_spec('AMESdusty', temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find AMESdusty Allard+ 2000 atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -316,8 +342,8 @@ def get_amesdusty_atmosphere_grid():
 def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
                                rebin=False):
     """
-    Return atmosphere from the pysynphot
-    `PHOENIX atlas <http://www.stsci.edu/hst/observatory/crds/SIfileInfo/pysynphottables/index_phoenix_models_html>`_.
+    Return atmosphere from the synphot
+    `PHOENIX atlas <http://www.stsci.edu/hst/observatory/crds/SIfileInfo/synphottables/index_phoenix_models_html>`_.
 
     Parameters
     ----------
@@ -337,7 +363,7 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
     """
         
     try:
-        sp = pysynphot.Icat('phoenix', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('phoenix', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
         (temperature, gravity, metallicity) = get_atmosphere_bounds('phoenix',
@@ -345,10 +371,10 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
                                                    temperature=temperature,
                                                    gravity=gravity)
 
-        sp = pysynphot.Icat('phoenix', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('phoenix', temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find PHOENIX BT-Settl (Allard+ 2011 atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -359,7 +385,7 @@ def get_phoenix_atmosphere(metallicity=0, temperature=5000, gravity=4,
 
 def get_phoenix_atmosphere_grid():
     """
-    Return atmosphere grid from the pysynphot 
+    Return atmosphere grid from the synphot 
     `PHOENIX atlas <http://www.stsci.edu/hst/observatory/crds/SIfileInfo/pysynphottables/index_phoenix_models_html>`_.
 
     """
@@ -383,12 +409,12 @@ def get_cmfgenRot_atmosphere(metallicity=0, temperature=24000, gravity=4.3, rebi
         gravity = 4.3
 
     if rebin:
-        sp = pysynphot.Icat('cmfgen_rot_rebin', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('cmfgen_rot_rebin', temperature, metallicity, gravity)
     else:
-        sp = pysynphot.Icat('cmfgen_rot', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('cmfgen_rot', temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find CMFGEN rotating atmosphere model (Fierro+15) for')
         print( '  temperature = %d' % temperature)
@@ -455,7 +481,7 @@ def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4
     idx_f = np.where(diff_tot == min(diff_tot))[0][0]
 
     # Extract the filename of the best-match model and read as
-    # pysynphot object
+    # synphot object
     infile = cat[idx_f]['FILENAME'].split('.')
     spec = Table.read('{0}/{1}.fits'.format(root_dir, infile[0]))
 
@@ -473,13 +499,14 @@ def get_cmfgenRot_atmosphere_closest(metallicity=0, temperature=24000, gravity=4
     radius = np.sqrt( lum / (4.0 * np.pi * teff**4. * sigma) ) # in cm
     radius /= 3.08*10**18 # in pc
 
-
-    # Make the pysynphot spectrum
+    # Make the synphot spectrum
     w = spec['Wavelength']
     f = spec['Flux'] * (1000 / radius)**2.
-    sp = pysynphot.ArraySpectrum(w,f)
-
-    #sp = pysynphot.FileSpectrum('{0}/{1}.fits'.format(root_dir, infile[0]))
+    sp = SourceSpectrum(
+        Empirical1D,
+        points=np.asarray(w, dtype=float) * u.AA,
+        lookup_table=np.asarray(f, dtype=float) * su.FLAM,
+    )
 
     # Print out parameters of match, if desired
     if verbose:
@@ -499,12 +526,12 @@ def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=22500, gravity=3.98, r
     """
         
     if rebin:
-        sp = pysynphot.Icat('cmfgen_norot_rebin', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('cmfgen_norot_rebin', temperature, metallicity, gravity)
     else:
-        sp = pysynphot.Icat('cmfgen_norot', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('cmfgen_norot', temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find CMFGEN rotating atmosphere model (Fierro+15) for')
         print( '  temperature = %d' % temperature)
@@ -533,11 +560,10 @@ def get_cmfgenNoRot_atmosphere(metallicity=0, temperature=30000, gravity=4.14):
     temperature = Kelvin (def = 30000)
     gravity = log gravity (def = 4.14)
     """
-        
-    sp = pysynphot.Icat('cmfgenF15_noRot', temperature, metallicity, gravity)
+    sp = stsyn.grid_to_spec('cmfgenF15_noRot', temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find CMFGEN non-rotating atmosphere model (Fierro+15) for')
         print( '  temperature = %d' % temperature)
@@ -593,7 +619,7 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
 
     # Extract atmosphere. If that fails, then check bounds and try again
     try:
-        sp = pysynphot.Icat(atm_model_name, temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec(atm_model_name, temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
         (temperature, gravity, metallicity) = get_atmosphere_bounds(atm_model_name,
@@ -601,10 +627,10 @@ def get_phoenixv16_atmosphere(metallicity=0, temperature=4000, gravity=4, rebin=
                                                    temperature=temperature,
                                                    gravity=gravity)
 
-        sp = pysynphot.Icat(atm_model_name, temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec(atm_model_name, temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find PHOENIXv16 (Husser+13) atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -676,7 +702,7 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
         atm_name = 'BTSettl_2015'
 
     try:
-        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec(atm_name, temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
         (temperature, gravity, metallicity) = get_atmosphere_bounds(atm_name,
@@ -684,11 +710,11 @@ def get_BTSettl_2015_atmosphere(metallicity=0, temperature=2500, gravity=4, rebi
                                                    temperature=temperature,
                                                    gravity=gravity)
 
-        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec(atm_name, temperature, metallicity, gravity)
 
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find BTSettl_2015 atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -807,7 +833,7 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
         atm_name = 'BTSettl'
 
     try:
-        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec(atm_name, temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
         (temperature, gravity, metallicity) = get_atmosphere_bounds(atm_name,
@@ -815,8 +841,18 @@ def get_BTSettl_atmosphere(metallicity=0, temperature=2500, gravity=4.5, rebin=T
                                                    temperature=temperature,
                                                    gravity=gravity)
 
-        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
-        
+        sp = stsyn.grid_to_spec(atm_name, temperature, metallicity, gravity)
+
+    # Do some error checking
+    idx = np.where(sp(sp.waveset) != 0)[0]
+    if len(idx) == 0:
+        print( 'Could not find BTSettl_2015 atmosphere model for')
+        print( '  temperature = %d' % temperature)
+        print( '  metallicity = %.1f' % metallicity)
+        print( '  log gravity = %.1f' % gravity)
+
+    return sp
+
 def get_Meisner2023_atmosphere(metallicity=0, temperature=1000, gravity=4.5, rebin=True):
     """
     Return atmosphere from Meisner2023 grid
@@ -836,7 +872,7 @@ def get_Meisner2023_atmosphere(metallicity=0, temperature=1000, gravity=4.5, reb
         atm_name = 'Meisner2023'
 
     try:
-        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec(atm_name, temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
         (temperature, gravity, metallicity) = get_atmosphere_bounds(atm_name,
@@ -844,10 +880,10 @@ def get_Meisner2023_atmosphere(metallicity=0, temperature=1000, gravity=4.5, reb
                                                    temperature=temperature,
                                                    gravity=gravity)
 
-        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec(atm_name, temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find Meisner2023 atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -886,7 +922,7 @@ def get_Phillips2020_atmosphere(metallicity=0, temperature=1000, gravity=4.5, re
         atm_name = 'Phillips2020'
 
     try:
-        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec(atm_name, temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
         (temperature, gravity, metallicity) = get_atmosphere_bounds(atm_name,
@@ -894,10 +930,10 @@ def get_Phillips2020_atmosphere(metallicity=0, temperature=1000, gravity=4.5, re
                                                    temperature=temperature,
                                                    gravity=gravity)
 
-        sp = pysynphot.Icat(atm_name, temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec(atm_name, temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find Phillips2020 atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -997,11 +1033,10 @@ def get_wdKoester_atmosphere(metallicity=0, temperature=20000, gravity=7):
         resolution as the Castelli+04 atmospheres. Default is False,
         which is often sufficient synthetic photometry in most cases.
     """
-        
-    sp = pysynphot.Icat('wdKoester', temperature, metallicity, gravity)
+    sp = stsyn.grid_to_spec('wdKoester', temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find WD Koester (Koester+ 2010 atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -1026,7 +1061,7 @@ def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     """
         
     try:
-        sp = pysynphot.Icat('merged_atlas_phoenix', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('merged_atlas_phoenix', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
         (temperature, gravity, metallicity) = get_atmosphere_bounds('merged_atlas_phoenix',
@@ -1034,10 +1069,10 @@ def get_atlas_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
                                                    temperature=temperature,
                                                    gravity=gravity)
 
-        sp = pysynphot.Icat('merged_atlas_phoenix', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('merged_atlas_phoenix', temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find ATLAS-PHOENIX merge atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -1063,7 +1098,7 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
     Only valid for temps between 3200 - 3800K, gravity from 2.5 - 5.5
     """
     try:
-        sp = pysynphot.Icat('merged_BTSettl_phoenix', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('merged_BTSettl_phoenix', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
         (temperature, gravity, metallicity) = get_atmosphere_bounds('merged_BTSettl_phoenix',
@@ -1071,10 +1106,10 @@ def get_BTSettl_phoenix_atmosphere(metallicity=0, temperature=5250, gravity=4):
                                                    temperature=temperature,
                                                    gravity=gravity)
 
-        sp = pysynphot.Icat('merged_BTSettl_phoenix', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('merged_BTSettl_phoenix', temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find ATLAS-PHOENIX merge atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -1103,18 +1138,18 @@ def get_BTSettl_meisner_atmosphere(metallicity=0, temperature=5250, gravity=4):
     Only valid for temps between 1000 - 1200K, gravity from 3.5 - 5.5
     """
     try:
-        sp = pysynphot.Icat('merged_BTSettl_meisner', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('merged_BTSettl_meisner', temperature, metallicity, gravity)
     except:
         # Check atmosphere catalog bounds
-        (temperature, gravity) = get_atmosphere_bounds('merged_BTSettl_meisner',
+        (temperature, gravity, metallicity) = get_atmosphere_bounds('merged_BTSettl_meisner',
                                                    metallicity=metallicity,
                                                    temperature=temperature,
                                                    gravity=gravity)
 
-        sp = pysynphot.Icat('merged_BTSettl_meisner', temperature, metallicity, gravity)
+        sp = stsyn.grid_to_spec('merged_BTSettl_meisner', temperature, metallicity, gravity)
 
     # Do some error checking
-    idx = np.where(sp.flux != 0)[0]
+    idx = np.where(sp(sp.waveset) != 0)[0]
     if len(idx) == 0:
         print( 'Could not find BTSettl-Meisner merge atmosphere model for')
         print( '  temperature = %d' % temperature)
@@ -1544,7 +1579,7 @@ def get_wd_atmosphere(metallicity=0, temperature=20000, gravity=4, verbose=False
                                             temperature=temperature,
                                             gravity=gravity)
 
-    except pysynphot.exceptions.ParameterOutOfBounds:
+    except stsyn_exceptions.ParameterOutOfBounds:
         # Use a black-body atmosphere.
         bbspec = get_bb_atmosphere(temperature=temperature, verbose=verbose)
         return bbspec
@@ -1584,7 +1619,7 @@ def get_bd_atmosphere(metallicity=0, temperature=1000, gravity=4, verbose=False)
                                             temperature=temperature,
                                             gravity=gravity)
 
-    except pysynphot.exceptions.ParameterOutOfBounds:
+    except stsyn_exceptions.ParameterOutOfBounds:
         # Use a black-body atmosphere
         bbspec = get_bb_atmosphere(temperature=temperature, verbose=verbose)
         return bbspec
@@ -1618,16 +1653,15 @@ def get_bb_atmosphere(metallicity=None, temperature=20_000, gravity=None,
     if verbose:
         print('Black-body atmosphere')
 
-    # Modify pysynphot's default waveset to specified bounds
-    pysynphot.refs.set_default_waveset(
-        minwave=wave_min, maxwave=wave_max, num=wave_num
+    # Log-spaced wavelength grid (Angstrom); synphot BlackBody in PHOTLAM → FLAM
+    w_grid = (
+        np.logspace(np.log10(wave_min), np.log10(wave_max), wave_num, dtype=np.float64)
+        * u.AA
     )
-
-    # Get black-body atmosphere for specified temperature from pysynphot
-    bbspec = pysynphot.spectrum.BlackBody(temperature)
-
-    # pysynphot `BlackBody` generates spectrum in `photlam`, need in `flam`
-    bbspec.convert('flam')
+    bb = SourceSpectrum(BlackBody1D, temperature=temperature)
+    y_photlam = bb(w_grid)
+    y_flam = convert_flux(w_grid, y_photlam, su.FLAM)
+    bbspec = SourceSpectrum(Empirical1D, points=w_grid, lookup_table=y_flam)
 
     # `BlackBody` spectrum is normalized to solar radius star at 1 kiloparsec.
     # Need to remove this normalization for SPISEA by multiplying bbspec
@@ -1860,7 +1894,7 @@ def cdbs_cmfgen(path_to_dir, path_to_cdbs_dir):
         wave = t['col1']
         flux = t['col2'] # Flux is already in erg/cm^2/s/A
 
-        # Need to eliminate duplicate entries (pysynphot crashes)
+        # Need to eliminate duplicate entries (synphot crashes)
         unique = np.unique(wave, return_index=True)
         wave = wave[unique[1]]
         flux = flux[unique[1]]
@@ -1928,7 +1962,7 @@ def rebin_cmfgen(cdbs_path, rot=True):
     files_all = [cat[ii][1].split('[')[0] for ii in range(len(cat))]
 
     # First column in new files will be for [atlas] wavelength
-    c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
+    c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.waveset.to(u.AA).value)
 
     # For each catalog.fits entry, read the unbinned spectrum and rebin to
     # the atlas resolution. Make a new fits file in rebin directory
@@ -1943,12 +1977,12 @@ def rebin_cmfgen(cdbs_path, rot=True):
 
         # Fetch the spectrum
         if rot == True:
-            sp = pysynphot.Icat('cmfgen_rot', temp, metal, grav)
+            sp = stsyn.grid_to_spec('cmfgen_rot', temp, metal, grav)
         else:
-            sp = pysynphot.Icat('cmfgen_norot', temp, metal, grav)
+            sp = stsyn.grid_to_spec('cmfgen_norot', temp, metal, grav)
 
         # Rebin
-        flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
+        flux_rebin = rebin_spec(sp.waveset, sp, sp_atlas.waveset)
         c1 = fits.Column(name='Flux', format='E', array=flux_rebin)
 
         # Make the FITS file from the columns with header
@@ -2249,15 +2283,15 @@ def rebin_phoenixV16(cdbs_path):
             cols_arr = []
 
             # Make the wavelength column, which is first in the cols array.
-            c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
+            c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.waveset.to(u.AA).value)
             cols_arr.append(c0)
 
             for gg in range(len(logg_exist)):
                 grav = logg_exist[gg] # gravity
 
                 # Fetch the spectrum
-                sp = pysynphot.Icat('phoenix_v16', temp, metal, grav)
-                flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
+                sp = stsyn.grid_to_spec('phoenix_v16', temp, metal, grav)
+                flux_rebin = rebin_spec(sp.waveset, sp, sp_atlas.waveset)
 
                 # Store the spectrum
                 name = 'g{0:3.1f}'.format(grav)
@@ -2282,20 +2316,6 @@ def rebin_phoenixV16(cdbs_path):
 
 
     return
-
-
-def rebin_spec(wave, specin, wavnew):
-    """
-    Helper routine to rebin spectra. TAKEN FROM ASTROBETTER BLOG FROM JESSICA:
-    http://www.astrobetter.com/blog/2013/08/12/
-    python-tip-re-sampling-spectra-with-pysynphot/
-    """
-    spec = pysynphot.spectrum.ArraySourceSpectrum(wave=wave, flux=specin)
-    f = np.ones(len(wave))
-    filt = pysynphot.spectrum.ArraySpectralElement(wave, f, waveunits='angstrom')
-    obs = pysynphot.observation.Observation(spec, filt, binset=wavnew, force='taper')
-
-    return obs.binflux
 
 def organize_BTSettl_2015_atmospheres(path_to_dir):
     """
@@ -2432,11 +2452,11 @@ def rebin_BTSettl_2015(cdbs_path=os.environ['PYSYN_CDBS']):
         logg = float(vals[2])
 
         # Fetch the BTSettl spectrum, rebin flux
-        sp = pysynphot.Icat('BTSettl_2015', temp, metal, logg)
-        flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
+        sp = stsyn.grid_to_spec('BTSettl_2015', temp, metal, logg)
+        flux_rebin = rebin_spec(sp.waveset, sp, sp_atlas.waveset)
 
         # Make new output
-        c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
+        c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.waveset.to(u.AA).value)
         c1 = fits.Column(name='Flux', format='E', array=flux_rebin)
 
         cols = fits.ColDefs([c0, c1])
@@ -2672,11 +2692,11 @@ def rebin_BTSettl(make_unique=False):
 
         # Fetch the BTSettl spectrum, rebin flux
         try:
-            sp = pysynphot.Icat('BTSettl', temp, metal, logg)
-            flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
+            sp = stsyn.grid_to_spec('BTSettl', temp, metal, logg)
+            flux_rebin = rebin_spec(sp.waveset, sp, sp_atlas.waveset)
 
             # Make new output
-            c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
+            c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.waveset.to(u.AA).value)
             c1 = fits.Column(name='Flux', format='E', array=flux_rebin)
 
             cols = fits.ColDefs([c0, c1])
@@ -2846,11 +2866,11 @@ def rebin_Meisner2023(make_unique=False):
 
         # Fetch the Meisner2023 spectrum and rebin its flux
         try:
-            sp = pysynphot.Icat('Meisner2023', temp, metal, logg)
-            flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
+            sp = stsyn.grid_to_spec('Meisner2023', temp, metal, logg)
+            flux_rebin = rebin_spec(sp.waveset, sp, sp_atlas.waveset)
 
             # Create the output FITS file
-            c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
+            c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.waveset.to(u.AA).value)
             c1 = fits.Column(name='Flux', format='E', array=flux_rebin)
 
             cols = fits.ColDefs([c0, c1])
@@ -2999,11 +3019,11 @@ def rebin_WDKoester(cdbs_path=os.environ['PYSYN_CDBS']):
         logg = float(vals[2])
 
         # Fetch the wdKoester spectrum, rebin flux
-        sp = pysynphot.Icat('wdKoester', temp, metal, logg)
-        flux_rebin = rebin_spec(sp.wave, sp.flux, sp_atlas.wave)
+        sp = stsyn.grid_to_spec('wdKoester', temp, metal, logg)
+        flux_rebin = rebin_spec(sp.waveset, sp, sp_atlas.waveset)
 
         # Make new output
-        c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.wave)
+        c0 = fits.Column(name='Wavelength', format='D', array=sp_atlas.waveset.to(u.AA).value)
         c1 = fits.Column(name='Flux', format='E', array=flux_rebin)
 
         cols = fits.ColDefs([c0, c1])

@@ -30,7 +30,7 @@ represents the combined photometry of all stars within a given system.
 For most selected evolution models, the multiples are evolved as single stars.
 To evolve binaries (does not support higher order multiples), you should use one of the ``MultiplicityResolved`` classes
 and the ``COSMIC`` evolution model. 
-See the example jupyter notebook `Cluster_w_COSMIC.ipynb <https://github.com/astropy/SPISEA/blob/main/docs/Cluster_w_COSMIC.ipynb>`_ for an example.
+See the example jupyter notebook `Cluster_w_COSMIC.ipynb <https://github.com/MovingUniverseLab/spisea/blob/main/docs/Cluster_w_COSMIC.ipynb>`_ for an example.
 Note that currently COSMIC due to being external evolution is significantly slower than the other evolution options.
 
 

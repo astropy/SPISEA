@@ -143,8 +143,8 @@ Example: ``'hipparcos,Hp'``
 
 **Hubble Space Telescope**
 
-HST filters are defined by their `pysynphot OBSMODE strings
-<https://pysynphot.readthedocs.io/en/latest/appendixb.html#pysynphot-appendixb>`_. These
+HST filters are defined by their `stsynphot / legacy OBSMODE strings
+<https://stsynphot.readthedocs.io/en/latest/stsynphot/obsmode.html>`_. These
 are defined in the ``cdbs/mtab/`` and ``cdbs/comp/`` directories.
 
 Example: ``'wfc3,ir,f125w'``
@@ -240,9 +240,9 @@ Example: ``'ps1, g'``
 
 **Roman Space Telescope**
 
-Roman Space Telescope WFI filters are defined by their `pysynphot
-OBSMODE strings
-<https://pysynphot.readthedocs.io/en/latest/appendixb.html#non-hst-filter-systems>`_.
+Roman Space Telescope WFI filters are defined by their stsynphot-style
+`OBSMODE strings
+<https://stsynphot.readthedocs.io/en/latest/stsynphot/obsmode.html>`_.
 These are defined in the ``cdbs/mtab/`` and ``cdbs/comp/``
 directories. Note that the 2021-07-16 version of these directories
 must be downloaded from from the `STScI reference atlases

@@ -9,14 +9,31 @@ import warnings
 import numpy as np
 import pylab as plt
 import matplotlib.pyplot as plt
+import stsynphot as stsyn
+import astropy.units as u
+from synphot import Observation
+from synphot import units as su
+import pdb
+
+from synphot.models import ConstFlux1D
+from synphot.spectrum import SourceSpectrum, SpectralElement, Empirical1D
+
 from spisea import reddening, evolution, filters
 from spisea import atmospheres as atm
 from scipy.spatial import cKDTree as KDTree
 from scipy.stats import truncnorm
 from spisea.imf import multiplicity
-from pysynphot import spectrum
-from pysynphot import ObsBandpass
-from pysynphot import observation as obs
+from spisea.utils.synphot_bridge import (
+    bandpass_from_stsyn,
+    bandpass_throughput_array,
+    bandpass_wave_aa,
+    make_observation,
+    observation_bin_edges,
+    resample_bandpass,
+    resample_source_to,
+    tabulate_if_needed,
+    trim_spectrum,
+)
 from astropy import constants, units
 from astropy.table import Table, Column
 import astropy.modeling
@@ -28,6 +45,9 @@ default_atm_func = atm.get_merged_atmosphere
 default_wd_atm_func = atm.get_wd_atmosphere
 default_multiplicity = multiplicity.MultiplicityResolvedDK(CSF_max = 1, companion_max = True)
 
+# Dummy telescope area for arbitrary photometry rescaling.
+tel_area_dummy = 1.0 * u.m**2
+
 def Vega():
     # Use Vega as our zeropoint... assume V=0.03 mag and all colors = 0.0
     # These parameters are defined in Girardi+02
@@ -37,7 +57,7 @@ def Vega():
 
     # Following the K93 README, set wavelength range to 0.1 - 10 microns.
     # This defines the maximum allowed wavelength range in SPISEA
-    vega = spectrum.trimSpectrum(vega, 995, 100200)
+    vega = trim_spectrum(vega, 995, 100200)
 
     # This is (R/d)**2 as reported by Girardi et al. 2002, page 198, col 1.
     # and is used to convert to flux observed at Earth.
@@ -706,7 +726,6 @@ class ResolvedCluster(Cluster):
             # Adjust the properties as needed
             star_systems['mass_current'][lm_idx] = star_systems['mass'][lm_idx]
             star_systems['phase'][lm_idx] = 98
-            #pdb.set_trace()
 
         star_systems = star_systems[idx]
         N_systems = len(star_systems)
@@ -803,8 +822,8 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         #t1 = time.time()
         delta_red_filt = {}
         AKs = iso.points.meta['AKS']
-        red_vega_lo = vega * red_law.reddening(AKs).resample(vega.wave)
-        red_vega_hi = vega * red_law.reddening(AKs + deltaAKs).resample(vega.wave)
+        red_vega_lo = vega * red_law.extinction_curve(AKs, vega.waveset)
+        red_vega_hi = vega * red_law.extinction_curve(AKs + deltaAKs, vega.waveset)
 
         for filt in self.filt_names:
             obs_str = get_obs_str(filt)
@@ -836,7 +855,9 @@ class ResolvedClusterDiffRedden(ResolvedCluster):
         self.star_systems.add_column(col)
         #t2 = time.time()
         #print 'Diff redden: {0}'.format(t2 - t1)
+        
         return
+
 
 class UnresolvedCluster(Cluster):
     """
@@ -885,16 +906,19 @@ class UnresolvedCluster(Cluster):
         # Sample a power-law IMF randomly
         self.mass, isMulti, compMass, sysMass = imf.generate_cluster(cluster_mass)
 
+        # Make temperature, mass, and spectrum arrays or lists for the cluster stars
         temp = np.zeros(len(self.mass), dtype=float)
         self.mass_all = np.zeros(len(self.mass), dtype=float)
         self.spec_list = [None] * len(self.mass)
+
         # placeholder array to make spectrum summing more efficient
-        spec_list_np = np.zeros(shape=(len(iso.spec_list[0].flux),len(self.mass)), dtype=float)
+        spec_list_np = np.zeros(shape=(len(iso.spec_list[0].waveset), len(self.mass)), dtype=float)
         self.spec_list_trim = [None] * len(self.mass)
-        # same as spec_list_np, but for the wavelength-trimmed spectra
-        trimtmp = spectrum.trimSpectrum(iso.spec_list[0],wave_range[0],wave_range[1])
-        trimx = len(trimtmp._fluxtable)
-        spec_list_trim_np = np.zeros(shape=(trimx,len(self.mass)), dtype=float)
+
+        # Trim one spectrum first to get a size estimate and make a list of spectra
+        # with the right size. Doing this in advance is much faster.
+        trimtmp = trim_spectrum(iso.spec_list[0], wave_range[0], wave_range[1])
+        spec_list_trim_np = np.zeros(shape=(len(trimtmp.waveset), len(self.mass)), dtype=float)
 
         t1 = time.time()
         for ii in range(len(self.mass)):
@@ -909,15 +933,19 @@ class UnresolvedCluster(Cluster):
             tmpspec = iso.spec_list[mdx]
 
             # resampling the matched spectrum to a common wavelength grid
-            tmpspec = spectrum.CompositeSourceSpectrum.tabulate(tmpspec)
-            tmpspecresamp = spectrum.TabularSourceSpectrum.resample(tmpspec,iso.spec_list[0].wave)
-            self.spec_list[ii] = tmpspecresamp
-            spec_list_np[:,ii]=np.asarray(tmpspecresamp._fluxtable)
+            new_wave = iso.spec_list[0].waveset
+            new_flux = tmpspec(new_wave)
+            new_sp = SourceSpectrum(Empirical1D, points=new_wave, lookup_table=new_flux)
+
+            # Save the new spectrum and the flux array to the list
+            self.spec_list[ii] = new_sp
+            spec_list_np[:,ii]= new_sp(new_sp.waveset).value
 
             # and trimming to the requested wavelength range
-            tmpspectrim = spectrum.trimSpectrum(tmpspecresamp,wave_range[0],wave_range[1])
-            self.spec_list_trim[ii] = tmpspectrim
-            spec_list_trim_np[:,ii] = np.asarray(tmpspectrim._fluxtable)
+            new_sp_trim = trim_spectrum(new_sp, wave_range[0], wave_range[1])
+
+            self.spec_list_trim[ii] = new_sp_trim
+            spec_list_trim_np[:,ii] = new_sp_trim(new_sp_trim.waveset).value
 
 
         t2 = time.time()
@@ -933,13 +961,13 @@ class UnresolvedCluster(Cluster):
         self.spec_list_trim = [self.spec_list_trim[iidx] for iidx in idx]
         spec_list_trim_np = spec_list_trim_np[:,idx]
 
-        self.spec_tot_full = np.sum(spec_list_np,1)
+        self.spec_tot_full = np.sum(spec_list_np, 1)
 
         t3 = time.time()
         print( 'Spec summing took {0:f}s'.format(t3-t2))
 
-        self.spec_trim = np.sum(spec_list_trim_np,1)
-        self.wave_trim = self.spec_list_trim[0].wave
+        self.spec_trim = np.sum(spec_list_trim_np, 1)
+        self.wave_trim = self.spec_list_trim[0].waveset.to(units.AA).value
 
         t4 = time.time()
         print( 'Spec trimming took {0:f}s'.format(t4-t3))
@@ -948,6 +976,7 @@ class UnresolvedCluster(Cluster):
         print( 'Total cluster mass is {0:f} M_sun'.format(self.mass_tot))
 
         return
+
 
 class Isochrone(object):
     """
@@ -1084,14 +1113,13 @@ class Isochrone(object):
                                     rebin=rebin)
 
             # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
-            star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
+            star = trim_spectrum(star, wave_range[0], wave_range[1])
 
             # Convert into flux observed at Earth (unreddened)
             star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
 
             # Redden the spectrum. This doesn't take much time at all.
-            red = red_law.reddening(AKs).resample(star.wave)
-            star *= red
+            star *= red_law.extinction_curve(AKs, star.waveset)
 
             # Save the final spectrum to our spec_list for later use.
             self.spec_list.append(star)
@@ -1341,6 +1369,7 @@ class IsochronePhot(Isochrone):
             col_name = 'm_' + get_filter_col_name(ii)
             if col_name not in self.points.keys():
                 comp_filters.append(ii)
+
         # Compute additional filters if needed
         if len(comp_filters)>0:
             self.verbose = True
@@ -1349,6 +1378,7 @@ class IsochronePhot(Isochrone):
             print('Loading stellar spectra')
             # Initialize output for stellar spectra
             self.spec_list = []
+
             # For each isochrone point, extract the synthetic photometry.
             for ii in range(len(self.points['Teff'])):
                 # Loop is currently taking about 0.11 s per iteration
@@ -1357,6 +1387,7 @@ class IsochronePhot(Isochrone):
                 T = float( self.points['Teff'][ii] )               # in Kelvin
                 R = float( (self.points['R'][ii]*units.m).to('pc') / units.pc)              # in pc
                 phase = int(self.points['phase'][ii])
+
                 # Get the atmosphere model now. Wavelength is in Angstroms
                 # This is the time-intensive call... everything else is negligable.
                 # If source is a star, pull from star atmospheres. If it is a WD,
@@ -1368,12 +1399,14 @@ class IsochronePhot(Isochrone):
                     star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
                                         rebin=rebin)
                 # Trim wavelength range down to appropriate range
-                star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
+                star = trim_spectrum(star, wave_range[0], wave_range[1])
+
                 # Convert into flux observed at Earth (unreddened)
                 star *= (R / self.points.meta["DISTANCE"])**2  # in erg s^-1 cm^-2 A^-1
+
                 # Redden the spectrum. This doesn't take much time at all.
-                red = red_law.reddening(AKs).resample(star.wave)
-                star *= red
+                star *= red_law.extinction_curve(AKs, star.waveset)
+
                 # Save the final spectrum to our spec_list for later use.
                 self.spec_list.append(star)
 
@@ -1712,14 +1745,13 @@ class IsochronePhotExternalEvolution(IsochronePhot):
                                     rebin=rebin)
     
                 # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
-                star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
+                star = trim_spectrum(star, wave_range[0], wave_range[1])
     
                 # Convert into flux observed at Earth (unreddened)
-                star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
+                star *= (R / self.points.meta["DISTANCE"])**2  # in erg s^-1 cm^-2 A^-1
     
                 # Redden the spectrum. This doesn't take much time at all.
-                red = red_law.reddening(AKs).resample(star.wave) 
-                star *= red
+                star *= red_law.extinction_curve(AKs, star.waveset)
                 
                 # Save the final spectrum to our spec_list for later use.            
                 self.spec_list.append(star)
@@ -1775,6 +1807,7 @@ class IsochronePhotExternalEvolution(IsochronePhot):
             print('Loading stellar spectra')
             # Initialize output for stellar spectra
             self.spec_list = []
+
             # For each isochrone point, extract the synthetic photometry.
             for ii in range(len(teff_arr)):
                 gravity = logg_arr[ii]
@@ -1786,13 +1819,16 @@ class IsochronePhotExternalEvolution(IsochronePhot):
                 # This is the time-intensive call... everything else is negligable.
                 star = atm_func(temperature=T, gravity=gravity, metallicity=metallicity,
                                         rebin=rebin)
+
                 # Trim wavelength range down to appropriate range
-                star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
+                star = trim_spectrum(star, wave_range[0], wave_range[1])
+
                 # Convert into flux observed at Earth (unreddened)
                 star *= (R / self.points.meta["DISTANCE"])**2  # in erg s^-1 cm^-2 A^-1
+
                 # Redden the spectrum. This doesn't take much time at all.
-                red = red_law.reddening(AKs).resample(star.wave) 
-                star *= red
+                star *= red_law.extinction_curve(AKs, star.waveset) 
+
                 # Save the final spectrum to our spec_list for later use.            
                 self.spec_list.append(star)
 
@@ -1993,7 +2029,7 @@ class iso_table(object):
             star = atm_func(temperature=T, gravity=gravity)
 
             # Trim wavelength range down to JHKL range (0.5 - 5.2 microns)
-            star = spectrum.trimSpectrum(star, wave_range[0], wave_range[1])
+            star = trim_spectrum(star, wave_range[0], wave_range[1])
 
             # Convert into flux observed at Earth (unreddened)
             star *= (R / distance)**2  # in erg s^-1 cm^-2 A^-1
@@ -2072,8 +2108,7 @@ class iso_table(object):
             else:
                 AKs_act = AKs
 
-            red = extinction_law.reddening(AKs_act).resample(star.wave)
-            star *= red
+            star *= extinction_law.extinction_curve(AKs_act, star.waveset)
 
             # Update the spectrum in spec list
             self.spec_list[i] = star
@@ -2094,7 +2129,7 @@ class iso_table(object):
         ----------
         filters : dictionary
             A dictionary containing the filter name (for the output columns)
-            and the filter specification string that can be processed by pysynphot.
+            and the filter specification string that can be processed by synphot.
 
         rebin: boolean
             True to rebin filter function (only used if non-zero transmission points are
@@ -2268,39 +2303,27 @@ def get_filter_info(name, vega=vega, rebin=True):
     else:
         # Otherwise, look for the filter info in the cdbs/mtab and cdbs/comp files
         try:
-            filt = ObsBandpass(name)
-        except:
+            filt = stsyn.band(name)
+        except Exception:
             raise Exception('Filter {0} not understood. Check spelling and make sure cdbs/mtab and cdbs/comp files are up to date'.format(name))
 
-        # Convert to ArraySpectralElement for resampling.
-        filt = spectrum.ArraySpectralElement(filt.wave, filt.throughput,
-                                             waveunits=filt.waveunits,
-                                             name=filt.name)
 
     # If rebin=True, limit filter function to <=1500 wavelength points
     # over the non-zero values
-    idx = np.where(filt.throughput > 0.001)[0]
+    idx = np.where(filt(filt.waveset) > 0.001)[0]
     if rebin:
-        if len(filt.wave[idx]) > 1500:
-            new_wave = np.linspace(filt.wave[idx[0]], filt.wave[idx[-1]], 1500, dtype=float)
-            filt = filt.resample(new_wave)
+        if len(filt.waveset[idx]) > 1500:
+            new_wave = np.linspace(filt.waveset[idx[0]], filt.waveset[idx[-1]], 1500, dtype=float)
+            filt = SpectralElement(filt.model, waveset=new_wave)
 
-    # Check that vega spectrum covers the wavelength range of the filter.
-    # Otherwise, throw an error
-    idx = np.where(filt.throughput > 0.001)[0]
-    if (min(filt.wave[idx]) < min(vega.wave)) | (max(filt.wave[idx]) > max(vega.wave)):
-        raise ValueError('Vega spectrum doesnt cover filter wavelength range!')
-
-    vega_obs = obs.Observation(vega, filt, binset=filt.wave, force='taper')
-    #vega_flux = vega_obs.binflux.sum()
-    diff = np.diff(vega_obs.binwave)
-    diff = np.append(diff, diff[-1])
-    vega_flux = np.sum(vega_obs.binflux * diff)
-
+    vega_obs = Observation(vega, filt, binset=filt.waveset, force='taper')
+    vega_flux = vega_obs.countrate(area=tel_area_dummy)
     vega_mag = 0.03
 
-    filt.flux0 = vega_flux
-    filt.mag0 = vega_mag
+    if getattr(filt, "meta", None) is None:
+        filt.meta = {}
+    filt.meta["flux0"] = vega_flux
+    filt.meta["mag0"] = vega_mag
 
     return filt
 
@@ -2312,7 +2335,7 @@ def get_filter_col_name(obs_str):
     appropriate SPISEA obs_string
     """
     # How we deal with obs_string is slightly different depending
-    # if it is an hst filter (and thus pysynphot syntax) or our
+    # if it is an hst filter (and thus synphot syntax) or our
     # own defined filters
     tmp = obs_str.split(',')
 
@@ -2369,18 +2392,6 @@ def get_obs_str(col):
 
     return obs_str
 
-def rebin_spec(wave, specin, wavnew):
-    """
-    Helper function to rebin spectra, from Jessica Lu's post
-    on Astrobetter:
-    https://www.astrobetter.com/blog/2013/08/12/python-tip-re-sampling-spectra-with-pysynphot/
-    """
-    spec = spectrum.ArraySourceSpectrum(wave=wave, flux=specin)
-    f = np.ones(len(wave))
-    filt = spectrum.ArraySpectralElement(wave, f, waveunits='angstrom')
-    obs_f = obs.Observation(spec, filt, binset=wavnew, force='taper')
-
-    return obs_f.binflux
 
 def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
                         atm_func=default_atm_func, redlaw = default_red_law,
@@ -2453,20 +2464,28 @@ def make_isochrone_grid(age_arr, AKs_arr, dist_arr, evo_model=default_evo_model,
     _out.close()
     return
 
+
 # Little helper utility to get the magnitude of an object through a filter.
 def mag_in_filter(star, filt):
     """
     Assumes that extinction is already resampled to same wavelengths
     as filter, and has been applied.
     """
-    star_in_filter = obs.Observation(star, filt, binset=filt.wave, force='taper')
-    #star_flux = star_in_filter.binflux.sum()
-    diff = np.diff(star_in_filter.binwave)
-    diff = np.append(diff, diff[-1])
-    star_flux = np.sum(star_in_filter.binflux * diff)
+    star_in_filter = Observation(star, filt, binset=filt.waveset, force='taper')
+    star_flux = star_in_filter.countrate(area=tel_area_dummy)
 
-    star_mag = -2.5 * math.log10(star_flux / filt.flux0) + filt.mag0
+    # plt.figure()
+    # plt.loglog(star_in_filter.waveset, star_in_filter(star_in_filter.waveset), 'r-', label='wave')
+    # plt.loglog(star_in_filter.binset, star_in_filter.binflux, 'k-', label='binwave')
+    # plt.xlabel('Wavelength (Angstroms)')
+    # plt.ylabel('Flux (erg s^-1 cm^-2 A^-1)')
+    # plt.legend()
+    # plt.savefig('spec.png')
+    
+    star_mag = -2.5 * math.log10(star_flux / filt.meta["flux0"]) + filt.meta["mag0"]
+
     return star_mag
+
 
 def match_model_mass(isoMasses,theMass):
     dm = np.abs(isoMasses - theMass)
@@ -2509,54 +2528,31 @@ def calc_ab_vega_filter_conversion(filt_str):
     filt_str: string
         SPISEA filter identification string (see Photometric Filters doc page)
     """
-    # Get filter info
+    # 1. Get filter info
     filt = get_filter_info(filt_str)
 
-    # Let's convert everything into frequency space
-    c = 2.997*10**18 # A / s
-    vega_wave = vega.wave
-    vega_mu = c / vega_wave
-    vega_flux_mu = vega.flux * (vega_wave **2 / c)
+    # 2. Define the Vega spectrum
+    vega = SourceSpectrum.from_vega()
 
-    filt_wave = filt.wave
-    filt_mu = c / filt_wave
-    s_filt = filt.throughput
+    # 3. Define an arbitrary input flux in VEGAMAG.
+    vegamag_value = 0.0 * su.VEGAMAG
 
-    # Interpolate the filter function, determine what the
-    # filter function is at the exact sampling of the
-    # vega spectrum (in freq space)
-    filt_interp = scipy.interpolate.interp1d(filt_mu, s_filt, kind='linear', bounds_error=False,
-                                                 fill_value=0)
-    s_interp = filt_interp(vega_mu)
+    # 4. Normalize the Vega spectrum to the input VEGAMAG value
+    vega_norm = vega.normalize(vegamag_value, band=filt)
 
-    # Now for the m_ab calculation
-    mu_diff = np.diff(vega_mu)
-    numerator = np.sum(vega_flux_mu[:-1] * s_interp[:-1] * mu_diff)
-    denominator = np.sum(s_interp[:-1] * mu_diff)
+    # 6. Observe the normalized spectrum through the bandpass
+    obs = Observation(vega_norm, filt)
 
-    vega_mag_ab = -2.5 * np.log10(numerator / denominator) - 48.6
+    # 7. Check the integrated flux in both filter sets.
+    abmag_value = obs.effstim(flux_unit='abmag')
+    vegamag_value = obs.effstim(flux_unit='vegamag')
 
-    print('For {0}, m_ab - m_vega = {1}'.format(filt_str, vega_mag_ab))
+    ab_2_vega = abmag_value - vegamag_value
 
-    #--Same calculation, in lambda space. Less accurate for some reason---#
-    # Interpolate the filter function to be the exact same sampling as the
-    # vega spectrum
-    #c = 3*10**18 # A / s
-    #filt_interp = scipy.interpolate.interp1d(filt.wave, filt.throughput, kind='linear', bounds_error=False,
-    #                                             fill_value=0)
-    #s_interp = filt_interp(vega.wave)
+    print(f'For {filt_str}, m_ab - m_vega = {ab_2_vega}')
 
-    # Calculate the numerator
-    #diff = np.diff(vega.wave)
-    #numerator2 = np.sum((vega.wave[:-1]**2. / c) * vega.flux[:-1] * s_interp[:-1] * diff)
+    return ab_2_vega
 
-    # Now we need to intergrate the filter response for the denominator
-    #denominator2 = np.sum(s_interp[:-1] * diff)
-
-    # Calculate vega AB magnitude. This is the conversion
-    #vega_mag_ab2 = -2.5 * np.log10(numerator2 / denominator2) - 48.6
-
-    return vega_mag_ab
 
 def calc_st_vega_filter_conversion(filt_str):
     """
@@ -2572,28 +2568,28 @@ def calc_st_vega_filter_conversion(filt_str):
     filt_str: string
         SPISEA filter identification string (see Photometric Filters doc page)
     """
-    # Get filter info
+    # 1. Get filter info
     filt = get_filter_info(filt_str)
 
-    # Interpolate the filter function to be the exact same sampling as the
-    # vega spectrum
-    c = 2.997*10**18 # A / s
-    filt_interp = scipy.interpolate.interp1d(filt.wave, filt.throughput, kind='linear', bounds_error=False,
-                                                fill_value=0)
-    s_interp = filt_interp(vega.wave)
+    # 2. Define the Vega spectrum
+    vega = SourceSpectrum.from_vega()
 
-    # Calculate the numerator
-    diff = np.diff(vega.wave)
-    numerator = np.sum(vega.flux[:-1] * s_interp[:-1] * diff)
+    # 3. Define an arbitrary input flux in VEGAMAG.
+    vegamag_value = 0.0 * su.VEGAMAG
 
-    # Now we need to intergrate the filter response for the denominator
-    denominator = np.sum(s_interp[:-1] * diff)
-    # Fλ must be in erg cm–2 sec–1 Å–1
+    # 4. Normalize the Vega spectrum to the input VEGAMAG value
+    vega_norm = vega.normalize(vegamag_value, band=filt)
 
-    # Calculate vega AB magnitude. This is the conversion
-    vega_mag_st = -2.5 * np.log10(numerator / denominator) - 21.1
+    # 6. Observe the normalized spectrum through the bandpass
+    obs = Observation(vega_norm, filt)
 
-    print('For {0}, m_st - m_vega = {1}'.format(filt_str, vega_mag_st))
+    # 7. Check the integrated flux in both filter sets.
+    stmag_value = obs.effstim(flux_unit='stmag')
+    vegamag_value = obs.effstim(flux_unit='vegamag')
 
-    return vega_mag_st
+    st_2_vega = stmag_value - vegamag_value
+
+    print(f'For {filt_str}, m_st - m_vega = {st_2_vega}')
+
+    return st_2_vega
 
