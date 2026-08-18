@@ -1867,7 +1867,7 @@ class RedLawBrokenPowerLaw(RedLawBase):
 
         self.low_lim = np.min(lambda_limits)
         self.high_lim = np.max(lambda_limits)
-        self.name = 'bp,{0},{1},{2}'.format(lambda_limits, alpha_vals, K_wave)
+        self.name = 'broken_pl,{0},{1},{2}'.format(lambda_limits, alpha_vals, K_wave)
         
         return
 
