@@ -3,9 +3,9 @@
 Generate docs/figures/mf_offner_vs_spisea2.5.png
 
 Two-panel comparison of multiplicity fraction vs primary mass:
-SPISEA v2.5 array power law, v2.5 scalar BD staircase,
-Offner et al. 2023 logistic in log-mass, and Offner Table 1
-points with error bars.
+SPISEA v2.5 ``MultiplicityUnresolved`` (array power law and
+scalar BD staircase), Offner et al. 2023 logistic in log-mass,
+and Offner Table 1 points with error bars.
 
 Run from the repository root::
 
@@ -46,22 +46,6 @@ _TABLE1 = [
 ]
 
 
-def _spisea25_array_mf(mass):
-    """SPISEA v2.5 array path: stellar power law, no BD staircase."""
-    mf = 0.44 * np.asarray(mass, dtype=float) ** 0.51
-    return np.clip(mf, 0.0, 1.0)
-
-
-def _spisea25_scalar_bd_staircase(mass):
-    """SPISEA v2.5 scalar-only BD bins in MultiplicityUnresolved.multiplicity_fraction."""
-    mass = np.asarray(mass, dtype=float)
-    mf = _spisea25_array_mf(mass)
-    mf = np.where(mass < 0.02, 0.0, mf)
-    mf = np.where((mass > 0.02) & (mass <= 0.06), 0.08, mf)
-    mf = np.where((mass > 0.06) & (mass <= 0.08), 0.16, mf)
-    return mf
-
-
 def _table1_xy():
     m = np.array([np.sqrt(lo * hi) for lo, hi, _, _ in _TABLE1])
     mf = np.array([row[2] for row in _TABLE1])
@@ -93,17 +77,21 @@ def _style_panel(ax, m_off, mf_off, m_lu, mf_lu, m_step, mf_step,
 
 def main():
     offner = multiplicity.MultiplicityUnresolvedOffner2023()
+    lu = multiplicity.MultiplicityUnresolved()
 
     m_wide = np.logspace(np.log10(0.012), np.log10(40.0), 800)
     mf_off = offner.multiplicity_fraction(m_wide)
-    mf_lu = _spisea25_array_mf(m_wide)
+    # Array path: stellar power law only (no BD staircase).
+    mf_lu = lu.multiplicity_fraction(m_wide)
 
     # Staircase sampled densely so the steps render as vertical jumps.
+    # Scalar path applies the Aberasturi/Fontanive BD bins.
     m_step = np.concatenate([
         np.array([0.012, 0.01999, 0.02001, 0.05999, 0.06001, 0.07999, 0.08001]),
         np.logspace(np.log10(0.081), np.log10(40.0), 200),
     ])
-    mf_step = _spisea25_scalar_bd_staircase(m_step)
+    mf_step = np.array([
+        float(lu.multiplicity_fraction(float(m))) for m in m_step])
 
     m_tab, mf_tab, err_tab = _table1_xy()
 
