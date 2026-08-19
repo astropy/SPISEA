@@ -24,8 +24,8 @@ The multiplicity object provides the following functions used by the IMF:
   (brown-dwarf vs stellar). ``random_q(x)`` with no mass keeps the
   historical stellar-only power law.
 * ``random_companion_count(x, CSF, MF, mass=None, rng=None)`` —
-  companion-count policy, including the binaries-only BD cap when
-  ``mass`` is given.
+  companion-count draw. If ``companion_max`` is True, counts are
+  capped at ``CSF_max`` at all masses.
 * attributes ``companion_max``, ``CSF_max``, ``q_min``
 
 The user can choose either
@@ -97,6 +97,12 @@ docstrings above.
 
    Offner 2023 vs SPISEA v2.5: multiplicity fraction vs primary mass.
 
+.. figure:: figures/csf_offner_vs_spisea2.5.png
+   :alt: Offner 2023 vs SPISEA v2.5: companion star fraction vs primary mass
+   :align: center
+
+   Offner 2023 vs SPISEA v2.5: companion star fraction vs primary mass.
+
 .. figure:: figures/q_offner_vs_spisea2.5.png
    :alt: Offner 2023 vs SPISEA v2.5: mass-ratio index vs primary mass
    :align: center
@@ -124,6 +130,7 @@ docstrings above.
 From the repository root::
 
    python docs/figures/plot_mf_offner_vs_spisea2.5.py
+   python docs/figures/plot_csf_offner_vs_spisea2.5.py
    python docs/figures/plot_q_offner_vs_spisea2.5.py
    python docs/figures/plot_meanq_offner_vs_spisea2.5.py
    python docs/figures/plot_sep_offner_vs_spisea2.5.py

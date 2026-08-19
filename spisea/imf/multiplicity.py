@@ -135,9 +135,9 @@ class MultiplicityUnresolved(object):
     Defaults are CSF_amp = 0.50, CSF_power = 0.45. CSF is clipped
     to CSF_max (default 3). The actual number of companions is drawn
     from a Poisson distribution with an expectation value of CSF.
-    For primaries at or below ``binary_only_mass_max`` (default
-    0.08 Msun), CSF is forced equal to MF and the companion count
-    is capped at 1 (binaries only).
+    Higher-order multiples (triples+) are allowed at all masses,
+    including brown dwarfs. If ``companion_max`` is True, the
+    companion count is capped at CSF_max at all masses.
 
     **Mass Ratio (Q)** -- The ratio between the companion star
     mass and primary star mass, Q = (m_comp / m_prim) has
@@ -148,8 +148,10 @@ class MultiplicityUnresolved(object):
     Stellar primaries use q_power = −0.4 (Lu et al. 2013).
     Brown-dwarf primaries (M <= 0.08 Msun) use γ = 6.1 from
     Fontanive et al. (2018) when ``mass`` is passed to
-    :meth:`q_power_at_mass` or :meth:`random_q`. ``random_q(x)``
-    with no mass keeps the stellar-only power law.
+    :meth:`q_power_at_mass` or :meth:`random_q`. That 0.08 Msun
+    switch is a mass-ratio index only, not a companion-count
+    policy. ``random_q(x)`` with no mass keeps the stellar-only
+    power law.
 
     Parameters
     ----------
@@ -173,21 +175,17 @@ class MultiplicityUnresolved(object):
         Minimum mass ratio m_comp/m_prim, dimensionless.
         Default 0.01.
     companion_max : bool, optional
-        If True, cap companion counts at CSF_max. Default False.
-    binary_only_mass_max : float, optional
-        Primary mass in solar masses (Msun) at and below which
-        systems are restricted to at most one companion (CSF = MF).
-        Default 0.08 Msun.
+        If True, cap companion counts at CSF_max at all masses.
+        Default False.
     bd_q_power : float, optional
         Mass-ratio power-law index γ for brown-dwarf primaries
-        (M <= binary_only_mass_max), dimensionless. Default 6.1
+        (M <= 0.08 Msun), dimensionless. Default 6.1
         (Fontanive et al. 2018).
     """
     def __init__(self,
                  MF_amp=0.44, MF_power=0.51,
                  CSF_amp=0.50, CSF_power=0.45, CSF_max=3,
                  q_power=-0.4, q_min=0.01, companion_max=False,
-                 binary_only_mass_max=H_BURNING_MASS,
                  bd_q_power=6.1):
 
         self.MF_amp = MF_amp
@@ -198,7 +196,6 @@ class MultiplicityUnresolved(object):
         self.q_pow = q_power
         self.q_min = q_min
         self.companion_max = companion_max
-        self.binary_only_mass_max = binary_only_mass_max
         self.bd_q_power = bd_q_power
 
     def multiplicity_fraction(self, mass):
@@ -244,8 +241,7 @@ class MultiplicityUnresolved(object):
     def companion_star_fraction(self, mass):
         """
         Given a star's mass, determine the average number of
-        companion stars (companion star fraction = CSF). For
-        brown dwarfs we impose a hard limit of one companion.
+        companion stars (companion star fraction = CSF).
 
         Parameters
         ----------
@@ -262,16 +258,12 @@ class MultiplicityUnresolved(object):
         """
         # Companion Star Fraction
         csf = self.CSF_amp * mass ** self.CSF_pow
-        
+
         if np.isscalar(csf):
             if csf > self.CSF_max:
                 csf = self.CSF_max
-            if (mass <= self.binary_only_mass_max):
-                csf = self.multiplicity_fraction(mass)
         else:
             csf[csf > self.CSF_max] = self.CSF_max
-            bd = mass <= self.binary_only_mass_max
-            csf[bd] = self.multiplicity_fraction(mass[bd])
 
         return csf
 
@@ -280,9 +272,9 @@ class MultiplicityUnresolved(object):
         Mass-ratio power-law index, P(q) ∝ q ** q_power.
 
         Lu et al. (2013) use a single ``q_power`` for stellar primaries.
-        Brown-dwarf primaries (M <= binary_only_mass_max) use
-        ``bd_q_power`` (default 6.1, Fontanive et al. 2018), matching
-        the companion-mass draw previously special-cased in
+        Brown-dwarf primaries (M <= 0.08 Msun) use ``bd_q_power``
+        (default 6.1, Fontanive et al. 2018), matching the
+        companion-mass draw previously special-cased in
         ``imf.calc_multi``.
 
         Parameters
@@ -298,7 +290,7 @@ class MultiplicityUnresolved(object):
         """
         mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
         q_pow = np.full(mass_arr.shape, self.q_pow, dtype=float)
-        q_pow[mass_arr <= self.binary_only_mass_max] = self.bd_q_power
+        q_pow[mass_arr <= H_BURNING_MASS] = self.bd_q_power
         if np.isscalar(mass):
             return float(q_pow[0])
         return q_pow
@@ -360,10 +352,8 @@ class MultiplicityUnresolved(object):
         MF : float or array_like
             Multiplicity fraction, dimensionless, in [0, 1].
         mass : float or array_like, optional
-            Primary mass must be positive, in solar masses (Msun). If given, primaries
-            at or below ``binary_only_mass_max`` are limited to one
-            companion. Cluster generation always passes mass so
-            subclasses can override the BD companion-count policy here.
+            Primary mass must be positive, in solar masses (Msun).
+            Unused for the count draw; kept for API compatibility.
         rng : numpy.random.Generator, optional
             Random generator. If omitted, uses ``numpy.random`` (the
             historical scalar helper).
@@ -381,8 +371,6 @@ class MultiplicityUnresolved(object):
             n_comp = 1 + np.random.poisson((CSF / MF) - 1)
             if self.companion_max and n_comp > self.CSF_max:
                 n_comp = self.CSF_max
-            if (mass is not None) and (np.asarray(mass, dtype=float).reshape(-1)[0] <= self.binary_only_mass_max):
-                n_comp = min(int(n_comp), 1)
             return int(n_comp)
 
         CSF = np.atleast_1d(np.asarray(CSF, dtype=float))
@@ -395,11 +383,6 @@ class MultiplicityUnresolved(object):
         if self.companion_max:
             n_comp = np.minimum(n_comp, self.CSF_max)
 
-        if mass is not None:
-            mass = np.atleast_1d(np.asarray(mass, dtype=float))
-            bd = mass <= self.binary_only_mass_max
-            n_comp[bd & (n_comp > 1)] = 1
-
         if return_scalar:
             return int(n_comp[0])
 
@@ -408,8 +391,9 @@ class MultiplicityUnresolved(object):
     def draw_n_companions(self, mass, CSF, MF, rng):
         """
         Vectorized companion counts for primaries that are already
-        identified as multiple. Delegates to :meth:`random_companion_count`
-        with ``mass`` so BD companion-count policy lives on this object.
+        identified as multiple. Delegates to
+        :meth:`random_companion_count`. If ``companion_max`` is True,
+        counts are capped at CSF_max at all masses.
 
         Parameters
         ----------
@@ -460,7 +444,7 @@ class MultiplicityUnresolved(object):
             [q_min, 1]. Shape (len(prim_subset), n_comp).
         """
         q_values = np.empty((len(prim_subset), n_comp))
-        bd_mask = prim_subset <= self.binary_only_mass_max
+        bd_mask = prim_subset <= H_BURNING_MASS
         star_mask = ~bd_mask
 
         if np.any(star_mask):
@@ -763,14 +747,15 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
         MF(M)  = MF_amp[i]  * M ** MF_power[i]
         CSF(M) = CSF_amp[i] * M ** CSF_power[i]
 
-    MF is clipped to [0, 1]. CSF is clipped to [0, CSF_max] and forced
-    equal to MF for primaries at or below ``binary_only_mass_max``
-    (binaries only). CSF is also raised to at least MF so the Poisson
-    companion-count draw is well defined. Mass-ratio draws use a
-    single ``q_power`` (same as :class:`MultiplicityUnresolved`)
-    unless a subclass overrides :meth:`q_power_at_mass`.
-    There is no scalar-only brown-dwarf staircase; each segment is
-    evaluated for both scalar and array mass.
+    MF is clipped to [0, 1]. CSF is clipped to [0, CSF_max] and
+    raised to at least MF so the Poisson companion-count draw is
+    well defined. Higher-order multiples are allowed at all masses.
+    If ``companion_max`` is True, counts are capped at CSF_max at
+    all masses. Mass-ratio draws use a single ``q_power`` (same as
+    :class:`MultiplicityUnresolved`) unless a subclass overrides
+    :meth:`q_power_at_mass`. There is no scalar-only brown-dwarf
+    staircase; each segment is evaluated for both scalar and array
+    mass.
 
     Parameters
     ----------
@@ -797,14 +782,11 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
     q_min : float, optional
         Minimum mass ratio m_comp/m_prim, dimensionless. Default 0.01.
     companion_max : bool, optional
-        If True, cap companion counts at CSF_max. Default False.
-    binary_only_mass_max : float, optional
-        Primary mass in solar masses (Msun) at and below which systems
-        are binaries only. Default 0.08 Msun.
+        If True, cap companion counts at CSF_max at all masses.
+        Default False.
     """
     def __init__(self, mass_limits, MF_amps, MF_powers, CSF_amps, CSF_powers,
-                 CSF_max=3, q_power=-0.4, q_min=0.01, companion_max=False,
-                 binary_only_mass_max=H_BURNING_MASS):
+                 CSF_max=3, q_power=-0.4, q_min=0.01, companion_max=False):
         mass_limits = np.asarray(mass_limits, dtype=float)
         MF_amps = np.asarray(MF_amps, dtype=float)
         MF_powers = np.asarray(MF_powers, dtype=float)
@@ -826,8 +808,7 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
             MF_amp=MF_amps[-1], MF_power=MF_powers[-1],
             CSF_amp=CSF_amps[-1], CSF_power=CSF_powers[-1],
             CSF_max=CSF_max, q_power=q_power, q_min=q_min,
-            companion_max=companion_max,
-            binary_only_mass_max=binary_only_mass_max)
+            companion_max=companion_max)
 
         self.mass_limits = mass_limits
         self.MF_amps = MF_amps
@@ -861,8 +842,7 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
         """
         Companion star fraction as a piecewise power law in primary mass.
 
-        Clipped to [0, CSF_max], raised to at least MF, and set equal
-        to MF for primaries at or below ``binary_only_mass_max``.
+        Clipped to [0, CSF_max] and raised to at least MF.
 
         Parameters
         ----------
@@ -885,8 +865,6 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
             mass_arr, self.mass_limits, self.MF_amps, self.MF_powers,
             clip_min=0.0, clip_max=1.0)
         csf = np.maximum(csf, mf)
-        bd = mass_arr <= self.binary_only_mass_max
-        csf[bd] = mf[bd]
         if return_scalar:
             return float(csf[0])
         return csf
@@ -909,10 +887,11 @@ class MultiplicityLogistic(MultiplicityUnresolved):
 
     As M → 0, f → A; as M → ∞, f → B. The curve is not a piecewise
     interpolation of survey knots. MF is clipped to [0, 1]. CSF is
-    clipped to [0, CSF_max], raised to at least MF, and forced equal
-    to MF for primaries at or below ``binary_only_mass_max``
-    (binaries only). Mass-ratio draws use a single ``q_power``
-    unless a subclass overrides :meth:`q_power_at_mass`.
+    clipped to [0, CSF_max] and raised to at least MF. Higher-order
+    multiples are allowed at all masses. If ``companion_max`` is
+    True, counts are capped at CSF_max at all masses. Mass-ratio
+    draws use a single ``q_power`` unless a subclass overrides
+    :meth:`q_power_at_mass`.
 
     Parameters
     ----------
@@ -938,20 +917,16 @@ class MultiplicityLogistic(MultiplicityUnresolved):
     q_min : float, optional
         Minimum mass ratio m_comp/m_prim, dimensionless. Default 0.01.
     companion_max : bool, optional
-        If True, cap companion counts at CSF_max. Default False.
-    binary_only_mass_max : float, optional
-        Primary mass in solar masses (Msun) at and below which systems
-        are binaries only. Default 0.08 Msun.
+        If True, cap companion counts at CSF_max at all masses.
+        Default False.
     """
     def __init__(self, MF_A, MF_B, MF_M0, MF_k,
                  CSF_A, CSF_B, CSF_M0, CSF_k,
-                 CSF_max=3, q_power=-0.4, q_min=0.01, companion_max=False,
-                 binary_only_mass_max=H_BURNING_MASS):
+                 CSF_max=3, q_power=-0.4, q_min=0.01, companion_max=False):
         super(MultiplicityLogistic, self).__init__(
             MF_amp=1.0, MF_power=0.0, CSF_amp=1.0, CSF_power=0.0,
             CSF_max=CSF_max, q_power=q_power, q_min=q_min,
-            companion_max=companion_max,
-            binary_only_mass_max=binary_only_mass_max)
+            companion_max=companion_max)
         self.MF_A = float(MF_A)
         self.MF_B = float(MF_B)
         self.MF_M0 = float(MF_M0)
@@ -988,8 +963,7 @@ class MultiplicityLogistic(MultiplicityUnresolved):
         """
         Companion star fraction as a logistic in log primary mass.
 
-        Clipped to [0, CSF_max], raised to at least MF, and set equal
-        to MF for primaries at or below ``binary_only_mass_max``.
+        Clipped to [0, CSF_max] and raised to at least MF.
 
         Parameters
         ----------
@@ -1016,10 +990,6 @@ class MultiplicityLogistic(MultiplicityUnresolved):
         
         # Ensure the companion star fraction is at least the multiplicity fraction
         csf = np.maximum(csf, mf)
-
-        # Fix all brown dwarf binaries so they only have one companion
-        bd = mass_arr <= self.binary_only_mass_max
-        csf[bd] = mf[bd]
 
         if return_scalar:
             return float(csf[0])
@@ -1060,8 +1030,10 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     Fontanive et al. (2018) 8 ± 6% sits ~0.07 below the curve (~15%),
     consistent with the Burgasser/Close BD points and within ~1–2σ
     of Fontanive. MF is clipped to [0, 1]. CSF is clipped to
-    [0, CSF_max], raised to at least MF, and forced equal to MF for
-    M ≤ 0.08 Msun (binaries only; companion count capped at 1).
+    [0, CSF_max] and raised to at least MF. Higher-order multiples
+    are allowed at all masses, including brown dwarfs. If
+    ``companion_max`` is True, counts are capped at CSF_max at all
+    masses.
 
     **Companion assignment vs Table 1.** Offner et al. 2023 (text
     above Table 1): BD primaries include all BD companions; FGKM MS
@@ -1168,11 +1140,8 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         Minimum mass ratio m_comp/m_prim, dimensionless, in [q_min, 1].
         Default 0.01.
     companion_max : bool, optional
-        If True, cap companion counts at CSF_max. Default False.
-    binary_only_mass_max : float, optional
-        Primary mass in solar masses (Msun) at and below which systems
-        are binaries only (CSF = MF, at most one companion). Default
-        0.08 Msun.
+        If True, cap companion counts at CSF_max at all masses.
+        Default False.
     """
     def __init__(self, MF_A=0.14, MF_B=0.99, MF_M0=1.41, MF_k=1.25,
                  CSF_A=0.12, CSF_B=2.35, CSF_M0=3.57, CSF_k=0.96,
@@ -1181,15 +1150,13 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
                  a_alphaR=-0.308, a_s=0.10, a_min=0.1,
                  sig_A=0.7, sig_B=1.5, sig_M0=0.354, sig_k=6.05,
                  CSF_max=3, q_power=0.2, q_min=0.01,
-                 companion_max=False,
-                 binary_only_mass_max=H_BURNING_MASS):
+                 companion_max=False):
 
         super(MultiplicityUnresolvedOffner2023, self).__init__(
             MF_A=MF_A, MF_B=MF_B, MF_M0=MF_M0, MF_k=MF_k,
             CSF_A=CSF_A, CSF_B=CSF_B, CSF_M0=CSF_M0, CSF_k=CSF_k,
             CSF_max=CSF_max, q_power=q_power, q_min=q_min,
-            companion_max=companion_max,
-            binary_only_mass_max=binary_only_mass_max)
+            companion_max=companion_max)
         self.q_A = float(q_A)
         self.q_B = float(q_B)
         self.q_M0 = float(q_M0)
@@ -1355,11 +1322,11 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
     Opt-in resolved Offner et al. 2023 multiplicity.
 
     Same MF/CSF/q as :class:`MultiplicityUnresolvedOffner2023`
-    (Table 1 logistic MF/CSF, error-weighted γ logistic, BD
-    binaries only, Table 1 companion-cut caveat). Adds
-    mass-dependent separations. Scientifically preferred over
-    :class:`MultiplicityResolvedDK` in the brown-dwarf regime, but
-    **not** the default.
+    (Table 1 logistic MF/CSF, error-weighted γ logistic, Table 1
+    companion-cut caveat). Adds mass-dependent separations.
+    Higher-order multiples are allowed at all masses.
+    Scientifically preferred over :class:`MultiplicityResolvedDK`
+    in the brown-dwarf regime, but **not** the default.
 
     Notes
     -----
@@ -1377,6 +1344,52 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
 
     Parameters
     ----------
+    MF_A, MF_B : float, optional
+        Low- and high-mass MF logistic asymptotes, dimensionless.
+        Defaults 0.14, 0.99 (Offner et al. 2023 Table 1,
+        equal-weight geom-mean MF fit).
+    MF_M0 : float, optional
+        Characteristic mass of the MF logistic, in solar masses
+        (Msun). Default 1.41.
+    MF_k : float, optional
+        MF logistic slope, dimensionless. Default 1.25.
+    CSF_A, CSF_B : float, optional
+        Low- and high-mass CSF logistic asymptotes, dimensionless
+        mean companion count. Defaults 0.12, 2.35 (Table 1
+        equal-weight geom-mean CF fit).
+    CSF_M0 : float, optional
+        Characteristic mass of the CSF logistic, in solar masses
+        (Msun). Default 3.57.
+    CSF_k : float, optional
+        CSF logistic slope, dimensionless. Default 0.96.
+    q_A, q_B : float, optional
+        Low- and high-mass γ logistic asymptotes, dimensionless.
+        Defaults 6.6, −1.77 (Table 1 γ_trunc, error-weighted).
+    q_M0 : float, optional
+        Characteristic mass of the γ logistic, in solar masses
+        (Msun). Default 0.0651.
+    q_k : float, optional
+        γ logistic slope, dimensionless. Default 0.629.
+    a_mup : float, optional
+        Smooth-broken-PL pivot μ(a), in AU. Default 44.46.
+    a_mp : float, optional
+        Smooth-broken-PL pivot mass, in solar masses (Msun).
+        Default 0.819.
+    a_alphaL, a_alphaR : float, optional
+        Smooth-broken-PL slopes in log10 a vs log10 M,
+        dimensionless. Defaults 1.005, −0.308.
+    a_s : float, optional
+        Smooth-broken-PL smoothing scale, in dex. Default 0.10.
+    a_min : float, optional
+        Minimum characteristic a, in AU. Default 0.1.
+    sig_A, sig_B : float, optional
+        Low- and high-mass σ(log10 a) logistic values, in dex.
+        Defaults 0.7, 1.5 (Table 2 pins).
+    sig_M0 : float, optional
+        Characteristic mass of the σ logistic, in solar masses
+        (Msun). Default 0.354.
+    sig_k : float, optional
+        σ logistic slope, dimensionless. Default 6.05.
     CSF_max : float, optional
         Maximum companion star fraction, dimensionless mean companion
         count (not bounded by 1). Default 3.
@@ -1387,25 +1400,36 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
     q_min : float, optional
         Minimum mass ratio m_comp/m_prim, dimensionless. Default 0.01.
     companion_max : bool, optional
-        If True, cap companion counts at CSF_max. Default False.
-    binary_only_mass_max : float, optional
-        Primary mass in solar masses (Msun) at and below which systems
-        are binaries only. Default 0.08 Msun.
+        If True, cap companion counts at CSF_max at all masses.
+        Default False.
+    sep_sig : array_like, optional
+        Table 2 σ(log10 a) knots, in dex. Default (0.7, 1.3, 1.5).
     sep_sig_mass : array_like, optional
         Table 2 primary-mass knots for the σ comparison plot, in
         solar masses (Msun). Defaults are geom-mean M1 of the
         late-M, early-M, and FGK bins.
-    sep_sig : array_like, optional
-        Table 2 σ(log10 a) knots, in dex. Default (0.7, 1.3, 1.5).
-    **kwargs
-        Passed to :class:`MultiplicityUnresolvedOffner2023`.
     """
-    def __init__(self, sep_sig=(0.7, 1.3, 1.5),
+    def __init__(self, MF_A=0.14, MF_B=0.99, MF_M0=1.41, MF_k=1.25,
+                 CSF_A=0.12, CSF_B=2.35, CSF_M0=3.57, CSF_k=0.96,
+                 q_A=6.6, q_B=-1.77, q_M0=0.0651, q_k=0.629,
+                 a_mup=44.46, a_mp=0.819, a_alphaL=1.005,
+                 a_alphaR=-0.308, a_s=0.10, a_min=0.1,
+                 sig_A=0.7, sig_B=1.5, sig_M0=0.354, sig_k=6.05,
+                 CSF_max=3, q_power=0.2, q_min=0.01,
+                 companion_max=False,
+                 sep_sig=(0.7, 1.3, 1.5),
                  sep_sig_mass=(np.sqrt(0.075 * 0.15),
                                np.sqrt(0.3 * 0.6),
-                               np.sqrt(0.75 * 1.25)),
-                 **kwargs):
-        super(MultiplicityResolvedOffner2023, self).__init__(**kwargs)
+                               np.sqrt(0.75 * 1.25))):
+        super(MultiplicityResolvedOffner2023, self).__init__(
+            MF_A=MF_A, MF_B=MF_B, MF_M0=MF_M0, MF_k=MF_k,
+            CSF_A=CSF_A, CSF_B=CSF_B, CSF_M0=CSF_M0, CSF_k=CSF_k,
+            q_A=q_A, q_B=q_B, q_M0=q_M0, q_k=q_k,
+            a_mup=a_mup, a_mp=a_mp, a_alphaL=a_alphaL,
+            a_alphaR=a_alphaR, a_s=a_s, a_min=a_min,
+            sig_A=sig_A, sig_B=sig_B, sig_M0=sig_M0, sig_k=sig_k,
+            CSF_max=CSF_max, q_power=q_power, q_min=q_min,
+            companion_max=companion_max)
         # Table 2 σ knots for the comparison plot; draws use sigma_log_a.
         self.sep_sig_mass = np.array(sep_sig_mass, dtype=float)
         self.sep_sig = np.array(sep_sig, dtype=float)

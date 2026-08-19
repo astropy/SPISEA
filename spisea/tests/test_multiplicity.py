@@ -132,13 +132,13 @@ def test_companion_star_fraction():
     # csf2_3 = mu1.companion_star_fraction(0.1)
     # np.testing.assert_almost_equal(csf2_3, 0.159, decimal=2)
 
-    # Test brown dwarf csf
+    # BD CSF follows the stellar power law (no CSF=MF mass cut).
     csf_bd1 = mu1.companion_star_fraction(0.07)
     csf_bd2 = mu1.companion_star_fraction(0.04)
     csf_bd3 = mu1.companion_star_fraction(0.01)
-    assert np.isclose(csf_bd1, 0.16, atol=0.01)
-    assert np.isclose(csf_bd2, 0.08, atol=0.01)
-    assert np.isclose(csf_bd3, 0.0, atol=1e-6)
+    np.testing.assert_almost_equal(csf_bd1, 0.50 * 0.07 ** 0.45, decimal=4)
+    np.testing.assert_almost_equal(csf_bd2, 0.50 * 0.04 ** 0.45, decimal=4)
+    np.testing.assert_almost_equal(csf_bd3, 0.50 * 0.01 ** 0.45, decimal=4)
 
 
 def test_resolvedmult():
@@ -282,8 +282,7 @@ def test_piecewise_powerlaw_api():
     mp = multiplicity.MultiplicityPiecewisePowerLaw(
         mass_limits,
         MF_amps=[0.4, 0.4], MF_powers=[0.0, 1.0],
-        CSF_amps=[0.4, 0.5], CSF_powers=[0.0, 0.5],
-        binary_only_mass_max=0.05)
+        CSF_amps=[0.4, 0.5], CSF_powers=[0.0, 0.5])
     assert mp.multiplicity_fraction(0.2) == 0.4
     assert mp.multiplicity_fraction(1.0) == 0.4
     np.testing.assert_almost_equal(mp.multiplicity_fraction(10.0), 1.0)
@@ -293,19 +292,19 @@ def test_piecewise_powerlaw_api():
 
 
 def test_logistic_api():
-    """Custom logistic MF/CSF clips, vectorizes, and sets BD CSF = MF."""
+    """Custom logistic MF/CSF clips, vectorizes, and keeps CSF >= MF."""
     ml = multiplicity.MultiplicityLogistic(
         MF_A=0.1, MF_B=1.5, MF_M0=1.0, MF_k=2.0,
-        CSF_A=0.05, CSF_B=4.0, CSF_M0=2.0, CSF_k=1.0,
-        CSF_max=2.0, binary_only_mass_max=0.08)
+        CSF_A=0.2, CSF_B=4.0, CSF_M0=2.0, CSF_k=1.0,
+        CSF_max=2.0)
     # Low-mass asymptote A for a very low-mass primary (not a missing mass)
     np.testing.assert_almost_equal(ml.multiplicity_fraction(1e-8), 0.1, decimal=4)
     # High-mass MF saturates at B then clips to 1
     np.testing.assert_almost_equal(ml.multiplicity_fraction(1e6), 1.0)
     # High-mass CSF clips to CSF_max
     np.testing.assert_almost_equal(ml.companion_star_fraction(1e6), 2.0)
-    # BD CSF = MF
-    assert ml.companion_star_fraction(0.05) == ml.multiplicity_fraction(0.05)
+    # No CSF=MF mass cut: low-mass CSF can exceed MF.
+    assert ml.companion_star_fraction(0.05) > ml.multiplicity_fraction(0.05)
     masses = np.array([0.05, 1.0, 100.0])
     mf = ml.multiplicity_fraction(masses)
     np.testing.assert_allclose(mf, [ml.multiplicity_fraction(m) for m in masses])
@@ -344,6 +343,14 @@ def test_offner2023_logistic_coefficients():
     np.testing.assert_allclose(multi.sig_k, 6.05)
     assert not hasattr(multiplicity, 'FONTANIVE2018_BD_Q_POWER')
     assert not any(n.startswith('OFFNER2023_') for n in dir(multiplicity))
+    resolved = multiplicity.MultiplicityResolvedOffner2023()
+    np.testing.assert_allclose(resolved.MF_A, 0.14)
+    np.testing.assert_allclose(resolved.sig_k, 6.05)
+    import inspect
+    res_sig = inspect.signature(
+        multiplicity.MultiplicityResolvedOffner2023.__init__)
+    assert res_sig.parameters['MF_A'].default == 0.14
+    assert res_sig.parameters['sig_k'].default == 6.05
 
 
 def test_offner2023_mf_smooth():
@@ -386,27 +393,21 @@ def test_offner2023_table1_mf():
 
 
 def test_offner2023_table1_csf():
-    """CSF matches Table 1 CF for stellar primaries; CSF = MF for BDs."""
+    """CSF tracks Table 1 CF; CSF >= MF at all masses (no BD CSF=MF cut)."""
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
     for row in _OFFNER_TABLE1:
         name, mlo, mhi, mf_tab, mf_err, cf_tab = row
         m = _table1_mgeom(row)
         csf = multi.companion_star_fraction(m)
         mf = multi.multiplicity_fraction(m)
-        if m <= multiplicity.H_BURNING_MASS:
-            assert np.isclose(csf, mf, atol=1e-12), \
-                '{0}: BD CSF should equal MF'.format(name)
-        elif mlo >= 1.6:
+        if mlo >= 1.6:
             # Logistic CF tracks A/B; Moe & Kratter residual ~0.1 is ok
             tol = max(0.12, 0.12 * cf_tab)
-            assert abs(csf - cf_tab) <= tol, \
-                '{0}: CSF({1:.3f})={2:.3f} vs Table 1 CF {3:.2f}'.format(
-                    name, m, csf, cf_tab)
         else:
             tol = max(0.08, 0.25 * cf_tab)
-            assert abs(csf - cf_tab) <= tol, \
-                '{0}: CSF({1:.3f})={2:.3f} vs Table 1 CF {3:.2f}'.format(
-                    name, m, csf, cf_tab)
+        assert abs(csf - cf_tab) <= tol, \
+            '{0}: CSF({1:.3f})={2:.3f} vs Table 1 CF {3:.2f}'.format(
+                name, m, csf, cf_tab)
         assert csf >= mf - 1e-12
         assert csf <= multi.CSF_max + 1e-12
 
@@ -422,25 +423,31 @@ def test_offner2023_array_vs_scalar():
         np.testing.assert_allclose(csf_arr[i], multi.companion_star_fraction(float(m)))
 
 
-def test_offner2023_bd_binaries_only():
-    """BD primaries have CSF = MF and companion counts of 0 or 1."""
+def test_higher_order_multiples_at_all_masses():
+    """BD and stellar primaries can have n_comp > 1 when CSF/MF allows."""
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
     rng = np.random.default_rng(123)
-    masses = np.array([0.02, 0.04, 0.07, 0.08])
-    mf = multi.multiplicity_fraction(masses)
-    csf = multi.companion_star_fraction(masses)
-    np.testing.assert_allclose(csf, mf)
-    # Force multiples so we test the count draw, not the MF coin flip.
-    n_comp = multi.draw_n_companions(masses, csf, mf, rng)
-    assert np.all(n_comp <= 1)
-    assert np.all(n_comp >= 1)
+    for m in (0.04, 1.0):
+        masses = np.full(4000, m)
+        mf = multi.multiplicity_fraction(masses)
+        csf = np.full(len(masses), 2.5)
+        n_comp = multi.draw_n_companions(masses, csf, mf, rng)
+        assert np.any(n_comp > 1)
+        assert np.all(n_comp >= 1)
 
-    # Full companion-mass assignment: never more than one companion column
-    is_mult = np.ones(len(masses), dtype=bool)
-    comp, sys_mass, is_mult_out = multi.draw_companion_masses(
-        masses, is_mult, csf, mf, rng, mass_min=0.01)
-    assert comp.shape[1] == 1
-    assert np.all(np.sum(~comp.mask, axis=1) <= 1)
+
+def test_companion_max_caps_all_masses():
+    """companion_max=True clips n_comp at CSF_max for BD and stellar."""
+    multi = multiplicity.MultiplicityUnresolvedOffner2023(
+        companion_max=True, CSF_max=1)
+    rng = np.random.default_rng(0)
+    for m in (0.04, 1.0):
+        masses = np.full(2000, m)
+        mf = multi.multiplicity_fraction(masses)
+        csf = np.full(len(masses), 3.0)
+        n_comp = multi.draw_n_companions(masses, csf, mf, rng)
+        assert np.all(n_comp <= 1)
+        assert np.all(n_comp >= 1)
 
 
 def test_offner2023_q_more_equal_mass_for_bds():
@@ -609,25 +616,22 @@ def test_resolveddk_log_a_mean_and_sigma():
 
 
 def test_offner_generate_cluster_companions():
-    """IMF cluster generation with Offner multiplicity produces BD binaries only."""
+    """IMF cluster generation with Offner multiplicity produces companions."""
     imf_multi = multiplicity.MultiplicityUnresolvedOffner2023()
     mass_limits = np.array([0.01, 0.08, 0.5, 120.0])
     powers = np.array([-0.3, -1.3, -2.3])
     my_imf = imf.IMF_broken_powerlaw(mass_limits, powers, imf_multi)
     my_imf.rng = np.random.default_rng(42)
     mass, is_multi, comp_mass, sys_mass = my_imf.generate_cluster(500.0)
-    bd = mass <= 0.08
-    n_comp = np.sum(~comp_mass.mask, axis=1)
-    assert np.all(n_comp[bd] <= 1)
     assert np.any(is_multi)
     assert np.abs(500.0 - sys_mass.sum()) < 500.0 * 0.05
 
 
 def test_calc_multi_uses_multiplicity_q_and_counts():
     """
-    IMF.calc_multi must not hardcode Fontanive gamma=6.1 or the BD
-    companion cap; those policies live on the multiplicity object so
-    Offner γ_trunc (~2–5 for BDs) actually applies.
+    IMF.calc_multi must not hardcode Fontanive gamma=6.1; q policy
+    lives on the multiplicity object so Offner γ_trunc (~2–5 for
+    BDs) actually applies.
     """
     import inspect
     from spisea.imf import imf as imf_mod
