@@ -538,13 +538,18 @@ class ResolvedCluster(Cluster):
         if (hasattr(multi_props, 'log_semimajoraxis') and
                 hasattr(multi_props, 'random_e') and
                 hasattr(multi_props, 'random_keplarian_parameters')):
-            companions.add_column(Column(multi_props.log_semimajoraxis(star_systems['mass'][companions['system_idx']]), name='log_a'))
-            companions.add_column(Column(multi_props.random_e(self.rng.random(N_comp_tot)), name='e'))
-            companions['i'], companions['Omega'], companions['omega'] = multi_props.random_keplarian_parameters(
-                self.rng.random(N_comp_tot),
-                self.rng.random(N_comp_tot),
-                self.rng.random(N_comp_tot)
-            )
+            prim_mass = star_systems['mass'][companions['system_idx']]
+            companions.add_column(Column(
+                multi_props.log_semimajoraxis(prim_mass, rng=self.rng),
+                name='log_a'))
+            companions.add_column(Column(
+                multi_props.random_e(self.rng.random(N_comp_tot)), name='e'))
+            companions['i'], companions['Omega'], companions['omega'] = (
+                multi_props.random_keplarian_parameters(
+                    self.rng.random(N_comp_tot),
+                    self.rng.random(N_comp_tot),
+                    self.rng.random(N_comp_tot),
+                    rng=self.rng))
 
         companions['mass'] = compMass.compressed()
         for key in ['Teff', 'L', 'logg', 'mass_current', 'phase']:

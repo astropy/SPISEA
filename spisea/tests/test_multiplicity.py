@@ -501,12 +501,12 @@ def test_offner2023_q_sigma_a_closed_form():
 def test_offner2023_bd_separations_peak_few_au():
     """BD lognormal separations peak at a few AU (μ(0.033)≈2.1 au)."""
     multi = multiplicity.MultiplicityResolvedOffner2023()
-    np.random.seed(0)
-    log_a = multi.log_semimajoraxis(np.full(5000, 0.04))
+    rng = np.random.default_rng(0)
+    log_a = multi.log_semimajoraxis(np.full(5000, 0.04), rng=rng)
     med_a = 10 ** np.median(log_a)
     assert 1.5 < med_a < 8.0, 'BD median a = {0:.2f} AU'.format(med_a)
     # Solar-type should be much wider (smooth-broken μ ~ 44 au)
-    log_a_s = multi.log_semimajoraxis(np.full(5000, 1.0))
+    log_a_s = multi.log_semimajoraxis(np.full(5000, 1.0), rng=rng)
     med_a_s = 10 ** np.median(log_a_s)
     assert med_a_s > 10.0
     assert med_a_s > med_a
@@ -607,8 +607,8 @@ def test_resolveddk_log_a_mean_and_sigma():
     assert 'self.sigma_log_a' in src
     assert 'BrokenPowerLaw1D' not in src
 
-    np.random.seed(0)
-    log_a_draw = dk.log_semimajoraxis(np.full(4000, 1.0))
+    log_a_draw = dk.log_semimajoraxis(
+        np.full(4000, 1.0), rng=np.random.default_rng(0))
     assert np.all(log_a_draw >= np.log10(0.01) - 1e-12)
     assert np.all(log_a_draw <= np.log10(2000) + 1e-12)
     np.testing.assert_allclose(
@@ -646,6 +646,9 @@ def test_calc_multi_uses_multiplicity_q_and_counts():
     assert "hasattr(multi_props, 'log_semimajoraxis')" in syn_src
     assert "hasattr(multi_props, 'random_e')" in syn_src
     assert "hasattr(multi_props, 'random_keplarian_parameters')" in syn_src
+    assert 'log_semimajoraxis(prim_mass, rng=self.rng)' in syn_src
+    assert 'random_keplarian_parameters(' in syn_src
+    assert 'rng=self.rng)' in syn_src
 
     offner = multiplicity.MultiplicityUnresolvedOffner2023()
     lu = multiplicity.MultiplicityUnresolved()
@@ -678,4 +681,36 @@ def test_offner2023_mf_is_vectorized():
     # Array path is not the SPISEA v2.5 stellar power law 0.44 * M**0.51
     lu_pl = 0.44 * masses ** 0.51
     assert not np.allclose(mf, np.clip(lu_pl, 0, 1), atol=0.02)
+
+
+def test_orbital_draws_respect_rng():
+    """Same rng seed reproduces log_a and Keplerian inclination sign."""
+    mass = np.full(20, 1.0)
+    x = np.linspace(0.01, 0.99, 20)
+    y = np.linspace(0.02, 0.98, 20)
+    z = np.linspace(0.03, 0.97, 20)
+    models = (
+        multiplicity.MultiplicityResolvedDK(),
+        multiplicity.MultiplicityResolvedOffner2023(),
+    )
+    for multi in models:
+        a1 = multi.log_semimajoraxis(mass, rng=np.random.default_rng(7))
+        a2 = multi.log_semimajoraxis(mass, rng=np.random.default_rng(7))
+        np.testing.assert_array_equal(a1, a2)
+        a3 = multi.log_semimajoraxis(mass, rng=np.random.default_rng(8))
+        assert not np.array_equal(a1, a3)
+
+        i1, O1, o1 = multi.random_keplarian_parameters(
+            x, y, z, rng=np.random.default_rng(7))
+        i2, O2, o2 = multi.random_keplarian_parameters(
+            x, y, z, rng=np.random.default_rng(7))
+        np.testing.assert_array_equal(i1, i2)
+        np.testing.assert_array_equal(O1, O2)
+        np.testing.assert_array_equal(o1, o2)
+        # Omega and omega are inverse-CDF of y, z; only i uses rng.
+        i3, O3, o3 = multi.random_keplarian_parameters(
+            x, y, z, rng=np.random.default_rng(8))
+        assert not np.array_equal(i1, i3)
+        np.testing.assert_array_equal(O1, O3)
+        np.testing.assert_array_equal(o1, o3)
 

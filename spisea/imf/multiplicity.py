@@ -1,6 +1,5 @@
 import numpy as np
 import astropy.modeling
-from random import choice
 from scipy.stats import truncnorm
 
 defaultMF_amp = 0.44
@@ -42,39 +41,44 @@ class _ResolvedOrbitalMixin(object):
         
         return e
     
-    def random_keplarian_parameters(self, x, y, z):
+    def random_keplarian_parameters(self, x, y, z, rng=None):
         """
-        Generate random incliniation and angles of binary system
-        
+        Generate random inclination and angles of a binary system.
+
+        Inclination uses the inverse CDF of isotropic orientations
+        (``i = arccos(s * x)`` with a random sign ``s``). ``Omega``
+        and ``omega`` are uniform on [0, 360) deg from ``y`` and ``z``.
+
         Parameters
         ----------
         x : float or array_like
-            Random number between 0 and 1.
-            
+            Random number between 0 and 1, used for inclination.
         y : float or array_like
-            Random number between 0 and 1.
-            
+            Random number between 0 and 1, used for Omega.
         z : float or array_like
-            Random number between 0 and 1.
+            Random number between 0 and 1, used for omega.
+        rng : numpy.random.Generator, optional
+            Random number generator used for the inclination sign.
+            Default is a new ``numpy.random.default_rng()``.
 
         Returns
         -------
         inclination : float or array_like
-            Angle of inclination
-                    
+            Inclination angle in degrees.
         Omega : float or array_like
-            Big Omega: one other angle of the system
-        
+            Longitude of the ascending node in degrees.
         omega : float or array_like
-            Final angle of the system
+            Argument of periastron in degrees.
         """
-        sign = np.array([choice([-1,1]) for i in range(len(x))])
-        x = sign*x
-        inclination = np.arccos(x)*180/np.pi #inclination angle in degrees
-        
-        Omega = 360*y
-        omega = 360*z
-        
+        if rng is None:
+            rng = np.random.default_rng()
+        sign = rng.choice([-1, 1], size=len(x))
+        x = sign * x
+        inclination = np.arccos(x) * 180 / np.pi
+
+        Omega = 360 * y
+        omega = 360 * z
+
         return inclination, Omega, omega
 
 class MultiplicityUnresolved(object):
@@ -693,14 +697,14 @@ class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
             return float(log_a_std[0])
         return log_a_std
     
-    def log_semimajoraxis(self, mass):
+    def log_semimajoraxis(self, mass, rng=None):
         """
-        Generate the semimajor axis for a given mass. The mean and standard deviation of a given mass are determined 
-        by fitting the data from fitting the semimajor axis data as a function of mass in table 1 of Duchene and Kraus 2013.
-        Then a random semimajor axis is drawn from a log normal distribution with that mean and standard deviation.
+        Draw log10(a/AU) from a mass-dependent truncated lognormal.
 
-        The brown dwarf range is covered by mass-dependent scaling of both the characteristic separation and dispersion
-        matching trends described in Fontanive et al. (2018).
+        The mean and standard deviation at a given mass come from
+        fitting Table 1 of Duchêne and Kraus 2013. The brown dwarf
+        range uses mass-dependent scaling of both the characteristic
+        separation and dispersion (Fontanive et al. 2018).
 
         Draws use ``loc = log_a_mean(mass)`` and
         ``scale = sigma_log_a(mass)``.
@@ -709,6 +713,9 @@ class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
         ----------
         mass : array-like
             Primary mass must be positive, in solar masses (Msun).
+        rng : numpy.random.Generator, optional
+            Random number generator passed to ``truncnorm.rvs``.
+            Default is a new ``numpy.random.default_rng()``.
 
         Returns
         -------
@@ -716,17 +723,23 @@ class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
             Drawn log10(a / 1 AU) in dex, truncated so a is between
             0.01 AU and 2000 AU.
         """
+        if rng is None:
+            rng = np.random.default_rng()
         mass = np.atleast_1d(mass)
-        log_a_mean = np.atleast_1d(np.asarray(self.log_a_mean(mass), dtype=float))
-        log_a_std = np.atleast_1d(np.asarray(self.sigma_log_a(mass), dtype=float))
+        log_a_mean = np.atleast_1d(np.asarray(self.log_a_mean(mass),
+                                             dtype=float))
+        log_a_std = np.atleast_1d(np.asarray(self.sigma_log_a(mass),
+                                            dtype=float))
 
-        # Trunc normal distribution between log10(0.01) AU and log10(2000) AU
+        # Trunc normal between log10(0.01) AU and log10(2000) AU
         log_a_lower = np.log10(0.01)
         log_a_upper = np.log10(2000)
         a_lower_std = (log_a_lower - log_a_mean) / log_a_std
         a_upper_std = (log_a_upper - log_a_mean) / log_a_std
 
-        log_semimajoraxis = truncnorm.rvs(a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std)
+        log_semimajoraxis = truncnorm.rvs(
+            a_lower_std, a_upper_std, loc=log_a_mean, scale=log_a_std,
+            random_state=rng)
         return log_semimajoraxis
 
 
@@ -1436,7 +1449,7 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
 
         return
 
-    def log_semimajoraxis(self, mass):
+    def log_semimajoraxis(self, mass, rng=None):
         """
         Draw log10(a/AU) from a mass-dependent truncated lognormal.
 
@@ -1449,6 +1462,9 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
         ----------
         mass : float or array_like
             Primary mass must be positive, in solar masses (Msun).
+        rng : numpy.random.Generator, optional
+            Random number generator passed to ``truncnorm.rvs``.
+            Default is a new ``numpy.random.default_rng()``.
 
         Returns
         -------
@@ -1456,9 +1472,13 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
             Drawn log10(a / 1 AU) in dex (not ln, not AU), truncated
             so a is between 0.01 AU and 2000 AU.
         """
+        if rng is None:
+            rng = np.random.default_rng()
         mass = np.atleast_1d(np.asarray(mass, dtype=float))
-        log_a_mean = np.atleast_1d(np.asarray(self.log_a_mean(mass), dtype=float))
-        log_a_std = np.atleast_1d(np.asarray(self.sigma_log_a(mass), dtype=float))
+        log_a_mean = np.atleast_1d(np.asarray(self.log_a_mean(mass),
+                                             dtype=float))
+        log_a_std = np.atleast_1d(np.asarray(self.sigma_log_a(mass),
+                                            dtype=float))
 
         log_a_lower = np.log10(0.01)
         log_a_upper = np.log10(2000)
@@ -1467,7 +1487,8 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
 
         # Draw the log10(a / 1 AU) from a truncated normal
         log_a = truncnorm.rvs(a_lower_std, a_upper_std,
-                             loc=log_a_mean, scale=log_a_std)
+                             loc=log_a_mean, scale=log_a_std,
+                             random_state=rng)
 
         return log_a
 
