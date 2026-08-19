@@ -1175,10 +1175,6 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
             companion_max=companion_max,
             binary_only_mass_max=binary_only_mass_max)
 
-        # Table 1/2 data that was fit; evaluation uses a smooth function.
-        self.q_mass = np.array(OFFNER2023_Q_MASS, dtype=float)
-        self.q_gamma = np.array(OFFNER2023_Q_GAMMA, dtype=float)
-
         return
 
     def q_power_at_mass(self, mass):
@@ -1367,9 +1363,7 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
     """
     def __init__(self, **kwargs):
         super(MultiplicityResolvedOffner2023, self).__init__(**kwargs)
-        # Table 1/2 data that was fit; draws use log_a_mean / sigma_log_a.
-        self.sep_mass = np.array(OFFNER2023_SEP_MASS, dtype=float)
-        self.sep_mu_au = np.array(OFFNER2023_SEP_MU_AU, dtype=float)
+        # Table 2 σ knots used by the comparison plot; draws use sigma_log_a.
         self.sep_sig_mass = np.array(OFFNER2023_SEP_SIG_MASS, dtype=float)
         self.sep_sig = np.array(OFFNER2023_SEP_SIG, dtype=float)
 
@@ -1409,33 +1403,6 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
                              loc=log_a_mean, scale=log_a_std)
 
         return log_a
-
-
-def _two_point_powerlaw(mass_1, y_1, mass_2, y_2):
-    """
-    Amplitude and power for y = A * M**alpha through two (M, y) points.
-
-    Parameters
-    ----------
-    mass_1, mass_2 : float
-        Primary masses of the two anchor points, in solar masses
-        (Msun). Must be positive and distinct.
-    y_1, y_2 : float
-        Ordinate values at ``mass_1`` and ``mass_2``. Units match the
-        fitted quantity (dimensionless for MF/γ, mean companion count
-        for CSF, AU for characteristic a, dex for σ).
-
-    Returns
-    -------
-    amp : float
-        Power-law amplitude A, in units of y / Msun**alpha.
-    power : float
-        Power-law index alpha, dimensionless.
-    """
-    power = np.log(y_2 / y_1) / np.log(mass_2 / mass_1)
-    amp = y_1 / (mass_1 ** power)
-
-    return amp, power
 
 
 def _piecewise_powerlaw(mass, mass_limits, amps, powers, clip_min=None,
@@ -1698,47 +1665,9 @@ def _offner2023_table1_geom_mass(m_lo, m_hi):
     # Calculate the geometric mean of the two masses
     return float(np.sqrt(m_lo * m_hi))
 
-# Table 1/2 data that was fit; the model is a smooth function,
-# not interpolation of these arrays.
-OFFNER2023_Q_MASS = np.array([
-    _offner2023_table1_geom_mass(0.019, 0.058),  # Fontanive+2018: 4.8
-    0.065,                                       # L/early-T: 2-3 (text)
-    _offner2023_table1_geom_mass(0.080, 0.095),  # Close+2003: 3.3
-    _offner2023_table1_geom_mass(0.06, 0.15),    # Allen+2007: 1.7
-    _offner2023_table1_geom_mass(0.15, 0.30),    # Winters mid-M: 0.7
-    _offner2023_table1_geom_mass(0.3, 0.6),      # Winters early-M: 0.1
-    _offner2023_table1_geom_mass(0.75, 1.25),    # Raghavan FGK: 0.2
-    _offner2023_table1_geom_mass(1.6, 2.4),      # De Rosa A: -1.3
-    _offner2023_table1_geom_mass(3.0, 5.0),      # MDS 3-5: -1.0
-    _offner2023_table1_geom_mass(5.0, 8.0),      # MDS 5-8: -1.7
-    _offner2023_table1_geom_mass(8.0, 17.0),     # MDS 8-17: -1.6
-    _offner2023_table1_geom_mass(17.0, 50.0),    # Sana O: -1.4
-])
-OFFNER2023_Q_GAMMA = np.array([
-    4.8, 2.5, 3.3, 1.7, 0.7, 0.1, 0.2, -1.3, -1.0, -1.7, -1.6, -1.4
-])
-
-# Table 1 ã_all (au) and Table 2 lognormal μ (au) vs geom-mean M1.
-# Table 2 μ is listed where both exist (late-M, early-M, FGK).
-# Fit data only; evaluation uses the smooth broken power law.
-OFFNER2023_SEP_MASS = np.array([
-    _offner2023_table1_geom_mass(0.019, 0.058),  # Fontanive ã_all=2.9
-    _offner2023_table1_geom_mass(0.080, 0.095),  # Close ã_all=3.7
-    _offner2023_table1_geom_mass(0.075, 0.15),   # Table 2 late-M μ=4
-    _offner2023_table1_geom_mass(0.15, 0.30),    # Winters mid-M ã_all=10
-    _offner2023_table1_geom_mass(0.3, 0.6),      # Table 2 early-M μ=25
-    _offner2023_table1_geom_mass(0.75, 1.25),    # Table 2 FGK μ=40
-    _offner2023_table1_geom_mass(1.6, 2.4),      # Moe & Kratter ã_all=32
-    _offner2023_table1_geom_mass(3.0, 5.0),      # MDS ã_all=28
-    _offner2023_table1_geom_mass(5.0, 8.0),      # MDS ã_all=25
-    _offner2023_table1_geom_mass(8.0, 17.0),     # MDS ã_all=23
-    _offner2023_table1_geom_mass(17.0, 50.0),    # Sana ã_all=19
-])
-OFFNER2023_SEP_MU_AU = np.array([
-    2.9, 3.7, 4.0, 10.0, 25.0, 40.0, 32.0, 28.0, 25.0, 23.0, 19.0
-])
 # Table 2 σ_log a at the three published bins. Fit data only;
-# evaluation uses the 2-parameter logistic.
+# evaluation uses the 2-parameter logistic. The comparison plot
+# reads these via MultiplicityResolvedOffner2023.sep_sig_mass / sep_sig.
 OFFNER2023_SEP_SIG_MASS = np.array([
     _offner2023_table1_geom_mass(0.075, 0.15),
     _offner2023_table1_geom_mass(0.3, 0.6),
