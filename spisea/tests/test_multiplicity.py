@@ -513,6 +513,75 @@ def test_lu2013_defaults_unchanged():
     assert np.isclose(mu.multiplicity_fraction(0.01), 0.0, atol=1e-6)
 
 
+def test_resolveddk_log_a_mean_and_sigma():
+    """
+    MultiplicityResolvedDK.a_mean / log_a_mean / sigma_log_a match the
+    Duchêne & Kraus + Fontanive BD interp + sigmoid that
+    log_semimajoraxis used to inline, and the draw uses those methods.
+    """
+    import astropy.modeling
+    import inspect
+
+    dk = multiplicity.MultiplicityResolvedDK()
+    masses = np.array([0.01, 0.04, 0.08, 0.3, 1.0, 5.0, 50.0])
+
+    def expected_log_a_mean(mass):
+        mass = np.atleast_1d(np.asarray(mass, dtype=float))
+        logm = np.log10(mass)
+        a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(
+            amplitude=dk.a_amp, x_break=dk.a_break,
+            alpha_1=dk.a_slope1, alpha_2=dk.a_slope2)
+        log_a_mean_star = np.log10(a_mean_func(mass))
+        log_a_mean_bd = np.interp(
+            logm,
+            [np.log10(0.01), np.log10(0.08)],
+            [np.log10(2.5), np.log10(8.0)])
+        w = 1.0 / (1.0 + np.exp(-(logm - np.log10(0.08)) / 0.15))
+        return (1 - w) * log_a_mean_bd + w * log_a_mean_star
+
+    def expected_sigma(mass):
+        mass = np.atleast_1d(np.asarray(mass, dtype=float))
+        logm = np.log10(mass)
+        log_a_std_func = astropy.modeling.models.Linear1D(
+            slope=dk.a_std_slope, intercept=dk.a_std_intercept)
+        log_a_std_star = log_a_std_func(logm)
+        log_a_std_star[mass >= 2.9] = log_a_std_func(np.log10(2.9))
+        log_a_std_star = np.clip(log_a_std_star, 0.1, None)
+        log_a_std_bd = np.interp(
+            logm,
+            [np.log10(0.01), np.log10(0.08)],
+            [0.25, 0.5])
+        w = 1.0 / (1.0 + np.exp(-(logm - np.log10(0.08)) / 0.15))
+        return (1 - w) * log_a_std_bd + w * log_a_std_star
+
+    np.testing.assert_allclose(dk.log_a_mean(masses), expected_log_a_mean(masses))
+    np.testing.assert_allclose(dk.sigma_log_a(masses), expected_sigma(masses))
+    np.testing.assert_allclose(dk.a_mean(masses), 10.0 ** dk.log_a_mean(masses))
+
+    for m in masses:
+        log_a = dk.log_a_mean(float(m))
+        sig = dk.sigma_log_a(float(m))
+        a_mean = dk.a_mean(float(m))
+        assert isinstance(log_a, float)
+        assert isinstance(sig, float)
+        assert isinstance(a_mean, float)
+        np.testing.assert_allclose(log_a, expected_log_a_mean(m)[0])
+        np.testing.assert_allclose(sig, expected_sigma(m)[0])
+        np.testing.assert_allclose(a_mean, 10.0 ** log_a)
+
+    src = inspect.getsource(dk.log_semimajoraxis)
+    assert 'self.log_a_mean' in src
+    assert 'self.sigma_log_a' in src
+    assert 'BrokenPowerLaw1D' not in src
+
+    np.random.seed(0)
+    log_a_draw = dk.log_semimajoraxis(np.full(4000, 1.0))
+    assert np.all(log_a_draw >= np.log10(0.01) - 1e-12)
+    assert np.all(log_a_draw <= np.log10(2000) + 1e-12)
+    np.testing.assert_allclose(
+        np.median(log_a_draw), dk.log_a_mean(1.0), atol=0.15)
+
+
 def test_offner_generate_cluster_companions():
     """IMF cluster generation with Offner multiplicity produces BD binaries only."""
     imf_multi = multiplicity.MultiplicityUnresolvedOffner2023()

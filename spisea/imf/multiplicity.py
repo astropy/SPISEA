@@ -606,6 +606,105 @@ class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
         self.a_std_intercept = a_std_intercept
 
         return
+
+    def log_a_mean(self, mass):
+        """
+        Characteristic log10(a/AU) used as the loc of
+        :meth:`log_semimajoraxis`.
+
+        Duchêne & Kraus (2013) broken power law for stellar primaries,
+        Fontanive et al. (2018) interpolation for brown dwarfs, and a
+        sigmoid blend at 0.08 Msun.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass must be positive, in solar masses (Msun).
+
+        Returns
+        -------
+        log_a_mean : float or ndarray
+            Characteristic log10(a / 1 AU) in dex (not ln, not AU).
+            Python float if ``mass`` is scalar, ndarray otherwise.
+        """
+        return_scalar = np.isscalar(mass)
+        mass = np.atleast_1d(np.asarray(mass, dtype=float))
+        logm = np.log10(mass)
+
+        a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(
+            amplitude=self.a_amp, x_break=self.a_break,
+            alpha_1=self.a_slope1, alpha_2=self.a_slope2)
+        log_a_mean_star = np.log10(a_mean_func(mass))
+        log_a_mean_bd = np.interp(
+            logm,
+            [np.log10(0.01), np.log10(0.08)],
+            [np.log10(2.5), np.log10(8.0)]
+        )
+        w = 1.0 / (1.0 + np.exp(-(logm - np.log10(0.08)) / 0.15))
+        log_a_mean = (1 - w) * log_a_mean_bd + w * log_a_mean_star
+        if return_scalar:
+            return float(log_a_mean[0])
+        return log_a_mean
+
+    def a_mean(self, mass):
+        """
+        Characteristic μ(a) in AU, ``10 ** log_a_mean(mass)``.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass must be positive, in solar masses (Msun).
+
+        Returns
+        -------
+        a_mean : float or ndarray
+            Characteristic separation μ(a) in AU. Python float if
+            ``mass`` is scalar, ndarray otherwise.
+        """
+        log_a = self.log_a_mean(mass)
+        if np.isscalar(log_a):
+            return 10.0 ** log_a
+        return 10.0 ** np.asarray(log_a, dtype=float)
+
+    def sigma_log_a(self, mass):
+        """
+        σ(log10 a) used as the scale of :meth:`log_semimajoraxis`.
+
+        Linear fit in log-mass for stellar primaries (saturates above
+        2.9 Msun, clipped to ≥ 0.1), Fontanive et al. (2018)
+        interpolation for brown dwarfs, and a sigmoid blend at
+        0.08 Msun.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass must be positive, in solar masses (Msun).
+
+        Returns
+        -------
+        sigma_log_a : float or ndarray
+            Standard deviation of log10(a / 1 AU), in dex.
+            Python float if ``mass`` is scalar, ndarray otherwise.
+        """
+        return_scalar = np.isscalar(mass)
+        mass = np.atleast_1d(np.asarray(mass, dtype=float))
+        logm = np.log10(mass)
+
+        log_a_std_func = astropy.modeling.models.Linear1D(
+            slope=self.a_std_slope, intercept=self.a_std_intercept)
+        log_a_std_star = log_a_std_func(logm)
+        log_a_std_star[mass >= 2.9] = log_a_std_func(np.log10(2.9))
+        log_a_std_star = np.clip(log_a_std_star, 0.1, None)
+        log_a_std_bd = np.interp(
+            logm,
+            [np.log10(0.01), np.log10(0.08)],
+            [0.25, 0.5]
+        )
+        w = 1.0 / (1.0 + np.exp(-(logm - np.log10(0.08)) / 0.15))
+        log_a_std = (1 - w) * log_a_std_bd + w * log_a_std_star
+        if return_scalar:
+            return float(log_a_std[0])
+        return log_a_std
     
     def log_semimajoraxis(self, mass):
         """
@@ -616,44 +715,23 @@ class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
         The brown dwarf range is covered by mass-dependent scaling of both the characteristic separation and dispersion
         matching trends described in Fontanive et al. (2018).
 
+        Draws use ``loc = log_a_mean(mass)`` and
+        ``scale = sigma_log_a(mass)``.
+
         Parameters
         ----------
         mass : array-like
-            Mass array of primary star
+            Primary mass must be positive, in solar masses (Msun).
 
         Returns
         -------
         log_semimajoraxis : array-like
-            Log of the semimajor axis/separation between the stars in units of AU
+            Drawn log10(a / 1 AU) in dex, truncated so a is between
+            0.01 AU and 2000 AU.
         """
         mass = np.atleast_1d(mass)
-        logm = np.log10(mass)
-
-        # Stellar mean and std (Duchene & Kraus 2013)
-        a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(amplitude=self.a_amp, x_break=self.a_break,
-                                                                  alpha_1=self.a_slope1, alpha_2=self.a_slope2)
-        log_a_mean_star = np.log10(a_mean_func(mass))  # mean log(a)
-        log_a_std_func = astropy.modeling.models.Linear1D(slope=self.a_std_slope, intercept=self.a_std_intercept)
-        log_a_std_star = log_a_std_func(logm)  # sigma_log(a)
-        log_a_std_star[mass >= 2.9] = log_a_std_func(np.log10(2.9))  # sigma_log(a)
-        log_a_std_star = np.clip(log_a_std_star, 0.1, None)
-
-        # BD mean and std (Fontanive+18): interpolated over substellar range
-        log_a_mean_bd = np.interp(
-            logm,
-            [np.log10(0.01), np.log10(0.08)],
-            [np.log10(2.5), np.log10(8.0)]
-        )
-        log_a_std_bd = np.interp(
-            logm,
-            [np.log10(0.01), np.log10(0.08)],
-            [0.25, 0.5]
-        )
-
-        # Sigmoid blend: smoothly transitions from BD to stellar regime at 0.08 M_sun
-        w = 1.0 / (1.0 + np.exp(-(logm - np.log10(0.08)) / 0.15))
-        log_a_mean = (1 - w) * log_a_mean_bd + w * log_a_mean_star
-        log_a_std = (1 - w) * log_a_std_bd + w * log_a_std_star
+        log_a_mean = np.atleast_1d(np.asarray(self.log_a_mean(mass), dtype=float))
+        log_a_std = np.atleast_1d(np.asarray(self.sigma_log_a(mass), dtype=float))
 
         # Trunc normal distribution between log10(0.01) AU and log10(2000) AU
         log_a_lower = np.log10(0.01)

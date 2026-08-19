@@ -204,6 +204,9 @@ uses the stable form
 The SPISEA v2.5 :class:`~imf.multiplicity.MultiplicityResolvedDK`
 uses a Duchêne & Kraus (2013) broken power law in :math:`a` with a
 brown-dwarf blend. That law is not meant for the BD regime.
+``MultiplicityResolvedDK.a_mean`` / ``log_a_mean`` and
+``sigma_log_a`` return the same characteristic mean and width that
+``log_semimajoraxis`` draws from.
 
 .. figure:: figures/sep_offner_vs_spisea2.5.png
    :alt: Offner 2023 vs SPISEA v2.5: characteristic separation vs primary mass
@@ -268,14 +271,21 @@ methods (``multiplicity_fraction``, ``q_power_at_mass``,
 ``a_mean``, ``sigma_log_a``) so they cannot drift from the code.
 From the repository root::
 
-  python docs/figures/plot_mf_offner_vs_spisea2.5.py
-  python docs/figures/plot_q_sep_offner_vs_spisea2.5.py
+   python docs/figures/plot_mf_offner_vs_spisea2.5.py
+   python docs/figures/plot_q_offner_vs_spisea2.5.py
+   python docs/figures/plot_meanq_offner_vs_spisea2.5.py
+   python docs/figures/plot_sep_offner_vs_spisea2.5.py
+   python docs/figures/plot_sig_loga_offner_vs_spisea2.5.py
+
+``python docs/figures/plot_q_sep_offner_vs_spisea2.5.py`` still writes
+the last four PNGs by running those scripts.
 
 
 Resolved Multiplicity Classes
 ------------------------------------------
 .. autoclass:: imf.multiplicity.MultiplicityResolvedDK
 	       :show-inheritance:
+	       :members: log_semimajoraxis, log_a_mean, a_mean, sigma_log_a
 
 .. autoclass:: imf.multiplicity.MultiplicityResolvedOffner2023
 	       :show-inheritance:
