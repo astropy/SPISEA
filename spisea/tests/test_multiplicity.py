@@ -328,6 +328,22 @@ def test_offner2023_logistic_coefficients():
     np.testing.assert_allclose(multi.CSF_B, 2.35)
     np.testing.assert_allclose(multi.CSF_M0, 3.57)
     np.testing.assert_allclose(multi.CSF_k, 0.96)
+    np.testing.assert_allclose(multi.q_A, 6.6)
+    np.testing.assert_allclose(multi.q_B, -1.77)
+    np.testing.assert_allclose(multi.q_M0, 0.0651)
+    np.testing.assert_allclose(multi.q_k, 0.629)
+    np.testing.assert_allclose(multi.a_mup, 44.46)
+    np.testing.assert_allclose(multi.a_mp, 0.819)
+    np.testing.assert_allclose(multi.a_alphaL, 1.005)
+    np.testing.assert_allclose(multi.a_alphaR, -0.308)
+    np.testing.assert_allclose(multi.a_s, 0.10)
+    np.testing.assert_allclose(multi.a_min, 0.1)
+    np.testing.assert_allclose(multi.sig_A, 0.7)
+    np.testing.assert_allclose(multi.sig_B, 1.5)
+    np.testing.assert_allclose(multi.sig_M0, 0.354)
+    np.testing.assert_allclose(multi.sig_k, 6.05)
+    assert not hasattr(multiplicity, 'FONTANIVE2018_BD_Q_POWER')
+    assert not any(n.startswith('OFFNER2023_') for n in dir(multiplicity))
 
 
 def test_offner2023_mf_smooth():
@@ -345,7 +361,8 @@ def test_offner2023_mf_smooth():
         np.testing.assert_allclose(d_left, d_right, atol=1e-3, rtol=0)
     for m in (0.04, 0.3, 1.0, 10.0):
         expected = multiplicity._logistic_in_logm(
-            m, 0.14, 0.99, 1.41, 1.25, clip_min=0.0, clip_max=1.0)
+            m, multi.MF_A, multi.MF_B, multi.MF_M0, multi.MF_k,
+            clip_min=0.0, clip_max=1.0)
         np.testing.assert_allclose(multi.multiplicity_fraction(m), expected)
 
 
@@ -447,15 +464,17 @@ def test_offner2023_q_sigma_a_closed_form():
         np.testing.assert_allclose(
             multi.q_power_at_mass(m),
             multiplicity._logistic_in_logm(
-                m, 6.6, -1.77, 0.0651, 0.629))
+                m, multi.q_A, multi.q_B, multi.q_M0, multi.q_k))
         np.testing.assert_allclose(
             multi.sigma_log_a(m),
             multiplicity._logistic_in_logm(
-                m, 0.7, 1.5, 0.354, 6.05, clip_min=0.1))
+                m, multi.sig_A, multi.sig_B, multi.sig_M0, multi.sig_k,
+                clip_min=0.1))
         np.testing.assert_allclose(
             multi.log_a_mean(m),
             multiplicity._smooth_broken_loglog(
-                m, 44.46, 0.819, 1.005, -0.308, 0.10, a_min=0.1))
+                m, multi.a_mup, multi.a_mp, multi.a_alphaL, multi.a_alphaR,
+                multi.a_s, a_min=multi.a_min))
     # Array vs scalar
     g_arr = multi.q_power_at_mass(masses)
     sig_arr = multi.sigma_log_a(masses)
@@ -467,7 +486,8 @@ def test_offner2023_q_sigma_a_closed_form():
     # Old L/early-T interpolation knot was 2.5; logistic is not that.
     g_knot = multi.q_power_at_mass(0.065)
     np.testing.assert_allclose(
-        g_knot, multiplicity._logistic_in_logm(0.065, 6.6, -1.77, 0.0651, 0.629))
+        g_knot, multiplicity._logistic_in_logm(
+            0.065, multi.q_A, multi.q_B, multi.q_M0, multi.q_k))
     assert abs(g_knot - 2.5) > 0.05
 
 
@@ -492,6 +512,10 @@ def test_offner2023_resolved_methods():
     assert hasattr(resolved, 'log_semimajoraxis')
     assert hasattr(resolved, 'log_a_mean')
     assert hasattr(resolved, 'sigma_log_a')
+    np.testing.assert_allclose(
+        resolved.sep_sig_mass,
+        [np.sqrt(0.075 * 0.15), np.sqrt(0.3 * 0.6), np.sqrt(0.75 * 1.25)])
+    np.testing.assert_allclose(resolved.sep_sig, [0.7, 1.3, 1.5])
     e = resolved.random_e(np.array([0.0, 0.25, 1.0]))
     np.testing.assert_allclose(e, [0.0, 0.5, 1.0])
 
@@ -506,6 +530,9 @@ def test_lu2013_defaults_unchanged():
     np.testing.assert_almost_equal(mu.multiplicity_fraction(1.0), 0.44, decimal=2)
     np.testing.assert_almost_equal(mu.multiplicity_fraction(10.0), 1.0, decimal=2)
     np.testing.assert_almost_equal(mu.multiplicity_fraction(0.1), 0.136, decimal=2)
+    assert mu.bd_q_power == 6.1
+    assert np.isclose(mu.q_power_at_mass(0.04), 6.1)
+    assert np.isclose(mu.q_power_at_mass(1.0), -0.4)
     # Scalar BD overrides (SPISEA v2.5 / Fontanive path)
     assert np.isclose(mu.multiplicity_fraction(0.07), 0.16, atol=0.01)
     assert np.isclose(mu.multiplicity_fraction(0.04), 0.08, atol=0.01)

@@ -18,45 +18,7 @@ default_aSigma = 0.1  # log (AU)
 # SPISEA keeps 0.08 Msun for consistency with existing BD handling.
 H_BURNING_MASS = 0.08
 
-# Fontanive et al. (2018) mass-ratio power-law index used for BD primaries
-# in the SPISEA v2.5 MultiplicityUnresolved implementation.
-FONTANIVE2018_BD_Q_POWER = 6.1
-
 # Eventually we should add in separation properties. (a_mean, a_sigma)
-
-# Equal-weight logistic-in-log-mass fit to Offner et al. 2023 Table 1
-# geom-mean (M, MF) and (M, CF) points:
-#   y(M) = A + (B - A) / (1 + (M / M0)**(-k))
-OFFNER2023_MF_A = 0.14
-OFFNER2023_MF_B = 0.99
-OFFNER2023_MF_M0 = 1.41
-OFFNER2023_MF_K = 1.25
-OFFNER2023_CSF_A = 0.12
-OFFNER2023_CSF_B = 2.35
-OFFNER2023_CSF_M0 = 3.57
-OFFNER2023_CSF_K = 0.96
-
-
-# Error-weighted logistic in log-mass for Table 1 γ_trunc (1–100 au).
-# The model is this logistic, not interpolation of the arrays below.
-OFFNER2023_Q_A = 6.6
-OFFNER2023_Q_B = -1.77
-OFFNER2023_Q_M0 = 0.0651
-OFFNER2023_Q_K = 0.629
-
-# Smooth broken power law in log10(a) vs log10(M), s=0.1 dex, FGK-pulled.
-OFFNER2023_A_MUP = 44.46
-OFFNER2023_A_MP = 0.819
-OFFNER2023_A_ALPHAL = 1.005
-OFFNER2023_A_ALPHAR = -0.308
-OFFNER2023_A_S = 0.10
-OFFNER2023_A_MIN = 0.1
-
-# 2-parameter logistic for σ(log10 a); floors/ceilings pinned at 0.7 / 1.5.
-OFFNER2023_SIG_A = 0.7
-OFFNER2023_SIG_B = 1.5
-OFFNER2023_SIG_M0 = 0.354
-OFFNER2023_SIG_K = 6.05
 
 
 class _ResolvedOrbitalMixin(object):
@@ -216,13 +178,18 @@ class MultiplicityUnresolved(object):
         Primary mass in solar masses (Msun) at and below which
         systems are restricted to at most one companion (CSF = MF).
         Default 0.08 Msun.
+    bd_q_power : float, optional
+        Mass-ratio power-law index γ for brown-dwarf primaries
+        (M <= binary_only_mass_max), dimensionless. Default 6.1
+        (Fontanive et al. 2018).
     """
-    def __init__(self, 
+    def __init__(self,
                  MF_amp=0.44, MF_power=0.51,
                  CSF_amp=0.50, CSF_power=0.45, CSF_max=3,
-                 q_power=-0.4, q_min=0.01, companion_max = False,
-                 binary_only_mass_max=H_BURNING_MASS):
-         
+                 q_power=-0.4, q_min=0.01, companion_max=False,
+                 binary_only_mass_max=H_BURNING_MASS,
+                 bd_q_power=6.1):
+
         self.MF_amp = MF_amp
         self.MF_pow = MF_power
         self.CSF_amp = CSF_amp
@@ -232,6 +199,7 @@ class MultiplicityUnresolved(object):
         self.q_min = q_min
         self.companion_max = companion_max
         self.binary_only_mass_max = binary_only_mass_max
+        self.bd_q_power = bd_q_power
 
     def multiplicity_fraction(self, mass):
         """
@@ -313,8 +281,9 @@ class MultiplicityUnresolved(object):
 
         Lu et al. (2013) use a single ``q_power`` for stellar primaries.
         Brown-dwarf primaries (M <= binary_only_mass_max) use
-        gamma = 6.1 from Fontanive et al. (2018), matching the
-        companion-mass draw previously special-cased in ``imf.calc_multi``.
+        ``bd_q_power`` (default 6.1, Fontanive et al. 2018), matching
+        the companion-mass draw previously special-cased in
+        ``imf.calc_multi``.
 
         Parameters
         ----------
@@ -329,7 +298,7 @@ class MultiplicityUnresolved(object):
         """
         mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
         q_pow = np.full(mass_arr.shape, self.q_pow, dtype=float)
-        q_pow[mass_arr <= self.binary_only_mass_max] = FONTANIVE2018_BD_Q_POWER
+        q_pow[mass_arr <= self.binary_only_mass_max] = self.bd_q_power
         if np.isscalar(mass):
             return float(q_pow[0])
         return q_pow
@@ -1142,6 +1111,52 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
 
     Parameters
     ----------
+    MF_A, MF_B : float, optional
+        Low- and high-mass MF logistic asymptotes, dimensionless.
+        Defaults 0.14, 0.99 (Offner et al. 2023 Table 1,
+        equal-weight geom-mean MF fit).
+    MF_M0 : float, optional
+        Characteristic mass of the MF logistic, in solar masses
+        (Msun). Default 1.41.
+    MF_k : float, optional
+        MF logistic slope, dimensionless. Default 1.25.
+    CSF_A, CSF_B : float, optional
+        Low- and high-mass CSF logistic asymptotes, dimensionless
+        mean companion count. Defaults 0.12, 2.35 (Table 1
+        equal-weight geom-mean CF fit).
+    CSF_M0 : float, optional
+        Characteristic mass of the CSF logistic, in solar masses
+        (Msun). Default 3.57.
+    CSF_k : float, optional
+        CSF logistic slope, dimensionless. Default 0.96.
+    q_A, q_B : float, optional
+        Low- and high-mass γ logistic asymptotes, dimensionless.
+        Defaults 6.6, −1.77 (Table 1 γ_trunc, error-weighted).
+    q_M0 : float, optional
+        Characteristic mass of the γ logistic, in solar masses
+        (Msun). Default 0.0651.
+    q_k : float, optional
+        γ logistic slope, dimensionless. Default 0.629.
+    a_mup : float, optional
+        Smooth-broken-PL pivot μ(a), in AU. Default 44.46.
+    a_mp : float, optional
+        Smooth-broken-PL pivot mass, in solar masses (Msun).
+        Default 0.819.
+    a_alphaL, a_alphaR : float, optional
+        Smooth-broken-PL slopes in log10 a vs log10 M,
+        dimensionless. Defaults 1.005, −0.308.
+    a_s : float, optional
+        Smooth-broken-PL smoothing scale, in dex. Default 0.10.
+    a_min : float, optional
+        Minimum characteristic a, in AU. Default 0.1.
+    sig_A, sig_B : float, optional
+        Low- and high-mass σ(log10 a) logistic values, in dex.
+        Defaults 0.7, 1.5 (Table 2 pins).
+    sig_M0 : float, optional
+        Characteristic mass of the σ logistic, in solar masses
+        (Msun). Default 0.354.
+    sig_k : float, optional
+        σ logistic slope, dimensionless. Default 6.05.
     CSF_max : float, optional
         Maximum companion star fraction, dimensionless mean companion
         count (not bounded by 1). Default 3.
@@ -1159,21 +1174,36 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         are binaries only (CSF = MF, at most one companion). Default
         0.08 Msun.
     """
-    def __init__(self, CSF_max=3, q_power=0.2, q_min=0.01,
-                 companion_max=False, binary_only_mass_max=H_BURNING_MASS):
+    def __init__(self, MF_A=0.14, MF_B=0.99, MF_M0=1.41, MF_k=1.25,
+                 CSF_A=0.12, CSF_B=2.35, CSF_M0=3.57, CSF_k=0.96,
+                 q_A=6.6, q_B=-1.77, q_M0=0.0651, q_k=0.629,
+                 a_mup=44.46, a_mp=0.819, a_alphaL=1.005,
+                 a_alphaR=-0.308, a_s=0.10, a_min=0.1,
+                 sig_A=0.7, sig_B=1.5, sig_M0=0.354, sig_k=6.05,
+                 CSF_max=3, q_power=0.2, q_min=0.01,
+                 companion_max=False,
+                 binary_only_mass_max=H_BURNING_MASS):
 
         super(MultiplicityUnresolvedOffner2023, self).__init__(
-            MF_A=OFFNER2023_MF_A,
-            MF_B=OFFNER2023_MF_B,
-            MF_M0=OFFNER2023_MF_M0,
-            MF_k=OFFNER2023_MF_K,
-            CSF_A=OFFNER2023_CSF_A,
-            CSF_B=OFFNER2023_CSF_B,
-            CSF_M0=OFFNER2023_CSF_M0,
-            CSF_k=OFFNER2023_CSF_K,
+            MF_A=MF_A, MF_B=MF_B, MF_M0=MF_M0, MF_k=MF_k,
+            CSF_A=CSF_A, CSF_B=CSF_B, CSF_M0=CSF_M0, CSF_k=CSF_k,
             CSF_max=CSF_max, q_power=q_power, q_min=q_min,
             companion_max=companion_max,
             binary_only_mass_max=binary_only_mass_max)
+        self.q_A = float(q_A)
+        self.q_B = float(q_B)
+        self.q_M0 = float(q_M0)
+        self.q_k = float(q_k)
+        self.a_mup = float(a_mup)
+        self.a_mp = float(a_mp)
+        self.a_alphaL = float(a_alphaL)
+        self.a_alphaR = float(a_alphaR)
+        self.a_s = float(a_s)
+        self.a_min = float(a_min)
+        self.sig_A = float(sig_A)
+        self.sig_B = float(sig_B)
+        self.sig_M0 = float(sig_M0)
+        self.sig_k = float(sig_k)
 
         return
 
@@ -1201,7 +1231,8 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
             Mass-ratio power-law index γ, dimensionless.
             Python float if ``mass`` is scalar, ndarray otherwise.
         """
-        gamma = _logistic_in_logm(mass, OFFNER2023_Q_A, OFFNER2023_Q_B, OFFNER2023_Q_M0, OFFNER2023_Q_K)
+        gamma = _logistic_in_logm(
+            mass, self.q_A, self.q_B, self.q_M0, self.q_k)
         
         return gamma
 
@@ -1232,9 +1263,9 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         """
         # Calculate the characteristic log10(a / 1 AU) using a smooth broken power law 
         log_a_mean = _smooth_broken_loglog(
-            mass, OFFNER2023_A_MUP, OFFNER2023_A_MP,
-            OFFNER2023_A_ALPHAL, OFFNER2023_A_ALPHAR, OFFNER2023_A_S,
-            a_min=OFFNER2023_A_MIN)
+            mass, self.a_mup, self.a_mp,
+            self.a_alphaL, self.a_alphaR, self.a_s,
+            a_min=self.a_min)
 
         return log_a_mean
 
@@ -1286,9 +1317,9 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         """
 
         # Calculate the standard deviation of log10(a / 1 AU) using a 2-parameter logistic
-        sigma_log_a = _logistic_in_logm(mass, OFFNER2023_SIG_A, OFFNER2023_SIG_B,
-                                        OFFNER2023_SIG_M0, OFFNER2023_SIG_K, 
-                                        clip_min=0.1)
+        sigma_log_a = _logistic_in_logm(
+            mass, self.sig_A, self.sig_B, self.sig_M0, self.sig_k,
+            clip_min=0.1)
 
         return sigma_log_a
 
@@ -1360,12 +1391,24 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
     binary_only_mass_max : float, optional
         Primary mass in solar masses (Msun) at and below which systems
         are binaries only. Default 0.08 Msun.
+    sep_sig_mass : array_like, optional
+        Table 2 primary-mass knots for the σ comparison plot, in
+        solar masses (Msun). Defaults are geom-mean M1 of the
+        late-M, early-M, and FGK bins.
+    sep_sig : array_like, optional
+        Table 2 σ(log10 a) knots, in dex. Default (0.7, 1.3, 1.5).
+    **kwargs
+        Passed to :class:`MultiplicityUnresolvedOffner2023`.
     """
-    def __init__(self, **kwargs):
+    def __init__(self, sep_sig=(0.7, 1.3, 1.5),
+                 sep_sig_mass=(np.sqrt(0.075 * 0.15),
+                               np.sqrt(0.3 * 0.6),
+                               np.sqrt(0.75 * 1.25)),
+                 **kwargs):
         super(MultiplicityResolvedOffner2023, self).__init__(**kwargs)
-        # Table 2 σ knots used by the comparison plot; draws use sigma_log_a.
-        self.sep_sig_mass = np.array(OFFNER2023_SEP_SIG_MASS, dtype=float)
-        self.sep_sig = np.array(OFFNER2023_SEP_SIG, dtype=float)
+        # Table 2 σ knots for the comparison plot; draws use sigma_log_a.
+        self.sep_sig_mass = np.array(sep_sig_mass, dtype=float)
+        self.sep_sig = np.array(sep_sig, dtype=float)
 
         return
 
@@ -1646,31 +1689,3 @@ def _q_from_powerlaw(x, q_pow, q_min):
     # Return the result
     return out
 
-
-def _offner2023_table1_geom_mass(m_lo, m_hi):
-    """
-    Geometric-mean primary mass of a Table 1 M1 interval.
-
-    Parameters
-    ----------
-    m_lo, m_hi : float
-        Low and high edges of the Table 1 primary-mass interval, in
-        solar masses (Msun). Must be positive.
-
-    Returns
-    -------
-    mass : float
-        Geometric mean sqrt(m_lo * m_hi) in solar masses (Msun).
-    """
-    # Calculate the geometric mean of the two masses
-    return float(np.sqrt(m_lo * m_hi))
-
-# Table 2 σ_log a at the three published bins. Fit data only;
-# evaluation uses the 2-parameter logistic. The comparison plot
-# reads these via MultiplicityResolvedOffner2023.sep_sig_mass / sep_sig.
-OFFNER2023_SEP_SIG_MASS = np.array([
-    _offner2023_table1_geom_mass(0.075, 0.15),
-    _offner2023_table1_geom_mass(0.3, 0.6),
-    _offner2023_table1_geom_mass(0.75, 1.25),
-])
-OFFNER2023_SEP_SIG = np.array([0.7, 1.3, 1.5])
