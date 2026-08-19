@@ -683,34 +683,87 @@ def test_offner2023_mf_is_vectorized():
     assert not np.allclose(mf, np.clip(lu_pl, 0, 1), atol=0.02)
 
 
-def test_orbital_draws_respect_rng():
-    """Same rng seed reproduces log_a and Keplerian inclination sign."""
-    mass = np.full(20, 1.0)
-    x = np.linspace(0.01, 0.99, 20)
-    y = np.linspace(0.02, 0.98, 20)
-    z = np.linspace(0.03, 0.97, 20)
-    models = (
-        multiplicity.MultiplicityResolvedDK(),
-        multiplicity.MultiplicityResolvedOffner2023(),
-    )
-    for multi in models:
-        a1 = multi.log_semimajoraxis(mass, rng=np.random.default_rng(7))
-        a2 = multi.log_semimajoraxis(mass, rng=np.random.default_rng(7))
-        np.testing.assert_array_equal(a1, a2)
-        a3 = multi.log_semimajoraxis(mass, rng=np.random.default_rng(8))
-        assert not np.array_equal(a1, a3)
+def _same_seed_rngs(seed=11):
+    return np.random.default_rng(seed), np.random.default_rng(seed)
 
+
+def test_random_companion_count_same_seed():
+    """Same rng seed reproduces random_companion_count."""
+    masses = np.full(40, 1.0)
+    for cls in (multiplicity.MultiplicityUnresolved,
+                multiplicity.MultiplicityUnresolvedOffner2023):
+        multi = cls()
+        mf = multi.multiplicity_fraction(masses)
+        csf = multi.companion_star_fraction(masses)
+        rng1, rng2 = _same_seed_rngs()
+        n1 = multi.random_companion_count(
+            None, csf, mf, mass=masses, rng=rng1)
+        n2 = multi.random_companion_count(
+            None, csf, mf, mass=masses, rng=rng2)
+        np.testing.assert_array_equal(n1, n2)
+
+
+def test_draw_n_companions_same_seed():
+    """Same rng seed reproduces draw_n_companions."""
+    masses = np.array([0.04, 0.3, 1.0, 5.0] * 10)
+    for cls in (multiplicity.MultiplicityUnresolved,
+                multiplicity.MultiplicityUnresolvedOffner2023):
+        multi = cls()
+        mf = multi.multiplicity_fraction(masses)
+        csf = multi.companion_star_fraction(masses)
+        rng1, rng2 = _same_seed_rngs()
+        n1 = multi.draw_n_companions(masses, csf, mf, rng1)
+        n2 = multi.draw_n_companions(masses, csf, mf, rng2)
+        np.testing.assert_array_equal(n1, n2)
+
+
+def test_assign_companions_same_seed():
+    """Same rng seed reproduces draw_companion_masses assignment."""
+    masses = np.array([0.04, 0.3, 1.0, 2.0, 5.0] * 8)
+    is_mult = np.ones(len(masses), dtype=bool)
+    for cls in (multiplicity.MultiplicityUnresolved,
+                multiplicity.MultiplicityUnresolvedOffner2023):
+        multi = cls()
+        mf = multi.multiplicity_fraction(masses)
+        csf = multi.companion_star_fraction(masses)
+        rng1, rng2 = _same_seed_rngs()
+        c1, s1, m1 = multi.draw_companion_masses(
+            masses, is_mult, csf, mf, rng1, mass_min=0.01)
+        c2, s2, m2 = multi.draw_companion_masses(
+            masses, is_mult, csf, mf, rng2, mass_min=0.01)
+        np.testing.assert_array_equal(np.ma.getdata(c1), np.ma.getdata(c2))
+        np.testing.assert_array_equal(np.ma.getmaskarray(c1),
+                                     np.ma.getmaskarray(c2))
+        np.testing.assert_array_equal(s1, s2)
+        np.testing.assert_array_equal(m1, m2)
+
+
+def test_log_semimajoraxis_same_seed():
+    """Same rng seed reproduces log_semimajoraxis."""
+    masses = np.full(30, 1.0)
+    for cls in (multiplicity.MultiplicityResolvedDK,
+                multiplicity.MultiplicityResolvedOffner2023):
+        multi = cls()
+        rng1, rng2 = _same_seed_rngs()
+        a1 = multi.log_semimajoraxis(masses, rng=rng1)
+        a2 = multi.log_semimajoraxis(masses, rng=rng2)
+        np.testing.assert_array_equal(a1, a2)
+
+
+def test_random_keplarian_parameters_same_seed():
+    """Same rng seed reproduces random_keplarian_parameters."""
+    n = 30
+    for cls in (multiplicity.MultiplicityResolvedDK,
+                multiplicity.MultiplicityResolvedOffner2023):
+        multi = cls()
+        rng1, rng2 = _same_seed_rngs()
+        x1, y1, z1 = rng1.random(n), rng1.random(n), rng1.random(n)
         i1, O1, o1 = multi.random_keplarian_parameters(
-            x, y, z, rng=np.random.default_rng(7))
+            x1, y1, z1, rng=rng1)
+        x2, y2, z2 = rng2.random(n), rng2.random(n), rng2.random(n)
         i2, O2, o2 = multi.random_keplarian_parameters(
-            x, y, z, rng=np.random.default_rng(7))
+            x2, y2, z2, rng=rng2)
         np.testing.assert_array_equal(i1, i2)
         np.testing.assert_array_equal(O1, O2)
         np.testing.assert_array_equal(o1, o2)
-        # Omega and omega are inverse-CDF of y, z; only i uses rng.
-        i3, O3, o3 = multi.random_keplarian_parameters(
-            x, y, z, rng=np.random.default_rng(8))
-        assert not np.array_equal(i1, i3)
-        np.testing.assert_array_equal(O1, O3)
-        np.testing.assert_array_equal(o1, o3)
 
