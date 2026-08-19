@@ -117,99 +117,105 @@ class _ResolvedOrbitalMixin(object):
 
 class MultiplicityUnresolved(object):
     """
-    The properties of stellar companions (see notes below). 
-    The default parameters are as described in 
+    SPISEA v2.5 default unresolved multiplicity (companions, no orbits).
+
+    The default parameters are as described in
     `Lu et al. 2013 <https://ui.adsabs.harvard.edu/abs/2013ApJ...764..155L/abstract>`_.
     These parameters are most appropriate for stellar populations
-    with ages <10 Myr.
+    with ages < 10 Myr. This is the unresolved default for backwards
+    compatibility. For a scientifically preferred model that includes
+    brown dwarfs, see :class:`MultiplicityUnresolvedOffner2023`
+    (opt-in; not the default).
 
     Notes
     -----
-    The number of stellar companions, their masses, and separations
-    are be described by the following functions:
+    The number of stellar companions and their masses are described
+    by the following functions.
 
-    **Multiplicity Fraction** -- the number of stellar systems that host 
+    **Multiplicity Fraction** -- the number of stellar systems that host
     multiple stars. In other words, the number of primary stars with
     companions. The multiplicity fraction (MF) is typically described
     as::
+
                             B + T + Q + ...
                 MF =     ---------------------
                           S + B + T + Q + ...
 
     where S = single, B = binary, T = triple, Q = quadruple, etc.
-    The MF also changes with mass and this dependency can be 
+    The MF also changes with mass and this dependency can be
     described as a power-law::
-            
+
                 MF(mass) = MF_amp * (mass ** MF_power)
 
-    However, in the brown dwarf mass regime, it is currently recognized
-    that only binaries are possible, and the MF decreases dissimilarly
-    to higher masses (> 0.08 solar masses). The values for this range
-    are given by Aberasturi et al. (2014) and Fontanive et al. (2023).
+    Defaults are MF_amp = 0.44, MF_power = 0.51 (Lu et al. 2013).
+    MF is clipped to [0, 1].
+
+    In the brown-dwarf regime, only binaries are expected and the MF
+    does not follow the stellar power law. For **scalar** mass,
+    :meth:`multiplicity_fraction` applies a staircase from
+    Aberasturi et al. (2014) and Fontanive et al. (2018)::
+
+        M < 0.02 Msun          MF = 0
+        0.02 < M <= 0.06 Msun  MF = 0.08
+        0.06 < M <= 0.08 Msun  MF = 0.16
+
+    Array masses use the stellar power law only (no staircase).
+    Cluster generation on this class therefore still uses
+    ``0.44 M**0.51`` for brown-dwarf primaries.
 
     **Companion Star Fraction** -- the expected number of companions in
-    a multiple system. The companion star fraction (CSF) also 
+    a multiple system. The companion star fraction (CSF) also
     changes with mass and this dependency can be described as
     a power-law::
-                
+
                 CSF(mass) = CSF_amp * (mass ** CSF_power)
 
-    The companion star fraction is clipped to some maximum
-    value, CSF_max. The actual number of companions is drawn 
+    Defaults are CSF_amp = 0.50, CSF_power = 0.45. CSF is clipped
+    to CSF_max (default 3). The actual number of companions is drawn
     from a Poisson distribution with an expectation value of CSF.
-
-    In the brown dwarf regime we impose an assumption that only
-    binary systems are possible due to current literature trends.
+    For primaries at or below ``binary_only_mass_max`` (default
+    0.08 Msun), CSF is forced equal to MF and the companion count
+    is capped at 1 (binaries only).
 
     **Mass Ratio (Q)** -- The ratio between the companion star
-    mass and primary star mass, Q = (m_comp / m_prim ) has
-    a probability density function described by a powerlaw::
+    mass and primary star mass, Q = (m_comp / m_prim) has
+    a probability density function described by a power law::
 
                 P(Q) = Q ** q_power  for q_min <= Q <= 1
 
-    Current observations show no significant mass dependence.
-        
+    Stellar primaries use q_power = −0.4 (Lu et al. 2013).
+    Brown-dwarf primaries (M <= 0.08 Msun) use γ = 6.1 from
+    Fontanive et al. (2018) when ``mass`` is passed to
+    :meth:`q_power_at_mass` or :meth:`random_q`. ``random_q(x)``
+    with no mass keeps the stellar-only power law.
+
     Parameters
     ----------
     MF_amp : float, optional
-        The amplitude of the power-law describing the Multiplicity 
-        Fraction as a function of stellar mass. 
-
+        Amplitude of the MF power law, dimensionless
+        (units of MF / Msun**MF_power). Default 0.44.
     MF_power : float, optional
-        The power of the power-law describing the Multiplicity
-        Fraction as a function of stellar mass.
-
+        Power-law index of MF(M), dimensionless. Default 0.51.
     CSF_amp : float, optional
-        The amplitude of the power-law describing the companion star 
-        fraction as a function of stellar mass.
-
+        Amplitude of the CSF power law, dimensionless mean
+        companion count / Msun**CSF_power. Default 0.50.
     CSF_power : float, optional
-        The power of the power-law describing the companion star 
-        fraction as a function of stellar mass.
-
+        Power-law index of CSF(M), dimensionless. Default 0.45.
     CSF_max : float, optional
-        The maximum allowed companion star fraction, which is the
-        expectation value for the number of companion stars. Given
-        a CSF_max = 3, some systems will still have more than 3 
-        companions.
-
+        Maximum companion star fraction, dimensionless mean
+        companion count (not bounded by 1). Default 3.
     q_power : float, optional
-        The power of the power-law describing the probability
-        density function for the mass ratio.
-
+        Stellar mass-ratio power-law index γ, dimensionless.
+        Default −0.4 (Lu et al. 2013).
     q_min : float, optional
-        The minimum allowed Q value for the probability
-        density function of the mass ratio.
-    
+        Minimum mass ratio m_comp/m_prim, dimensionless.
+        Default 0.01.
     companion_max : bool, optional
-        Sets CSF_max is the max as the max number of companions.
-        Default False.
-
+        If True, cap companion counts at CSF_max. Default False.
     binary_only_mass_max : float, optional
-        Primary mass in solar masses (Msun) at and below which systems
-        are restricted to at most one companion (CSF = MF). Default is
-        0.08 Msun.
-    
+        Primary mass in solar masses (Msun) at and below which
+        systems are restricted to at most one companion (CSF = MF).
+        Default 0.08 Msun.
     """
     def __init__(self, 
                  MF_amp=0.44, MF_power=0.51,
@@ -232,8 +238,9 @@ class MultiplicityUnresolved(object):
         Given a star's mass, determine the probability that the star is in a
         multiple system (multiplicity fraction = MF).
 
-        Modified to allow binary fraction to decrease in brown dwarf regime.
-        Supported by Aberasturi et al. (2014) and Fontanive et al. (2018).
+        Arrays use ``MF = MF_amp * M**MF_power`` clipped to 1.
+        Scalars also apply the Aberasturi/Fontanive brown-dwarf
+        staircase (0 / 8% / 16% below 0.02 / 0.06 / 0.08 Msun).
 
         Parameters
         ----------
@@ -570,30 +577,51 @@ class MultiplicityUnresolved(object):
 
 class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
     """
-    Sub-class of MultiplicityUnresolved that adds semimajor axis and eccentricity information 
-    for multiple objects from distributions described in Duchene and Kraus 2013
+    SPISEA v2.5 default resolved multiplicity.
 
-    For brown dwarf regime, mean separation and std are given by Fontanive et al. (2018).
+    Same MF/CSF/q as :class:`MultiplicityUnresolved` (Lu et al. 2013
+    stellar power laws, scalar BD staircase, Fontanive γ = 6.1), plus
+    semimajor axis and eccentricity from Duchêne & Kraus (2013).
+    This is the resolved default for backwards compatibility. It is
+    **not** meant for the brown-dwarf regime the way
+    :class:`MultiplicityResolvedOffner2023` is.
+
+    Notes
+    -----
+    Characteristic μ(a) is a broken power law in a vs M
+    (``astropy.modeling.powerlaws.BrokenPowerLaw1D`` with the fitted
+    ``a_amp``, ``a_break``, ``a_slope1``, ``a_slope2``).
+    σ(log10 a) is a linear fit in log M (``a_std_slope``,
+    ``a_std_intercept``) that saturates above 2.9 Msun and is
+    clipped to ≥ 0.1 dex. The dip near 0.08 Msun is the BD/stellar
+    blend: Fontanive et al. (2018) interpolation of the BD mean
+    (2.5–8 AU) and width (0.25–0.5 dex) over 0.01–0.08 Msun,
+    combined with the stellar law by a sigmoid at 0.08 Msun.
+
+    :meth:`log_a_mean`, :meth:`a_mean`, and :meth:`sigma_log_a`
+    return that same characteristic mean and width.
+    :meth:`log_semimajoraxis` draws from a truncated lognormal
+    with ``loc = log_a_mean(mass)`` and
+    ``scale = sigma_log_a(mass)``, truncated to 0.01–2000 AU.
+    Eccentricity follows f(e) = 2e; inclination and angles are
+    random (Duchêne & Kraus 2013).
 
     Parameters
-    --------------
-    a_amp: float, optional
-        Ampltiude of the broken power law describing the log_semimajoraxis
-        
-    a_break: float, optional
-        Break location on the x-axis of the broken power law describing the log_semimajoraxis
-    
-    a_slope1: float, optional
-        Slope of the left side of the broken power law describing the log_semimajoraxis
-        
-    a_slope2: float, optional
-        Slope of the right side of the broken power law describing the log_semimajoraxis
-        
-    a_std_slope: float, optional
-        Slope of the line that fit sigma_log_semimajoraxis vs log_mass
-    
-    a_std_intercept: float, optional
-        Intercept of the line that fit sigma_log_semimajoraxis vs log_mass        
+    ----------
+    a_amp : float, optional
+        Amplitude of the broken power law for μ(a), in AU.
+    a_break : float, optional
+        Break mass of the broken power law, in solar masses (Msun).
+    a_slope1 : float, optional
+        Power-law index below ``a_break``, dimensionless.
+    a_slope2 : float, optional
+        Power-law index above ``a_break``, dimensionless.
+    a_std_slope : float, optional
+        Slope of σ(log10 a) vs log10(M / Msun), in dex per dex.
+    a_std_intercept : float, optional
+        Intercept of σ(log10 a) vs log10(M / Msun), in dex.
+    **kwargs
+        Passed to :class:`MultiplicityUnresolved` (MF/CSF/q).
     """
     def __init__(self, a_amp = 379.79953034, a_break = 4.90441533, a_slope1 = -1.80171539, 
                  a_slope2 = 4.23325571, a_std_slope = 1.19713084, a_std_intercept = 1.28974264, **kwargs):
@@ -745,7 +773,12 @@ class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
 
 class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
     """
-    Multiplicity described by a piecewise power law in primary mass.
+    Generic helper: multiplicity as a piecewise power law in primary mass.
+
+    Use this when MF and CSF should change slope at user-specified
+    mass edges (survey-specific segments), rather than a single
+    power law or a logistic. Offner et al. 2023 does **not** use
+    this class; it uses :class:`MultiplicityLogistic`.
 
     On each mass segment i, with edges ``mass_limits[i] <= M < mass_limits[i+1]``::
 
@@ -755,7 +788,9 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
     MF is clipped to [0, 1]. CSF is clipped to [0, CSF_max] and forced
     equal to MF for primaries at or below ``binary_only_mass_max``
     (binaries only). CSF is also raised to at least MF so the Poisson
-    companion-count draw is well defined.
+    companion-count draw is well defined. Mass-ratio draws use a
+    single ``q_power`` (same as :class:`MultiplicityUnresolved`)
+    unless a subclass overrides :meth:`q_power_at_mass`.
 
     Parameters
     ----------
@@ -879,18 +914,23 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
 
 class MultiplicityLogistic(MultiplicityUnresolved):
     """
-    Multiplicity described by a logistic in log primary mass.
+    Generic helper: multiplicity as a logistic in log primary mass.
+
+    Use this for a C-infinity smooth MF/CSF that saturates at low
+    and high mass. :class:`MultiplicityUnresolvedOffner2023` is this
+    class with coefficients fitted to Offner et al. (2023) Table 1.
 
         f(M) = A + (B - A) / (1 + (M / M0)**(-k))
 
     As M → 0, f → A; as M → ∞, f → B. The same functional form is
-    used for MF and CSF with independent coefficients.
-    ``MultiplicityUnresolvedOffner2023`` uses this class with
-    coefficients fitted to Offner et al. (2023) Table 1.
+    used for MF and CSF with independent coefficients. The curve is
+    not a piecewise interpolation of survey knots.
 
     MF is clipped to [0, 1]. CSF is clipped to [0, CSF_max], raised
     to at least MF, and forced equal to MF for primaries at or below
-    ``binary_only_mass_max`` (binaries only).
+    ``binary_only_mass_max`` (binaries only). Mass-ratio draws use
+    a single ``q_power`` unless a subclass overrides
+    :meth:`q_power_at_mass`.
 
     Parameters
     ----------
@@ -1007,8 +1047,12 @@ class MultiplicityLogistic(MultiplicityUnresolved):
 
 class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     """
-    Unresolved multiplicity from Offner et al. 2023 Table 1, including
-    brown dwarfs.
+    Opt-in unresolved multiplicity from Offner et al. 2023 Table 1,
+    including brown dwarfs.
+
+    Scientifically preferred over the SPISEA v2.5 default, but **not**
+    the default (backwards compatibility). Companions only; for orbits
+    use :class:`MultiplicityResolvedOffner2023`.
 
     Citation: Offner, S. S. R., Moe, M., Kratter, K. M., Sadavoy, S. I.,
     Jensen, E. L. N., & Tobin, J. J. 2023, in Protostars and Planets VII,
@@ -1019,54 +1063,69 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     Table 1 data: Zenodo `10.5281/zenodo.6628915
     <https://doi.org/10.5281/zenodo.6628915>`_.
 
-    The multiplicity fraction and companion frequency are a
-    **4-parameter logistic in log-mass** fitted with equal weight to
-    the geom-mean MF/CF columns of Table 1::
+    Notes
+    -----
+    MF and CSF are a **4-parameter logistic in log-mass**, fitted with
+    equal weight to the geom-mean MF/CF columns of Table 1::
 
         f(M) = A + (B - A) / (1 + (M / M0)**(-k))
 
     with (A, B, M0, k) = (0.14, 0.99, 1.41, 1.25) for MF and
     (0.12, 2.35, 3.57, 0.96) for CSF/CF. The curve is C-infinity
-    smooth (not a broken power law), saturates at B ~ 1 for MF so
-    A/B stars stay near the Raghavan/MDS/Sana points, and has a
-    low-mass floor A ~ 0.14. Fontanive et al. (2018) 8 ± 6% sits
-    ~0.07 below the curve (~15%), which is consistent with the
-    Burgasser/Close BD points and within ~1–2σ of Fontanive. MF is
-    clipped to [0, 1]. Below 0.08 Msun, CSF = MF (binaries only;
-    THF is tiny).
+    smooth (not a broken power law and not interpolation of Table 1
+    knots), saturates at B ~ 1 for MF so A/B stars stay near the
+    Raghavan/MDS/Sana points, and has a low-mass floor A ~ 0.14.
+    Fontanive et al. (2018) 8 ± 6% sits ~0.07 below the curve (~15%),
+    consistent with the Burgasser/Close BD points and within ~1–2σ
+    of Fontanive. MF is clipped to [0, 1]. CSF is clipped to
+    [0, CSF_max], raised to at least MF, and forced equal to MF for
+    M ≤ 0.08 Msun (binaries only; companion count capped at 1).
 
-    Companion assignment vs Table 1
-    -------------------------------
-    Offner et al. 2023 (text above Table 1): BD primaries include all
-    BD companions; FGKM MS statistics include only MS companions with
-    M_comp > 0.075 Msun; OBA include MS companions above q > 0.1.
-    Table 1 stellar MF/CF therefore exclude BD companions. SPISEA still
-    draws companions down to ``q_min`` (default 0.01), so brown-dwarf
-    secondaries of stellar primaries are generated. The solar-type
-    BD-companion fraction is only ≈ 4% (BD desert at a < 0.5 au), so
-    the integrated stellar MF is affected very little. Do not interpret
+    **Companion assignment vs Table 1.** Offner et al. 2023 (text
+    above Table 1): BD primaries include all BD companions; FGKM MS
+    statistics include only MS companions with M_comp > 0.075 Msun;
+    OBA include MS companions above q > 0.1. Table 1 stellar MF/CF
+    therefore exclude BD companions. SPISEA still draws companions
+    down to ``q_min`` (default 0.01), so brown-dwarf secondaries of
+    stellar primaries are generated. The solar-type BD-companion
+    fraction is only ≈ 4% (BD desert at a < 0.5 au), so the
+    integrated stellar MF is affected very little. Do not interpret
     the simulated stellar-primary MF as a stellar-companion-only
     statistic.
 
-    Mass-ratio draws use an **error-weighted logistic in log-mass**
-    fitted to Table 1 γ_trunc (1–100 au)::
+    **Mass-ratio index.** :meth:`q_power_at_mass` is an error-weighted
+    logistic in log-mass fitted to Table 1 γ_trunc (1–100 au)::
 
         γ(M) = A + (B - A) / (1 + (M / M0)**(-k))
 
-    with (A, B, M0, k) = (6.6, −1.77, 0.0651, 0.629). BD companions
-    are still more equal-mass than solar-type companions. The
+    with (A, B, M0, k) = (6.6, −1.77, 0.0651, 0.629). Call
+    ``random_q(x, mass=...)``. Without ``mass``, ``random_q(x)``
+    keeps the historical stellar-only power law. BD companions are
+    still more equal-mass than solar-type companions. The
     err-weighted fit undershoots Fontanive 4.8 ± 2.2 (~3.3 at
-    0.033 Msun).
+    0.033 Msun); that is the fit, not a bug.
 
-    Characteristic separation μ(a) is a **smooth broken power law**
-    in log10(a) vs log10(M) (s = 0.1 dex, FGK-pulled), C-infinity
-    via a stable logcosh. σ(log10 a) is a 2-parameter logistic
-    pinned at 0.7 / 1.5. See :meth:`log_a_mean` and
-    :meth:`sigma_log_a`. Resolved draws use those as loc / scale
-    of a truncated lognormal.
+    **Characteristic separation.** :meth:`log_a_mean` / :meth:`a_mean`
+    are a smooth broken power law in log10 a vs log10 M (FGK-pulled,
+    s = 0.1 dex), C-infinity via a stable logcosh (not
+    ``log(cosh x)`` and not a hard ``where`` break)::
 
-    This class is opt-in; it does not change the SPISEA v2.5
-    :class:`MultiplicityUnresolved` default.
+        v = log10(M / Mp),   yp = log10(μp)
+        log10 a = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
+
+    with μp = 44.46 AU, Mp = 0.819 Msun, αL = 1.005, αR = −0.308,
+    s = 0.10. Linear-space a is clipped above 0.1 AU. The
+    implementation uses
+    ``logcosh x = |x| + log(1 + e**(-2|x|)) - log 2``.
+
+    **Separation scatter.** :meth:`sigma_log_a` is a 2-parameter
+    logistic pinned at 0.7 / 1.5::
+
+        σ(M) = 0.7 + 0.8 / (1 + (M / 0.354)**(-6.05))
+
+    i.e. (A, B, M0, k) = (0.7, 1.5, 0.354, 6.05), clipped to ≥ 0.1.
+    Resolved draws use these as loc / scale of a truncated lognormal
+    (see :class:`MultiplicityResolvedOffner2023`).
 
     Parameters
     ----------
@@ -1111,10 +1170,16 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
 
     def q_power_at_mass(self, mass):
         """
-        Mass-ratio power-law index γ(M), P(q) ∝ q^γ.
+        Mass-ratio power-law index γ(M), P(q) ∝ q^γ on [q_min, 1].
 
         Error-weighted logistic in log-mass fitted to Table 1
-        γ_trunc. Not an interpolation of the Table 1 knots.
+        γ_trunc (1–100 au). Not an interpolation of the Table 1
+        knots::
+
+            γ(M) = A + (B - A) / (1 + (M / M0)**(-k))
+
+        with (A, B, M0, k) = (6.6, −1.77, 0.0651, 0.629).
+        Undershoots Fontanive 4.8 ± 2.2 (~3.3 at 0.033 Msun).
 
         Parameters
         ----------
@@ -1135,8 +1200,15 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         """
         Characteristic log10(a/AU) from the smooth broken power law.
 
-        FGK-pulled, s = 0.1 dex, C-infinity (stable logcosh).
-        Linear-space a is clipped to 0.1 AU.
+        FGK-pulled, s = 0.1 dex, C-infinity (stable logcosh; not
+        ``log(cosh x)`` and not a hard ``where`` break)::
+
+            v = log10(M / Mp),   yp = log10(μp)
+            log10 a = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
+
+        with μp = 44.46 AU, Mp = 0.819 Msun, αL = 1.005,
+        αR = −0.308, s = 0.10. Linear-space a is clipped to 0.1 AU.
+        Uses ``logcosh x = |x| + log(1 + e**(-2|x|)) - log 2``.
 
         Parameters
         ----------
@@ -1186,7 +1258,11 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         """
         σ(log10 a) from a 2-parameter logistic in log-mass.
 
-        Floors/ceilings pinned at 0.7 / 1.5; clipped to ≥ 0.1.
+        Floors/ceilings pinned at 0.7 / 1.5; clipped to ≥ 0.1::
+
+            σ(M) = 0.7 + 0.8 / (1 + (M / 0.354)**(-6.05))
+
+        i.e. (A, B, M0, k) = (0.7, 1.5, 0.354, 6.05).
 
         Parameters
         ----------
@@ -1236,20 +1312,28 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
 class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
                                      _ResolvedOrbitalMixin):
     """
-    Resolved Offner et al. 2023 multiplicity: Table 1 MF/CF plus
-    mass-dependent separations.
+    Opt-in resolved Offner et al. 2023 multiplicity.
 
-    Separations are drawn from a truncated lognormal in log10(a/AU)
-    with loc = :meth:`log_a_mean` (smooth broken power law, s = 0.1
-    dex, FGK-pulled) and scale = :meth:`sigma_log_a` (2-parameter
-    logistic pinned at 0.7 / 1.5). Brown-dwarf binaries peak near a
-    few AU. Truncation is 0.01–2000 AU, same as
+    Same MF/CSF/q as :class:`MultiplicityUnresolvedOffner2023`
+    (Table 1 logistic MF/CSF, error-weighted γ logistic, BD
+    binaries only, Table 1 companion-cut caveat). Adds
+    mass-dependent separations. Scientifically preferred over
+    :class:`MultiplicityResolvedDK` in the brown-dwarf regime, but
+    **not** the default.
+
+    Notes
+    -----
+    :meth:`log_semimajoraxis` draws log10(a/AU) from a truncated
+    lognormal with ``loc = log_a_mean(mass)`` (smooth broken power
+    law, s = 0.1 dex, FGK-pulled) and
+    ``scale = sigma_log_a(mass)`` (2-parameter logistic pinned at
+    0.7 / 1.5). Brown-dwarf binaries peak near a few AU
+    (μ(0.033) ≈ 2 AU). Truncation is 0.01–2000 AU, same limits as
     :class:`MultiplicityResolvedDK`.
 
-    Eccentricity and Keplerian angles follow Duchêne & Kraus (2013),
-    same as :class:`MultiplicityResolvedDK`.
-
-    Opt-in; does not replace :class:`MultiplicityResolvedDK`.
+    Eccentricity and Keplerian angles still follow Duchêne & Kraus
+    (2013): f(e) = 2e, random inclination and angles. Same mixin as
+    :class:`MultiplicityResolvedDK`.
 
     Parameters
     ----------
@@ -1281,6 +1365,11 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
     def log_semimajoraxis(self, mass):
         """
         Draw log10(a/AU) from a mass-dependent truncated lognormal.
+
+        Uses ``loc = log_a_mean(mass)`` and
+        ``scale = sigma_log_a(mass)``. Truncated so a is between
+        0.01 AU and 2000 AU (same limits as
+        :class:`MultiplicityResolvedDK`).
 
         Parameters
         ----------
