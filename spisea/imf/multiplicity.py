@@ -610,16 +610,22 @@ class MultiplicityResolvedDK(MultiplicityUnresolved, _ResolvedOrbitalMixin):
     ----------
     a_amp : float, optional
         Amplitude of the broken power law for μ(a), in AU.
+        Default 379.79953034.
     a_break : float, optional
         Break mass of the broken power law, in solar masses (Msun).
+        Default 4.90441533.
     a_slope1 : float, optional
         Power-law index below ``a_break``, dimensionless.
+        Default −1.80171539.
     a_slope2 : float, optional
         Power-law index above ``a_break``, dimensionless.
+        Default 4.23325571.
     a_std_slope : float, optional
         Slope of σ(log10 a) vs log10(M / Msun), in dex per dex.
+        Default 1.19713084.
     a_std_intercept : float, optional
         Intercept of σ(log10 a) vs log10(M / Msun), in dex.
+        Default 1.28974264.
     **kwargs
         Passed to :class:`MultiplicityUnresolved` (MF/CSF/q).
     """
@@ -780,7 +786,10 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
     power law or a logistic. Offner et al. 2023 does **not** use
     this class; it uses :class:`MultiplicityLogistic`.
 
-    On each mass segment i, with edges ``mass_limits[i] <= M < mass_limits[i+1]``::
+    Notes
+    -----
+    On each mass segment i, with edges
+    ``mass_limits[i] <= M < mass_limits[i+1]``::
 
         MF(M)  = MF_amp[i]  * M ** MF_power[i]
         CSF(M) = CSF_amp[i] * M ** CSF_power[i]
@@ -791,6 +800,8 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
     companion-count draw is well defined. Mass-ratio draws use a
     single ``q_power`` (same as :class:`MultiplicityUnresolved`)
     unless a subclass overrides :meth:`q_power_at_mass`.
+    There is no scalar-only brown-dwarf staircase; each segment is
+    evaluated for both scalar and array mass.
 
     Parameters
     ----------
@@ -920,17 +931,19 @@ class MultiplicityLogistic(MultiplicityUnresolved):
     and high mass. :class:`MultiplicityUnresolvedOffner2023` is this
     class with coefficients fitted to Offner et al. (2023) Table 1.
 
+    Notes
+    -----
+    The same 4-parameter logistic is used for MF and CSF with
+    independent coefficients::
+
         f(M) = A + (B - A) / (1 + (M / M0)**(-k))
 
-    As M → 0, f → A; as M → ∞, f → B. The same functional form is
-    used for MF and CSF with independent coefficients. The curve is
-    not a piecewise interpolation of survey knots.
-
-    MF is clipped to [0, 1]. CSF is clipped to [0, CSF_max], raised
-    to at least MF, and forced equal to MF for primaries at or below
-    ``binary_only_mass_max`` (binaries only). Mass-ratio draws use
-    a single ``q_power`` unless a subclass overrides
-    :meth:`q_power_at_mass`.
+    As M → 0, f → A; as M → ∞, f → B. The curve is not a piecewise
+    interpolation of survey knots. MF is clipped to [0, 1]. CSF is
+    clipped to [0, CSF_max], raised to at least MF, and forced equal
+    to MF for primaries at or below ``binary_only_mass_max``
+    (binaries only). Mass-ratio draws use a single ``q_power``
+    unless a subclass overrides :meth:`q_power_at_mass`.
 
     Parameters
     ----------
