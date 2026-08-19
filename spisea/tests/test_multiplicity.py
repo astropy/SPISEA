@@ -485,10 +485,9 @@ def test_offner2023_bd_separations_peak_few_au():
     assert med_a_s > med_a
 
 
-def test_offner2023_alias_and_resolved_methods():
-    """Public names and resolved orbital methods exist."""
-    assert multiplicity.MultiplicityOffner2023 is \
-        multiplicity.MultiplicityUnresolvedOffner2023
+def test_offner2023_resolved_methods():
+    """Resolved orbital methods exist; no unresolved/resolved alias."""
+    assert not hasattr(multiplicity, 'MultiplicityOffner2023')
     resolved = multiplicity.MultiplicityResolvedOffner2023()
     assert hasattr(resolved, 'log_semimajoraxis')
     assert hasattr(resolved, 'log_a_mean')

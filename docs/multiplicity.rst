@@ -91,8 +91,6 @@ Unresolved (companions, no orbits)::
   from spisea import synthetic
 
   multi = multiplicity.MultiplicityUnresolvedOffner2023()
-  # alias:
-  # multi = multiplicity.MultiplicityOffner2023()
   imf_obj = imf.Kroupa_2001(multiplicity=multi)
   cluster = synthetic.ResolvedCluster(iso, imf_obj, Mcl)
 

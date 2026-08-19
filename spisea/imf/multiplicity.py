@@ -1308,9 +1308,6 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
 
         return log_a
 
-# Convenience alias; unresolved Table 1 model is the usual opt-in object.
-MultiplicityOffner2023 = MultiplicityUnresolvedOffner2023
-
 
 def _two_point_powerlaw(mass_1, y_1, mass_2, y_2):
     """
