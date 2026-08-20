@@ -132,13 +132,13 @@ def test_companion_star_fraction():
     # csf2_3 = mu1.companion_star_fraction(0.1)
     # np.testing.assert_almost_equal(csf2_3, 0.159, decimal=2)
 
-    # Test brown dwarf csf
+    # BD CSF follows the stellar power law (no CSF=MF mass cut).
     csf_bd1 = mu1.companion_star_fraction(0.07)
     csf_bd2 = mu1.companion_star_fraction(0.04)
     csf_bd3 = mu1.companion_star_fraction(0.01)
-    assert np.isclose(csf_bd1, 0.16, atol=0.01)
-    assert np.isclose(csf_bd2, 0.08, atol=0.01)
-    assert np.isclose(csf_bd3, 0.0, atol=1e-6)
+    np.testing.assert_almost_equal(csf_bd1, 0.50 * 0.07 ** 0.45, decimal=4)
+    np.testing.assert_almost_equal(csf_bd2, 0.50 * 0.04 ** 0.45, decimal=4)
+    np.testing.assert_almost_equal(csf_bd3, 0.50 * 0.01 ** 0.45, decimal=4)
 
 
 def test_resolvedmult():
@@ -282,8 +282,7 @@ def test_piecewise_powerlaw_api():
     mp = multiplicity.MultiplicityPiecewisePowerLaw(
         mass_limits,
         MF_amps=[0.4, 0.4], MF_powers=[0.0, 1.0],
-        CSF_amps=[0.4, 0.5], CSF_powers=[0.0, 0.5],
-        binary_only_mass_max=0.05)
+        CSF_amps=[0.4, 0.5], CSF_powers=[0.0, 0.5])
     assert mp.multiplicity_fraction(0.2) == 0.4
     assert mp.multiplicity_fraction(1.0) == 0.4
     np.testing.assert_almost_equal(mp.multiplicity_fraction(10.0), 1.0)
@@ -293,19 +292,19 @@ def test_piecewise_powerlaw_api():
 
 
 def test_logistic_api():
-    """Custom logistic MF/CSF clips, vectorizes, and sets BD CSF = MF."""
+    """Custom logistic MF/CSF clips, vectorizes, and keeps CSF >= MF."""
     ml = multiplicity.MultiplicityLogistic(
         MF_A=0.1, MF_B=1.5, MF_M0=1.0, MF_k=2.0,
-        CSF_A=0.05, CSF_B=4.0, CSF_M0=2.0, CSF_k=1.0,
-        CSF_max=2.0, binary_only_mass_max=0.08)
+        CSF_A=0.2, CSF_B=4.0, CSF_M0=2.0, CSF_k=1.0,
+        CSF_max=2.0)
     # Low-mass asymptote A for a very low-mass primary (not a missing mass)
     np.testing.assert_almost_equal(ml.multiplicity_fraction(1e-8), 0.1, decimal=4)
     # High-mass MF saturates at B then clips to 1
     np.testing.assert_almost_equal(ml.multiplicity_fraction(1e6), 1.0)
     # High-mass CSF clips to CSF_max
     np.testing.assert_almost_equal(ml.companion_star_fraction(1e6), 2.0)
-    # BD CSF = MF
-    assert ml.companion_star_fraction(0.05) == ml.multiplicity_fraction(0.05)
+    # No CSF=MF mass cut: low-mass CSF can exceed MF.
+    assert ml.companion_star_fraction(0.05) > ml.multiplicity_fraction(0.05)
     masses = np.array([0.05, 1.0, 100.0])
     mf = ml.multiplicity_fraction(masses)
     np.testing.assert_allclose(mf, [ml.multiplicity_fraction(m) for m in masses])
@@ -328,6 +327,30 @@ def test_offner2023_logistic_coefficients():
     np.testing.assert_allclose(multi.CSF_B, 2.35)
     np.testing.assert_allclose(multi.CSF_M0, 3.57)
     np.testing.assert_allclose(multi.CSF_k, 0.96)
+    np.testing.assert_allclose(multi.q_A, 6.6)
+    np.testing.assert_allclose(multi.q_B, -1.77)
+    np.testing.assert_allclose(multi.q_M0, 0.0651)
+    np.testing.assert_allclose(multi.q_k, 0.629)
+    np.testing.assert_allclose(multi.a_mup, 44.46)
+    np.testing.assert_allclose(multi.a_mp, 0.819)
+    np.testing.assert_allclose(multi.a_alphaL, 1.005)
+    np.testing.assert_allclose(multi.a_alphaR, -0.308)
+    np.testing.assert_allclose(multi.a_s, 0.10)
+    np.testing.assert_allclose(multi.a_min, 0.1)
+    np.testing.assert_allclose(multi.sig_A, 0.7)
+    np.testing.assert_allclose(multi.sig_B, 1.5)
+    np.testing.assert_allclose(multi.sig_M0, 0.354)
+    np.testing.assert_allclose(multi.sig_k, 6.05)
+    assert not hasattr(multiplicity, 'FONTANIVE2018_BD_Q_POWER')
+    assert not any(n.startswith('OFFNER2023_') for n in dir(multiplicity))
+    resolved = multiplicity.MultiplicityResolvedOffner2023()
+    np.testing.assert_allclose(resolved.MF_A, 0.14)
+    np.testing.assert_allclose(resolved.sig_k, 6.05)
+    import inspect
+    res_sig = inspect.signature(
+        multiplicity.MultiplicityResolvedOffner2023.__init__)
+    assert res_sig.parameters['MF_A'].default == 0.14
+    assert res_sig.parameters['sig_k'].default == 6.05
 
 
 def test_offner2023_mf_smooth():
@@ -345,7 +368,8 @@ def test_offner2023_mf_smooth():
         np.testing.assert_allclose(d_left, d_right, atol=1e-3, rtol=0)
     for m in (0.04, 0.3, 1.0, 10.0):
         expected = multiplicity._logistic_in_logm(
-            m, 0.14, 0.99, 1.41, 1.25, clip_min=0.0, clip_max=1.0)
+            m, multi.MF_A, multi.MF_B, multi.MF_M0, multi.MF_k,
+            clip_min=0.0, clip_max=1.0)
         np.testing.assert_allclose(multi.multiplicity_fraction(m), expected)
 
 
@@ -369,27 +393,21 @@ def test_offner2023_table1_mf():
 
 
 def test_offner2023_table1_csf():
-    """CSF matches Table 1 CF for stellar primaries; CSF = MF for BDs."""
+    """CSF tracks Table 1 CF; CSF >= MF at all masses (no BD CSF=MF cut)."""
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
     for row in _OFFNER_TABLE1:
         name, mlo, mhi, mf_tab, mf_err, cf_tab = row
         m = _table1_mgeom(row)
         csf = multi.companion_star_fraction(m)
         mf = multi.multiplicity_fraction(m)
-        if m <= multiplicity.H_BURNING_MASS:
-            assert np.isclose(csf, mf, atol=1e-12), \
-                '{0}: BD CSF should equal MF'.format(name)
-        elif mlo >= 1.6:
+        if mlo >= 1.6:
             # Logistic CF tracks A/B; Moe & Kratter residual ~0.1 is ok
             tol = max(0.12, 0.12 * cf_tab)
-            assert abs(csf - cf_tab) <= tol, \
-                '{0}: CSF({1:.3f})={2:.3f} vs Table 1 CF {3:.2f}'.format(
-                    name, m, csf, cf_tab)
         else:
             tol = max(0.08, 0.25 * cf_tab)
-            assert abs(csf - cf_tab) <= tol, \
-                '{0}: CSF({1:.3f})={2:.3f} vs Table 1 CF {3:.2f}'.format(
-                    name, m, csf, cf_tab)
+        assert abs(csf - cf_tab) <= tol, \
+            '{0}: CSF({1:.3f})={2:.3f} vs Table 1 CF {3:.2f}'.format(
+                name, m, csf, cf_tab)
         assert csf >= mf - 1e-12
         assert csf <= multi.CSF_max + 1e-12
 
@@ -405,25 +423,31 @@ def test_offner2023_array_vs_scalar():
         np.testing.assert_allclose(csf_arr[i], multi.companion_star_fraction(float(m)))
 
 
-def test_offner2023_bd_binaries_only():
-    """BD primaries have CSF = MF and companion counts of 0 or 1."""
+def test_higher_order_multiples_at_all_masses():
+    """BD and stellar primaries can have n_comp > 1 when CSF/MF allows."""
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
     rng = np.random.default_rng(123)
-    masses = np.array([0.02, 0.04, 0.07, 0.08])
-    mf = multi.multiplicity_fraction(masses)
-    csf = multi.companion_star_fraction(masses)
-    np.testing.assert_allclose(csf, mf)
-    # Force multiples so we test the count draw, not the MF coin flip.
-    n_comp = multi.draw_n_companions(masses, csf, mf, rng)
-    assert np.all(n_comp <= 1)
-    assert np.all(n_comp >= 1)
+    for m in (0.04, 1.0):
+        masses = np.full(4000, m)
+        mf = multi.multiplicity_fraction(masses)
+        csf = np.full(len(masses), 2.5)
+        n_comp = multi.draw_n_companions(masses, csf, mf, rng)
+        assert np.any(n_comp > 1)
+        assert np.all(n_comp >= 1)
 
-    # Full companion-mass assignment: never more than one companion column
-    is_mult = np.ones(len(masses), dtype=bool)
-    comp, sys_mass, is_mult_out = multi.draw_companion_masses(
-        masses, is_mult, csf, mf, rng, mass_min=0.01)
-    assert comp.shape[1] == 1
-    assert np.all(np.sum(~comp.mask, axis=1) <= 1)
+
+def test_companion_max_caps_all_masses():
+    """companion_max=True clips n_comp at CSF_max for BD and stellar."""
+    multi = multiplicity.MultiplicityUnresolvedOffner2023(
+        companion_max=True, CSF_max=1)
+    rng = np.random.default_rng(0)
+    for m in (0.04, 1.0):
+        masses = np.full(2000, m)
+        mf = multi.multiplicity_fraction(masses)
+        csf = np.full(len(masses), 3.0)
+        n_comp = multi.draw_n_companions(masses, csf, mf, rng)
+        assert np.all(n_comp <= 1)
+        assert np.all(n_comp >= 1)
 
 
 def test_offner2023_q_more_equal_mass_for_bds():
@@ -447,15 +471,17 @@ def test_offner2023_q_sigma_a_closed_form():
         np.testing.assert_allclose(
             multi.q_power_at_mass(m),
             multiplicity._logistic_in_logm(
-                m, 6.6, -1.77, 0.0651, 0.629))
+                m, multi.q_A, multi.q_B, multi.q_M0, multi.q_k))
         np.testing.assert_allclose(
             multi.sigma_log_a(m),
             multiplicity._logistic_in_logm(
-                m, 0.7, 1.5, 0.354, 6.05, clip_min=0.1))
+                m, multi.sig_A, multi.sig_B, multi.sig_M0, multi.sig_k,
+                clip_min=0.1))
         np.testing.assert_allclose(
             multi.log_a_mean(m),
             multiplicity._smooth_broken_loglog(
-                m, 44.46, 0.819, 1.005, -0.308, 0.10, a_min=0.1))
+                m, multi.a_mup, multi.a_mp, multi.a_alphaL, multi.a_alphaR,
+                multi.a_s, a_min=multi.a_min))
     # Array vs scalar
     g_arr = multi.q_power_at_mass(masses)
     sig_arr = multi.sigma_log_a(masses)
@@ -467,32 +493,36 @@ def test_offner2023_q_sigma_a_closed_form():
     # Old L/early-T interpolation knot was 2.5; logistic is not that.
     g_knot = multi.q_power_at_mass(0.065)
     np.testing.assert_allclose(
-        g_knot, multiplicity._logistic_in_logm(0.065, 6.6, -1.77, 0.0651, 0.629))
+        g_knot, multiplicity._logistic_in_logm(
+            0.065, multi.q_A, multi.q_B, multi.q_M0, multi.q_k))
     assert abs(g_knot - 2.5) > 0.05
 
 
 def test_offner2023_bd_separations_peak_few_au():
     """BD lognormal separations peak at a few AU (μ(0.033)≈2.1 au)."""
     multi = multiplicity.MultiplicityResolvedOffner2023()
-    np.random.seed(0)
-    log_a = multi.log_semimajoraxis(np.full(5000, 0.04))
+    rng = np.random.default_rng(0)
+    log_a = multi.log_semimajoraxis(np.full(5000, 0.04), rng=rng)
     med_a = 10 ** np.median(log_a)
     assert 1.5 < med_a < 8.0, 'BD median a = {0:.2f} AU'.format(med_a)
     # Solar-type should be much wider (smooth-broken μ ~ 44 au)
-    log_a_s = multi.log_semimajoraxis(np.full(5000, 1.0))
+    log_a_s = multi.log_semimajoraxis(np.full(5000, 1.0), rng=rng)
     med_a_s = 10 ** np.median(log_a_s)
     assert med_a_s > 10.0
     assert med_a_s > med_a
 
 
-def test_offner2023_alias_and_resolved_methods():
-    """Public names and resolved orbital methods exist."""
-    assert multiplicity.MultiplicityOffner2023 is \
-        multiplicity.MultiplicityUnresolvedOffner2023
+def test_offner2023_resolved_methods():
+    """Resolved orbital methods exist; no unresolved/resolved alias."""
+    assert not hasattr(multiplicity, 'MultiplicityOffner2023')
     resolved = multiplicity.MultiplicityResolvedOffner2023()
     assert hasattr(resolved, 'log_semimajoraxis')
     assert hasattr(resolved, 'log_a_mean')
     assert hasattr(resolved, 'sigma_log_a')
+    np.testing.assert_allclose(
+        resolved.sep_sig_mass,
+        [np.sqrt(0.075 * 0.15), np.sqrt(0.3 * 0.6), np.sqrt(0.75 * 1.25)])
+    np.testing.assert_allclose(resolved.sep_sig, [0.7, 1.3, 1.5])
     e = resolved.random_e(np.array([0.0, 0.25, 1.0]))
     np.testing.assert_allclose(e, [0.0, 0.5, 1.0])
 
@@ -507,32 +537,101 @@ def test_lu2013_defaults_unchanged():
     np.testing.assert_almost_equal(mu.multiplicity_fraction(1.0), 0.44, decimal=2)
     np.testing.assert_almost_equal(mu.multiplicity_fraction(10.0), 1.0, decimal=2)
     np.testing.assert_almost_equal(mu.multiplicity_fraction(0.1), 0.136, decimal=2)
+    assert mu.bd_q_power == 6.1
+    assert np.isclose(mu.q_power_at_mass(0.04), 6.1)
+    assert np.isclose(mu.q_power_at_mass(1.0), -0.4)
     # Scalar BD overrides (SPISEA v2.5 / Fontanive path)
     assert np.isclose(mu.multiplicity_fraction(0.07), 0.16, atol=0.01)
     assert np.isclose(mu.multiplicity_fraction(0.04), 0.08, atol=0.01)
     assert np.isclose(mu.multiplicity_fraction(0.01), 0.0, atol=1e-6)
 
 
+def test_resolveddk_log_a_mean_and_sigma():
+    """
+    MultiplicityResolvedDK.a_mean / log_a_mean / sigma_log_a match the
+    Duchêne & Kraus + Fontanive BD interp + sigmoid that
+    log_semimajoraxis used to inline, and the draw uses those methods.
+    """
+    import astropy.modeling
+    import inspect
+
+    dk = multiplicity.MultiplicityResolvedDK()
+    masses = np.array([0.01, 0.04, 0.08, 0.3, 1.0, 5.0, 50.0])
+
+    def expected_log_a_mean(mass):
+        mass = np.atleast_1d(np.asarray(mass, dtype=float))
+        logm = np.log10(mass)
+        a_mean_func = astropy.modeling.powerlaws.BrokenPowerLaw1D(
+            amplitude=dk.a_amp, x_break=dk.a_break,
+            alpha_1=dk.a_slope1, alpha_2=dk.a_slope2)
+        log_a_mean_star = np.log10(a_mean_func(mass))
+        log_a_mean_bd = np.interp(
+            logm,
+            [np.log10(0.01), np.log10(0.08)],
+            [np.log10(2.5), np.log10(8.0)])
+        w = 1.0 / (1.0 + np.exp(-(logm - np.log10(0.08)) / 0.15))
+        return (1 - w) * log_a_mean_bd + w * log_a_mean_star
+
+    def expected_sigma(mass):
+        mass = np.atleast_1d(np.asarray(mass, dtype=float))
+        logm = np.log10(mass)
+        log_a_std_func = astropy.modeling.models.Linear1D(
+            slope=dk.a_std_slope, intercept=dk.a_std_intercept)
+        log_a_std_star = log_a_std_func(logm)
+        log_a_std_star[mass >= 2.9] = log_a_std_func(np.log10(2.9))
+        log_a_std_star = np.clip(log_a_std_star, 0.1, None)
+        log_a_std_bd = np.interp(
+            logm,
+            [np.log10(0.01), np.log10(0.08)],
+            [0.25, 0.5])
+        w = 1.0 / (1.0 + np.exp(-(logm - np.log10(0.08)) / 0.15))
+        return (1 - w) * log_a_std_bd + w * log_a_std_star
+
+    np.testing.assert_allclose(dk.log_a_mean(masses), expected_log_a_mean(masses))
+    np.testing.assert_allclose(dk.sigma_log_a(masses), expected_sigma(masses))
+    np.testing.assert_allclose(dk.a_mean(masses), 10.0 ** dk.log_a_mean(masses))
+
+    for m in masses:
+        log_a = dk.log_a_mean(float(m))
+        sig = dk.sigma_log_a(float(m))
+        a_mean = dk.a_mean(float(m))
+        assert isinstance(log_a, float)
+        assert isinstance(sig, float)
+        assert isinstance(a_mean, float)
+        np.testing.assert_allclose(log_a, expected_log_a_mean(m)[0])
+        np.testing.assert_allclose(sig, expected_sigma(m)[0])
+        np.testing.assert_allclose(a_mean, 10.0 ** log_a)
+
+    src = inspect.getsource(dk.log_semimajoraxis)
+    assert 'self.log_a_mean' in src
+    assert 'self.sigma_log_a' in src
+    assert 'BrokenPowerLaw1D' not in src
+
+    log_a_draw = dk.log_semimajoraxis(
+        np.full(4000, 1.0), rng=np.random.default_rng(0))
+    assert np.all(log_a_draw >= np.log10(0.01) - 1e-12)
+    assert np.all(log_a_draw <= np.log10(2000) + 1e-12)
+    np.testing.assert_allclose(
+        np.median(log_a_draw), dk.log_a_mean(1.0), atol=0.15)
+
+
 def test_offner_generate_cluster_companions():
-    """IMF cluster generation with Offner multiplicity produces BD binaries only."""
+    """IMF cluster generation with Offner multiplicity produces companions."""
     imf_multi = multiplicity.MultiplicityUnresolvedOffner2023()
     mass_limits = np.array([0.01, 0.08, 0.5, 120.0])
     powers = np.array([-0.3, -1.3, -2.3])
     my_imf = imf.IMF_broken_powerlaw(mass_limits, powers, imf_multi)
     my_imf.rng = np.random.default_rng(42)
     mass, is_multi, comp_mass, sys_mass = my_imf.generate_cluster(500.0)
-    bd = mass <= 0.08
-    n_comp = np.sum(~comp_mass.mask, axis=1)
-    assert np.all(n_comp[bd] <= 1)
     assert np.any(is_multi)
     assert np.abs(500.0 - sys_mass.sum()) < 500.0 * 0.05
 
 
 def test_calc_multi_uses_multiplicity_q_and_counts():
     """
-    IMF.calc_multi must not hardcode Fontanive gamma=6.1 or the BD
-    companion cap; those policies live on the multiplicity object so
-    Offner γ_trunc (~2–5 for BDs) actually applies.
+    IMF.calc_multi must not hardcode Fontanive gamma=6.1; q policy
+    lives on the multiplicity object so Offner γ_trunc (~2–5 for
+    BDs) actually applies.
     """
     import inspect
     from spisea.imf import imf as imf_mod
@@ -547,6 +646,9 @@ def test_calc_multi_uses_multiplicity_q_and_counts():
     assert "hasattr(multi_props, 'log_semimajoraxis')" in syn_src
     assert "hasattr(multi_props, 'random_e')" in syn_src
     assert "hasattr(multi_props, 'random_keplarian_parameters')" in syn_src
+    assert 'log_semimajoraxis(prim_mass, rng=self.rng)' in syn_src
+    assert 'random_keplarian_parameters(' in syn_src
+    assert 'rng=self.rng)' in syn_src
 
     offner = multiplicity.MultiplicityUnresolvedOffner2023()
     lu = multiplicity.MultiplicityUnresolved()
@@ -579,4 +681,89 @@ def test_offner2023_mf_is_vectorized():
     # Array path is not the SPISEA v2.5 stellar power law 0.44 * M**0.51
     lu_pl = 0.44 * masses ** 0.51
     assert not np.allclose(mf, np.clip(lu_pl, 0, 1), atol=0.02)
+
+
+def _same_seed_rngs(seed=11):
+    return np.random.default_rng(seed), np.random.default_rng(seed)
+
+
+def test_random_companion_count_same_seed():
+    """Same rng seed reproduces random_companion_count."""
+    masses = np.full(40, 1.0)
+    for cls in (multiplicity.MultiplicityUnresolved,
+                multiplicity.MultiplicityUnresolvedOffner2023):
+        multi = cls()
+        mf = multi.multiplicity_fraction(masses)
+        csf = multi.companion_star_fraction(masses)
+        rng1, rng2 = _same_seed_rngs()
+        n1 = multi.random_companion_count(
+            None, csf, mf, mass=masses, rng=rng1)
+        n2 = multi.random_companion_count(
+            None, csf, mf, mass=masses, rng=rng2)
+        np.testing.assert_array_equal(n1, n2)
+
+
+def test_draw_n_companions_same_seed():
+    """Same rng seed reproduces draw_n_companions."""
+    masses = np.array([0.04, 0.3, 1.0, 5.0] * 10)
+    for cls in (multiplicity.MultiplicityUnresolved,
+                multiplicity.MultiplicityUnresolvedOffner2023):
+        multi = cls()
+        mf = multi.multiplicity_fraction(masses)
+        csf = multi.companion_star_fraction(masses)
+        rng1, rng2 = _same_seed_rngs()
+        n1 = multi.draw_n_companions(masses, csf, mf, rng1)
+        n2 = multi.draw_n_companions(masses, csf, mf, rng2)
+        np.testing.assert_array_equal(n1, n2)
+
+
+def test_assign_companions_same_seed():
+    """Same rng seed reproduces draw_companion_masses assignment."""
+    masses = np.array([0.04, 0.3, 1.0, 2.0, 5.0] * 8)
+    is_mult = np.ones(len(masses), dtype=bool)
+    for cls in (multiplicity.MultiplicityUnresolved,
+                multiplicity.MultiplicityUnresolvedOffner2023):
+        multi = cls()
+        mf = multi.multiplicity_fraction(masses)
+        csf = multi.companion_star_fraction(masses)
+        rng1, rng2 = _same_seed_rngs()
+        c1, s1, m1 = multi.draw_companion_masses(
+            masses, is_mult, csf, mf, rng1, mass_min=0.01)
+        c2, s2, m2 = multi.draw_companion_masses(
+            masses, is_mult, csf, mf, rng2, mass_min=0.01)
+        np.testing.assert_array_equal(np.ma.getdata(c1), np.ma.getdata(c2))
+        np.testing.assert_array_equal(np.ma.getmaskarray(c1),
+                                     np.ma.getmaskarray(c2))
+        np.testing.assert_array_equal(s1, s2)
+        np.testing.assert_array_equal(m1, m2)
+
+
+def test_log_semimajoraxis_same_seed():
+    """Same rng seed reproduces log_semimajoraxis."""
+    masses = np.full(30, 1.0)
+    for cls in (multiplicity.MultiplicityResolvedDK,
+                multiplicity.MultiplicityResolvedOffner2023):
+        multi = cls()
+        rng1, rng2 = _same_seed_rngs()
+        a1 = multi.log_semimajoraxis(masses, rng=rng1)
+        a2 = multi.log_semimajoraxis(masses, rng=rng2)
+        np.testing.assert_array_equal(a1, a2)
+
+
+def test_random_keplarian_parameters_same_seed():
+    """Same rng seed reproduces random_keplarian_parameters."""
+    n = 30
+    for cls in (multiplicity.MultiplicityResolvedDK,
+                multiplicity.MultiplicityResolvedOffner2023):
+        multi = cls()
+        rng1, rng2 = _same_seed_rngs()
+        x1, y1, z1 = rng1.random(n), rng1.random(n), rng1.random(n)
+        i1, O1, o1 = multi.random_keplarian_parameters(
+            x1, y1, z1, rng=rng1)
+        x2, y2, z2 = rng2.random(n), rng2.random(n), rng2.random(n)
+        i2, O2, o2 = multi.random_keplarian_parameters(
+            x2, y2, z2, rng=rng2)
+        np.testing.assert_array_equal(i1, i2)
+        np.testing.assert_array_equal(O1, O2)
+        np.testing.assert_array_equal(o1, o2)
 

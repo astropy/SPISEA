@@ -34,8 +34,8 @@ def test_generate_cluster():
 def test_generate_cluster_offner2023():
     """
     generate_cluster with Offner et al. 2023 multiplicity: vectorized MF,
-    BD primaries have at most one companion, and Offner q (not Fontanive
-    gamma=6.1) is used for BD companion masses.
+    and Offner q (not Fontanive gamma=6.1) is used for BD companion
+    masses.
     """
     imf_multi = multiplicity.MultiplicityUnresolvedOffner2023()
     massLimits = np.array([0.01, 0.05, 0.22, 0.55, 8, 120])
@@ -47,9 +47,7 @@ def test_generate_cluster_offner2023():
     mass, isMulti, compMass, sysMass = my_imf.generate_cluster(M_cl)
 
     assert np.abs(M_cl - sysMass.sum()) < M_cl * 0.05
-    n_comp = np.sum(~compMass.mask, axis=1)
     bd = mass <= 0.08
-    assert np.all(n_comp[bd] <= 1)
     assert np.any(isMulti)
 
     # BD companions should be more equal-mass than SPISEA v2.5 stellar q_power=-0.4
