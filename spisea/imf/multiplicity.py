@@ -238,7 +238,7 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass must be positive, in solar masses (Msun).
+            Primary mass n solar masses (Msun).
 
         Returns
         -------
@@ -275,7 +275,7 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass must be positive, in solar masses (Msun).
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
@@ -312,7 +312,7 @@ class MultiplicityUnresolved(object):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass must be positive, in solar masses (Msun).
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
@@ -342,7 +342,7 @@ class MultiplicityUnresolved(object):
             sample for q.
 
         mass : float or array_like, optional
-            Primary mass must be positive, in solar masses (Msun). If given, the
+            Primary mass in solar masses (Msun). If given, the
             power-law index is ``q_power_at_mass(mass)`` (brown-dwarf
             vs stellar for the SPISEA v2.5 default; mass-dependent for
             Offner et al. 2023). If omitted, ``self.q_pow`` is used
@@ -384,7 +384,7 @@ class MultiplicityUnresolved(object):
         MF : float or array_like
             Multiplicity fraction, dimensionless, in [0, 1].
         mass : float or array_like, optional
-            Primary mass must be positive, in solar masses (Msun). If given, primaries
+            Primary mass in solar masses (Msun). If given, primaries
             at or below ``binary_only_mass_max`` are limited to one
             companion. Cluster generation always passes mass so
             subclasses can override the BD companion-count policy here.
@@ -752,7 +752,7 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass must be positive, in solar masses (Msun).
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
@@ -774,7 +774,7 @@ class MultiplicityPiecewisePowerLaw(MultiplicityUnresolved):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass must be positive, in solar masses (Msun).
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
@@ -871,7 +871,7 @@ class MultiplicityLogistic(MultiplicityUnresolved):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass must be positive, in solar masses (Msun).
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
@@ -894,7 +894,7 @@ class MultiplicityLogistic(MultiplicityUnresolved):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass must be positive, in solar masses (Msun).
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
@@ -929,7 +929,7 @@ class MultiplicityLogistic(MultiplicityUnresolved):
 
 class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     """
-    Unresolved multiplicity from Offner et al. 2023 Table 1, including
+    Unresolved multiplicity derived from data in Offner et al. 2023 Table 1, including
     brown dwarfs.
 
     Citation: Offner, S. S. R., Moe, M., Kratter, K. M., Sadavoy, S. I.,
@@ -1041,7 +1041,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass must be positive, in solar masses (Msun).
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
@@ -1063,7 +1063,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass must be positive, in solar masses (Msun).
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
@@ -1086,7 +1086,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass must be positive, in solar masses (Msun).
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
@@ -1113,7 +1113,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         Parameters
         ----------
         mass : float or array_like
-            Primary mass must be positive, in solar masses (Msun).
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
@@ -1207,7 +1207,7 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
         Parameters
         ----------
         mass : float or array_like
-            Primary mass must be positive, in solar masses (Msun).
+            Primary mass in solar masses (Msun).
 
         Returns
         -------
@@ -1273,7 +1273,7 @@ def _piecewise_powerlaw(mass, mass_limits, amps, powers, clip_min=None,
     Parameters
     ----------
     mass : float or array_like
-        Primary mass must be positive, in solar masses (Msun).
+        Primary mass in solar masses (Msun).
     mass_limits : array_like
         Segment edges in solar masses (Msun), length N+1, strictly
         increasing.
@@ -1335,7 +1335,7 @@ def _logistic_in_logm(mass, A, B, M0, k, clip_min=None, clip_max=None):
     Parameters
     ----------
     mass : float or array_like
-        Primary mass must be positive, in solar masses (Msun).
+        Primary mass in solar masses (Msun).
     A, B : float
         Low-mass and high-mass asymptotes, in the same units as y.
         Dimensionless for MF and γ; mean companion count for CSF;
@@ -1414,7 +1414,7 @@ def _smooth_broken_loglog(mass, mup, Mp, alpha_L, alpha_R, s, a_min=0.1):
     Parameters
     ----------
     mass : float or array_like
-        Primary mass must be positive, in solar masses (Msun).
+        Primary mass in solar masses (Msun).
     mup : float
         Characteristic separation at the break mass, in AU.
     Mp : float

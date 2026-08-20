@@ -21,8 +21,7 @@ The multiplicity object provides the following functions used by the IMF:
 * ``multiplicity_fraction(mass)``
 * ``companion_star_fraction(mass)``
 * ``random_q(x, mass=None)`` — pass ``mass`` for mass-dependent q
-  (brown-dwarf vs stellar). ``random_q(x)`` with no mass keeps the
-  historical stellar-only power law.
+  (brown-dwarf vs stellar). ``random_q(x)`` with no mass assumes a uniform distribution.
 * ``random_companion_count(x, CSF, MF, mass=None, rng=None)`` —
   companion-count policy, including the binaries-only BD cap when
   ``mass`` is given.
@@ -41,10 +40,11 @@ same for both unresolved and resolved multiplicity classes: it
 represents the combined photometry of all stars within a given system.
 
 For most selected evolution models, the companions are evolved as single stars.
-To evolve binaries with mass exchange (does not support higher order multiples), you should use one of the ``MultiplicityResolved`` classes
+To evolve binaries with mass exchange (does not support triples and higher order multiples), 
+you should use one of the ``MultiplicityResolved`` classes
 and the ``COSMIC`` evolution model. 
 See the example jupyter notebook `Cluster_w_COSMIC.ipynb <https://github.com/MovingUniverseLab/spisea/blob/main/docs/Cluster_w_COSMIC.ipynb>`_ for an example.
-Note that currently COSMIC due to being external evolution is significantly slower than the other evolution options.
+Note that currently COSMIC, due to being external evolution is significantly slower (2-10x) than the other evolution options.
 
 
 Unresolved Multiplicity Classes
