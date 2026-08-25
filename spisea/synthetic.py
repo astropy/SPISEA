@@ -270,7 +270,7 @@ class ResolvedCluster(Cluster):
             else:
                 # Makes initial table to be evolved externally
                 star_systems, companions = self._make_companions_table_initial(
-                    star_systems, compMass, compLoga, compEcc
+                    star_systems, compMass, compLoga, compEcc, compI, compOmega, compomega
                 )
 
         #####
