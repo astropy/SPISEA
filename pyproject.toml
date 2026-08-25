@@ -26,7 +26,8 @@ dependencies = [
     "scipy>=1.10.1",
     "matplotlib",
     "astropy",
-    "pysynphot"
+    "synphot>=1.5",
+    "stsynphot>=1.4",
 ]
 
 optional-dependencies.dev = [
@@ -46,8 +47,10 @@ classifiers = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/astropy/SPISEA"
-Issues = "https://github.com/astropy/SPISEA/issues"
+Homepage = "https://github.com/MovingUniverseLab/spisea"
+Documentation = "https://github.com/MovingUniverseLab/spisea/tree/main/docs"
+Repository = "https://github.com/MovingUniverseLab/spisea"
+Issues = "https://github.com/MovingUniverseLab/spisea/issues"
 
 [build-system]
 requires = [
