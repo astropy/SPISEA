@@ -16,7 +16,7 @@ def test_generate_cluster():
     # Define total cluster mass
     M_cl = 10**5.
 
-    mass, isMulti, compMass, _, _, sysMass = my_imf.generate_cluster(M_cl)
+    mass, isMulti, compMass, _, _, _, _, _, sysMass = my_imf.generate_cluster(M_cl)
 
     # Make sure that the total mass is always within the expected
     # range of the requested mass (2%).
@@ -39,7 +39,7 @@ def test_prim_power():
     imf_tmp = imf.IMF_broken_powerlaw(mass_limits, powers)
 
     Mcl = 1e5
-    (mass, is_multi, c_mass, _, _, s_mass) = imf_tmp.generate_cluster(Mcl)
+    (mass, is_multi, c_mass, _, _, _, _, _, s_mass) = imf_tmp.generate_cluster(Mcl)
 
     print('mass shape = ', mass.shape)
     print('mass array:')
