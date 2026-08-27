@@ -52,14 +52,13 @@ def test_generate_cluster_offner2023():
 
     # BD companions should be more equal-mass than SPISEA v2.5 stellar q_power=-0.4
     bd_mult = bd & isMulti
-    if np.any(bd_mult):
-        q_bd = []
-        for i in np.where(bd_mult)[0]:
-            comps = compMass[i].compressed()
-            if len(comps):
-                q_bd.extend(list(comps / mass[i]))
-        if len(q_bd) >= 5:
-            assert np.mean(q_bd) > 0.5
+    q_bd = []
+    for i in np.where(bd_mult)[0]:
+        comps = compMass[i].compressed()
+        if len(comps):
+            q_bd.extend(list(comps / mass[i]))
+    assert len(q_bd) >= 5
+    assert np.mean(q_bd) > 0.5
 
     return
 

@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import astropy.modeling
 from scipy.stats import truncnorm
@@ -139,11 +141,11 @@ class MultiplicityUnresolved(object):
 
     Stellar primaries use q_power = −0.4 (Lu et al. 2013).
     Brown-dwarf primaries (M <= 0.08 Msun) use γ = 6.1 from
-    Fontanive et al. (2018) when ``mass`` is passed to
-    :meth:`q_power_at_mass` or :meth:`random_q`. That 0.08 Msun
-    switch is a mass-ratio index only, not a companion-count
-    policy. ``random_q(x)`` with no mass keeps the stellar-only
-    power law.
+    Fontanive et al. (2018) via :meth:`q_power_at_mass` /
+    :meth:`draw_q`. That 0.08 Msun switch is a mass-ratio index
+    only, not a companion-count policy. :meth:`random_q` is
+    deprecated; ``random_q(x)`` with no mass keeps the
+    stellar-only power law.
 
     Parameters
     ----------
@@ -289,8 +291,11 @@ class MultiplicityUnresolved(object):
 
     def random_q(self, x, mass=None):
         """
-        Generative function for companion mass ratio, equivalent
-        to the inverse of the CDF.
+        Deprecated inverse-CDF wrapper for companion mass ratio.
+
+        Use :meth:`draw_q` and pass the primary mass. This wrapper
+        is kept so leftover external callers do not silently change.
+        If ``mass`` is omitted, ``self.q_pow`` is used (stellar-only).
 
             `q = m_companion / m_primary`
             `P(q) = q ** beta`    for q_min <= q <= 1
@@ -300,13 +305,10 @@ class MultiplicityUnresolved(object):
         x : float or array_like
             Uniform random draw, dimensionless, in [0, 1]. Inverse CDF
             sample for q.
-
         mass : float or array_like, optional
             Primary mass in solar masses (Msun). If given, the
-            power-law index is ``q_power_at_mass(mass)`` (brown-dwarf
-            vs stellar for the SPISEA v2.5 default; mass-dependent for
-            Offner et al. 2023). If omitted, ``self.q_pow`` is used
-            for all companions.
+            power-law index is ``q_power_at_mass(mass)``. If omitted,
+            ``self.q_pow`` is used for all companions.
 
         Returns
         -------
@@ -315,9 +317,61 @@ class MultiplicityUnresolved(object):
             [q_min, 1]. Python float if ``x`` is scalar, ndarray
             otherwise.
         """
+        warnings.warn(
+            "random_q is deprecated; use draw_q(mass, rng=...) and "
+            "pass the primary mass.",
+            DeprecationWarning,
+            stacklevel=2)
         if mass is None:
             return _q_from_powerlaw(x, self.q_pow, self.q_min)
         return _q_from_powerlaw(x, self.q_power_at_mass(mass), self.q_min)
+
+    def draw_q(self, mass, rng=None, n_comp=1):
+        """
+        Draw companion mass ratios q = m_comp / m_prim.
+
+        Uses ``q_power_at_mass(mass)`` for γ. ``mass`` is required.
+        Stellar and brown-dwarf primaries are drawn in two separate
+        RNG calls (star_mask then bd_mask, split at
+        ``H_BURNING_MASS``) so the SPISEA v2.5 ``imf.calc_multi``
+        random sequence is unchanged.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+        rng : numpy.random.Generator, optional
+            Random generator. Default ``numpy.random.default_rng()``.
+        n_comp : int, optional
+            Companions per primary. Default 1.
+
+        Returns
+        -------
+        q : float or ndarray
+            Mass ratios in [q_min, 1]. Scalar if ``mass`` is scalar
+            and ``n_comp`` is 1; shape ``(n_mass,)`` or
+            ``(n_mass, n_comp)`` otherwise.
+        """
+        if rng is None:
+            rng = np.random.default_rng()
+        n_comp = int(n_comp)
+        return_scalar = np.isscalar(mass) and n_comp == 1
+        mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
+        q_values = np.empty((len(mass_arr), n_comp), dtype=float)
+        bd_mask = mass_arr <= H_BURNING_MASS
+        star_mask = ~bd_mask
+
+        if np.any(star_mask):
+            q_pow = self.q_power_at_mass(mass_arr[star_mask])
+            x = rng.random((int(star_mask.sum()), n_comp))
+            q_values[star_mask] = _q_from_powerlaw(x, q_pow, self.q_min)
+
+        if np.any(bd_mask):
+            q_pow = self.q_power_at_mass(mass_arr[bd_mask])
+            x = rng.random((int(bd_mask.sum()), n_comp))
+            q_values[bd_mask] = _q_from_powerlaw(x, q_pow, self.q_min)
+
+        return _finalize_q_draw(q_values, return_scalar, n_comp)
 
     def random_is_multiple(self, x, MF):
         """
@@ -410,51 +464,14 @@ class MultiplicityUnresolved(object):
 
         return np.atleast_1d(n_comp)
 
-    def _q_values_for_primaries(self, prim_subset, n_comp, rng):
-        """
-        Draw mass ratios for ``n_comp`` companions of each primary.
-
-        The stellar / brown-dwarf split (two separate RNG draws) preserves
-        the historical SPISEA v2.5 random sequence used by
-        ``imf.calc_multi``.
-
-        Parameters
-        ----------
-        prim_subset : array_like
-            Primary masses for this companion-count group. Must be
-            positive, in solar masses (Msun).
-        n_comp : int
-            Number of companions per primary, integer count.
-        rng : numpy.random.Generator
-            Random generator used for inverse-CDF q draws.
-
-        Returns
-        -------
-        q_values : ndarray
-            Companion mass ratios m_comp/m_prim, dimensionless, in
-            [q_min, 1]. Shape (len(prim_subset), n_comp).
-        """
-        q_values = np.empty((len(prim_subset), n_comp))
-        bd_mask = prim_subset <= H_BURNING_MASS
-        star_mask = ~bd_mask
-
-        if np.any(star_mask):
-            q_values[star_mask] = self.random_q(rng.random((star_mask.sum(), n_comp)), mass=prim_subset[star_mask])
-
-        if np.any(bd_mask):
-            q_values[bd_mask] = self.random_q(rng.random((bd_mask.sum(), n_comp)), mass=prim_subset[bd_mask])
-
-        return q_values
-
     def draw_companion_masses(self, primary_masses, is_multiple, CSF, MF,
                               rng, mass_min):
         """
         Assign companion masses for a set of primaries.
 
         This is the multiplicity-object entry point used by
-        ``IMF.calc_multi``. Companion-mass draws, including brown-dwarf
-        q distributions and the binaries-only BD companion count, live
-        here rather than in ``imf.py``.
+        ``IMF.calc_multi``. Companion-mass draws use :meth:`draw_q`
+        and live here rather than in ``imf.py``.
 
         Parameters
         ----------
@@ -508,7 +525,11 @@ class MultiplicityUnresolved(object):
 
         for n_c, idx in zip(n_unique, n_indices):
             prim_subset = primary[idx]
-            q_values = self._q_values_for_primaries(prim_subset, int(n_c), rng)
+            q_values = np.asarray(
+                self.draw_q(prim_subset, rng=rng, n_comp=int(n_c)),
+                dtype=float)
+            if q_values.ndim == 1:
+                q_values = q_values[:, np.newaxis]
             m_comp = q_values * prim_subset[:, np.newaxis]
             comp_masses[multiple_idx[idx], :int(n_c)] = m_comp
 
@@ -1041,30 +1062,18 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
 
         γ(M) = A + (B - A) / (1 + (M / M0)**(-k))
 
-    with (A, B, M0, k) = (6.6, −1.77, 0.0651, 0.629). Call
-    ``random_q(x, mass=...)``. Without ``mass``, ``random_q(x)``
-    keeps the historical stellar-only power law.
+    with (A, B, M0, k) = (6.6, −1.77, 0.0651, 0.629). The q API
+    is :meth:`draw_q` / :meth:`q_power_at_mass`; ``random_q`` is
+    not supported. BD companions are still more equal-mass than
+    solar-type companions. The err-weighted fit undershoots
+    Fontanive 4.8 ± 2.2 (~3.3 at 0.033 Msun); that is the fit,
+    not a bug.
 
-    **Characteristic separation.** :meth:`log_a_mean` / :meth:`a_mean`
-    are a smooth broken power law in log10(a) vs log10(M) (FGK-pulled,
-    s = 0.1 dex), C-infinity via a stable logcosh::
-
-        v = log10(M / Mp),   yp = log10(μp)
-        log10 a = yp + 0.5*(αL + αR)*v + 0.5*(αR - αL)*s * logcosh(v/s)
-
-    with μp = 44.46 AU, Mp = 0.819 Msun, αL = 1.005, αR = −0.308,
-    s = 0.10. Linear-space a is clipped above 0.1 AU. The
-    implementation uses
-    ``logcosh x = |x| + log(1 + e**(-2|x|)) - log 2``.
-
-    **Separation scatter.** :meth:`sigma_log_a` is a 2-parameter
-    logistic pinned at 0.7 / 1.5::
-
-        σ(M) = 0.7 + 0.8 / (1 + (M / 0.354)**(-6.05))
-
-    i.e. (A, B, M0, k) = (0.7, 1.5, 0.354, 6.05), clipped to ≥ 0.1.
-    Resolved draws use these as loc / scale of a truncated lognormal
-    (see :class:`MultiplicityResolvedOffner2023`).
+    This class is companions-only (MF/CSF/q). Orbital methods
+    (:meth:`~MultiplicityResolvedOffner2023.log_a_mean`,
+    :meth:`~MultiplicityResolvedOffner2023.a_mean`,
+    :meth:`~MultiplicityResolvedOffner2023.sigma_log_a`) live on
+    :class:`MultiplicityResolvedOffner2023`.
 
     Parameters
     ----------
@@ -1094,33 +1103,9 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         (Msun). Default 0.0651.
     q_k : float, optional
         γ logistic slope, dimensionless. Default 0.629.
-    a_mup : float, optional
-        Smooth-broken-PL pivot μ(a), in AU. Default 44.46.
-    a_mp : float, optional
-        Smooth-broken-PL pivot mass, in solar masses (Msun).
-        Default 0.819.
-    a_alphaL, a_alphaR : float, optional
-        Smooth-broken-PL slopes in log10 a vs log10 M,
-        dimensionless. Defaults 1.005, −0.308.
-    a_s : float, optional
-        Smooth-broken-PL smoothing scale, in dex. Default 0.10.
-    a_min : float, optional
-        Minimum characteristic a, in AU. Default 0.1.
-    sig_A, sig_B : float, optional
-        Low- and high-mass σ(log10 a) logistic values, in dex.
-        Defaults 0.7, 1.5 (Table 2 pins).
-    sig_M0 : float, optional
-        Characteristic mass of the σ logistic, in solar masses
-        (Msun). Default 0.354.
-    sig_k : float, optional
-        σ logistic slope, dimensionless. Default 6.05.
     CSF_max : float, optional
         Maximum companion star fraction, dimensionless mean companion
         count (not bounded by 1). Default 3.
-    q_power : float, optional
-        Fallback mass-ratio power-law index, dimensionless. Ignored for
-        draws when primary mass is provided (the γ logistic is used);
-        used by ``random_q(x)`` with no mass. Default 0.2.
     q_min : float, optional
         Minimum mass ratio m_comp/m_prim, dimensionless, in [q_min, 1].
         Default 0.01.
@@ -1131,33 +1116,34 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     def __init__(self, MF_A=0.14, MF_B=0.99, MF_M0=1.41, MF_k=1.25,
                  CSF_A=0.12, CSF_B=2.35, CSF_M0=3.57, CSF_k=0.96,
                  q_A=6.6, q_B=-1.77, q_M0=0.0651, q_k=0.629,
-                 a_mup=44.46, a_mp=0.819, a_alphaL=1.005,
-                 a_alphaR=-0.308, a_s=0.10, a_min=0.1,
-                 sig_A=0.7, sig_B=1.5, sig_M0=0.354, sig_k=6.05,
-                 CSF_max=3, q_power=0.2, q_min=0.01,
-                 companion_max=False):
+                 CSF_max=3, q_min=0.01, companion_max=False):
 
         super(MultiplicityUnresolvedOffner2023, self).__init__(
             MF_A=MF_A, MF_B=MF_B, MF_M0=MF_M0, MF_k=MF_k,
             CSF_A=CSF_A, CSF_B=CSF_B, CSF_M0=CSF_M0, CSF_k=CSF_k,
-            CSF_max=CSF_max, q_power=q_power, q_min=q_min,
+            CSF_max=CSF_max, q_min=q_min,
             companion_max=companion_max)
         self.q_A = float(q_A)
         self.q_B = float(q_B)
         self.q_M0 = float(q_M0)
         self.q_k = float(q_k)
-        self.a_mup = float(a_mup)
-        self.a_mp = float(a_mp)
-        self.a_alphaL = float(a_alphaL)
-        self.a_alphaR = float(a_alphaR)
-        self.a_s = float(a_s)
-        self.a_min = float(a_min)
-        self.sig_A = float(sig_A)
-        self.sig_B = float(sig_B)
-        self.sig_M0 = float(sig_M0)
-        self.sig_k = float(sig_k)
 
         return
+
+    def random_q(self, x, mass=None):
+        """
+        Not supported on Offner classes.
+
+        Use :meth:`draw_q` with a primary mass.
+
+        Raises
+        ------
+        TypeError
+            Always. Offner q draws require ``draw_q(mass, rng=...)``.
+        """
+        raise TypeError(
+            "Offner multiplicity does not support random_q; "
+            "use draw_q(mass, rng=...)")
 
     def q_power_at_mass(self, mass):
         """
@@ -1188,117 +1174,39 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         
         return gamma
 
-    def log_a_mean(self, mass):
+    def draw_q(self, mass, rng=None, n_comp=1):
         """
-        Characteristic log10(a/AU) from the smooth broken power law.
+        Draw companion mass ratios q = m_comp / m_prim.
 
-        FGK-pulled, s = 0.1 dex, C-infinity (stable logcosh; not
-        ``log(cosh x)`` and not a hard ``where`` break)::
-
-            v = log10(M / Mp),   yp = log10(μp)
-            log10 a = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
-
-        with μp = 44.46 AU, Mp = 0.819 Msun, αL = 1.005,
-        αR = −0.308, s = 0.10. Linear-space a is clipped to 0.1 AU.
-        Uses ``logcosh x = |x| + log(1 + e**(-2|x|)) - log 2``.
+        Uses ``q_power_at_mass(mass)`` for the Table 1 γ logistic.
+        ``mass`` is required. All primaries are drawn in one RNG
+        call; γ(M) is already mass-dependent.
 
         Parameters
         ----------
         mass : float or array_like
             Primary mass in solar masses (Msun).
+        rng : numpy.random.Generator, optional
+            Random generator. Default ``numpy.random.default_rng()``.
+        n_comp : int, optional
+            Companions per primary. Default 1.
 
         Returns
         -------
-        log_a_mean : float or ndarray
-            Characteristic log10(a / 1 AU) in dex (not ln, not AU).
-            Python float if ``mass`` is scalar, ndarray otherwise.
+        q : float or ndarray
+            Mass ratios in [q_min, 1]. Scalar if ``mass`` is scalar
+            and ``n_comp`` is 1; shape ``(n_mass,)`` or
+            ``(n_mass, n_comp)`` otherwise.
         """
-        # Calculate the characteristic log10(a / 1 AU) using a smooth broken power law 
-        log_a_mean = _smooth_broken_loglog(
-            mass, self.a_mup, self.a_mp,
-            self.a_alphaL, self.a_alphaR, self.a_s,
-            a_min=self.a_min)
-
-        return log_a_mean
-
-    def a_mean(self, mass):
-        """
-        Characteristic μ(a) in AU, ``10 ** log_a_mean(mass)``.
-
-        Parameters
-        ----------
-        mass : float or array_like
-            Primary mass in solar masses (Msun).
-
-        Returns
-        -------
-        a_mean : float or ndarray
-            Characteristic separation μ(a) in AU. Python float if
-            ``mass`` is scalar, ndarray otherwise.
-        """
-        log_a = self.log_a_mean(mass)
-
-        if np.isscalar(log_a):
-            a_mean = 10.0 ** log_a
-            return a_mean
-
-        a_mean = 10.0 ** np.asarray(log_a, dtype=float)
-
-        return a_mean
-
-    def sigma_log_a(self, mass):
-        """
-        σ(log10 a) from a 2-parameter logistic in log-mass.
-
-        Floors/ceilings pinned at 0.7 / 1.5; clipped to ≥ 0.1::
-
-            σ(M) = 0.7 + 0.8 / (1 + (M / 0.354)**(-6.05))
-
-        i.e. (A, B, M0, k) = (0.7, 1.5, 0.354, 6.05).
-
-        Parameters
-        ----------
-        mass : float or array_like
-            Primary mass in solar masses (Msun).
-
-        Returns
-        -------
-        sigma_log_a : float or ndarray
-            Standard deviation of log10(a / 1 AU), in dex.
-            Python float if ``mass`` is scalar, ndarray otherwise.
-        """
-
-        # Calculate the standard deviation of log10(a / 1 AU) using a 2-parameter logistic
-        sigma_log_a = _logistic_in_logm(
-            mass, self.sig_A, self.sig_B, self.sig_M0, self.sig_k,
-            clip_min=0.1)
-
-        return sigma_log_a
-
-    def _q_values_for_primaries(self, prim_subset, n_comp, rng):
-        """
-        Draw mass-dependent q for every primary (BD and stellar).
-
-        Parameters
-        ----------
-        prim_subset : array_like
-            Primary masses for this companion-count group. Must be
-            positive, in solar masses (Msun).
-        n_comp : int
-            Number of companions per primary, integer count.
-        rng : numpy.random.Generator
-            Random generator used for inverse-CDF q draws.
-
-        Returns
-        -------
-        q_values : ndarray
-            Companion mass ratios m_comp/m_prim, dimensionless, in
-            [q_min, 1]. Shape (len(prim_subset), n_comp).
-        """
-        # Draw the mass-dependent mass ratios using a logistic in log-mass
-        q_values = self.random_q(rng.random((len(prim_subset), n_comp)), mass=prim_subset)
-
-        return q_values
+        if rng is None:
+            rng = np.random.default_rng()
+        n_comp = int(n_comp)
+        return_scalar = np.isscalar(mass) and n_comp == 1
+        mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
+        q_pow = self.q_power_at_mass(mass_arr)
+        x = rng.random((len(mass_arr), n_comp))
+        q_values = _q_from_powerlaw(x, q_pow, self.q_min)
+        return _finalize_q_draw(q_values, return_scalar, n_comp)
 
 
 class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
@@ -1315,13 +1223,25 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
 
     Notes
     -----
+    :meth:`log_a_mean` / :meth:`a_mean` are a smooth broken power
+    law in log10 a vs log10 M (FGK-pulled, s = 0.1 dex),
+    C-infinity via a stable logcosh (not ``log(cosh x)``)::
+
+        v = log10(M / Mp),   yp = log10(μp)
+        log10 a = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
+
+    with μp = 44.46 AU, Mp = 0.819 Msun, αL = 1.005, αR = −0.308,
+    s = 0.10. Linear-space a is clipped above 0.1 AU.
+
+    :meth:`sigma_log_a` is a 2-parameter logistic pinned at
+    0.7 / 1.5::
+
+        σ(M) = 0.7 + 0.8 / (1 + (M / 0.354)**(-6.05))
+
     :meth:`log_semimajoraxis` draws log10(a/AU) from a truncated
-    lognormal with ``loc = log_a_mean(mass)`` (smooth broken power
-    law, s = 0.1 dex, FGK-pulled) and
-    ``scale = sigma_log_a(mass)`` (2-parameter logistic pinned at
-    0.7 / 1.5). Brown-dwarf binaries peak near a few AU
-    (μ(0.033) ≈ 2 AU). Truncation is 0.01–2000 AU, same limits as
-    :class:`MultiplicityResolvedDK`.
+    lognormal with those loc / scale values. Brown-dwarf binaries
+    peak near a few AU (μ(0.033) ≈ 2 AU). Truncation is
+    0.01–2000 AU, same limits as :class:`MultiplicityResolvedDK`.
 
     Eccentricity and Keplerian angles still follow Duchêne & Kraus
     (2013): f(e) = 2e, random inclination and angles. Same mixin as
@@ -1378,10 +1298,6 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
     CSF_max : float, optional
         Maximum companion star fraction, dimensionless mean companion
         count (not bounded by 1). Default 3.
-    q_power : float, optional
-        Fallback mass-ratio power-law index, dimensionless. Ignored for
-        draws when primary mass is provided (the γ logistic is used).
-        Default 0.2.
     q_min : float, optional
         Minimum mass ratio m_comp/m_prim, dimensionless. Default 0.01.
     companion_max : bool, optional
@@ -1400,8 +1316,7 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
                  a_mup=44.46, a_mp=0.819, a_alphaL=1.005,
                  a_alphaR=-0.308, a_s=0.10, a_min=0.1,
                  sig_A=0.7, sig_B=1.5, sig_M0=0.354, sig_k=6.05,
-                 CSF_max=3, q_power=0.2, q_min=0.01,
-                 companion_max=False,
+                 CSF_max=3, q_min=0.01, companion_max=False,
                  sep_sig=(0.7, 1.3, 1.5),
                  sep_sig_mass=(np.sqrt(0.075 * 0.15),
                                np.sqrt(0.3 * 0.6),
@@ -1410,16 +1325,107 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
             MF_A=MF_A, MF_B=MF_B, MF_M0=MF_M0, MF_k=MF_k,
             CSF_A=CSF_A, CSF_B=CSF_B, CSF_M0=CSF_M0, CSF_k=CSF_k,
             q_A=q_A, q_B=q_B, q_M0=q_M0, q_k=q_k,
-            a_mup=a_mup, a_mp=a_mp, a_alphaL=a_alphaL,
-            a_alphaR=a_alphaR, a_s=a_s, a_min=a_min,
-            sig_A=sig_A, sig_B=sig_B, sig_M0=sig_M0, sig_k=sig_k,
-            CSF_max=CSF_max, q_power=q_power, q_min=q_min,
+            CSF_max=CSF_max, q_min=q_min,
             companion_max=companion_max)
+        self.a_mup = float(a_mup)
+        self.a_mp = float(a_mp)
+        self.a_alphaL = float(a_alphaL)
+        self.a_alphaR = float(a_alphaR)
+        self.a_s = float(a_s)
+        self.a_min = float(a_min)
+        self.sig_A = float(sig_A)
+        self.sig_B = float(sig_B)
+        self.sig_M0 = float(sig_M0)
+        self.sig_k = float(sig_k)
         # Table 2 σ knots for the comparison plot; draws use sigma_log_a.
         self.sep_sig_mass = np.array(sep_sig_mass, dtype=float)
         self.sep_sig = np.array(sep_sig, dtype=float)
 
         return
+
+    def log_a_mean(self, mass):
+        """
+        Characteristic log10(a/AU) from the smooth broken power law.
+
+        FGK-pulled, s = 0.1 dex, C-infinity (stable logcosh; not
+        ``log(cosh x)`` and not a hard ``where`` break)::
+
+            v = log10(M / Mp),   yp = log10(μp)
+            log10 a = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
+
+        with μp = 44.46 AU, Mp = 0.819 Msun, αL = 1.005,
+        αR = −0.308, s = 0.10. Linear-space a is clipped to 0.1 AU.
+        Uses ``logcosh x = |x| + log(1 + e**(-2|x|)) - log 2``.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        log_a_mean : float or ndarray
+            Characteristic log10(a / 1 AU) in dex (not ln, not AU).
+            Python float if ``mass`` is scalar, ndarray otherwise.
+        """
+        log_a_mean = _smooth_broken_loglog(
+            mass, self.a_mup, self.a_mp,
+            self.a_alphaL, self.a_alphaR, self.a_s,
+            a_min=self.a_min)
+
+        return log_a_mean
+
+    def a_mean(self, mass):
+        """
+        Characteristic μ(a) in AU, ``10 ** log_a_mean(mass)``.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        a_mean : float or ndarray
+            Characteristic separation μ(a) in AU. Python float if
+            ``mass`` is scalar, ndarray otherwise.
+        """
+        log_a = self.log_a_mean(mass)
+
+        if np.isscalar(log_a):
+            a_mean = 10.0 ** log_a
+            return a_mean
+
+        a_mean = 10.0 ** np.asarray(log_a, dtype=float)
+
+        return a_mean
+
+    def sigma_log_a(self, mass):
+        """
+        σ(log10 a) from a 2-parameter logistic in log-mass.
+
+        Floors/ceilings pinned at 0.7 / 1.5; clipped to ≥ 0.1::
+
+            σ(M) = 0.7 + 0.8 / (1 + (M / 0.354)**(-6.05))
+
+        i.e. (A, B, M0, k) = (0.7, 1.5, 0.354, 6.05).
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        sigma_log_a : float or ndarray
+            Standard deviation of log10(a / 1 AU), in dex.
+            Python float if ``mass`` is scalar, ndarray otherwise.
+        """
+        sigma_log_a = _logistic_in_logm(
+            mass, self.sig_A, self.sig_B, self.sig_M0, self.sig_k,
+            clip_min=0.1)
+
+        return sigma_log_a
 
     def log_semimajoraxis(self, mass, rng=None):
         """
@@ -1705,4 +1711,30 @@ def _q_from_powerlaw(x, q_pow, q_min):
 
     # Return the result
     return out
+
+
+def _finalize_q_draw(q_values, return_scalar, n_comp):
+    """
+    Shape a (n_mass, n_comp) q array for :meth:`draw_q`.
+
+    Parameters
+    ----------
+    q_values : ndarray
+        Mass ratios, dimensionless, shape (n_mass, n_comp).
+    return_scalar : bool
+        If True, return a Python float.
+    n_comp : int
+        Companions per primary, integer count.
+
+    Returns
+    -------
+    q : float or ndarray
+        Scalar, shape (n_mass,), or shape (n_mass, n_comp).
+    """
+    q_values = np.asarray(q_values, dtype=float)
+    if return_scalar:
+        return float(q_values[0, 0])
+    if n_comp == 1:
+        return q_values[:, 0]
+    return q_values
 

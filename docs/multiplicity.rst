@@ -20,8 +20,9 @@ The multiplicity object provides the following functions used by the IMF:
 
 * ``multiplicity_fraction(mass)``
 * ``companion_star_fraction(mass)``
-* ``random_q(x, mass=None)`` — pass ``mass`` for mass-dependent q
-  (brown-dwarf vs stellar). ``random_q(x)`` with no mass assumes a uniform distribution.
+* ``draw_q(mass, rng=None, n_comp=1)`` — companion mass ratios
+  from ``q_power_at_mass``. ``random_q`` is deprecated on the
+  v2.5 classes and is not supported on Offner.
 * ``random_companion_count(x, CSF, MF, mass=None, rng=None)`` —
   companion-count draw. If ``companion_max`` is True, counts are
   capped at ``CSF_max`` at all masses.
@@ -57,7 +58,7 @@ Unresolved Multiplicity Classes
 .. autoclass:: imf.multiplicity.MultiplicityUnresolved
 	       :show-inheritance:
 	       :members: companion_star_fraction,
-			 multiplicity_fraction, random_q,
+			 multiplicity_fraction, draw_q,
 			 q_power_at_mass, random_companion_count
 
 .. autoclass:: imf.multiplicity.MultiplicityPiecewisePowerLaw
@@ -71,8 +72,7 @@ Unresolved Multiplicity Classes
 .. autoclass:: imf.multiplicity.MultiplicityUnresolvedOffner2023
 	       :show-inheritance:
 	       :members: multiplicity_fraction, companion_star_fraction,
-			 q_power_at_mass, random_q, log_a_mean, a_mean,
-			 sigma_log_a
+			 q_power_at_mass, draw_q
 
 
 Resolved Multiplicity Classes

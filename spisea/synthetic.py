@@ -532,8 +532,8 @@ class ResolvedCluster(Cluster):
         companions = Table([system_index], names=['system_idx'])
         companions.add_column(np.zeros(N_comp_tot, dtype=float), name='mass')
 
-        # Duck-type resolved multiplicity: any object with orbital methods
-        # gets log_a / e / angles, not only MultiplicityResolvedDK.
+        # Resolved if the multiplicity object implements orbital draws.
+        # Offner resolved is not a MultiplicityResolvedDK subclass.
         multi_props = self.imf._multi_props
         if (hasattr(multi_props, 'log_semimajoraxis') and
                 hasattr(multi_props, 'random_e') and
