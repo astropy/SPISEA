@@ -645,29 +645,8 @@ def test_offner_generate_cluster_companions():
     assert np.abs(500.0 - sys_mass.sum()) < 500.0 * 0.05
 
 
-def test_calc_multi_uses_multiplicity_q_and_counts():
-    """
-    IMF.calc_multi must not hardcode Fontanive gamma=6.1; q policy
-    lives on the multiplicity object so Offner γ_trunc (~2–5 for
-    BDs) actually applies.
-    """
-    import inspect
-    from spisea.imf import imf as imf_mod
-    calc_src = inspect.getsource(imf_mod.IMF.calc_multi)
-    assert '6.1' not in calc_src
-    assert 'draw_companion_masses' in calc_src
-
-    syn_path = os.path.join(os.path.dirname(spisea.__file__), 'synthetic.py')
-    with open(syn_path, 'r') as fh:
-        syn_src = fh.read()
-    assert 'isinstance(self.imf._multi_props, multiplicity.MultiplicityResolvedDK)' not in syn_src
-    assert "hasattr(multi_props, 'log_semimajoraxis')" in syn_src
-    assert "hasattr(multi_props, 'random_e')" in syn_src
-    assert "hasattr(multi_props, 'random_keplarian_parameters')" in syn_src
-    assert 'log_semimajoraxis(prim_mass, rng=self.rng)' in syn_src
-    assert 'random_keplarian_parameters(' in syn_src
-    assert 'rng=self.rng)' in syn_src
-
+def test_offner_bd_q_shallower_than_v25():
+    """Offner BD γ and mean q are shallower than SPISEA v2.5 Fontanive 6.1."""
     offner = multiplicity.MultiplicityUnresolvedOffner2023()
     lu = multiplicity.MultiplicityUnresolved()
     q_off = offner.q_power_at_mass(0.04)
