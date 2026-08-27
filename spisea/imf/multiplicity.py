@@ -2,22 +2,10 @@ import numpy as np
 import astropy.modeling
 from scipy.stats import truncnorm
 
-defaultMF_amp = 0.44
-defaultMF_power = 0.51
-defaultCSF_amp = 0.50
-defaultCSF_power = 0.45
-defaultCSF_max = 3
-defaultq_power = -0.4
-defaultq_min = 0.01
-default_aMean = 100.0 # log (AU)
-default_aSigma = 0.1  # log (AU)
-
 # Hydrogen-burning limit used for BD-primary (binaries-only) logic.
 # Offner et al. 2023 use M_comp > 0.075 Msun as the MS companion cut;
 # SPISEA keeps 0.08 Msun for consistency with existing BD handling.
 H_BURNING_MASS = 0.08
-
-# Eventually we should add in separation properties. (a_mean, a_sigma)
 
 
 class _ResolvedOrbitalMixin(object):
@@ -81,6 +69,7 @@ class _ResolvedOrbitalMixin(object):
 
         return inclination, Omega, omega
 
+
 class MultiplicityUnresolved(object):
     """
     SPISEA v2.5 default unresolved multiplicity (companions, no orbits).
@@ -125,10 +114,9 @@ class MultiplicityUnresolved(object):
         0.02 < M <= 0.06 Msun  MF = 0.08
         0.06 < M <= 0.08 Msun  MF = 0.16
 
-    Array masses use the stellar power law only (no staircase).
-    Cluster generation on this class therefore still uses
-    ``0.44 M**0.51`` for brown-dwarf primaries.
-
+    Array masses use the stellar power law only over the whole mass range, 
+    including brown dwarf primaries. .
+    
     **Companion Star Fraction** -- the expected number of companions in
     a multiple system. The companion star fraction (CSF) also
     changes with mass and this dependency can be described as
@@ -1014,7 +1002,7 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     Opt-in unresolved multiplicity derived from data in Offner et al. 2023 Table 1,
     including brown dwarfs.
 
-    Scientifically preferred over the SPISEA v2.5 default, but **not**
+    Scientifically preferred over the MultiplicityUnresolved default, but **not**
     the default (backwards compatibility). Companions only; for orbits
     use :class:`MultiplicityResolvedOffner2023`.
 
@@ -1036,28 +1024,17 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
 
     with (A, B, M0, k) = (0.14, 0.99, 1.41, 1.25) for MF and
     (0.12, 2.35, 3.57, 0.96) for CSF/CF. The curve is C-infinity
-    smooth (not a broken power law and not interpolation of Table 1
-    knots), saturates at B ~ 1 for MF so A/B stars stay near the
-    Raghavan/MDS/Sana points, and has a low-mass floor A ~ 0.14.
-    Fontanive et al. (2018) 8 ± 6% sits ~0.07 below the curve (~15%),
-    consistent with the Burgasser/Close BD points and within ~1–2σ
-    of Fontanive. MF is clipped to [0, 1]. CSF is clipped to
-    [0, CSF_max] and raised to at least MF. Higher-order multiples
+    smooth (not a broken power law).
+    The curve saturates at B ~ 1 for MF so A/B stars stay near the
+    Raghavan/MDS/Sana points, and has a low-mass floor of A ~ 0.14.
+    The MF is clipped to [0, 1] and the CSF is clipped to
+    [0, CSF_max]. Higher-order multiples
     are allowed at all masses, including brown dwarfs. If
-    ``companion_max`` is True, counts are capped at CSF_max at all
-    masses.
+    ``companion_max`` is True, the number of companions is
+    capped at CSF_max at all masses.
 
-    **Companion assignment vs Table 1.** Offner et al. 2023 (text
-    above Table 1): BD primaries include all BD companions; FGKM MS
-    statistics include only MS companions with M_comp > 0.075 Msun;
-    OBA include MS companions above q > 0.1. Table 1 stellar MF/CF
-    therefore exclude BD companions. SPISEA still draws companions
-    down to ``q_min`` (default 0.01), so brown-dwarf secondaries of
-    stellar primaries are generated. The solar-type BD-companion
-    fraction is only ≈ 4% (BD desert at a < 0.5 au), so the
-    integrated stellar MF is affected very little. Do not interpret
-    the simulated stellar-primary MF as a stellar-companion-only
-    statistic.
+    SPISEA draws companions down to ``q_min`` (default 0.01), 
+    so brown-dwarf secondaries of stellar primaries are generated. 
 
     **Mass-ratio index.** :meth:`q_power_at_mass` is an error-weighted
     logistic in log-mass fitted to Table 1 γ_trunc (1–100 au)::
@@ -1066,18 +1043,14 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
 
     with (A, B, M0, k) = (6.6, −1.77, 0.0651, 0.629). Call
     ``random_q(x, mass=...)``. Without ``mass``, ``random_q(x)``
-    keeps the historical stellar-only power law. BD companions are
-    still more equal-mass than solar-type companions. The
-    err-weighted fit undershoots Fontanive 4.8 ± 2.2 (~3.3 at
-    0.033 Msun); that is the fit, not a bug.
+    keeps the historical stellar-only power law.
 
     **Characteristic separation.** :meth:`log_a_mean` / :meth:`a_mean`
-    are a smooth broken power law in log10 a vs log10 M (FGK-pulled,
-    s = 0.1 dex), C-infinity via a stable logcosh (not
-    ``log(cosh x)`` and not a hard ``where`` break)::
+    are a smooth broken power law in log10(a) vs log10(M) (FGK-pulled,
+    s = 0.1 dex), C-infinity via a stable logcosh::
 
         v = log10(M / Mp),   yp = log10(μp)
-        log10 a = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
+        log10 a = yp + 0.5*(αL + αR)*v + 0.5*(αR - αL)*s * logcosh(v/s)
 
     with μp = 44.46 AU, Mp = 0.819 Msun, αL = 1.005, αR = −0.308,
     s = 0.10. Linear-space a is clipped above 0.1 AU. The
