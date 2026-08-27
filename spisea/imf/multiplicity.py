@@ -1092,27 +1092,11 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     Fontanive 4.8 ± 2.2 (~3.3 at 0.033 Msun); that is the fit,
     not a bug.
 
-    **Characteristic separation.** :meth:`log_a_mean` / :meth:`a_mean`
-    are a smooth broken power law in log10 a vs log10 M (FGK-pulled,
-    s = 0.1 dex), C-infinity via a stable logcosh (not
-    ``log(cosh x)`` and not a hard ``where`` break)::
-
-        v = log10(M / Mp),   yp = log10(μp)
-        log10 a = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
-
-    with μp = 44.46 AU, Mp = 0.819 Msun, αL = 1.005, αR = −0.308,
-    s = 0.10. Linear-space a is clipped above 0.1 AU. The
-    implementation uses
-    ``logcosh x = |x| + log(1 + e**(-2|x|)) - log 2``.
-
-    **Separation scatter.** :meth:`sigma_log_a` is a 2-parameter
-    logistic pinned at 0.7 / 1.5::
-
-        σ(M) = 0.7 + 0.8 / (1 + (M / 0.354)**(-6.05))
-
-    i.e. (A, B, M0, k) = (0.7, 1.5, 0.354, 6.05), clipped to ≥ 0.1.
-    Resolved draws use these as loc / scale of a truncated lognormal
-    (see :class:`MultiplicityResolvedOffner2023`).
+    This class is companions-only (MF/CSF/q). Orbital methods
+    (:meth:`~MultiplicityResolvedOffner2023.log_a_mean`,
+    :meth:`~MultiplicityResolvedOffner2023.a_mean`,
+    :meth:`~MultiplicityResolvedOffner2023.sigma_log_a`) live on
+    :class:`MultiplicityResolvedOffner2023`.
 
     Parameters
     ----------
@@ -1142,26 +1126,6 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         (Msun). Default 0.0651.
     q_k : float, optional
         γ logistic slope, dimensionless. Default 0.629.
-    a_mup : float, optional
-        Smooth-broken-PL pivot μ(a), in AU. Default 44.46.
-    a_mp : float, optional
-        Smooth-broken-PL pivot mass, in solar masses (Msun).
-        Default 0.819.
-    a_alphaL, a_alphaR : float, optional
-        Smooth-broken-PL slopes in log10 a vs log10 M,
-        dimensionless. Defaults 1.005, −0.308.
-    a_s : float, optional
-        Smooth-broken-PL smoothing scale, in dex. Default 0.10.
-    a_min : float, optional
-        Minimum characteristic a, in AU. Default 0.1.
-    sig_A, sig_B : float, optional
-        Low- and high-mass σ(log10 a) logistic values, in dex.
-        Defaults 0.7, 1.5 (Table 2 pins).
-    sig_M0 : float, optional
-        Characteristic mass of the σ logistic, in solar masses
-        (Msun). Default 0.354.
-    sig_k : float, optional
-        σ logistic slope, dimensionless. Default 6.05.
     CSF_max : float, optional
         Maximum companion star fraction, dimensionless mean companion
         count (not bounded by 1). Default 3.
@@ -1175,9 +1139,6 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     def __init__(self, MF_A=0.14, MF_B=0.99, MF_M0=1.41, MF_k=1.25,
                  CSF_A=0.12, CSF_B=2.35, CSF_M0=3.57, CSF_k=0.96,
                  q_A=6.6, q_B=-1.77, q_M0=0.0651, q_k=0.629,
-                 a_mup=44.46, a_mp=0.819, a_alphaL=1.005,
-                 a_alphaR=-0.308, a_s=0.10, a_min=0.1,
-                 sig_A=0.7, sig_B=1.5, sig_M0=0.354, sig_k=6.05,
                  CSF_max=3, q_min=0.01, companion_max=False):
 
         super(MultiplicityUnresolvedOffner2023, self).__init__(
@@ -1189,16 +1150,6 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         self.q_B = float(q_B)
         self.q_M0 = float(q_M0)
         self.q_k = float(q_k)
-        self.a_mup = float(a_mup)
-        self.a_mp = float(a_mp)
-        self.a_alphaL = float(a_alphaL)
-        self.a_alphaR = float(a_alphaR)
-        self.a_s = float(a_s)
-        self.a_min = float(a_min)
-        self.sig_A = float(sig_A)
-        self.sig_B = float(sig_B)
-        self.sig_M0 = float(sig_M0)
-        self.sig_k = float(sig_k)
 
         return
 
@@ -1245,93 +1196,6 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
             mass, self.q_A, self.q_B, self.q_M0, self.q_k)
         
         return gamma
-
-    def log_a_mean(self, mass):
-        """
-        Characteristic log10(a/AU) from the smooth broken power law.
-
-        FGK-pulled, s = 0.1 dex, C-infinity (stable logcosh; not
-        ``log(cosh x)`` and not a hard ``where`` break)::
-
-            v = log10(M / Mp),   yp = log10(μp)
-            log10 a = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
-
-        with μp = 44.46 AU, Mp = 0.819 Msun, αL = 1.005,
-        αR = −0.308, s = 0.10. Linear-space a is clipped to 0.1 AU.
-        Uses ``logcosh x = |x| + log(1 + e**(-2|x|)) - log 2``.
-
-        Parameters
-        ----------
-        mass : float or array_like
-            Primary mass in solar masses (Msun).
-
-        Returns
-        -------
-        log_a_mean : float or ndarray
-            Characteristic log10(a / 1 AU) in dex (not ln, not AU).
-            Python float if ``mass`` is scalar, ndarray otherwise.
-        """
-        # Calculate the characteristic log10(a / 1 AU) using a smooth broken power law 
-        log_a_mean = _smooth_broken_loglog(
-            mass, self.a_mup, self.a_mp,
-            self.a_alphaL, self.a_alphaR, self.a_s,
-            a_min=self.a_min)
-
-        return log_a_mean
-
-    def a_mean(self, mass):
-        """
-        Characteristic μ(a) in AU, ``10 ** log_a_mean(mass)``.
-
-        Parameters
-        ----------
-        mass : float or array_like
-            Primary mass in solar masses (Msun).
-
-        Returns
-        -------
-        a_mean : float or ndarray
-            Characteristic separation μ(a) in AU. Python float if
-            ``mass`` is scalar, ndarray otherwise.
-        """
-        log_a = self.log_a_mean(mass)
-
-        if np.isscalar(log_a):
-            a_mean = 10.0 ** log_a
-            return a_mean
-
-        a_mean = 10.0 ** np.asarray(log_a, dtype=float)
-
-        return a_mean
-
-    def sigma_log_a(self, mass):
-        """
-        σ(log10 a) from a 2-parameter logistic in log-mass.
-
-        Floors/ceilings pinned at 0.7 / 1.5; clipped to ≥ 0.1::
-
-            σ(M) = 0.7 + 0.8 / (1 + (M / 0.354)**(-6.05))
-
-        i.e. (A, B, M0, k) = (0.7, 1.5, 0.354, 6.05).
-
-        Parameters
-        ----------
-        mass : float or array_like
-            Primary mass in solar masses (Msun).
-
-        Returns
-        -------
-        sigma_log_a : float or ndarray
-            Standard deviation of log10(a / 1 AU), in dex.
-            Python float if ``mass`` is scalar, ndarray otherwise.
-        """
-
-        # Calculate the standard deviation of log10(a / 1 AU) using a 2-parameter logistic
-        sigma_log_a = _logistic_in_logm(
-            mass, self.sig_A, self.sig_B, self.sig_M0, self.sig_k,
-            clip_min=0.1)
-
-        return sigma_log_a
 
     def draw_q(self, mass, rng=None, n_comp=1):
         """
@@ -1382,13 +1246,25 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
 
     Notes
     -----
+    :meth:`log_a_mean` / :meth:`a_mean` are a smooth broken power
+    law in log10 a vs log10 M (FGK-pulled, s = 0.1 dex),
+    C-infinity via a stable logcosh (not ``log(cosh x)``)::
+
+        v = log10(M / Mp),   yp = log10(μp)
+        log10 a = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
+
+    with μp = 44.46 AU, Mp = 0.819 Msun, αL = 1.005, αR = −0.308,
+    s = 0.10. Linear-space a is clipped above 0.1 AU.
+
+    :meth:`sigma_log_a` is a 2-parameter logistic pinned at
+    0.7 / 1.5::
+
+        σ(M) = 0.7 + 0.8 / (1 + (M / 0.354)**(-6.05))
+
     :meth:`log_semimajoraxis` draws log10(a/AU) from a truncated
-    lognormal with ``loc = log_a_mean(mass)`` (smooth broken power
-    law, s = 0.1 dex, FGK-pulled) and
-    ``scale = sigma_log_a(mass)`` (2-parameter logistic pinned at
-    0.7 / 1.5). Brown-dwarf binaries peak near a few AU
-    (μ(0.033) ≈ 2 AU). Truncation is 0.01–2000 AU, same limits as
-    :class:`MultiplicityResolvedDK`.
+    lognormal with those loc / scale values. Brown-dwarf binaries
+    peak near a few AU (μ(0.033) ≈ 2 AU). Truncation is
+    0.01–2000 AU, same limits as :class:`MultiplicityResolvedDK`.
 
     Eccentricity and Keplerian angles still follow Duchêne & Kraus
     (2013): f(e) = 2e, random inclination and angles. Same mixin as
@@ -1472,16 +1348,107 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
             MF_A=MF_A, MF_B=MF_B, MF_M0=MF_M0, MF_k=MF_k,
             CSF_A=CSF_A, CSF_B=CSF_B, CSF_M0=CSF_M0, CSF_k=CSF_k,
             q_A=q_A, q_B=q_B, q_M0=q_M0, q_k=q_k,
-            a_mup=a_mup, a_mp=a_mp, a_alphaL=a_alphaL,
-            a_alphaR=a_alphaR, a_s=a_s, a_min=a_min,
-            sig_A=sig_A, sig_B=sig_B, sig_M0=sig_M0, sig_k=sig_k,
             CSF_max=CSF_max, q_min=q_min,
             companion_max=companion_max)
+        self.a_mup = float(a_mup)
+        self.a_mp = float(a_mp)
+        self.a_alphaL = float(a_alphaL)
+        self.a_alphaR = float(a_alphaR)
+        self.a_s = float(a_s)
+        self.a_min = float(a_min)
+        self.sig_A = float(sig_A)
+        self.sig_B = float(sig_B)
+        self.sig_M0 = float(sig_M0)
+        self.sig_k = float(sig_k)
         # Table 2 σ knots for the comparison plot; draws use sigma_log_a.
         self.sep_sig_mass = np.array(sep_sig_mass, dtype=float)
         self.sep_sig = np.array(sep_sig, dtype=float)
 
         return
+
+    def log_a_mean(self, mass):
+        """
+        Characteristic log10(a/AU) from the smooth broken power law.
+
+        FGK-pulled, s = 0.1 dex, C-infinity (stable logcosh; not
+        ``log(cosh x)`` and not a hard ``where`` break)::
+
+            v = log10(M / Mp),   yp = log10(μp)
+            log10 a = yp + 0.5*(αL+αR)*v + 0.5*(αR-αL)*s * logcosh(v/s)
+
+        with μp = 44.46 AU, Mp = 0.819 Msun, αL = 1.005,
+        αR = −0.308, s = 0.10. Linear-space a is clipped to 0.1 AU.
+        Uses ``logcosh x = |x| + log(1 + e**(-2|x|)) - log 2``.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        log_a_mean : float or ndarray
+            Characteristic log10(a / 1 AU) in dex (not ln, not AU).
+            Python float if ``mass`` is scalar, ndarray otherwise.
+        """
+        log_a_mean = _smooth_broken_loglog(
+            mass, self.a_mup, self.a_mp,
+            self.a_alphaL, self.a_alphaR, self.a_s,
+            a_min=self.a_min)
+
+        return log_a_mean
+
+    def a_mean(self, mass):
+        """
+        Characteristic μ(a) in AU, ``10 ** log_a_mean(mass)``.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        a_mean : float or ndarray
+            Characteristic separation μ(a) in AU. Python float if
+            ``mass`` is scalar, ndarray otherwise.
+        """
+        log_a = self.log_a_mean(mass)
+
+        if np.isscalar(log_a):
+            a_mean = 10.0 ** log_a
+            return a_mean
+
+        a_mean = 10.0 ** np.asarray(log_a, dtype=float)
+
+        return a_mean
+
+    def sigma_log_a(self, mass):
+        """
+        σ(log10 a) from a 2-parameter logistic in log-mass.
+
+        Floors/ceilings pinned at 0.7 / 1.5; clipped to ≥ 0.1::
+
+            σ(M) = 0.7 + 0.8 / (1 + (M / 0.354)**(-6.05))
+
+        i.e. (A, B, M0, k) = (0.7, 1.5, 0.354, 6.05).
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+
+        Returns
+        -------
+        sigma_log_a : float or ndarray
+            Standard deviation of log10(a / 1 AU), in dex.
+            Python float if ``mass`` is scalar, ndarray otherwise.
+        """
+        sigma_log_a = _logistic_in_logm(
+            mass, self.sig_A, self.sig_B, self.sig_M0, self.sig_k,
+            clip_min=0.1)
+
+        return sigma_log_a
 
     def log_semimajoraxis(self, mass, rng=None):
         """

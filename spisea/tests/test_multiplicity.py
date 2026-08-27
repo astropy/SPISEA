@@ -331,22 +331,31 @@ def test_offner2023_logistic_coefficients():
     np.testing.assert_allclose(multi.q_B, -1.77)
     np.testing.assert_allclose(multi.q_M0, 0.0651)
     np.testing.assert_allclose(multi.q_k, 0.629)
-    np.testing.assert_allclose(multi.a_mup, 44.46)
-    np.testing.assert_allclose(multi.a_mp, 0.819)
-    np.testing.assert_allclose(multi.a_alphaL, 1.005)
-    np.testing.assert_allclose(multi.a_alphaR, -0.308)
-    np.testing.assert_allclose(multi.a_s, 0.10)
-    np.testing.assert_allclose(multi.a_min, 0.1)
-    np.testing.assert_allclose(multi.sig_A, 0.7)
-    np.testing.assert_allclose(multi.sig_B, 1.5)
-    np.testing.assert_allclose(multi.sig_M0, 0.354)
-    np.testing.assert_allclose(multi.sig_k, 6.05)
+    assert not hasattr(multi, 'a_mup')
+    assert not hasattr(multi, 'sig_A')
+    assert not hasattr(multi, 'log_a_mean')
+    assert not hasattr(multi, 'a_mean')
+    assert not hasattr(multi, 'sigma_log_a')
+    import inspect
+    unres_sig = inspect.signature(
+        multiplicity.MultiplicityUnresolvedOffner2023.__init__)
+    for name in ('a_mup', 'a_mp', 'a_alphaL', 'a_alphaR', 'a_s', 'a_min',
+                 'sig_A', 'sig_B', 'sig_M0', 'sig_k'):
+        assert name not in unres_sig.parameters
     assert not hasattr(multiplicity, 'FONTANIVE2018_BD_Q_POWER')
     assert not any(n.startswith('OFFNER2023_') for n in dir(multiplicity))
     resolved = multiplicity.MultiplicityResolvedOffner2023()
     np.testing.assert_allclose(resolved.MF_A, 0.14)
+    np.testing.assert_allclose(resolved.a_mup, 44.46)
+    np.testing.assert_allclose(resolved.a_mp, 0.819)
+    np.testing.assert_allclose(resolved.a_alphaL, 1.005)
+    np.testing.assert_allclose(resolved.a_alphaR, -0.308)
+    np.testing.assert_allclose(resolved.a_s, 0.10)
+    np.testing.assert_allclose(resolved.a_min, 0.1)
+    np.testing.assert_allclose(resolved.sig_A, 0.7)
+    np.testing.assert_allclose(resolved.sig_B, 1.5)
+    np.testing.assert_allclose(resolved.sig_M0, 0.354)
     np.testing.assert_allclose(resolved.sig_k, 6.05)
-    import inspect
     res_sig = inspect.signature(
         multiplicity.MultiplicityResolvedOffner2023.__init__)
     assert res_sig.parameters['MF_A'].default == 0.14
@@ -465,36 +474,39 @@ def test_offner2023_q_more_equal_mass_for_bds():
 
 def test_offner2023_q_sigma_a_closed_form():
     """γ, σ(log a), and log_a_mean match the smooth helpers; not interpolation."""
-    multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    unres = multiplicity.MultiplicityUnresolvedOffner2023()
+    resolved = multiplicity.MultiplicityResolvedOffner2023()
     masses = np.array([0.033, 0.065, 0.3, 1.0, 10.0])
     for m in masses:
         np.testing.assert_allclose(
-            multi.q_power_at_mass(m),
+            unres.q_power_at_mass(m),
             multiplicity._logistic_in_logm(
-                m, multi.q_A, multi.q_B, multi.q_M0, multi.q_k))
+                m, unres.q_A, unres.q_B, unres.q_M0, unres.q_k))
         np.testing.assert_allclose(
-            multi.sigma_log_a(m),
+            resolved.sigma_log_a(m),
             multiplicity._logistic_in_logm(
-                m, multi.sig_A, multi.sig_B, multi.sig_M0, multi.sig_k,
-                clip_min=0.1))
+                m, resolved.sig_A, resolved.sig_B, resolved.sig_M0,
+                resolved.sig_k, clip_min=0.1))
         np.testing.assert_allclose(
-            multi.log_a_mean(m),
+            resolved.log_a_mean(m),
             multiplicity._smooth_broken_loglog(
-                m, multi.a_mup, multi.a_mp, multi.a_alphaL, multi.a_alphaR,
-                multi.a_s, a_min=multi.a_min))
+                m, resolved.a_mup, resolved.a_mp, resolved.a_alphaL,
+                resolved.a_alphaR, resolved.a_s, a_min=resolved.a_min))
     # Array vs scalar
-    g_arr = multi.q_power_at_mass(masses)
-    sig_arr = multi.sigma_log_a(masses)
-    loga_arr = multi.log_a_mean(masses)
+    g_arr = unres.q_power_at_mass(masses)
+    sig_arr = resolved.sigma_log_a(masses)
+    loga_arr = resolved.log_a_mean(masses)
     for i, m in enumerate(masses):
-        np.testing.assert_allclose(g_arr[i], multi.q_power_at_mass(float(m)))
-        np.testing.assert_allclose(sig_arr[i], multi.sigma_log_a(float(m)))
-        np.testing.assert_allclose(loga_arr[i], multi.log_a_mean(float(m)))
+        np.testing.assert_allclose(g_arr[i], unres.q_power_at_mass(float(m)))
+        np.testing.assert_allclose(
+            sig_arr[i], resolved.sigma_log_a(float(m)))
+        np.testing.assert_allclose(
+            loga_arr[i], resolved.log_a_mean(float(m)))
     # Old L/early-T interpolation knot was 2.5; logistic is not that.
-    g_knot = multi.q_power_at_mass(0.065)
+    g_knot = unres.q_power_at_mass(0.065)
     np.testing.assert_allclose(
         g_knot, multiplicity._logistic_in_logm(
-            0.065, multi.q_A, multi.q_B, multi.q_M0, multi.q_k))
+            0.065, unres.q_A, unres.q_B, unres.q_M0, unres.q_k))
     assert abs(g_knot - 2.5) > 0.05
 
 
@@ -516,9 +528,15 @@ def test_offner2023_resolved_methods():
     """Resolved orbital methods exist; no unresolved/resolved alias."""
     assert not hasattr(multiplicity, 'MultiplicityOffner2023')
     resolved = multiplicity.MultiplicityResolvedOffner2023()
+    unres = multiplicity.MultiplicityUnresolvedOffner2023()
     assert hasattr(resolved, 'log_semimajoraxis')
     assert hasattr(resolved, 'log_a_mean')
+    assert hasattr(resolved, 'a_mean')
     assert hasattr(resolved, 'sigma_log_a')
+    assert not hasattr(unres, 'log_semimajoraxis')
+    assert not hasattr(unres, 'log_a_mean')
+    assert not hasattr(unres, 'a_mean')
+    assert not hasattr(unres, 'sigma_log_a')
     np.testing.assert_allclose(
         resolved.sep_sig_mass,
         [np.sqrt(0.075 * 0.15), np.sqrt(0.3 * 0.6), np.sqrt(0.75 * 1.25)])

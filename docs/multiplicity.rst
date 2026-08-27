@@ -72,8 +72,7 @@ Unresolved Multiplicity Classes
 .. autoclass:: imf.multiplicity.MultiplicityUnresolvedOffner2023
 	       :show-inheritance:
 	       :members: multiplicity_fraction, companion_star_fraction,
-			 q_power_at_mass, draw_q, log_a_mean, a_mean,
-			 sigma_log_a
+			 q_power_at_mass, draw_q
 
 
 Resolved Multiplicity Classes
