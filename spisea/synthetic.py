@@ -640,7 +640,7 @@ class ResolvedCluster(Cluster):
         ----------
         star_systems : Astropy table
             Star system table.
-            
+
         companions: Astropy table
             Companions table.
 
@@ -649,34 +649,39 @@ class ResolvedCluster(Cluster):
 
         cdx : array-like
             Indices of companions
-
+            
         filt : str
             Filter name
-
+             
         Returns
         -------
         star_systems : Astropy table
             Star system table with system magnitdes corrected
         """
-        mag_s = star_systems[filt][idx]
-        mag_c = companions[filt][cdx]
+        mag_s = np.asarray(star_systems[filt][idx], dtype=float)
+        mag_c = np.asarray(companions[filt][cdx], dtype=float)
 
-        # Add companion flux to system flux.
-        f1 = 10**(-mag_s / 2.5)
-        f2 = 10**(-mag_c / 2.5)
+        # Relative magnitude difference and flux ratio (f_comp / f_sys)
+        delta_m = mag_c - mag_s
+        r = np.nan_to_num(10.0 ** (-0.4 * delta_m), nan=0.0)
 
-        # For dark objects, turn the np.nan fluxes into zeros.
-        f1 = np.nan_to_num(f1)
-        f2 = np.nan_to_num(f2)
+        inv_ln10_25 = 2.5 / np.log(10.0)
 
-        # If *both* objects are dark, then keep the magnitude
-        # as np.nan. Otherwise, add fluxes together
-        good = np.where( (f1 != 0) | (f2 != 0) )[0]
-        bad = np.where( (f1 == 0) & (f2 == 0) )[0]
-        
-        star_systems[filt][idx[good]] = -2.5 * np.log10(f1[good] + f2[good])
-        star_systems[filt][idx[bad]] = np.nan
+        with np.errstate(invalid='ignore', divide='ignore'):
+            valid_s = ~np.isnan(mag_s)
+            valid_c = ~np.isnan(mag_c)
 
+            # Combined magnitude = mag_s - (2.5 / ln10) * log1p(r)
+            mag_offset = -inv_ln10_25 * np.log1p(r)
+
+            # Preserve valid primary, fallback to valid companion, or set NaN
+            combined = np.where(
+                valid_s,
+                mag_s + mag_offset,
+                np.where(valid_c, mag_c, np.nan)
+            )
+
+        star_systems[filt][idx] = combined
         return star_systems
 
     def _remove_bad_systems(self, star_systems, compMass, compLoga, compEcc, compI, compOmega, compomega, keep_low_mass_stars):
