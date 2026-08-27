@@ -642,25 +642,22 @@ class ResolvedCluster(Cluster):
         N_systems = len(star_systems)
         
         for filt in self.filt_names:
-            m_primary = np.asarray(star_systems[filt], dtype=float)
-            m_comp = np.asarray(companions[filt], dtype=float)
+            m_primary = np.asarray(star_systems[filt])
+            m_comp = np.asarray(companions[filt])
             sys_idx = companions['system_idx']
 
-            # 1. Compute relative companion-to-primary flux ratio
+            # companion-to-primary flux ratios
             delta_m = m_comp - m_primary[sys_idx]
             comp_ratio = np.nan_to_num(10.0 ** (-0.4 * delta_m), nan=0.0)
-
-            # Accumulate into guaranteed shape (N_systems,)
             total_comp_ratio = np.zeros(N_systems, dtype=float)
             np.add.at(total_comp_ratio, sys_idx, comp_ratio)
 
-            # 2. Compute absolute companion flux fallback (for dark primaries where m_primary is NaN)
+            # companion only total flux for dark primary case
             comp_abs_flux = np.nan_to_num(10.0 ** (-0.4 * m_comp), nan=0.0)
-            
             total_comp_abs_flux = np.zeros(N_systems, dtype=float)
             np.add.at(total_comp_abs_flux, sys_idx, comp_abs_flux)
 
-            # 3. High-precision log1p combination
+            # use log1p for precise magnitude addition
             with np.errstate(divide='ignore', invalid='ignore'):
                 m_with_primary = m_primary - inv_ln10_25 * np.log1p(total_comp_ratio)
                 m_dark = np.where(total_comp_abs_flux > 0.0, -2.5 * np.log10(total_comp_abs_flux), np.nan)
