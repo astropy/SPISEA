@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 import astropy.modeling
 from scipy.stats import truncnorm
@@ -151,11 +153,11 @@ class MultiplicityUnresolved(object):
 
     Stellar primaries use q_power = −0.4 (Lu et al. 2013).
     Brown-dwarf primaries (M <= 0.08 Msun) use γ = 6.1 from
-    Fontanive et al. (2018) when ``mass`` is passed to
-    :meth:`q_power_at_mass` or :meth:`random_q`. That 0.08 Msun
-    switch is a mass-ratio index only, not a companion-count
-    policy. ``random_q(x)`` with no mass keeps the stellar-only
-    power law.
+    Fontanive et al. (2018) via :meth:`q_power_at_mass` /
+    :meth:`draw_q`. That 0.08 Msun switch is a mass-ratio index
+    only, not a companion-count policy. :meth:`random_q` is
+    deprecated; ``random_q(x)`` with no mass keeps the
+    stellar-only power law.
 
     Parameters
     ----------
@@ -301,8 +303,11 @@ class MultiplicityUnresolved(object):
 
     def random_q(self, x, mass=None):
         """
-        Generative function for companion mass ratio, equivalent
-        to the inverse of the CDF.
+        Deprecated inverse-CDF wrapper for companion mass ratio.
+
+        Use :meth:`draw_q` and pass the primary mass. This wrapper
+        is kept so leftover external callers do not silently change.
+        If ``mass`` is omitted, ``self.q_pow`` is used (stellar-only).
 
             `q = m_companion / m_primary`
             `P(q) = q ** beta`    for q_min <= q <= 1
@@ -312,13 +317,10 @@ class MultiplicityUnresolved(object):
         x : float or array_like
             Uniform random draw, dimensionless, in [0, 1]. Inverse CDF
             sample for q.
-
         mass : float or array_like, optional
             Primary mass in solar masses (Msun). If given, the
-            power-law index is ``q_power_at_mass(mass)`` (brown-dwarf
-            vs stellar for the SPISEA v2.5 default; mass-dependent for
-            Offner et al. 2023). If omitted, ``self.q_pow`` is used
-            for all companions.
+            power-law index is ``q_power_at_mass(mass)``. If omitted,
+            ``self.q_pow`` is used for all companions.
 
         Returns
         -------
@@ -327,9 +329,61 @@ class MultiplicityUnresolved(object):
             [q_min, 1]. Python float if ``x`` is scalar, ndarray
             otherwise.
         """
+        warnings.warn(
+            "random_q is deprecated; use draw_q(mass, rng=...) and "
+            "pass the primary mass.",
+            DeprecationWarning,
+            stacklevel=2)
         if mass is None:
             return _q_from_powerlaw(x, self.q_pow, self.q_min)
         return _q_from_powerlaw(x, self.q_power_at_mass(mass), self.q_min)
+
+    def draw_q(self, mass, rng=None, n_comp=1):
+        """
+        Draw companion mass ratios q = m_comp / m_prim.
+
+        Uses ``q_power_at_mass(mass)`` for γ. ``mass`` is required.
+        Stellar and brown-dwarf primaries are drawn in two separate
+        RNG calls (star_mask then bd_mask, split at
+        ``H_BURNING_MASS``) so the SPISEA v2.5 ``imf.calc_multi``
+        random sequence is unchanged.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+        rng : numpy.random.Generator, optional
+            Random generator. Default ``numpy.random.default_rng()``.
+        n_comp : int, optional
+            Companions per primary. Default 1.
+
+        Returns
+        -------
+        q : float or ndarray
+            Mass ratios in [q_min, 1]. Scalar if ``mass`` is scalar
+            and ``n_comp`` is 1; shape ``(n_mass,)`` or
+            ``(n_mass, n_comp)`` otherwise.
+        """
+        if rng is None:
+            rng = np.random.default_rng()
+        n_comp = int(n_comp)
+        return_scalar = np.isscalar(mass) and n_comp == 1
+        mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
+        q_values = np.empty((len(mass_arr), n_comp), dtype=float)
+        bd_mask = mass_arr <= H_BURNING_MASS
+        star_mask = ~bd_mask
+
+        if np.any(star_mask):
+            q_pow = self.q_power_at_mass(mass_arr[star_mask])
+            x = rng.random((int(star_mask.sum()), n_comp))
+            q_values[star_mask] = _q_from_powerlaw(x, q_pow, self.q_min)
+
+        if np.any(bd_mask):
+            q_pow = self.q_power_at_mass(mass_arr[bd_mask])
+            x = rng.random((int(bd_mask.sum()), n_comp))
+            q_values[bd_mask] = _q_from_powerlaw(x, q_pow, self.q_min)
+
+        return _finalize_q_draw(q_values, return_scalar, n_comp)
 
     def random_is_multiple(self, x, MF):
         """
@@ -422,51 +476,14 @@ class MultiplicityUnresolved(object):
 
         return np.atleast_1d(n_comp)
 
-    def _q_values_for_primaries(self, prim_subset, n_comp, rng):
-        """
-        Draw mass ratios for ``n_comp`` companions of each primary.
-
-        The stellar / brown-dwarf split (two separate RNG draws) preserves
-        the historical SPISEA v2.5 random sequence used by
-        ``imf.calc_multi``.
-
-        Parameters
-        ----------
-        prim_subset : array_like
-            Primary masses for this companion-count group. Must be
-            positive, in solar masses (Msun).
-        n_comp : int
-            Number of companions per primary, integer count.
-        rng : numpy.random.Generator
-            Random generator used for inverse-CDF q draws.
-
-        Returns
-        -------
-        q_values : ndarray
-            Companion mass ratios m_comp/m_prim, dimensionless, in
-            [q_min, 1]. Shape (len(prim_subset), n_comp).
-        """
-        q_values = np.empty((len(prim_subset), n_comp))
-        bd_mask = prim_subset <= H_BURNING_MASS
-        star_mask = ~bd_mask
-
-        if np.any(star_mask):
-            q_values[star_mask] = self.random_q(rng.random((star_mask.sum(), n_comp)), mass=prim_subset[star_mask])
-
-        if np.any(bd_mask):
-            q_values[bd_mask] = self.random_q(rng.random((bd_mask.sum(), n_comp)), mass=prim_subset[bd_mask])
-
-        return q_values
-
     def draw_companion_masses(self, primary_masses, is_multiple, CSF, MF,
                               rng, mass_min):
         """
         Assign companion masses for a set of primaries.
 
         This is the multiplicity-object entry point used by
-        ``IMF.calc_multi``. Companion-mass draws, including brown-dwarf
-        q distributions and the binaries-only BD companion count, live
-        here rather than in ``imf.py``.
+        ``IMF.calc_multi``. Companion-mass draws use :meth:`draw_q`
+        and live here rather than in ``imf.py``.
 
         Parameters
         ----------
@@ -520,7 +537,11 @@ class MultiplicityUnresolved(object):
 
         for n_c, idx in zip(n_unique, n_indices):
             prim_subset = primary[idx]
-            q_values = self._q_values_for_primaries(prim_subset, int(n_c), rng)
+            q_values = np.asarray(
+                self.draw_q(prim_subset, rng=rng, n_comp=int(n_c)),
+                dtype=float)
+            if q_values.ndim == 1:
+                q_values = q_values[:, np.newaxis]
             m_comp = q_values * prim_subset[:, np.newaxis]
             comp_masses[multiple_idx[idx], :int(n_c)] = m_comp
 
@@ -1065,11 +1086,12 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         γ(M) = A + (B - A) / (1 + (M / M0)**(-k))
 
     with (A, B, M0, k) = (6.6, −1.77, 0.0651, 0.629). Call
-    ``random_q(x, mass=...)``. Without ``mass``, ``random_q(x)``
-    keeps the historical stellar-only power law. BD companions are
-    still more equal-mass than solar-type companions. The
-    err-weighted fit undershoots Fontanive 4.8 ± 2.2 (~3.3 at
-    0.033 Msun); that is the fit, not a bug.
+    :meth:`draw_q`. :meth:`random_q` is deprecated; without
+    ``mass``, ``random_q(x)`` keeps the historical stellar-only
+    power law. BD companions are still more equal-mass than
+    solar-type companions. The err-weighted fit undershoots
+    Fontanive 4.8 ± 2.2 (~3.3 at 0.033 Msun); that is the fit,
+    not a bug.
 
     **Characteristic separation.** :meth:`log_a_mean` / :meth:`a_mean`
     are a smooth broken power law in log10 a vs log10 M (FGK-pulled,
@@ -1147,7 +1169,8 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     q_power : float, optional
         Fallback mass-ratio power-law index, dimensionless. Ignored for
         draws when primary mass is provided (the γ logistic is used);
-        used by ``random_q(x)`` with no mass. Default 0.2.
+        used by the deprecated ``random_q(x)`` with no mass.
+        Default 0.2.
     q_min : float, optional
         Minimum mass ratio m_comp/m_prim, dimensionless, in [q_min, 1].
         Default 0.01.
@@ -1302,30 +1325,39 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
 
         return sigma_log_a
 
-    def _q_values_for_primaries(self, prim_subset, n_comp, rng):
+    def draw_q(self, mass, rng=None, n_comp=1):
         """
-        Draw mass-dependent q for every primary (BD and stellar).
+        Draw companion mass ratios q = m_comp / m_prim.
+
+        Uses ``q_power_at_mass(mass)`` for the Table 1 γ logistic.
+        ``mass`` is required. All primaries are drawn in one RNG
+        call; γ(M) is already mass-dependent.
 
         Parameters
         ----------
-        prim_subset : array_like
-            Primary masses for this companion-count group. Must be
-            positive, in solar masses (Msun).
-        n_comp : int
-            Number of companions per primary, integer count.
-        rng : numpy.random.Generator
-            Random generator used for inverse-CDF q draws.
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+        rng : numpy.random.Generator, optional
+            Random generator. Default ``numpy.random.default_rng()``.
+        n_comp : int, optional
+            Companions per primary. Default 1.
 
         Returns
         -------
-        q_values : ndarray
-            Companion mass ratios m_comp/m_prim, dimensionless, in
-            [q_min, 1]. Shape (len(prim_subset), n_comp).
+        q : float or ndarray
+            Mass ratios in [q_min, 1]. Scalar if ``mass`` is scalar
+            and ``n_comp`` is 1; shape ``(n_mass,)`` or
+            ``(n_mass, n_comp)`` otherwise.
         """
-        # Draw the mass-dependent mass ratios using a logistic in log-mass
-        q_values = self.random_q(rng.random((len(prim_subset), n_comp)), mass=prim_subset)
-
-        return q_values
+        if rng is None:
+            rng = np.random.default_rng()
+        n_comp = int(n_comp)
+        return_scalar = np.isscalar(mass) and n_comp == 1
+        mass_arr = np.atleast_1d(np.asarray(mass, dtype=float))
+        q_pow = self.q_power_at_mass(mass_arr)
+        x = rng.random((len(mass_arr), n_comp))
+        q_values = _q_from_powerlaw(x, q_pow, self.q_min)
+        return _finalize_q_draw(q_values, return_scalar, n_comp)
 
 
 class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
@@ -1732,4 +1764,30 @@ def _q_from_powerlaw(x, q_pow, q_min):
 
     # Return the result
     return out
+
+
+def _finalize_q_draw(q_values, return_scalar, n_comp):
+    """
+    Shape a (n_mass, n_comp) q array for :meth:`draw_q`.
+
+    Parameters
+    ----------
+    q_values : ndarray
+        Mass ratios, dimensionless, shape (n_mass, n_comp).
+    return_scalar : bool
+        If True, return a Python float.
+    n_comp : int
+        Companions per primary, integer count.
+
+    Returns
+    -------
+    q : float or ndarray
+        Scalar, shape (n_mass,), or shape (n_mass, n_comp).
+    """
+    q_values = np.asarray(q_values, dtype=float)
+    if return_scalar:
+        return float(q_values[0, 0])
+    if n_comp == 1:
+        return q_values[:, 0]
+    return q_values
 

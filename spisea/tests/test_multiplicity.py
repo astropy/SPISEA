@@ -455,8 +455,8 @@ def test_offner2023_q_more_equal_mass_for_bds():
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
     rng = np.random.default_rng(7)
     n = 20000
-    q_bd = multi.random_q(rng.random(n), mass=0.04)
-    q_sun = multi.random_q(rng.random(n), mass=1.0)
+    q_bd = multi.draw_q(np.full(n, 0.04), rng=rng)
+    q_sun = multi.draw_q(np.full(n, 1.0), rng=rng)
     assert np.mean(q_bd) > np.mean(q_sun) + 0.1
     # Err-wt logistic undershoots Fontanive 4.8 (~3.3 at 0.033 Msun)
     assert multi.q_power_at_mass(0.033) > 2.5
@@ -666,7 +666,8 @@ def test_calc_multi_uses_multiplicity_q_and_counts():
     comp, _, _ = offner.draw_companion_masses(
         masses, is_mult, csf, mf, rng, mass_min=0.01)
     q = comp.compressed() / 0.04
-    q_lu_draw = lu.random_q(np.random.default_rng(1).random(len(q)), mass=0.04)
+    q_lu_draw = lu.draw_q(
+        np.full(len(q), 0.04), rng=np.random.default_rng(1))
     # Offner BD gamma is shallower than Fontanive 6.1, so mean q is lower.
     assert np.mean(q) < np.mean(q_lu_draw)
 
@@ -766,4 +767,64 @@ def test_random_keplarian_parameters_same_seed():
         np.testing.assert_array_equal(i1, i2)
         np.testing.assert_array_equal(O1, O2)
         np.testing.assert_array_equal(o1, o2)
+
+
+def test_draw_q_same_seed():
+    """Same rng seed reproduces draw_q."""
+    masses = np.array([0.04, 0.3, 1.0, 2.0] * 8)
+    for cls in (multiplicity.MultiplicityUnresolved,
+                multiplicity.MultiplicityUnresolvedOffner2023):
+        multi = cls()
+        rng1, rng2 = _same_seed_rngs()
+        q1 = multi.draw_q(masses, rng=rng1, n_comp=2)
+        q2 = multi.draw_q(masses, rng=rng2, n_comp=2)
+        np.testing.assert_array_equal(q1, q2)
+
+
+def test_unresolved_draw_q_keeps_bd_stellar_split():
+    """v2.5 draw_q draws stars then BDs (two RNG calls)."""
+    multi = multiplicity.MultiplicityUnresolved()
+    masses = np.array([1.0, 0.04, 2.0, 0.03])
+    rng = np.random.default_rng(5)
+    q = multi.draw_q(masses, rng=rng, n_comp=2)
+    rng2 = np.random.default_rng(5)
+    star = masses > multiplicity.H_BURNING_MASS
+    q_exp = np.empty((len(masses), 2))
+    q_exp[star] = multiplicity._q_from_powerlaw(
+        rng2.random((int(star.sum()), 2)),
+        multi.q_power_at_mass(masses[star]),
+        multi.q_min)
+    q_exp[~star] = multiplicity._q_from_powerlaw(
+        rng2.random((int((~star).sum()), 2)),
+        multi.q_power_at_mass(masses[~star]),
+        multi.q_min)
+    np.testing.assert_array_equal(q, q_exp)
+
+
+def test_offner_draw_q_is_single_shot():
+    """Offner draw_q draws all primaries in one RNG call."""
+    multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    masses = np.array([1.0, 0.04, 2.0, 0.03])
+    rng = np.random.default_rng(5)
+    q = multi.draw_q(masses, rng=rng, n_comp=2)
+    rng2 = np.random.default_rng(5)
+    q_exp = multiplicity._q_from_powerlaw(
+        rng2.random((len(masses), 2)),
+        multi.q_power_at_mass(masses),
+        multi.q_min)
+    np.testing.assert_array_equal(q, q_exp)
+
+
+def test_random_q_is_deprecated():
+    """random_q warns and still uses q_pow when mass is omitted."""
+    import warnings
+    multi = multiplicity.MultiplicityUnresolved()
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter('always', DeprecationWarning)
+        q = multi.random_q(np.array([0.0, 1.0]))
+    assert any(issubclass(w.category, DeprecationWarning) for w in caught)
+    assert any('draw_q' in str(w.message) for w in caught)
+    q_exp = multiplicity._q_from_powerlaw(
+        np.array([0.0, 1.0]), multi.q_pow, multi.q_min)
+    np.testing.assert_allclose(q, q_exp)
 
