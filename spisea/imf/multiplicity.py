@@ -1085,10 +1085,9 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
 
         γ(M) = A + (B - A) / (1 + (M / M0)**(-k))
 
-    with (A, B, M0, k) = (6.6, −1.77, 0.0651, 0.629). Call
-    :meth:`draw_q`. :meth:`random_q` is deprecated; without
-    ``mass``, ``random_q(x)`` keeps the historical stellar-only
-    power law. BD companions are still more equal-mass than
+    with (A, B, M0, k) = (6.6, −1.77, 0.0651, 0.629). The q API
+    is :meth:`draw_q` / :meth:`q_power_at_mass`; ``random_q`` is
+    not supported. BD companions are still more equal-mass than
     solar-type companions. The err-weighted fit undershoots
     Fontanive 4.8 ± 2.2 (~3.3 at 0.033 Msun); that is the fit,
     not a bug.
@@ -1166,11 +1165,6 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
     CSF_max : float, optional
         Maximum companion star fraction, dimensionless mean companion
         count (not bounded by 1). Default 3.
-    q_power : float, optional
-        Fallback mass-ratio power-law index, dimensionless. Ignored for
-        draws when primary mass is provided (the γ logistic is used);
-        used by the deprecated ``random_q(x)`` with no mass.
-        Default 0.2.
     q_min : float, optional
         Minimum mass ratio m_comp/m_prim, dimensionless, in [q_min, 1].
         Default 0.01.
@@ -1184,13 +1178,12 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
                  a_mup=44.46, a_mp=0.819, a_alphaL=1.005,
                  a_alphaR=-0.308, a_s=0.10, a_min=0.1,
                  sig_A=0.7, sig_B=1.5, sig_M0=0.354, sig_k=6.05,
-                 CSF_max=3, q_power=0.2, q_min=0.01,
-                 companion_max=False):
+                 CSF_max=3, q_min=0.01, companion_max=False):
 
         super(MultiplicityUnresolvedOffner2023, self).__init__(
             MF_A=MF_A, MF_B=MF_B, MF_M0=MF_M0, MF_k=MF_k,
             CSF_A=CSF_A, CSF_B=CSF_B, CSF_M0=CSF_M0, CSF_k=CSF_k,
-            CSF_max=CSF_max, q_power=q_power, q_min=q_min,
+            CSF_max=CSF_max, q_min=q_min,
             companion_max=companion_max)
         self.q_A = float(q_A)
         self.q_B = float(q_B)
@@ -1208,6 +1201,21 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
         self.sig_k = float(sig_k)
 
         return
+
+    def random_q(self, x, mass=None):
+        """
+        Not supported on Offner classes.
+
+        Use :meth:`draw_q` with a primary mass.
+
+        Raises
+        ------
+        TypeError
+            Always. Offner q draws require ``draw_q(mass, rng=...)``.
+        """
+        raise TypeError(
+            "Offner multiplicity does not support random_q; "
+            "use draw_q(mass, rng=...)")
 
     def q_power_at_mass(self, mass):
         """
@@ -1437,10 +1445,6 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
     CSF_max : float, optional
         Maximum companion star fraction, dimensionless mean companion
         count (not bounded by 1). Default 3.
-    q_power : float, optional
-        Fallback mass-ratio power-law index, dimensionless. Ignored for
-        draws when primary mass is provided (the γ logistic is used).
-        Default 0.2.
     q_min : float, optional
         Minimum mass ratio m_comp/m_prim, dimensionless. Default 0.01.
     companion_max : bool, optional
@@ -1459,8 +1463,7 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
                  a_mup=44.46, a_mp=0.819, a_alphaL=1.005,
                  a_alphaR=-0.308, a_s=0.10, a_min=0.1,
                  sig_A=0.7, sig_B=1.5, sig_M0=0.354, sig_k=6.05,
-                 CSF_max=3, q_power=0.2, q_min=0.01,
-                 companion_max=False,
+                 CSF_max=3, q_min=0.01, companion_max=False,
                  sep_sig=(0.7, 1.3, 1.5),
                  sep_sig_mass=(np.sqrt(0.075 * 0.15),
                                np.sqrt(0.3 * 0.6),
@@ -1472,7 +1475,7 @@ class MultiplicityResolvedOffner2023(MultiplicityUnresolvedOffner2023,
             a_mup=a_mup, a_mp=a_mp, a_alphaL=a_alphaL,
             a_alphaR=a_alphaR, a_s=a_s, a_min=a_min,
             sig_A=sig_A, sig_B=sig_B, sig_M0=sig_M0, sig_k=sig_k,
-            CSF_max=CSF_max, q_power=q_power, q_min=q_min,
+            CSF_max=CSF_max, q_min=q_min,
             companion_max=companion_max)
         # Table 2 σ knots for the comparison plot; draws use sigma_log_a.
         self.sep_sig_mass = np.array(sep_sig_mass, dtype=float)

@@ -21,7 +21,8 @@ The multiplicity object provides the following functions used by the IMF:
 * ``multiplicity_fraction(mass)``
 * ``companion_star_fraction(mass)``
 * ``draw_q(mass, rng=None, n_comp=1)`` — companion mass ratios
-  from ``q_power_at_mass``. ``random_q`` is deprecated.
+  from ``q_power_at_mass``. ``random_q`` is deprecated on the
+  v2.5 classes and is not supported on Offner.
 * ``random_companion_count(x, CSF, MF, mass=None, rng=None)`` —
   companion-count draw. If ``companion_max`` is True, counts are
   capped at ``CSF_max`` at all masses.

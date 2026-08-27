@@ -816,7 +816,8 @@ def test_offner_draw_q_is_single_shot():
 
 
 def test_random_q_is_deprecated():
-    """random_q warns and still uses q_pow when mass is omitted."""
+    """v2.5 random_q warns and still uses q_pow when mass is omitted."""
+    import inspect
     import warnings
     multi = multiplicity.MultiplicityUnresolved()
     with warnings.catch_warnings(record=True) as caught:
@@ -827,4 +828,16 @@ def test_random_q_is_deprecated():
     q_exp = multiplicity._q_from_powerlaw(
         np.array([0.0, 1.0]), multi.q_pow, multi.q_min)
     np.testing.assert_allclose(q, q_exp)
+
+    import pytest
+    off_src = inspect.signature(
+        multiplicity.MultiplicityUnresolvedOffner2023.__init__)
+    assert 'q_power' not in off_src.parameters
+    res_src = inspect.signature(
+        multiplicity.MultiplicityResolvedOffner2023.__init__)
+    assert 'q_power' not in res_src.parameters
+    for cls in (multiplicity.MultiplicityUnresolvedOffner2023,
+                multiplicity.MultiplicityResolvedOffner2023):
+        with pytest.raises(TypeError, match='draw_q'):
+            cls().random_q(0.5)
 
