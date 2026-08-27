@@ -447,6 +447,8 @@ class ResolvedCluster(Cluster):
         companions['isWR'] = ~(self.iso_interps['isWR'](companions['mass']) < 0.5)
         companions['phase'] = np.round(self.iso_interps['phase'](companions['mass']))
 
+        # TODO: do we want this hard-coded? it should probably be handled
+        # by the isochrones, right?
         bd_mask = (companions['mass'] >= 0.01) & (companions['mass'] <= 0.08)
         companions['phase'][bd_mask] = 90
         companions['mass_current'][bd_mask] = companions['mass'][bd_mask]
@@ -468,12 +470,7 @@ class ResolvedCluster(Cluster):
         # Update primary fluxes to include the flux of companions.
         for filt in self.filt_names:
             companions[filt] = self.iso_interps[filt](companions['mass'])
-            primary_flux = 10**(-star_systems[filt] / 2.5)
-            # Sum the flux of all companions in each system
-            companions_flux = np.bincount(companions['system_idx'], weights=10**(-companions[filt] / 2.5), minlength=N_systems)
-            combined_flux = np.nansum(np.vstack((primary_flux, companions_flux)), axis=0)
-            combined_flux[combined_flux == 0] = np.nan
-            star_systems[filt] = -2.5 * np.log10(combined_flux)
+        star_systems = self._calc_system_mag(star_systems,companions)
 
         #####
         # Make Remnants with flux = 0 in all bands.
@@ -609,6 +606,8 @@ class ResolvedCluster(Cluster):
             companions[filt] = m_rescaled
 
             # Add companions masses to primaries
+            # TODO: I don't think that gets done here... is the comment old?
+            # TODO: Should it just say mags instead of masses?
             N_comp_max = np.max(star_systems['N_companions'])
             comp_index = np.zeros((len(star_systems), N_comp_max), dtype=int)
             kk = 0
@@ -617,24 +616,14 @@ class ResolvedCluster(Cluster):
                     comp_index[ii][cc] = kk
                     kk += 1
 
-            # Find all the systems with at least one companion... add the flux
-            # of that companion to the primary. Repeat for 2 companions,
-            # 3 companions, etc.
-            for cc in range(1, N_comp_max+1):
-                # All systems with at least cc companions.
-                idx = np.where(star_systems['N_companions'] >= cc)[0]
-
-                # Get the location in the companions array for each system and
-                # the cc'th companion.
-                cdx = comp_index[idx, cc-1]
-                star_systems = self._calc_system_mag(star_systems, companions, idx, cdx, filt)
+        star_systems = self._calc_system_mag(star_systems, companions)
 
         return star_systems, companions
 
-    def _calc_system_mag(self, star_systems, companions, idx, cdx, filt):
+    def _calc_system_mag(self, star_systems, companions):
         """
         Helper function to calculate the system magnitude from
-        companion and primary magnitude.
+        companion and primary magnitudes.
 
         Parameters
         ----------
@@ -643,45 +632,40 @@ class ResolvedCluster(Cluster):
 
         companions: Astropy table
             Companions table.
-
-        idx : array-like
-            Indices of primaries with companions
-
-        cdx : array-like
-            Indices of companions
-            
-        filt : str
-            Filter name
              
         Returns
         -------
         star_systems : Astropy table
             Star system table with system magnitdes corrected
         """
-        mag_s = np.asarray(star_systems[filt][idx], dtype=float)
-        mag_c = np.asarray(companions[filt][cdx], dtype=float)
-
-        # Relative magnitude difference and flux ratio (f_comp / f_sys)
-        delta_m = mag_c - mag_s
-        r = np.nan_to_num(10.0 ** (-0.4 * delta_m), nan=0.0)
-
         inv_ln10_25 = 2.5 / np.log(10.0)
+        N_systems = len(star_systems)
+        
+        for filt in self.filt_names:
+            m_primary = np.asarray(star_systems[filt], dtype=float)
+            m_comp = np.asarray(companions[filt], dtype=float)
+            sys_idx = companions['system_idx']
 
-        with np.errstate(invalid='ignore', divide='ignore'):
-            valid_s = ~np.isnan(mag_s)
-            valid_c = ~np.isnan(mag_c)
+            # 1. Compute relative companion-to-primary flux ratio
+            delta_m = m_comp - m_primary[sys_idx]
+            comp_ratio = np.nan_to_num(10.0 ** (-0.4 * delta_m), nan=0.0)
 
-            # Combined magnitude = mag_s - (2.5 / ln10) * log1p(r)
-            mag_offset = -inv_ln10_25 * np.log1p(r)
+            # Accumulate into guaranteed shape (N_systems,)
+            total_comp_ratio = np.zeros(N_systems, dtype=float)
+            np.add.at(total_comp_ratio, sys_idx, comp_ratio)
 
-            # Preserve valid primary, fallback to valid companion, or set NaN
-            combined = np.where(
-                valid_s,
-                mag_s + mag_offset,
-                np.where(valid_c, mag_c, np.nan)
-            )
+            # 2. Compute absolute companion flux fallback (for dark primaries where m_primary is NaN)
+            comp_abs_flux = np.nan_to_num(10.0 ** (-0.4 * m_comp), nan=0.0)
+            
+            total_comp_abs_flux = np.zeros(N_systems, dtype=float)
+            np.add.at(total_comp_abs_flux, sys_idx, comp_abs_flux)
 
-        star_systems[filt][idx] = combined
+            # 3. High-precision log1p combination
+            with np.errstate(divide='ignore', invalid='ignore'):
+                m_with_primary = m_primary - inv_ln10_25 * np.log1p(total_comp_ratio)
+                m_dark = np.where(total_comp_abs_flux > 0.0, -2.5 * np.log10(total_comp_abs_flux), np.nan)
+
+                star_systems[filt] = np.where(~np.isnan(m_primary), m_with_primary, m_dark)
         return star_systems
 
     def _remove_bad_systems(self, star_systems, compMass, compLoga, compEcc, compI, compOmega, compomega, keep_low_mass_stars):
