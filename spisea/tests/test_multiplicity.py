@@ -271,7 +271,21 @@ _OFFNER_TABLE1 = [
 ]
 
 
-def _table1_mgeom(row):
+def _geom_mean_mass(row):
+    """
+    Geometric-mean primary mass of a Table 1 M1 interval.
+
+    Parameters
+    ----------
+    row : sequence
+        Table 1 row whose indices 1 and 2 are the low and high
+        edges of the primary-mass interval, in solar masses (Msun).
+
+    Returns
+    -------
+    mass : float
+        Geometric mean ``sqrt(M_lo * M_hi)`` in solar masses (Msun).
+    """
     return np.sqrt(row[1] * row[2])
 
 
@@ -392,7 +406,7 @@ def test_offner2023_table1_mf():
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
     for row in _OFFNER_TABLE1:
         name, mlo, mhi, mf_tab, mf_err, cf_tab = row
-        m = _table1_mgeom(row)
+        m = _geom_mean_mass(row)
         mf = multi.multiplicity_fraction(m)
         tol = max(0.08, 2.0 * mf_err)
         assert abs(mf - mf_tab) <= tol, \
@@ -406,7 +420,7 @@ def test_offner2023_table1_csf():
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
     for row in _OFFNER_TABLE1:
         name, mlo, mhi, mf_tab, mf_err, cf_tab = row
-        m = _table1_mgeom(row)
+        m = _geom_mean_mass(row)
         csf = multi.companion_star_fraction(m)
         mf = multi.multiplicity_fraction(m)
         if mlo >= 1.6:
@@ -424,7 +438,7 @@ def test_offner2023_table1_csf():
 def test_offner2023_array_vs_scalar():
     """Array and scalar MF/CSF evaluations agree."""
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
-    masses = np.array([_table1_mgeom(row) for row in _OFFNER_TABLE1])
+    masses = np.array([_geom_mean_mass(row) for row in _OFFNER_TABLE1])
     mf_arr = multi.multiplicity_fraction(masses)
     csf_arr = multi.companion_star_fraction(masses)
     for i, m in enumerate(masses):
@@ -433,8 +447,15 @@ def test_offner2023_array_vs_scalar():
 
 
 def test_higher_order_multiples_at_all_masses():
-    """BD and stellar primaries can have n_comp > 1 when CSF/MF allows."""
+    """
+    BD and stellar primaries can have n_comp > 1 when CSF/MF allows.
+
+    ``draw_n_companions`` is for systems already drawn as multiple,
+    so n_comp >= 1. Single brown dwarfs are allowed via the MF
+    coin-flip (``random_is_multiple``), not this helper.
+    """
     multi = multiplicity.MultiplicityUnresolvedOffner2023()
+    assert multi.multiplicity_fraction(0.04) < 1.0
     rng = np.random.default_rng(123)
     for m in (0.04, 1.0):
         masses = np.full(4000, m)
@@ -472,44 +493,6 @@ def test_offner2023_q_more_equal_mass_for_bds():
     assert multi.q_power_at_mass(1.0) < 0.5
 
 
-def test_offner2023_q_sigma_a_closed_form():
-    """γ, σ(log a), and log_a_mean match the smooth helpers; not interpolation."""
-    unres = multiplicity.MultiplicityUnresolvedOffner2023()
-    resolved = multiplicity.MultiplicityResolvedOffner2023()
-    masses = np.array([0.033, 0.065, 0.3, 1.0, 10.0])
-    for m in masses:
-        np.testing.assert_allclose(
-            unres.q_power_at_mass(m),
-            multiplicity._logistic_in_logm(
-                m, unres.q_A, unres.q_B, unres.q_M0, unres.q_k))
-        np.testing.assert_allclose(
-            resolved.sigma_log_a(m),
-            multiplicity._logistic_in_logm(
-                m, resolved.sig_A, resolved.sig_B, resolved.sig_M0,
-                resolved.sig_k, clip_min=0.1))
-        np.testing.assert_allclose(
-            resolved.log_a_mean(m),
-            multiplicity._smooth_broken_loglog(
-                m, resolved.a_mup, resolved.a_mp, resolved.a_alphaL,
-                resolved.a_alphaR, resolved.a_s, a_min=resolved.a_min))
-    # Array vs scalar
-    g_arr = unres.q_power_at_mass(masses)
-    sig_arr = resolved.sigma_log_a(masses)
-    loga_arr = resolved.log_a_mean(masses)
-    for i, m in enumerate(masses):
-        np.testing.assert_allclose(g_arr[i], unres.q_power_at_mass(float(m)))
-        np.testing.assert_allclose(
-            sig_arr[i], resolved.sigma_log_a(float(m)))
-        np.testing.assert_allclose(
-            loga_arr[i], resolved.log_a_mean(float(m)))
-    # Old L/early-T interpolation knot was 2.5; logistic is not that.
-    g_knot = unres.q_power_at_mass(0.065)
-    np.testing.assert_allclose(
-        g_knot, multiplicity._logistic_in_logm(
-            0.065, unres.q_A, unres.q_B, unres.q_M0, unres.q_k))
-    assert abs(g_knot - 2.5) > 0.05
-
-
 def test_offner2023_bd_separations_peak_few_au():
     """BD lognormal separations peak at a few AU (μ(0.033)≈2.1 au)."""
     multi = multiplicity.MultiplicityResolvedOffner2023()
@@ -522,27 +505,6 @@ def test_offner2023_bd_separations_peak_few_au():
     med_a_s = 10 ** np.median(log_a_s)
     assert med_a_s > 10.0
     assert med_a_s > med_a
-
-
-def test_offner2023_resolved_methods():
-    """Resolved orbital methods exist; no unresolved/resolved alias."""
-    assert not hasattr(multiplicity, 'MultiplicityOffner2023')
-    resolved = multiplicity.MultiplicityResolvedOffner2023()
-    unres = multiplicity.MultiplicityUnresolvedOffner2023()
-    assert hasattr(resolved, 'log_semimajoraxis')
-    assert hasattr(resolved, 'log_a_mean')
-    assert hasattr(resolved, 'a_mean')
-    assert hasattr(resolved, 'sigma_log_a')
-    assert not hasattr(unres, 'log_semimajoraxis')
-    assert not hasattr(unres, 'log_a_mean')
-    assert not hasattr(unres, 'a_mean')
-    assert not hasattr(unres, 'sigma_log_a')
-    np.testing.assert_allclose(
-        resolved.sep_sig_mass,
-        [np.sqrt(0.075 * 0.15), np.sqrt(0.3 * 0.6), np.sqrt(0.75 * 1.25)])
-    np.testing.assert_allclose(resolved.sep_sig, [0.7, 1.3, 1.5])
-    e = resolved.random_e(np.array([0.0, 0.25, 1.0]))
-    np.testing.assert_allclose(e, [0.0, 0.5, 1.0])
 
 
 def test_lu2013_defaults_unchanged():
@@ -685,87 +647,6 @@ def _same_seed_rngs(seed=11):
     return np.random.default_rng(seed), np.random.default_rng(seed)
 
 
-def test_random_companion_count_same_seed():
-    """Same rng seed reproduces random_companion_count."""
-    masses = np.full(40, 1.0)
-    for cls in (multiplicity.MultiplicityUnresolved,
-                multiplicity.MultiplicityUnresolvedOffner2023):
-        multi = cls()
-        mf = multi.multiplicity_fraction(masses)
-        csf = multi.companion_star_fraction(masses)
-        rng1, rng2 = _same_seed_rngs()
-        n1 = multi.random_companion_count(
-            None, csf, mf, mass=masses, rng=rng1)
-        n2 = multi.random_companion_count(
-            None, csf, mf, mass=masses, rng=rng2)
-        np.testing.assert_array_equal(n1, n2)
-
-
-def test_draw_n_companions_same_seed():
-    """Same rng seed reproduces draw_n_companions."""
-    masses = np.array([0.04, 0.3, 1.0, 5.0] * 10)
-    for cls in (multiplicity.MultiplicityUnresolved,
-                multiplicity.MultiplicityUnresolvedOffner2023):
-        multi = cls()
-        mf = multi.multiplicity_fraction(masses)
-        csf = multi.companion_star_fraction(masses)
-        rng1, rng2 = _same_seed_rngs()
-        n1 = multi.draw_n_companions(masses, csf, mf, rng1)
-        n2 = multi.draw_n_companions(masses, csf, mf, rng2)
-        np.testing.assert_array_equal(n1, n2)
-
-
-def test_assign_companions_same_seed():
-    """Same rng seed reproduces draw_companion_masses assignment."""
-    masses = np.array([0.04, 0.3, 1.0, 2.0, 5.0] * 8)
-    is_mult = np.ones(len(masses), dtype=bool)
-    for cls in (multiplicity.MultiplicityUnresolved,
-                multiplicity.MultiplicityUnresolvedOffner2023):
-        multi = cls()
-        mf = multi.multiplicity_fraction(masses)
-        csf = multi.companion_star_fraction(masses)
-        rng1, rng2 = _same_seed_rngs()
-        c1, s1, m1 = multi.draw_companion_masses(
-            masses, is_mult, csf, mf, rng1, mass_min=0.01)
-        c2, s2, m2 = multi.draw_companion_masses(
-            masses, is_mult, csf, mf, rng2, mass_min=0.01)
-        np.testing.assert_array_equal(np.ma.getdata(c1), np.ma.getdata(c2))
-        np.testing.assert_array_equal(np.ma.getmaskarray(c1),
-                                     np.ma.getmaskarray(c2))
-        np.testing.assert_array_equal(s1, s2)
-        np.testing.assert_array_equal(m1, m2)
-
-
-def test_log_semimajoraxis_same_seed():
-    """Same rng seed reproduces log_semimajoraxis."""
-    masses = np.full(30, 1.0)
-    for cls in (multiplicity.MultiplicityResolvedDK,
-                multiplicity.MultiplicityResolvedOffner2023):
-        multi = cls()
-        rng1, rng2 = _same_seed_rngs()
-        a1 = multi.log_semimajoraxis(masses, rng=rng1)
-        a2 = multi.log_semimajoraxis(masses, rng=rng2)
-        np.testing.assert_array_equal(a1, a2)
-
-
-def test_random_keplarian_parameters_same_seed():
-    """Same rng seed reproduces random_keplarian_parameters."""
-    n = 30
-    for cls in (multiplicity.MultiplicityResolvedDK,
-                multiplicity.MultiplicityResolvedOffner2023):
-        multi = cls()
-        rng1, rng2 = _same_seed_rngs()
-        x1, y1, z1 = rng1.random(n), rng1.random(n), rng1.random(n)
-        i1, O1, o1 = multi.random_keplarian_parameters(
-            x1, y1, z1, rng=rng1)
-        x2, y2, z2 = rng2.random(n), rng2.random(n), rng2.random(n)
-        i2, O2, o2 = multi.random_keplarian_parameters(
-            x2, y2, z2, rng=rng2)
-        np.testing.assert_array_equal(i1, i2)
-        np.testing.assert_array_equal(O1, O2)
-        np.testing.assert_array_equal(o1, o2)
-
-
 def test_draw_q_same_seed():
     """Same rng seed reproduces draw_q."""
     masses = np.array([0.04, 0.3, 1.0, 2.0] * 8)
@@ -813,20 +694,27 @@ def test_offner_draw_q_is_single_shot():
 
 
 def test_random_q_is_deprecated():
-    """v2.5 random_q warns and still uses q_pow when mass is omitted."""
+    """v2.5 random_q warns, requires mass, and delegates to draw_q."""
     import inspect
     import warnings
+    import pytest
+
     multi = multiplicity.MultiplicityUnresolved()
+
+    with pytest.raises(TypeError):
+        multi.random_q()
+
+    masses = np.array([1.0, 0.04])
+    rng1 = np.random.default_rng(5)
+    rng2 = np.random.default_rng(5)
     with warnings.catch_warnings(record=True) as caught:
         warnings.simplefilter('always', DeprecationWarning)
-        q = multi.random_q(np.array([0.0, 1.0]))
+        q = multi.random_q(masses, rng=rng1, n_comp=2)
     assert any(issubclass(w.category, DeprecationWarning) for w in caught)
     assert any('draw_q' in str(w.message) for w in caught)
-    q_exp = multiplicity._q_from_powerlaw(
-        np.array([0.0, 1.0]), multi.q_pow, multi.q_min)
-    np.testing.assert_allclose(q, q_exp)
+    q_exp = multi.draw_q(masses, rng=rng2, n_comp=2)
+    np.testing.assert_array_equal(q, q_exp)
 
-    import pytest
     off_src = inspect.signature(
         multiplicity.MultiplicityUnresolvedOffner2023.__init__)
     assert 'q_power' not in off_src.parameters

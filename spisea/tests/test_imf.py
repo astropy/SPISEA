@@ -60,6 +60,10 @@ def test_generate_cluster_offner2023():
     assert len(q_bd) >= 5
     assert np.mean(q_bd) > 0.5
 
+    # Seeded golden values for rng seed 7 (same cluster as above).
+    assert len(q_bd) == 85
+    np.testing.assert_allclose(np.mean(q_bd), 0.8046575091308631)
+
     return
 
 

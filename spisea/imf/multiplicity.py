@@ -144,8 +144,7 @@ class MultiplicityUnresolved(object):
     Fontanive et al. (2018) via :meth:`q_power_at_mass` /
     :meth:`draw_q`. That 0.08 Msun switch is a mass-ratio index
     only, not a companion-count policy. :meth:`random_q` is
-    deprecated; ``random_q(x)`` with no mass keeps the
-    stellar-only power law.
+    deprecated; use :meth:`draw_q`.
 
     Parameters
     ----------
@@ -289,42 +288,34 @@ class MultiplicityUnresolved(object):
             return float(q_pow[0])
         return q_pow
 
-    def random_q(self, x, mass=None):
+    def random_q(self, mass, rng=None, n_comp=1):
         """
-        Deprecated inverse-CDF wrapper for companion mass ratio.
+        Deprecated wrapper for companion mass ratios.
 
-        Use :meth:`draw_q` and pass the primary mass. This wrapper
-        is kept so leftover external callers do not silently change.
-        If ``mass`` is omitted, ``self.q_pow`` is used (stellar-only).
-
-            `q = m_companion / m_primary`
-            `P(q) = q ** beta`    for q_min <= q <= 1
+        Use :meth:`draw_q`. ``mass`` is required; γ comes from
+        :meth:`q_power_at_mass`. Random draws use ``rng``.
 
         Parameters
         ----------
-        x : float or array_like
-            Uniform random draw, dimensionless, in [0, 1]. Inverse CDF
-            sample for q.
-        mass : float or array_like, optional
-            Primary mass in solar masses (Msun). If given, the
-            power-law index is ``q_power_at_mass(mass)``. If omitted,
-            ``self.q_pow`` is used for all companions.
+        mass : float or array_like
+            Primary mass in solar masses (Msun).
+        rng : numpy.random.Generator, optional
+            Random generator. Default ``numpy.random.default_rng()``.
+        n_comp : int, optional
+            Companions per primary. Default 1.
 
         Returns
         -------
         q : float or ndarray
-            Companion mass ratio m_comp/m_prim, dimensionless, in
-            [q_min, 1]. Python float if ``x`` is scalar, ndarray
-            otherwise.
+            Mass ratios in [q_min, 1]. Same shape convention as
+            :meth:`draw_q`.
         """
         warnings.warn(
-            "random_q is deprecated; use draw_q(mass, rng=...) and "
-            "pass the primary mass.",
+            "random_q is deprecated; use draw_q(mass, rng=...).",
             DeprecationWarning,
             stacklevel=2)
-        if mass is None:
-            return _q_from_powerlaw(x, self.q_pow, self.q_min)
-        return _q_from_powerlaw(x, self.q_power_at_mass(mass), self.q_min)
+
+        return self.draw_q(mass, rng=rng, n_comp=n_comp)
 
     def draw_q(self, mass, rng=None, n_comp=1):
         """
@@ -1130,11 +1121,21 @@ class MultiplicityUnresolvedOffner2023(MultiplicityLogistic):
 
         return
 
-    def random_q(self, x, mass=None):
+    def random_q(self, mass, rng=None, n_comp=1):
         """
         Not supported on Offner classes.
 
         Use :meth:`draw_q` with a primary mass.
+
+        Parameters
+        ----------
+        mass : float or array_like
+            Primary mass in solar masses (Msun). Unused; this method
+            always raises.
+        rng : numpy.random.Generator, optional
+            Unused; this method always raises.
+        n_comp : int, optional
+            Unused; this method always raises.
 
         Raises
         ------
