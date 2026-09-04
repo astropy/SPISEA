@@ -224,6 +224,10 @@ class ResolvedCluster(Cluster):
 
         # Check if using an external evolution model (i.e. COSMIC)
         self.external_evol = getattr(iso, 'external_evol', False)
+        print(f"Isochrone {type(iso).__name__}")
+        if self.external_evol and (self.ifmr is not None):
+            warnings.warn(f"Isochrone {type(iso).__name__} uses external evolution. "
+                "Input IFMR will be ignored.")
 
         #####
         # Make isochrone interpolators
